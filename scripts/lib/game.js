@@ -10,7 +10,9 @@
   Canvas.height = Canvas.tileSize * Canvas.numTilesHeight;
 
   Canvas.imagePath = "images";
-  Canvas.imageNames = ["grass"];
+  Canvas.imageNames = ["grass", "player"];
+  
+  Canvas.images = {};
 
   Object.extend(Canvas, {
     init: function() {
@@ -24,7 +26,7 @@
       self.canvas = canvas;
       self.ctx    = canvas.getContext("2d");
 
-      self.delayDrawing = true;
+      self.ready = false;
       self._preloadImages();
     },
 
@@ -35,16 +37,16 @@
     
     _preloadImages: function() {
       var self = this;
-      var images = [];
+      var images = {};
       for (var i=0; i<self.imageNames.length; i++) {
         (function(i) {
           var name = self.imageNames[i];
           var image = new Image(self.tileSize, self.tileSize);
           image.src = self.imagePath + "/" + name + ".gif";
           image.onload = function() {
-            if (i == self.imageNames.length-1) self.delayDrawing = false;
+            if (i == self.imageNames.length-1) self.ready = true;
           }
-          images.push(image);
+          images[name] = image;
         })(i)
       }
           
@@ -53,12 +55,17 @@
 
     _redraw: function() {
       var self = this;
-      if (self.delayDrawing) return;
+      if (!self.ready) return;
+      
+      // Draw background
       for (var i=0; i<self.numTilesWidth; i++) {
         for (var j=0; j<self.numTilesHeight; j++) {
-          self.ctx.drawImage(self.images[0], i*self.tileSize, j*self.tileSize);
+          self.ctx.drawImage(self.images["grass"], i*self.tileSize, j*self.tileSize);
         }
       }
+      
+      // Draw player
+      self.ctx.drawImage(self.images["player"], (self.numTilesWidth/2)*self.tileSize, (self.numTilesHeight/2)*self.tileSize);
     }
   })
 
