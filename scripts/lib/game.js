@@ -54,6 +54,9 @@
         ready = false;
         self._preloadImages();
         
+        // This won't work -- the key repeat delay is in effect
+        // Basically, we need to implement key repeat ourselves --
+        // see http://stackoverflow.com/questions/3691461/remove-key-press-delay-in-javascript
         bean.add(document, 'keydown', function(event) {
           var keyCode = event.keyCode;
           if (typeof keyHandlers[keyCode] != "undefined") {
