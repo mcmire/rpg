@@ -12,29 +12,27 @@
   };
   
   window.Game = (function() {
-    var canvas;
-    var ctx;
-    var images = {};
-    var ready = false;
-    var curKeyHandler;
-    var playerPos = {x: 0, y: 0};
+    var canvas, ctx;
+    var images = {}, ready;
     var background;
+    var playerPos = {x: 0, y: 0};
     
-    var keyHandlers = {}
+    var activeKeyHandlers = {};
+    var keyHandlers = {};
     keyHandlers[Keyboard.LEFT_ARROW]  =
-    keyHandlers[Keyboard.KEY_A]       = function() { playerPos.x-- }
+    keyHandlers[Keyboard.KEY_A]       = function() { playerPos.x -= 5 }
     keyHandlers[Keyboard.RIGHT_ARROW] = 
-    keyHandlers[Keyboard.KEY_D]       = function() { playerPos.x++ }
+    keyHandlers[Keyboard.KEY_D]       = function() { playerPos.x += 5 }
     keyHandlers[Keyboard.UP_ARROW]    = 
-    keyHandlers[Keyboard.KEY_W]       = function() { playerPos.y-- }
+    keyHandlers[Keyboard.KEY_W]       = function() { playerPos.y -= 5 }
     keyHandlers[Keyboard.DOWN_ARROW]  =
-    keyHandlers[Keyboard.KEY_S]       = function() { playerPos.y++ }
+    keyHandlers[Keyboard.KEY_S]       = function() { playerPos.y += 5 }
     
     return {
-      tickInterval: 150,
+      tickInterval: 30, // ms/frame
       tileSize: 32,
-      numCols: 24,  // in # of tiles; must be a multiple of 2
-      numRows: 16, // in # of tiles; must be a multiple of 2
+      numCols: 24,      // in # of tiles; must be a multiple of 2
+      numRows: 16,      // in # of tiles; must be a multiple of 2
 
       imagePath: "images",
       
@@ -43,28 +41,20 @@
       init: function(callback) {
         var self = this;
 
+        self.width = self.tileSize * self.numCols;
+        self.height = self.tileSize * self.numRows;
+
         canvas = document.createElement("canvas");
         ctx = canvas.getContext("2d");
-        canvas.width = self.tileSize * self.numCols;
-        canvas.height = self.tileSize * self.numRows;
+        canvas.width = self.width;
+        canvas.height = self.height;
         document.body.appendChild(canvas);
         
-        // This won't work -- the key repeat delay is in effect
-        // Basically, we need to implement key repeat ourselves --
-        // see http://stackoverflow.com/questions/3691461/remove-key-press-delay-in-javascript
-        bean.add(document, 'keydown', function(event) {
-          var keyCode = event.keyCode;
-          if (typeof keyHandlers[keyCode] != "undefined") {
-            // Since we can't handle more than one keystroke in a tick, just
-            // store the first keystroke until we handle it
-            if (!curKeyHandler) curKeyHandler = keyHandlers[keyCode];
-            event.preventDefault();
-          }
-        });
+        self._initKeyboard();
         
         // Initialize the player position
-        playerPos.x = self.numCols / 2;
-        playerPos.y = self.numRows / 2;
+        playerPos.x = Math.floor(self.width / 2);
+        playerPos.y = Math.floor(self.height / 2);
         
         // Cache all the images so that we are not loading them while the user
         // plays the game
@@ -112,13 +102,30 @@
         ctx.drawImage(background, 0, 0);
         
         // Draw the player
-        ctx.drawImage(images["player"], playerPos.x*self.tileSize, playerPos.y*self.tileSize);
+        ctx.drawImage(images["player"], playerPos.x, playerPos.y);
         
-        // Respond to a keystroke
-        if (curKeyHandler) {
-          curKeyHandler();
-          curKeyHandler = null;
+        // Respond to keystrokes placed during the "dead time", i.e., the time
+        // between the end of last iteration and the start of this iteration
+        for (key in activeKeyHandlers) {
+          activeKeyHandlers[key]();
+          //delete activeKeyHandlers[key];
         }
+      },
+      
+      _initKeyboard: function() {
+        bean.add(document, 'keydown', function(event) {
+          var key = event.keyCode;
+          if (key in keyHandlers) {
+            if (!(key in activeKeyHandlers)) activeKeyHandlers[key] = keyHandlers[key];
+            event.preventDefault();
+          }
+        });
+        
+        bean.add(document, 'keyup', function(event) {
+          var key = event.keyCode;
+          delete activeKeyHandlers[key];
+          event.preventDefault();
+        })
       },
       
       // One of the things we need to during our game loop is redraw the
@@ -154,6 +161,18 @@
   $(function() {
     Game.init();
     Game.ready(function() { Game.run() });
+    
+    /*
+    var textarea = document.createElement("textarea");
+    textarea.style.width = "300px";
+    textarea.style.height = "300px";
+    document.body.appendChild(textarea);
+    var key;
+    bean.add(textarea, 'keydown', function(event) {
+      if (!key) key = event.keyCode;
+      else event.preventDefault();
+    })
+    */
   })
   
 })(window, window.document, window.$, window._);
