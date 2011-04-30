@@ -2,9 +2,13 @@
   
   window.Keyboard = {
     LEFT_ARROW: 37,
-    UP_ARROW: 38,
     RIGHT_ARROW: 39,
-    DOWN_ARROW: 40
+    UP_ARROW: 38,
+    DOWN_ARROW: 40,
+    KEY_A: 65,
+    KEY_D: 68, 
+    KEY_W: 87,
+    KEY_S: 83
   };
   
   window.Game = (function() {
@@ -16,10 +20,14 @@
     var playerPos = {x: 0, y: 0};
     
     var keyHandlers = {}
-    keyHandlers[Keyboard.LEFT_ARROW]  = function() { playerPos.x-- }
-    keyHandlers[Keyboard.RIGHT_ARROW] = function() { playerPos.x++ }
-    keyHandlers[Keyboard.UP_ARROW]    = function() { playerPos.y-- }
-    keyHandlers[Keyboard.DOWN_ARROW]  = function() { playerPos.y++ }
+    keyHandlers[Keyboard.LEFT_ARROW]  =
+    keyHandlers[Keyboard.KEY_A]       = function() { playerPos.x-- }
+    keyHandlers[Keyboard.RIGHT_ARROW] = 
+    keyHandlers[Keyboard.KEY_D]       = function() { playerPos.x++ }
+    keyHandlers[Keyboard.UP_ARROW]    = 
+    keyHandlers[Keyboard.KEY_W]       = function() { playerPos.y-- }
+    keyHandlers[Keyboard.DOWN_ARROW]  =
+    keyHandlers[Keyboard.KEY_S]       = function() { playerPos.y++ }
     
     return {
       tickInterval: 30,
