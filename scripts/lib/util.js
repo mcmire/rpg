@@ -1,17 +1,8 @@
 (function(window, document, $, undefined) {
 
-  // Stolen from zepto.js
-  function onDocumentReady(callback) {
-    if (document.readyState == 'complete' || document.readyState == 'loaded') {
-      callback();
-    }
-    document.addEventListener('DOMContentLoaded', callback, false);
-    return this;
-  }
-
   window.$ = function(id) {
     if (typeof id == "function") {
-      onDocumentReady(id);
+      bean.add(document, 'DOMContentLoaded', id);
     } else {
       document.getElementById(id);
     }

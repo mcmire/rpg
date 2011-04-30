@@ -1,22 +1,31 @@
 (function(window, document, $, undefined) {
   
-  // Keyboard
+  window.Keyboard = {
+    LEFT_ARROW: 37,
+    UP_ARROW: 38,
+    RIGHT_ARROW: 39,
+    DOWN_ARROW: 40
+  };
   
-  window.Keyboard = {};
-  
-  // Canvas
-  
-  window.Canvas = (function() {
+  window.Game = (function() {
     var canvas;
     var ctx;
     var images = {};
     var ready = false;
+    var curKeyHandler;
+    var playerPos = {x: 0, y: 0};
+    
+    var keyHandlers = {}
+    keyHandlers[Keyboard.LEFT_ARROW]  = function() { playerPos.x-- }
+    keyHandlers[Keyboard.RIGHT_ARROW] = function() { playerPos.x++ }
+    keyHandlers[Keyboard.UP_ARROW]    = function() { playerPos.y-- }
+    keyHandlers[Keyboard.DOWN_ARROW]  = function() { playerPos.y++ }
     
     return {
-      tickInterval: 150,
+      tickInterval: 30,
       tileSize: 32,
-      numTilesWidth: 24,
-      numTilesHeight: 16,
+      width: 24,  // in # of tiles; must be a multiple of 2
+      height: 16, // in # of tiles; must be a multiple of 2
 
       imagePath: "images",
       
@@ -24,15 +33,26 @@
       
       init: function() {
         var self = this;
+        
+        playerPos.x = self.width / 2;
+        playerPos.y = self.height / 2;
 
         canvas = document.createElement("canvas");
         ctx = canvas.getContext("2d");
-        canvas.width = self.tileSize * self.numTilesWidth;
-        canvas.height = self.tileSize * self.numTilesHeight;
+        canvas.width = self.tileSize * self.width;
+        canvas.height = self.tileSize * self.height;
         document.body.appendChild(canvas);
 
         ready = false;
         self._preloadImages();
+        
+        bean.add(document, 'keydown', function(event) {
+          var keyCode = event.keyCode;
+          if (typeof keyHandlers[keyCode] != "undefined") {
+            if (!curKeyHandler) curKeyHandler = keyHandlers[keyCode];
+            event.preventDefault();
+          }
+        });
       },
 
       run: function() {
@@ -60,21 +80,31 @@
         if (!ready) return;
 
         // Draw background
-        for (var i=0; i<self.numTilesWidth; i++) {
-          for (var j=0; j<self.numTilesHeight; j++) {
-            ctx.drawImage(images["grass"], i*self.tileSize, j*self.tileSize);
+        for (var i=0; i<self.width; i++) {
+          for (var j=0; j<self.height; j++) {
+            self._drawSprite("grass", i, j);
           }
         }
 
         // Draw player
-        ctx.drawImage(images["player"], (self.numTilesWidth/2)*self.tileSize, (self.numTilesHeight/2)*self.tileSize);
+        self._drawSprite("player", playerPos.x, playerPos.y);
+        
+        if (curKeyHandler) {
+          curKeyHandler();
+          curKeyHandler = null;
+        }
+      },
+      
+      _drawSprite: function(name, x, y) {
+        var self = this;
+        ctx.drawImage(images[name], x*self.tileSize, y*self.tileSize);
       }
     }
   })();
 
   $(function() {
-    Canvas.init();
-    Canvas.run();
+    Game.init();
+    Game.run();
   })
   
 })(window, window.document, window.$);
