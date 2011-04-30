@@ -126,6 +126,11 @@
           delete activeKeyHandlers[key];
           event.preventDefault();
         })
+        
+        bean.add(window, 'blur', function(event) {
+          // Clear all the handlers to prevent stuck keys
+          activeKeyHandlers = {};
+        })
       },
       
       // One of the things we need to during our game loop is redraw the
