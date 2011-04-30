@@ -2,10 +2,10 @@
   
   window.Canvas = {};
 
-  Canvas.tileSize = 16;
+  Canvas.tileSize = 32;
   Canvas.tickInterval = 150;
-  Canvas.numTilesWidth = 48;
-  Canvas.numTilesHeight = 32;
+  Canvas.numTilesWidth = 24;
+  Canvas.numTilesHeight = 16;
   Canvas.width = Canvas.tileSize * Canvas.numTilesWidth;
   Canvas.height = Canvas.tileSize * Canvas.numTilesHeight;
 
