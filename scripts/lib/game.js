@@ -76,12 +76,17 @@
     game.viewport.heightInPixels = game.viewport.heightInTiles * game.tileSize;
     
     game.map = {
-      widthInTiles: game.viewport.widthInTiles * 15,
-      heightInTiles: game.viewport.heightInTiles * 15,
-      widthInPixels: game.viewport.widthInPixels * 15,
-      heightInPixels: game.viewport.heightInPixels * 15,
+      widthInTiles: game.viewport.widthInTiles * 5,
+      heightInTiles: game.viewport.heightInTiles * 5,
+      widthInPixels: game.viewport.widthInPixels * 5,
+      heightInPixels: game.viewport.heightInPixels * 5,
       data: [],
-      location: {i: 0, j: 0}
+      location: {
+        x: 0,
+        y: 0,
+        i: 0,
+        j: 0
+      }
     };
     
     game.bg = {
@@ -205,15 +210,21 @@
         Keyboard.addKeyHandler('A_KEY', 'LEFT_ARROW', function() {
           //self.bg.offset.x += self.player.velocity;
           
-          // If the lefthand bound of the background image would cross the
-          // lefthand bound of the viewport...
+          // Prevent the player from going beyond the left edge of the map
+          if ((self.map.location.x - self.player.velocity) < 0) {
+            self.map.location.x = 0;
+            self.bg.offset.x += self.map.location.x;
+            return;
+          }
+          
+          // If the left edge of the background image would cross the left edge
+          // of the viewport...
           if ((self.bg.offset.x + self.player.velocity) >= 0) {
             // Go ahead and shift the background rightward internally...
             self.bg.offset.x += self.player.velocity;
             
             // ...but before we render the background, let's generate another
-            // column of tiles on the left side of the background image and chop
-            // off the rightmost column.
+            // column of tiles on the left side of the background image.
             
             // To do this, we need to change the column index of the map.
             self.map.location.j -= self.bg.frame.sizeInTiles;
@@ -222,9 +233,8 @@
             // the current background with this.
             var bg = self._newBackgroundCanvas();
             
-            // On this new canvas, we first draw the new column (we're just
-            // figuring out which sprites to populate it with by using the map
-            // that we've already generated).
+            // On this new canvas, we first draw the new column, populating it
+            // with the relevant part of the map that we've already generated.
             var newColumn = self._newCanvas(self.bg.frame.sizeInPixels, self.bg.heightInPixels);
             for (var i=0; i<self.bg.heightInTiles; i++) {
               for (var j=0; j<self.bg.frame.sizeInTiles; j++) {
@@ -234,8 +244,10 @@
               }
             }
             
-            // Then we can take the current canvas and draw it to the right of
-            // the new column.
+            // Then we can take the current canvas and put it to the right of
+            // the new column. (The right part of the current canvas that
+            // goes beyond the size of the background image will get cut off,
+            // which is fine, because we don't need it in memory.)
             bg.ctx.drawImage(self.bg.canvas, self.bg.frame.sizeInPixels, 0);
             
             // So now, we replace the current canvas.
@@ -253,24 +265,30 @@
           }
           else {
             self.bg.offset.x += self.player.velocity;
+            self.map.location.x -= self.player.velocity;
           }
           
           console.log("bg.offset.x: " + self.bg.offset.x);
+          console.log("map.location.x: " + self.map.location.x);
+          console.log("map.location.j: " + self.map.location.j);
         });
         Keyboard.addKeyHandler('D_KEY', 'RIGHT_ARROW', function() {
           self.bg.offset.x -= self.player.velocity;
+          self.map.location.x += self.player.velocity;
           //if (self.bg.offset.x > self.map.widthInPixels) {
           //  self.bg.offset.x = self.map.widthInPixels;
           //}
         });
         Keyboard.addKeyHandler('W_KEY', 'UP_ARROW', function() {
           self.bg.offset.y += self.player.velocity;
+          self.map.location.y -= self.player.velocity;
           //if (self.bg.offset.y < 0) {
           //  self.bg.offset.y = 0;
           //}
         });
         Keyboard.addKeyHandler('S_KEY', 'DOWN_ARROW', function() {
           self.bg.offset.y -= self.player.velocity;
+          self.map.location.y += self.player.velocity;
           //if (self.bg.offset.y > self.map.heightInPixels) {
           //  self.bg.offset.y = self.map.heightInPixels;
           //}
@@ -294,15 +312,17 @@
         
         Object.extend(self.bg, self._newBackgroundCanvas());
         
-        // Pick a random point on the map
+        // Pick a random range of tiles on the map
         var i1 = Math.randomInt(0, self.map.heightInTiles - self.bg.heightInTiles - 1);
         var i2 = i1 + self.bg.heightInTiles;
         var j1 = Math.randomInt(0, self.map.widthInTiles - self.bg.widthInTiles - 1);
         var j2 = j1 + self.bg.widthInTiles;
-        // Store the current indices as this will come in handy when generating
+        // Store the current location as this will come in handy when generating
         // more of the background later
         self.map.location.i = i1;
         self.map.location.j = j1;
+        self.map.location.x = j1 * self.tileSize;
+        self.map.location.y = i1 * self.tileSize;
         
         // Fill up the viewport with the tiles on the map within the range that
         // we've chosen
