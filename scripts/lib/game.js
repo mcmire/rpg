@@ -109,9 +109,14 @@
     
     game.imagePath = "images";
     game.sprite = {
-      names: ["grass", "snow", "water", "player"],
+      names: ["player"],
       instances: {}
     };
+
+    game.mapTiles = {
+      names: ["grass", "snow", "water", "dirt"],
+      instances: []
+    }
     
     Object.extend(game, {
       init: function(callback) {
@@ -126,7 +131,6 @@
         self._initKeyboard();
         
         self._generateMap();
-        
         // Initialize the background offset
         self.bg.offset.x = self.bg.offset.y = -self.bg.frame.sizeInPixels;
         console.log("bg.offset.x: " + self.bg.offset.x);
@@ -160,16 +164,7 @@
       },
 
       _generateMap: function() {
-        var self = this;
-        var bgSpriteNames = _.reject(self.sprite.names, function(n) { return n == "player" });
-        for (var i=0; i<self.map.heightInTiles; i++) {
-          var row = self.map.data[i] = [];
-          for (var j=0; j<self.map.widthInTiles; j++) {
-            // Pick a random sprite
-            var spriteName = bgSpriteNames[Math.randomInt(0, bgSpriteNames.length-1)];
-            row[j] = spriteName;
-          }
-        }
+        get('/scripts/lib/map.js')
       },
 
       _preloadImages: function() {
@@ -183,6 +178,17 @@
               if (i == self.sprite.names.length-1) self.ready = true;
             }
             self.sprite.instances[name] = image;
+          })(i)
+        }
+        for (var i=0; i<self.mapTiles.names.length; i++) {
+          (function(i) {
+            var name = self.mapTiles.names[i];
+            var image = new Image(self.tileSize, self.tileSize);
+            image.src = self.imagePath + "/" + name + ".gif";
+            image.onload = function() {
+              if (i == self.mapTiles.names.length-1) self.ready = true;
+            }
+            self.mapTiles.instances[i] = image;
           })(i)
         }
       },
@@ -238,9 +244,9 @@
             var newColumn = self._newCanvas(self.bg.frame.sizeInPixels, self.bg.heightInPixels);
             for (var i=0; i<self.bg.heightInTiles; i++) {
               for (var j=0; j<self.bg.frame.sizeInTiles; j++) {
-                var spriteName = self.map.data[self.map.location.i+i][self.map.location.j+j];
-                var sprite = self.sprite.instances[spriteName];
-                bg.ctx.drawImage(sprite, j*self.tileSize, i*self.tileSize);
+                var tileNumber = self.map.data[self.map.location.i+i][self.map.location.j+j];
+                var tile = self.mapTiles.instances[tileNumber];
+                bg.ctx.drawImage(tile, j*self.tileSize, i*self.tileSize);
               }
             }
             
@@ -309,13 +315,12 @@
       //
       _generateBackground: function() {
         var self = this;
-        
         Object.extend(self.bg, self._newBackgroundCanvas());
         
         // Pick a random range of tiles on the map
-        var i1 = Math.randomInt(0, self.map.heightInTiles - self.bg.heightInTiles - 1);
+        var i1 = 0;
         var i2 = i1 + self.bg.heightInTiles;
-        var j1 = Math.randomInt(0, self.map.widthInTiles - self.bg.widthInTiles - 1);
+        var j1 = 0;
         var j2 = j1 + self.bg.widthInTiles;
         // Store the current location as this will come in handy when generating
         // more of the background later
@@ -328,12 +333,11 @@
         // we've chosen
         for (var i=i1, tx=0; i<i2; i++, tx++) {
           for (var j=j1, ty=0; j<j2; j++, ty++) {
-            var spriteName = self.map.data[i][j];
-            var sprite = self.sprite.instances[spriteName];
-            self.bg.ctx.drawImage(sprite, ty*self.tileSize, tx*self.tileSize);
+            var tileNumber = self.map.data[i][j];
+            var tile = self.mapTiles.instances[tileNumber];
+            self.bg.ctx.drawImage(tile, ty*self.tileSize, tx*self.tileSize);
           }
         }
-        
         self.bg.needsRegenerating = false;
       },
       

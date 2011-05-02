@@ -8,6 +8,22 @@
     }
   };
 
+  window.get = function(url){
+    var xhr;
+    if (window.XMLHttpRequest) {
+      xhr = new XMLHttpRequest();
+    } else {
+      xhr = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState==4 && xhr.status==200) {
+        eval(xhr.responseText);
+      }
+    }
+    xhr.open("GET", url, true);
+    xhr.send(null);
+  };
+
   Object.extend = function(obj, props) {
     var prop;
     for (prop in props) {
