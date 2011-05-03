@@ -8,7 +8,7 @@
     }
   };
 
-  window.get = function(url){
+  window.get = function(url, callback) {
     var xhr;
     if (window.XMLHttpRequest) {
       xhr = new XMLHttpRequest();
@@ -17,7 +17,7 @@
     }
     xhr.onreadystatechange = function() {
       if (xhr.readyState==4 && xhr.status==200) {
-        eval(xhr.responseText);
+        callback(xhr.responseText, xhr);
       }
     }
     xhr.open("GET", url, true);

@@ -47,7 +47,7 @@
       }
     },
     
-    addKeyHandler: function() {
+    addKeyHandler: function(/* key1, key2, ..., callback */) {
       var self = this;
       var keyNames = Array.prototype.slice.call(arguments);
       var callback = keyNames.pop();
@@ -62,7 +62,9 @@
     
     game.canvas = null;
     game.ctx = null;
-    game.ready = false;
+    
+    game.mapLoaded = false;
+    game.imagesLoaded = false;
     
     game.tickInterval = 30; // ms/frame
     //game.tickInterval = 150; // ms/frame
@@ -70,16 +72,8 @@
     game.tileSize = 32; // pixels
     
     game.viewport = {};
-    game.viewport.widthInTiles = 24;
-    game.viewport.heightInTiles = 16;
-    game.viewport.widthInPixels = game.viewport.widthInTiles * game.tileSize;
-    game.viewport.heightInPixels = game.viewport.heightInTiles * game.tileSize;
     
     game.map = {
-      widthInTiles: game.viewport.widthInTiles * 5,
-      heightInTiles: game.viewport.heightInTiles * 5,
-      widthInPixels: game.viewport.widthInPixels * 5,
-      heightInPixels: game.viewport.heightInPixels * 5,
       data: [],
       location: {
         x: 0,
@@ -92,19 +86,12 @@
     game.bg = {
       canvas: null,
       ctx: null,
-      offset: {x: 0, y: 0},
-      needsRegenerating: true
+      offset: {x: 0, y: 0}
     }
-    // The frame size is the distance between the edge of the viewport and the
-    // edge of the background, i.e., it's a measure of how much bigger the
-    // background is compared to the viewport
-    game.bg.frame = {}
-    game.bg.frame.sizeInTiles = 10;
-    game.bg.frame.sizeInPixels = game.bg.frame.sizeInTiles * game.tileSize;
     
     game.player = {
       pos: {x: 0, y: 0},
-      velocity: 5
+      speed: 5
     };
     
     game.imagePath = "images";
@@ -122,26 +109,33 @@
       init: function(callback) {
         var self = this;
 
+        self.viewport.width = self._dim(24, 'tiles');
+        self.viewport.height = self._dim(16, 'tiles');
+        //self.map.width = self._dim(self.viewport.height.tiles * 5, 'tiles');
+        //self.map.height = self._dim(self.viewport.width.tiles * 5, 'tiles')
+
         self.canvas = document.createElement("canvas");
         self.ctx = self.canvas.getContext("2d");
-        self.canvas.width = self.viewport.widthInPixels;
-        self.canvas.height = self.viewport.heightInPixels;
+        self.canvas.width = self.viewport.width.pixels;
+        self.canvas.height = self.viewport.height.pixels;
         document.body.appendChild(self.canvas);
         
         self._initKeyboard();
         
-        self._generateMap();
-        // Initialize the background offset
-        self.bg.offset.x = self.bg.offset.y = -self.bg.frame.sizeInPixels;
-        console.log("bg.offset.x: " + self.bg.offset.x);
-        
-        // Initialize the player position
-        self.player.pos.x = self.viewport.widthInPixels / 2;
-        self.player.pos.y = self.viewport.heightInPixels / 2;
-        
-        // Cache all the images so that we are not loading them while the user
-        // plays the game
-        self._preloadImages();
+        self._loadMap(function() {
+          self.mapLoaded = true;
+          
+          self.map.width = self._dim(self.map.data[0].length, 'tiles');
+          self.map.height = self._dim(self.map.data.length, 'tiles');
+
+          // Initialize the player position
+          self.player.pos.x = self.viewport.width.pixels / 2;
+          self.player.pos.y = self.viewport.height.pixels / 2;
+
+          // Cache all the images so that we are not loading them while the user
+          // plays the game
+          self._preloadImages();
+        });
       },
       
       ready: function(callback) {
@@ -149,7 +143,7 @@
         // Keep checking the flag that we set in _preloadImages().
         // When it's true then we are ready to continue.
         var timer = setInterval(function() {
-          if (self.ready) {
+          if (self.mapLoaded && self.imagesLoaded) {
             clearInterval(timer);
             callback();
           }
@@ -158,39 +152,43 @@
 
       run: function() {
         var self = this;
+        
+        self._renderMap();
+        self._initViewport();
+        
         // Start the game loop
         setInterval(function() { self._redraw() }, self.tickInterval);
         //self._redraw();
       },
 
-      _generateMap: function() {
-        get('/scripts/lib/map.js')
+      _loadMap: function(callback) {
+        get('/scripts/lib/map.js', function(code) {
+          eval(code);
+          callback();
+        })
       },
 
       _preloadImages: function() {
         var self = this;
-        for (var i=0; i<self.sprite.names.length; i++) {
-          (function(i) {
-            var name = self.sprite.names[i];
-            var image = new Image(self.tileSize, self.tileSize);
-            image.src = self.imagePath + "/" + name + ".gif";
-            image.onload = function() {
-              if (i == self.sprite.names.length-1) self.ready = true;
-            }
-            self.sprite.instances[name] = image;
-          })(i)
-        }
-        for (var i=0; i<self.mapTiles.names.length; i++) {
-          (function(i) {
-            var name = self.mapTiles.names[i];
-            var image = new Image(self.tileSize, self.tileSize);
-            image.src = self.imagePath + "/" + name + ".gif";
-            image.onload = function() {
-              if (i == self.mapTiles.names.length-1) self.ready = true;
-            }
-            self.mapTiles.instances[i] = image;
-          })(i)
-        }
+        var i = 0, len = self.sprite.names.length + self.mapTiles.names.length;
+        _.each(self.sprite.names, function(name) {
+          var image = new Image(self.tileSize, self.tileSize);
+          image.src = self.imagePath + "/" + name + ".gif";
+          image.onload = function() {
+            if (i == len-1) self.imagesLoaded = true;
+          }
+          self.sprite.instances[name] = image;
+          i++;
+        });
+        _.each(self.mapTiles.names, function(name, i) {
+          var image = new Image(self.tileSize, self.tileSize);
+          image.src = self.imagePath + "/" + name + ".gif";
+          image.onload = function() {
+            if (i == len-1) self.imagesLoaded = true;
+          }
+          self.mapTiles.instances[i] = image;
+          i++;
+        })
       },
 
       _redraw: function() {
@@ -201,8 +199,7 @@
         Keyboard.runHandlers();
         
         // Draw the background
-        if (self.bg.needsRegenerating) self._generateBackground();
-        self.ctx.drawImage(self.bg.canvas, self.bg.offset.x, self.bg.offset.y);
+        self.ctx.drawImage(self.map.canvas, -self.viewport.x1, -self.viewport.y1);
         
         // Draw the player
         self.ctx.drawImage(self.sprite.instances["player"], self.player.pos.x, self.player.pos.y);
@@ -214,139 +211,87 @@
         Keyboard.init(self);
         
         Keyboard.addKeyHandler('A_KEY', 'LEFT_ARROW', function() {
-          //self.bg.offset.x += self.player.velocity;
-          
-          // Prevent the player from going beyond the left edge of the map
-          if ((self.map.location.x - self.player.velocity) < 0) {
-            self.map.location.x = 0;
-            self.bg.offset.x += self.map.location.x;
-            return;
+          if ((self.viewport.x1 - self.player.speed) >= 0) {
+            self._addToViewportLocation({x: -self.player.speed});
+          } else {
+            self._addToViewportLocation({x: -self.viewport.x1});
           }
-          
-          // If the left edge of the background image would cross the left edge
-          // of the viewport...
-          if ((self.bg.offset.x + self.player.velocity) >= 0) {
-            // Go ahead and shift the background rightward internally...
-            self.bg.offset.x += self.player.velocity;
-            
-            // ...but before we render the background, let's generate another
-            // column of tiles on the left side of the background image.
-            
-            // To do this, we need to change the column index of the map.
-            self.map.location.j -= self.bg.frame.sizeInTiles;
-            
-            // We also need to make a new Canvas object -- we're going to replace
-            // the current background with this.
-            var bg = self._newBackgroundCanvas();
-            
-            // On this new canvas, we first draw the new column, populating it
-            // with the relevant part of the map that we've already generated.
-            var newColumn = self._newCanvas(self.bg.frame.sizeInPixels, self.bg.heightInPixels);
-            for (var i=0; i<self.bg.heightInTiles; i++) {
-              for (var j=0; j<self.bg.frame.sizeInTiles; j++) {
-                var tileNumber = self.map.data[self.map.location.i+i][self.map.location.j+j];
-                var tile = self.mapTiles.instances[tileNumber];
-                bg.ctx.drawImage(tile, j*self.tileSize, i*self.tileSize);
-              }
-            }
-            
-            // Then we can take the current canvas and put it to the right of
-            // the new column. (The right part of the current canvas that
-            // goes beyond the size of the background image will get cut off,
-            // which is fine, because we don't need it in memory.)
-            bg.ctx.drawImage(self.bg.canvas, self.bg.frame.sizeInPixels, 0);
-            
-            // So now, we replace the current canvas.
-            self.bg.canvas = bg.canvas;
-            self.bg.ctx = bg.ctx;
-            
-            // One more thing. The offset of this new background is going to be
-            // different than the current offset, because the current offset
-            // doesn't apply anymore since we've tacked something else onto the
-            // image and thus changed all the coordinates. Remember that the
-            // offset right now is past 0 (that's why we're in this branch of
-            // the code), so we just need to subtract whatever it is and then
-            // subtract the amount that we've tacked on.
-            self.bg.offset.x = -self.bg.offset.x - self.bg.frame.sizeInPixels;
-          }
-          else {
-            self.bg.offset.x += self.player.velocity;
-            self.map.location.x -= self.player.velocity;
-          }
-          
-          console.log("bg.offset.x: " + self.bg.offset.x);
-          console.log("map.location.x: " + self.map.location.x);
-          console.log("map.location.j: " + self.map.location.j);
+          //self._debugViewportLocation();
         });
         Keyboard.addKeyHandler('D_KEY', 'RIGHT_ARROW', function() {
-          self.bg.offset.x -= self.player.velocity;
-          self.map.location.x += self.player.velocity;
-          //if (self.bg.offset.x > self.map.widthInPixels) {
-          //  self.bg.offset.x = self.map.widthInPixels;
-          //}
+          if ((self.viewport.x2 + self.player.speed) <= self.map.width.pixels) {
+            self._addToViewportLocation({x: self.player.speed});
+          } else {
+            self._addToViewportLocation({x: self.map.width.pixels-self.viewport.x2});
+          }
+          //self._debugViewportLocation();
         });
         Keyboard.addKeyHandler('W_KEY', 'UP_ARROW', function() {
-          self.bg.offset.y += self.player.velocity;
-          self.map.location.y -= self.player.velocity;
-          //if (self.bg.offset.y < 0) {
-          //  self.bg.offset.y = 0;
-          //}
+          if ((self.viewport.y1 - self.player.speed) >= 0) {
+            self._addToViewportLocation({y: -self.player.speed});
+          } else {
+            self._addToViewportLocation({y: -self.viewport.y1});
+          }
+          //self._debugViewportLocation();
         });
         Keyboard.addKeyHandler('S_KEY', 'DOWN_ARROW', function() {
-          self.bg.offset.y -= self.player.velocity;
-          self.map.location.y += self.player.velocity;
-          //if (self.bg.offset.y > self.map.heightInPixels) {
-          //  self.bg.offset.y = self.map.heightInPixels;
-          //}
+          if ((self.viewport.y2 + self.player.speed) <= self.map.height.pixels) {
+            self._addToViewportLocation({y: self.player.speed});
+          } else {
+            self._addToViewportLocation({y: self.map.height.pixels-self.viewport.y2});
+          }
+          //self._debugViewportLocation();
         });
       },
       
       // One of the things we need to during our game loop is to redraw the
-      // background. The thing is, the background is made up of tiles, and
-      // redrawing every tile of the background every iteration is really not
-      // optimal. For instance, if our tickInterval is 30ms, and our viewport
-      // is 24 tiles x 16 tiles, that means we'd be making about 12,700 draw
-      // calls every second. Yikes! We can fix this by taking advantage of
-      //the fact that Canvas's drawImage() function accepts a Canvas object as
-      // an argument (instead of an Image object which you are probably used to
-      // using). So basically, we concatenate the background (which is just the
-      // part of the map clipped by the viewport) into one Canvas object and
-      // then redraw *that* every iteration. Much better!
+      // map. The thing is, the map is made up of tiles, and redrawing every
+      // tile of the map every iteration is really not optimal. We can actually
+      // take advantage of the fact that Canvas's drawImage() function accepts
+      // a Canvas object as an argument (instead of an Image object which you
+      // are probably used to using). So basically, we concatenate the tiles
+      // that make up the map into one Canvas object and then we redraw *that*
+      // every iteration.
       //
-      _generateBackground: function() {
+      _renderMap: function() {
         var self = this;
-        Object.extend(self.bg, self._newBackgroundCanvas());
+        Object.extend(self.map, self._newCanvas(self.map.width.pixels, self.map.height.pixels));
         
-        // Pick a random range of tiles on the map
-        var i1 = 0;
-        var i2 = i1 + self.bg.heightInTiles;
-        var j1 = 0;
-        var j2 = j1 + self.bg.widthInTiles;
-        // Store the current location as this will come in handy when generating
-        // more of the background later
-        self.map.location.i = i1;
-        self.map.location.j = j1;
-        self.map.location.x = j1 * self.tileSize;
-        self.map.location.y = i1 * self.tileSize;
-        
-        // Fill up the viewport with the tiles on the map within the range that
-        // we've chosen
-        for (var i=i1, tx=0; i<i2; i++, tx++) {
-          for (var j=j1, ty=0; j<j2; j++, ty++) {
+        // Fill up the map canvas with the map data
+        for (var i=0; i<self.map.height.tiles; i++) {
+          for (var j=0; j<self.map.width.tiles; j++) {
             var tileNumber = self.map.data[i][j];
             var tile = self.mapTiles.instances[tileNumber];
-            self.bg.ctx.drawImage(tile, ty*self.tileSize, tx*self.tileSize);
+            self.map.ctx.drawImage(tile, j*self.tileSize, i*self.tileSize);
           }
         }
-        self.bg.needsRegenerating = false;
       },
       
-      _newBackgroundCanvas: function() {
+      _initViewport: function() {
         var self = this;
-        return self._newCanvas(
-          (self.viewport.widthInTiles + (self.bg.frame.sizeInTiles * 2)) * self.tileSize,
-          (self.viewport.heightInTiles + (self.bg.frame.sizeInTiles * 2)) * self.tileSize
-        );
+        // Pick a random range of pixels on the map for the viewport
+        self.viewport.x1 = Math.randomInt(0, self.map.width.pixels - self.viewport.width.pixels);
+        self.viewport.x2 = self.viewport.x1 + self.viewport.width.pixels;
+        self.viewport.y1 = Math.randomInt(0, self.map.height.pixels - self.viewport.height.pixels);
+        self.viewport.y2 = self.viewport.y1 + self.viewport.height.pixels;
+      },
+      
+      _addToViewportLocation: function(vector) {
+        var self = this;
+        if (typeof vector.x != "undefined") {
+          self.viewport.x1 += vector.x;
+          self.viewport.x2 += vector.x;
+        }
+        if (typeof vector.y != "undefined") {
+          self.viewport.y1 += vector.y;
+          self.viewport.y2 += vector.y;
+        }
+      },
+      
+      _debugViewportLocation: function() {
+        var self = this;
+        console.log("self.viewport.x = (" + self.viewport.x1 + " .. " + self.viewport.x2 + ")");
+        console.log("self.viewport.y = (" + self.viewport.y1 + " .. " + self.viewport.y2 + ")");
       },
       
       _newCanvas: function(width, height) {
@@ -354,11 +299,27 @@
         var o = {};
         o.canvas = document.createElement("canvas");
         o.ctx    = o.canvas.getContext("2d");
-        o.widthInPixels  = o.canvas.width = width;
-        o.heightInPixels = o.canvas.height = height;
-        o.widthInTiles   = o.widthInPixels / self.tileSize;
-        o.heightInTiles  = o.heightInPixels / self.tileSize;
+        o.canvas.width  = width;
+        o.canvas.height = height;
+        o.width  = self._dim(width, "pixels");
+        o.height = self._dim(height, "pixels");
         return o;
+      },
+      
+      _dim: function(value, unit) {
+        var self = this;
+        var d = {};
+        switch(unit) {
+          case "tile", "tiles":
+            d.tiles = value;
+            d.pixels = value * self.tileSize;
+            break;
+          case "pixel", "pixels":
+            d.pixels = value;
+            d.tiles = value / self.tileSize;
+            break;
+        }
+        return d;
       }
     })
     
