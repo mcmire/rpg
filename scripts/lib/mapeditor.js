@@ -4,12 +4,14 @@
 
     editor.canvas = null;
     editor.ctx = null;
+    editor.imagePath = "images";
+    editor.activeTool = 'dirt'
 
     editor.map = {
       data: [],
       tiles: {
         names: ['grass', 'snow', 'water', 'dirt'],
-        instances: []
+        instances: {}
       },
       location: {
         x: 0,
@@ -30,10 +32,10 @@
 
     editor._preloadImages = function(){
       var self = this;
-      _.each(self.map.tiles.names, function(tile, i){
+      _.each(self.map.tiles.names, function(tile){
         var image = new Image(32, 32);
-        image.src = 'images/' + tile + '.gif';
-        self.map.tiles.instances[i] = image;
+        image.src = self.imagePath +'/' + tile + '.gif';
+        self.map.tiles.instances[tile] = image;
       })
     };
 
@@ -54,7 +56,9 @@
       _.each(self.map.tiles.names, function(tile, i){
         li = document.createElement("li");
         img = document.createElement("img");
-        img.src = '/images/' + tile + '.gif';
+        img.src = self.imagePath + '/' + tile + '.gif';
+        img.setAttribute('class', 'tile');
+        img.setAttribute('id', tile)
         ul.appendChild(li);
         li.appendChild(img);
       });
@@ -84,8 +88,16 @@
       bean.add(canvas, 'click', function(event){
         var x = Math.floor((event.pageX - canvas.offsetLeft)/32)*32;
         var y = Math.floor((event.pageY - canvas.offsetTop)/32)*32;
-        self.ctx.drawImage(self.map.tiles.instances[3], x, y);
+        self.ctx.drawImage(self.map.tiles.instances[self.activeTool], x, y);
       })
+      var tiles = document.getElementsByClassName('tile');
+      bean.add(document, tiles, 'click', function(event){
+        _.each(tiles,function(tile){
+          tile.className = 'tile';
+        });
+        this.className += ' active';
+        self.activeTool = this.id
+      });
     }
     return editor;
   })();

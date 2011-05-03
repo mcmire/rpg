@@ -9,3 +9,7 @@ ul{
   padding: 0;
   list-style: none;
 }
+
+ul li img.active{
+  border: 1px solid red;
+}
