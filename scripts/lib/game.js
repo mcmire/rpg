@@ -1,16 +1,19 @@
 (function(window, document, $, _, undefined) {
   
   window.Keyboard = {
-    LEFT_ARROW: 37,
-    RIGHT_ARROW: 39,
-    UP_ARROW: 38,
-    DOWN_ARROW: 40,
-    A_KEY: 65,
-    D_KEY: 68, 
-    W_KEY: 87,
-    S_KEY: 83,
+    keys: {
+      LEFT_ARROW: 37,
+      RIGHT_ARROW: 39,
+      UP_ARROW: 38,
+      DOWN_ARROW: 40,
+      A_KEY: 65,
+      D_KEY: 68, 
+      W_KEY: 87,
+      S_KEY: 83
+    },
     
     game: null,
+    globalKeyHandler: null,
     keyHandlers: {},
     activeKeyHandlers: {},
     
@@ -24,6 +27,7 @@
           if (!(key in self.activeKeyHandlers)) {
             self.activeKeyHandlers[key] = self.keyHandlers[key];
           }
+          if (self.globalKeyHandler) self.globalKeyHandler();
           event.preventDefault();
         }
       });
@@ -47,18 +51,26 @@
       }
     },
     
-    addKeyHandler: function(/* key1, key2, ..., callback */) {
+    addKeyHandler: function(/* [key1, key2, ..., ]callback */) {
       var self = this;
       var keyNames = Array.prototype.slice.call(arguments);
       var callback = keyNames.pop();
-      for (var i=0; i<keyNames.length; i++) {
-        self.keyHandlers[self[keyNames[i]]] = callback;
+      if (_.any(keyNames)) {
+        _.each(keyNames, function(keyName) {
+          self.keyHandlers[self.keys[keyName]] = callback;
+        })
+      } else {
+        self.globalKeyHandler = callback;
       }
     }
   };
   
   window.Game = (function() {
     var game = {};
+    
+    // Here are the variables that we'll we working with.
+    // Some of these we don't technically need to initialize, they're just
+    //  here for documentation.
     
     game.canvas = null;
     game.ctx = null;
@@ -71,16 +83,20 @@
     
     game.tileSize = 32; // pixels
     
-    game.viewport = {};
+    game.viewport = {
+      height: null,
+      width: null,
+      bounds: {
+        x1: 0,
+        x2: 0,
+        y1: 0,
+        y2: 0
+      },
+      playerPadding: 30
+    };
     
     game.map = {
-      data: [],
-      location: {
-        x: 0,
-        y: 0,
-        i: 0,
-        j: 0
-      }
+      data: []
     };
     
     game.bg = {
@@ -90,8 +106,15 @@
     }
     
     game.player = {
-      pos: {x: 0, y: 0},
-      speed: 5
+      viewport: {
+        pos: {x: 0, y: 0},
+        offset: {x: 0, y: 0},
+        fenceDistance: null
+      },
+      map: {
+        pos: {x: 0, y: 0}
+      },
+      speed: 10
     };
     
     game.imagePath = "images";
@@ -109,6 +132,7 @@
       init: function(callback) {
         var self = this;
 
+        // Initialize the dimensions of the viewport
         self.viewport.width = self._dim(24, 'tiles');
         self.viewport.height = self._dim(16, 'tiles');
         //self.map.width = self._dim(self.viewport.height.tiles * 5, 'tiles');
@@ -125,12 +149,17 @@
         self._loadMap(function() {
           self.mapLoaded = true;
           
+          // Initialize the dimensions of the map based on the data
           self.map.width = self._dim(self.map.data[0].length, 'tiles');
           self.map.height = self._dim(self.map.data.length, 'tiles');
 
-          // Initialize the player position
-          self.player.pos.x = self.viewport.width.pixels / 2;
-          self.player.pos.y = self.viewport.height.pixels / 2;
+          // Initialize the player's position within the viewport
+          self.player.viewport.pos.x = self.viewport.width.pixels / 2;
+          self.player.viewport.pos.y = self.viewport.height.pixels / 2;
+          // Initialize the "fence distance" -- the distance the player can
+          // travel from the center of the viewport to the edge of the viewport
+          // before it starts scrolling
+          self.player.viewport.fenceDistance = (self.viewport.width.pixels / 2) - self.viewport.playerPadding;
 
           // Cache all the images so that we are not loading them while the user
           // plays the game
@@ -155,6 +184,13 @@
         
         self._renderMap();
         self._initViewport();
+        
+        // Initialize the player's position on the map
+        self.player.map.pos.x = self.viewport.bounds.x1 + (self.viewport.width.pixels / 2);
+        self.player.map.pos.y = self.viewport.bounds.y1 + (self.viewport.width.pixels / 2);
+        
+        self._debugViewport();
+        self._debugPlayer();
         
         // Start the game loop
         setInterval(function() { self._redraw() }, self.tickInterval);
@@ -199,10 +235,10 @@
         Keyboard.runHandlers();
         
         // Draw the background
-        self.ctx.drawImage(self.map.canvas, -self.viewport.x1, -self.viewport.y1);
+        self.ctx.drawImage(self.map.canvas, -self.viewport.bounds.x1, -self.viewport.bounds.y1);
         
         // Draw the player
-        self.ctx.drawImage(self.sprite.instances["player"], self.player.pos.x, self.player.pos.y);
+        self.ctx.drawImage(self.sprite.instances["player"], self.player.viewport.pos.x, self.player.viewport.pos.y);
       },
       
       _initKeyboard: function() {
@@ -210,37 +246,141 @@
         
         Keyboard.init(self);
         
+        /*
+        Keyboard.addKeyHandler(function() {
+          self._debugViewport();
+          self._debugPlayer();
+        })
+        */
         Keyboard.addKeyHandler('A_KEY', 'LEFT_ARROW', function() {
-          if ((self.viewport.x1 - self.player.speed) >= 0) {
-            self._addToViewportLocation({x: -self.player.speed});
+          // The idea here is that we move the player sprite left until it
+          // reaches a certain point (we call it the "fence"), after which we
+          // continue the appearance of movement by shifting the viewport
+          // leftward along the map. We do this until we've reached the left
+          // edge of the map and can scroll no longer, at which point we move
+          // the player left until it touches the left edge of the map.
+          //
+          if ((self.viewport.bounds.x1 - self.player.speed) >= 0) {
+            if ((self.player.viewport.pos.x - self.player.speed) >= self.viewport.playerPadding) {
+              // Move player left
+              self.player.viewport.pos.x -= self.player.speed;
+              self.player.viewport.offset.x -= self.player.speed;
+            } else {
+              // Player has hit fence: shift viewport left
+              self.viewport.bounds.x1 -= self.player.speed;
+              self.viewport.bounds.x2 -= self.player.speed;
+            }
+            self.player.map.pos.x -= self.player.speed;
+          } else if ((self.player.viewport.pos.x - self.player.speed) >= 0) {
+            // Left edge of map hit: move player left
+            self.player.viewport.pos.x -= self.player.speed;
+            self.player.viewport.offset.x -= self.player.speed;
+            self.player.map.pos.x -= self.player.speed;
           } else {
-            self._addToViewportLocation({x: -self.viewport.x1});
+            // Put player at left edge of map
+            self.player.viewport.pos.x -= self.player.viewport.pos.x;
+            self.player.viewport.offset.x -= self.player.viewport.pos.x;
+            self.player.map.pos.x -= self.player.viewport.pos.x;
           }
-          //self._debugViewportLocation();
         });
         Keyboard.addKeyHandler('D_KEY', 'RIGHT_ARROW', function() {
-          if ((self.viewport.x2 + self.player.speed) <= self.map.width.pixels) {
-            self._addToViewportLocation({x: self.player.speed});
+          // Similar to moving leftward, we move the player sprite right until
+          // it hits the fence, after which we continue the appearance of
+          // movement by shifting the viewport rightward along the map. We do
+          // this until we've reached the right edge of the map and can scroll
+          // no longer, at which point we move the player right until it touches
+          // the right edge of the map.
+          //
+          if ((self.viewport.bounds.x2 + self.player.speed) <= self.map.width.pixels) {
+            if ((self.viewport.width.pixels - (self.player.viewport.pos.x + self.tileSize + self.player.speed)) >= self.viewport.playerPadding) {
+              // Move player right
+              self.player.viewport.pos.x += self.player.speed;
+              self.player.viewport.offset.x += self.player.speed;
+            } else {
+              // Player has hit fence: shift viewport right
+              self.viewport.bounds.x1 += self.player.speed;
+              self.viewport.bounds.x2 += self.player.speed;
+            }
+            self.player.map.pos.x += self.player.speed;
           } else {
-            self._addToViewportLocation({x: self.map.width.pixels-self.viewport.x2});
+            var dist = (self.player.viewport.pos.x + self.tileSize) - self.viewport.width.pixels;
+            if ((dist + self.player.speed) < 0) {
+              // Right edge of map hit: move player right
+              self.player.viewport.pos.x += self.player.speed;
+              self.player.viewport.offset.x += self.player.speed;
+              self.player.map.pos.x += self.player.speed;
+            } else {
+              // Put player at right edge of map
+              self.player.viewport.pos.x += -dist;
+              self.player.viewport.offset.x += -dist;
+              self.player.map.pos.x += -dist;
+            }
           }
-          //self._debugViewportLocation();
         });
         Keyboard.addKeyHandler('W_KEY', 'UP_ARROW', function() {
-          if ((self.viewport.y1 - self.player.speed) >= 0) {
-            self._addToViewportLocation({y: -self.player.speed});
+          // Similar to moving leftward, we move the player sprite upward until
+          // it hits the fence, after which we continue the appearance of
+          // movement by shifting the viewport upward along the map. We do
+          // this until we've reached the top edge of the map and can scroll
+          // no longer, at which point we move the player up until it touches
+          // the top edge of the map.
+          //
+          if ((self.viewport.bounds.y1 - self.player.speed) >= 0) {
+            if ((self.player.viewport.pos.y - self.player.speed) >= self.viewport.playerPadding) {
+              // Move player up
+              self.player.viewport.pos.y -= self.player.speed;
+              self.player.viewport.offset.y -= self.player.speed;
+            } else {
+              // Player has hit fence: shift viewport up
+              self.viewport.bounds.y1 -= self.player.speed;
+              self.viewport.bounds.y2 -= self.player.speed;
+            }
+            self.player.map.pos.y -= self.player.speed;
+          } else if ((self.player.viewport.pos.y - self.player.speed) >= 0) {
+            // Left edge of map hit: move player up
+            self.player.viewport.pos.y -= self.player.speed;
+            self.player.viewport.offset.y -= self.player.speed;
+            self.player.map.pos.y -= self.player.speed;
           } else {
-            self._addToViewportLocation({y: -self.viewport.y1});
+            // Put player at top edge of map
+            self.player.viewport.pos.y -= self.player.viewport.pos.y;
+            self.player.viewport.offset.y -= self.player.viewport.pos.y;
+            self.player.map.pos.y -= self.player.viewport.pos.y;
           }
-          //self._debugViewportLocation();
         });
         Keyboard.addKeyHandler('S_KEY', 'DOWN_ARROW', function() {
-          if ((self.viewport.y2 + self.player.speed) <= self.map.height.pixels) {
-            self._addToViewportLocation({y: self.player.speed});
+          // Similar to moving leftward, we move the player sprite downward
+          // until it hits the fence, after which we continue the appearance of
+          // movement by shifting the viewport downard along the map. We do
+          // this until we've reached the bottom edge of the map and can scroll
+          // no longer, at which point we move the player down until it touches
+          // the bottom edge of the map.
+          //
+          if ((self.viewport.bounds.y2 + self.player.speed) <= self.map.height.pixels) {
+            if ((self.viewport.height.pixels - (self.player.viewport.pos.y + self.tileSize + self.player.speed)) >= self.viewport.playerPadding) {
+              // Move player down
+              self.player.viewport.pos.y += self.player.speed;
+              self.player.viewport.offset.y += self.player.speed;
+            } else {
+              // Player has hit fence: shift viewport down
+              self.viewport.bounds.y1 += self.player.speed;
+              self.viewport.bounds.y2 += self.player.speed;
+            }
+            self.player.map.pos.y += self.player.speed;
           } else {
-            self._addToViewportLocation({y: self.map.height.pixels-self.viewport.y2});
+            var dist = (self.player.viewport.pos.y + self.tileSize) - self.viewport.height.pixels;
+            if ((dist + self.player.speed) < 0) {
+              // Bottom edge of map hit: move player down
+              self.player.viewport.pos.y += self.player.speed;
+              self.player.viewport.offset.y += self.player.speed;
+              self.player.map.pos.y += self.player.speed;
+            } else {
+              // Put player at bottom edge of map
+              self.player.viewport.pos.y += -dist;
+              self.player.viewport.offset.y += -dist;
+              self.player.map.pos.y += -dist;
+            }
           }
-          //self._debugViewportLocation();
         });
       },
       
@@ -270,28 +410,22 @@
       _initViewport: function() {
         var self = this;
         // Pick a random range of pixels on the map for the viewport
-        self.viewport.x1 = Math.randomInt(0, self.map.width.pixels - self.viewport.width.pixels);
-        self.viewport.x2 = self.viewport.x1 + self.viewport.width.pixels;
-        self.viewport.y1 = Math.randomInt(0, self.map.height.pixels - self.viewport.height.pixels);
-        self.viewport.y2 = self.viewport.y1 + self.viewport.height.pixels;
+        self.viewport.bounds.x1 = Math.randomInt(0, self.map.width.pixels - self.viewport.width.pixels);
+        self.viewport.bounds.x2 = self.viewport.bounds.x1 + self.viewport.width.pixels;
+        self.viewport.bounds.y1 = Math.randomInt(0, self.map.height.pixels - self.viewport.height.pixels);
+        self.viewport.bounds.y2 = self.viewport.bounds.y1 + self.viewport.height.pixels;
       },
       
-      _addToViewportLocation: function(vector) {
+      _debugViewport: function() {
         var self = this;
-        if (typeof vector.x != "undefined") {
-          self.viewport.x1 += vector.x;
-          self.viewport.x2 += vector.x;
-        }
-        if (typeof vector.y != "undefined") {
-          self.viewport.y1 += vector.y;
-          self.viewport.y2 += vector.y;
-        }
+        console.log("self.viewport.bounds = (" + self.viewport.bounds.x1 + ".." + self.viewport.bounds.x2 + ", " + self.viewport.bounds.y1 + ".." + self.viewport.bounds.y2 + ")");
       },
       
-      _debugViewportLocation: function() {
+      _debugPlayer: function() {
         var self = this;
-        console.log("self.viewport.x = (" + self.viewport.x1 + " .. " + self.viewport.x2 + ")");
-        console.log("self.viewport.y = (" + self.viewport.y1 + " .. " + self.viewport.y2 + ")");
+        console.log("self.player.viewport.pos = (" + self.player.viewport.pos.x + ", " + self.player.viewport.pos.y + ")");
+        console.log("self.player.viewport.offset = (" + self.player.viewport.offset.x + ", " + self.player.viewport.offset.y + ")");
+        console.log("self.player.map.pos = (" + self.player.map.pos.x + ", " + self.player.map.pos.y + ")");
       },
       
       _newCanvas: function(width, height) {
