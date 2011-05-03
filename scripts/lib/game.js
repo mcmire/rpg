@@ -198,7 +198,7 @@
       },
 
       _loadMap: function(callback) {
-        get('/scripts/lib/map.js', function(code) {
+        get('scripts/lib/map.js', function(code) {
           eval(code);
           callback();
         })
