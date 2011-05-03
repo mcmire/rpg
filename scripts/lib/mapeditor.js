@@ -32,7 +32,7 @@
       var self = this;
       _.each(self.map.tiles.names, function(tile, i){
         var image = new Image(32, 32);
-        image.src = '/images/' + tile + '.gif';
+        image.src = 'images/' + tile + '.gif';
         self.map.tiles.instances[i] = image;
       })
     };
