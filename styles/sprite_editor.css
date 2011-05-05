@@ -3,6 +3,10 @@ body {
   font-family: Helvetica;
 }
 
+canvas {
+  display: block;
+}
+
 #enlarged_canvas {
   float: left;
   border: 1px solid red;
@@ -41,10 +45,10 @@ body {
 }
 
 #preview {
-  width: 100px;
-  height: 100px;
-  text-align: center;
+  width: 300px;
+  height: 300px;
 }
 #preview canvas {
   border: 1px solid red;
+  margin: 30px auto;
 }

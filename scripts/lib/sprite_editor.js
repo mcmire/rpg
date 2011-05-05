@@ -19,18 +19,15 @@
     editor.heightInCells = 16; // cells
     editor.cellSize = 30; // pixels
     
-    editor.canvas = null;
+    editor.timer = null;
     editor.width = null;
     editor.height = null;
-    editor.timer = null;
+    editor.canvas = null;
     editor.gridCanvas = null;
+    editor.previewCanvas = null;
     editor.currentCell = null;
     editor.filledCells = {};
-    editor.currentColor = {
-      red: 172,
-      green: 85,
-      blue: 255
-    }
+    editor.currentColor = {red: 172, green: 85, blue: 255}
     editor.dragging = false;
     editor.mouseDownAt = null;
     
@@ -56,9 +53,11 @@
         var self = this;
         self._clearCanvas();
         self._clearPreviewCanvas();
+        self._clearTiledPreviewCanvas();
         self._drawGrid();
         self._highlightCurrentCell();
         self._drawFilledCells();
+        self._updateTiledPreviewCanvas();
       },
       
       stop: function() {
@@ -154,8 +153,13 @@
         h3.innerHTML = "Preview";
         wrapperDiv.appendChild(h3);
         
-        var canvas = self.previewCanvas = Canvas.create(self.widthInCells, self.heightInCells);
-        wrapperDiv.appendChild(canvas.element);
+        self.previewCanvas = Canvas.create(self.widthInCells, self.heightInCells);
+        self.previewCanvas.element.id = "preview_canvas";
+        wrapperDiv.appendChild(self.previewCanvas.element);
+        
+        self.tiledPreviewCanvas = Canvas.create(self.widthInCells * 9, self.heightInCells * 9);
+        self.tiledPreviewCanvas.element.id = "tiled_preview_canvas";
+        wrapperDiv.appendChild(self.tiledPreviewCanvas.element);
       },
       
       _addEvents: function() {
@@ -256,10 +260,17 @@
       _clearPreviewCanvas: function() {
         var self = this;
         var pc = self.previewCanvas;
-        //self.previewCanvas.ctx.clearRect(0, 0, self.previewCanvas.element.width, self.previewCanvas.element.height);
+        // clearRect() won't clear image data set using createImageData(),
+        // so this is another way to clear the canvas that works
         pc.element.width = pc.element.width;
         pc.imageData = pc.ctx.createImageData(self.widthInCells, self.heightInCells);
         self._extendImageData(pc.imageData);
+      },
+      
+      _clearTiledPreviewCanvas: function() {
+        var self = this;
+        var ptc = self.tiledPreviewCanvas;
+        ptc.ctx.clearRect(0, 0, ptc.element.width, ptc.element.height);
       },
       
       _drawGrid: function() {
@@ -271,8 +282,8 @@
         var self = this;
         var ctx = self.canvas.ctx;
         if (self.currentCell && !self.dragging) {
-          var cx = self.currentCell.enlarged.x;// + 0.5;
-          var cy = self.currentCell.enlarged.y;// + 0.5;
+          var cx = self.currentCell.enlarged.x;
+          var cy = self.currentCell.enlarged.y;
           ctx.save();
             ctx.fillStyle = 'rgba('+self._rgb(self.currentColor)+',0.5)';
             ctx.fillRect(cx+1, cy+1, self.cellSize-1, self.cellSize-1);
@@ -292,6 +303,16 @@
           })
         c.ctx.restore();
         pc.ctx.putImageData(pc.imageData, 0, 0);
+      },
+      
+      _updateTiledPreviewCanvas: function() {
+        var self = this;
+        var tpc = self.tiledPreviewCanvas;
+        var pattern = tpc.ctx.createPattern(self.previewCanvas.element, 'repeat');
+        tpc.ctx.save();
+          tpc.ctx.fillStyle = pattern;
+          tpc.ctx.fillRect(0, 0, tpc.element.width, tpc.element.height);
+        tpc.ctx.restore();
       },
       
       _extendImageData: function(imageData) {
