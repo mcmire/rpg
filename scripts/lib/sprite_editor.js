@@ -31,6 +31,7 @@
       green: 107,
       blue: 242
     }
+    editor.dragging = false;
     
     Object.extend(editor, {
       init: function() {
@@ -137,6 +138,21 @@
           },
           mousemove: function(event) {
             self._setCurrentCell(event.pageX, event.pageY);
+            if (self.dragging) {
+              if (event.rightClick) {  // thanks, bean
+                self._setCurrentCellToUnfilled();
+              } else {
+                self._setCurrentCellToFilled();
+              }
+            }
+          },
+          mousedown: function(event) {
+            self.dragging = true;
+            event.preventDefault();
+          },
+          mouseup: function(event) {
+            self.dragging = false;
+            event.preventDefault();
           },
           mouseout: function(event) {
             self.currentCell = null;
@@ -144,11 +160,9 @@
             self.redraw();
           },
           click: function(event) {
-            self._setCurrentCellToFilled();
             event.preventDefault();
           },
           contextmenu: function(event) {
-            self._setCurrentCellToUnfilled();
             event.preventDefault();
           }
         })
