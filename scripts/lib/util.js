@@ -31,6 +31,7 @@
         obj[prop] = props[prop];
       }
     }
+    return obj;
   };
   
   // Returns a random number between min (inclusive) and max (exclusive)

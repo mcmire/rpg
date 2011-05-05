@@ -1,0 +1,23 @@
+body {
+  margin: 30px;
+}
+
+canvas {
+  float: left;
+  border: 1px solid red;
+  cursor: pointer;
+}
+
+#color_controls {
+  float: left;
+  margin-left: 20px;
+  border: 1px solid blue;
+  width: 400px;
+  height: 400px;
+}
+
+#color_sample {
+  width: 100px;
+  height: 100px;
+  border: 1px solid black;
+}
