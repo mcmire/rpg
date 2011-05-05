@@ -75,8 +75,8 @@
     game.canvas = null;
     game.ctx = null;
     
-    game.mapLoaded = false;
     game.imagesLoaded = false;
+    game.mapLoaded = false;
     
     game.tickInterval = 30; // ms/frame
     //game.tickInterval = 150; // ms/frame

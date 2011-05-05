@@ -1,3 +1,7 @@
+body {
+  padding: 20px;
+}
+
 canvas {
   float: left;
   border: 1px solid red;
