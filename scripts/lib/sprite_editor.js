@@ -30,6 +30,7 @@
     editor.currentColor = {red: 172, green: 85, blue: 255}
     editor.dragging = false;
     editor.mouseDownAt = null;
+    editor.pressedKeys = {};
     
     Object.extend(editor, {
       init: function() {
@@ -183,7 +184,7 @@
             }
             
             if (self.dragging) {
-              if (event.rightClick) {  // thanks, bean!
+              if (event.rightClick || self.pressedKeys[16]) {
                 self._setCurrentCellToUnfilled();
               } else {
                 self._setCurrentCellToFilled();
@@ -196,7 +197,7 @@
           },
           mouseup: function(event) {
             self.mouseDownAt = null;
-            if (event.rightClick) {  // thanks, bean!
+            if (event.rightClick || self.pressedKeys[16]) {  // thanks, bean!
               self._setCurrentCellToUnfilled();
             } else {
               self._setCurrentCellToFilled();
@@ -213,6 +214,14 @@
           },
           contextmenu: function(event) {
             event.preventDefault();
+          }
+        })
+        bean.add(document, {
+          keydown: function(event) {
+            self.pressedKeys[event.keyCode] = true;
+          },
+          keyup: function(event) {
+            self.pressedKeys[event.keyCode] = false;
           }
         })
       },
@@ -281,7 +290,7 @@
       _highlightCurrentCell: function() {
         var self = this;
         var ctx = self.canvas.ctx;
-        if (self.currentCell && !self.dragging) {
+        if (self.currentCell && !(self.dragging || self.pressedKeys[16])) {
           var cx = self.currentCell.enlarged.x;
           var cy = self.currentCell.enlarged.y;
           ctx.save();
