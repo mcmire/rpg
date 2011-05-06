@@ -26,17 +26,21 @@
     editor.gridCanvas = null;
     editor.previewCanvas = null;
     editor.currentCell = null;
-    editor.filledCells = {};
+    editor.cells = [];
     editor.currentColor = {red: 172, green: 85, blue: 255}
     editor.dragging = false;
     editor.mouseDownAt = null;
     editor.pressedKeys = {};
+    editor.currentTool = "pencil";
+    editor.currentCellToStartFill = null;
     
     Object.extend(editor, {
       init: function() {
         var self = this;
+        self._initCells();
         self._createCanvas();
         self._createGridCanvas();
+        self._createToolbox();
         self._createColorControls();
         self._createPreview();
         self._addEvents();
@@ -57,7 +61,7 @@
         self._clearTiledPreviewCanvas();
         self._drawGrid();
         self._highlightCurrentCell();
-        self._drawFilledCells();
+        self._fillCells();
         self._updateTiledPreviewCanvas();
       },
       
@@ -65,6 +69,26 @@
         var self = this;
         clearInterval(self.timer);
         return self;
+      },
+      
+      _initCells: function() {
+        var self = this;
+        for (var i=0; i<self.heightInCells; i++) {
+          var row = self.cells[i] = [];
+          for (var j=0; j<self.widthInCells; j++) {
+            row[j] = {
+              actual: {
+                x: j,
+                y: i
+              },
+              enlarged: {
+                x: j*self.cellSize,
+                y: i*self.cellSize
+              },
+              color: null
+            };
+          }
+        }
       },
       
       _createCanvas: function() {
@@ -163,6 +187,42 @@
         wrapperDiv.appendChild(self.tiledPreviewCanvas.element);
       },
       
+      _createToolbox: function() {
+        var self = this;
+        
+        var wrapperDiv = document.createElement("div");
+        wrapperDiv.id = "toolbox";
+        document.body.appendChild(wrapperDiv);
+        
+        var h3 = document.createElement("h3");
+        h3.innerHTML = "Toolbox";
+        wrapperDiv.appendChild(h3);
+        
+        var ul = document.createElement("ul");
+        var imgs = [];
+        _.each(["pencil", "bucket"], function(tool) {
+          var li = document.createElement("li");
+          
+          var img = document.createElement("img");
+          img.className = "tool";
+          img.width = 24;
+          img.height = 24;
+          img.src = "images/sprite_editor/"+tool+".png";
+          imgs.push(img);
+          li.appendChild(img);
+          ul.appendChild(li);
+          
+          bean.add(img, 'click', function() {
+            self.currentTool = tool;
+            _.each(imgs, function(img) { img.className = img.className.replace("selected", "") })
+            img.className += " selected";
+          })
+          
+          if (self.currentTool == tool) bean.fire(img, 'click');
+        })
+        wrapperDiv.appendChild(ul);
+      },
+      
       _addEvents: function() {
         var self = this;
         bean.add(self.canvas.element, {
@@ -174,8 +234,8 @@
             
             self._setCurrentCell(mouse);
             
+            // If dragging isn't set yet, set it until the mouse is lifted off
             if (self.mouseDownAt) {
-              // If dragging isn't set yet, set it until the mouse is lifted off
               if (!self.dragging) {
                 self.dragging = (self._distance(self.mouseDownAt, mouse) > 3);
               }
@@ -196,12 +256,21 @@
             event.preventDefault();
           },
           mouseup: function(event) {
-            self.mouseDownAt = null;
-            if (event.rightClick || self.pressedKeys[16]) {  // thanks, bean!
-              self._setCurrentCellToUnfilled();
-            } else {
-              self._setCurrentCellToFilled();
+            if (!self.dragging) {
+              switch (self.currentTool) {
+                case "pencil":
+                  if (event.rightClick || self.pressedKeys[16]) {
+                    self._setCurrentCellToUnfilled();
+                  } else {
+                    self._setCurrentCellToFilled();
+                  }
+                  break;
+                case "bucket":
+                  self._setFilledCellsLikeCurrentCell();
+                  break;
+              }
             }
+            self.mouseDownAt = null;
             event.preventDefault();
           },
           mouseout: function(event) {
@@ -228,36 +297,40 @@
       
       _setCurrentCell: function(mouse) {
         var self = this;
-        var currentCell = {enlarged: {}, actual: {}};
-        currentCell.actual.x = Math.floor((mouse.x - self.canvas.element.offsetLeft) / self.cellSize);
-        currentCell.actual.y = Math.floor((mouse.y - self.canvas.element.offsetTop)  / self.cellSize);
-        // Round the mouse position to the position of the nearest cell
-        currentCell.enlarged.x = currentCell.actual.x * self.cellSize;
-        currentCell.enlarged.y = currentCell.actual.y * self.cellSize;
-        self.currentCell = currentCell;
+        var i = Math.floor((mouse.y - self.canvas.element.offsetTop)  / self.cellSize);
+        var j = Math.floor((mouse.x - self.canvas.element.offsetLeft) / self.cellSize);
+        self.currentCell = self.cells[i][j];
       },
       
       _setCurrentCellToFilled: function() {
         var self = this;
         if (self.currentCell) {
-          var key = [self.currentCell.enlarged.x, self.currentCell.enlarged.y].join(",")
-          var data = {};
           // Clone so when changing the current color we don't change all cells
           // filled with that color
-          data.color = Object.extend({}, self.currentColor);
-          data.color.rgb = self._rgb(self.currentColor);
-          data.enlarged = Object.extend({}, self.currentCell.enlarged);
-          data.actual = Object.extend({}, self.currentCell.actual);
-          self.filledCells[key] = data;
+          self.currentCell.color = Object.extend({}, self.currentColor);
         }
       },
       
       _setCurrentCellToUnfilled: function() {
         var self = this;
         if (self.currentCell) {
-          var key = [self.currentCell.enlarged.x, self.currentCell.enlarged.y].join(",")
-          delete self.filledCells[key];
+          self.currentCell.color = null;
         }
+      },
+      
+      _setFilledCellsLikeCurrentCell: function() {
+        var self = this;
+        // Copy this as the color of the current cell will change during this loop
+        var currentCellColor = Object.extend({}, self.currentCell.color);
+        // Look for all cells with the color (or non-color) of the current cell
+        // and mark them as filled with the current color
+        _.each(self.cells, function(row, i) {
+          _.each(row, function(cell, j) {
+            if (self._colorsEqual(cell.color, currentCellColor)) {
+              cell.color = Object.extend({}, self.currentColor);
+            }
+          })
+        })
       },
       
       _clearCanvas: function() {
@@ -300,15 +373,19 @@
         }
       },
       
-      _drawFilledCells: function() {
+      _fillCells: function() {
         var self = this;
         var c = self.canvas;
         var pc = self.previewCanvas;
         c.ctx.save();
-          _.each(self.filledCells, function(data, _) {
-            c.ctx.fillStyle = 'rgb('+data.color.rgb+')';
-            c.ctx.fillRect(data.enlarged.x+1, data.enlarged.y+1, self.cellSize-1, self.cellSize-1);
-            pc.imageData.fillPixel(data.actual.x, data.actual.y, data.color.red, data.color.green, data.color.blue, 255);
+          _.each(self.cells, function(row, i) {
+            _.each(row, function(cell, j) {
+              if (cell.color) {
+                c.ctx.fillStyle = 'rgb('+self._rgb(cell.color)+')';
+                c.ctx.fillRect(cell.enlarged.x+1, cell.enlarged.y+1, self.cellSize-1, self.cellSize-1);
+                pc.imageData.fillPixel(cell.actual.x, cell.actual.y, cell.color.red, cell.color.green, cell.color.blue, 255);
+              }
+            })
           })
         c.ctx.restore();
         pc.ctx.putImageData(pc.imageData, 0, 0);
@@ -337,6 +414,10 @@
       
       _rgb: function(c) {
         return [c.red, c.green, c.blue].join(",");
+      },
+      
+      _colorsEqual: function(c1, c2) {
+        return c1 && c2 && c1.red == c2.red && c1.green == c2.green && c1.blue == c2.blue;
       },
       
       _distance: function(v1, v2) {

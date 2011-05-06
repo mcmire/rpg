@@ -13,14 +13,14 @@ canvas {
   cursor: pointer;
 }
 
-#color_controls, #preview {
+#color_controls, #preview, #toolbox {
   float: left;
   margin-left: 20px;
   border: 1px solid #333;
   border-radius: 4px;
   padding: 10px;
 }
-#color_controls h3, #preview h3 {
+#color_controls h3, #preview h3, #toolbox h3 {
   margin: -10px;
   margin-bottom: 10px;
   background-color: #333;
@@ -45,10 +45,25 @@ canvas {
 }
 
 #preview {
-  width: 300px;
+  width: 200px;
   height: 300px;
 }
 #preview canvas {
   border: 1px solid red;
   margin: 30px auto;
+}
+
+#toolbox ul, #toolbox li {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+#toolbox li {
+  margin: 10px;
+}
+#toolbox .tool {
+  cursor: pointer;
+}
+#toolbox .tool.selected {
+  border: 1px solid black;
 }
