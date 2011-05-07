@@ -45,4 +45,15 @@
     return Math.floor(Math.random() * (max - min + 1)) + min;
   };
   
+  // <http://stackoverflow.com/questions/610406/javascript-printf-string-format>
+  String.format = function(/* str, var1, var2, ... */) {
+    var args = Array.prototype.slice.call(arguments);
+    var str = args.shift();
+    for (var i = 0; i < args.length; i++) {
+      var regexp = new RegExp('\\{'+i+'\\}', 'gi');
+      str = str.replace(regexp, args[i]);
+    }
+    return str;
+  };
+  
 })(window, window.document, window.$);

@@ -67,7 +67,7 @@ canvas {
   vertical-align: middle;
   cursor: pointer;
 }
-#sizes_box canvas:hover {
+#sizes_box canvas:hover, #sizes_box canvas.selected  {
   border: 1px solid rgba(255, 0, 0, 1);
 }
 

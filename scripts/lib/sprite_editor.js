@@ -61,6 +61,7 @@
     editor.pressedKeys = {};
     editor.currentTool = "pencil";
     editor.currentCellToStartFill = null;
+    editor.currentBrushSize = 1;
     
     Object.extend(editor, {
       init: function() {
@@ -90,7 +91,7 @@
         self._clearPreviewCanvas();
         self._clearTiledPreviewCanvas();
         self._drawGrid();
-        self._highlightCurrentCell();
+        self._highlightCurrentCells();
         self._fillCells();
         self._updateTiledPreviewCanvas();
       },
@@ -279,12 +280,17 @@
         h3.innerHTML = "Sizes";
         boxDiv.appendChild(h3);
         
+        var grids = []
         _.each([1, 2, 3, 4], function(brushSize) {
-          grid = Grid.create(self, self.cellSize*brushSize, self.cellSize*brushSize);
+          var grid = Grid.create(self, self.cellSize*brushSize, self.cellSize*brushSize);
+          grids.push(grid);
           boxDiv.appendChild(grid.element);
           bean.add(grid.element, 'click', function() {
             self.currentBrushSize = brushSize;
+            _.each(grids, function(grid) { grid.element.className = grid.element.className.replace("selected", "") })
+            grid.element.className += " selected";
           })
+          if (self.currentBrushSize == brushSize) bean.fire(grid.element, 'click');
         })
       },
       
@@ -297,7 +303,7 @@
           mousemove: function(event) {
             var mouse = {x: event.pageX, y: event.pageY};
             
-            self._setCurrentCell(mouse);
+            self._setCurrentCells(mouse);
             
             // If dragging isn't set yet, set it until the mouse is lifted off
             if (self.mouseDownAt) {
@@ -310,9 +316,9 @@
             
             if (self.dragging) {
               if (event.rightClick || self.pressedKeys[16]) {
-                self._setCurrentCellToUnfilled();
+                self._setCurrentCellsToUnfilled();
               } else {
-                self._setCurrentCellToFilled();
+                self._setCurrentCellsToFilled();
               }
             }
           },
@@ -325,9 +331,9 @@
               switch (self.currentTool) {
                 case "pencil":
                   if (event.rightClick || self.pressedKeys[16]) {
-                    self._setCurrentCellToUnfilled();
+                    self._setCurrentCellsToUnfilled();
                   } else {
-                    self._setCurrentCellToFilled();
+                    self._setCurrentCellsToFilled();
                   }
                   break;
                 case "bucket":
@@ -339,7 +345,7 @@
             event.preventDefault();
           },
           mouseout: function(event) {
-            self.currentCell = null;
+            self._unsetCurrentCells();
             self.stop();
             self.redraw();
           },
@@ -360,33 +366,72 @@
         })
       },
       
-      _setCurrentCell: function(mouse) {
+      _setCurrentCells: function(mouse) {
         var self = this;
-        var i = Math.floor((mouse.y - self.canvas.element.offsetTop)  / self.cellSize);
-        var j = Math.floor((mouse.x - self.canvas.element.offsetLeft) / self.cellSize);
-        self.currentCell = self.cells[i][j];
+        
+        var bs = (self.currentBrushSize-1) * self.cellSize;
+        var x = (mouse.x - self.canvas.element.offsetLeft);
+        var y = (mouse.y - self.canvas.element.offsetTop);
+        
+        var currentCells = [];
+        // Make a bounding box of pixels within the enlarged canvas based on
+        // the brush size
+        var x1 = x - (bs / 2),
+            x2 = x + (bs / 2),
+            y1 = y - (bs / 2),
+            y2 = y + (bs / 2);
+        ///console.log(String.format("x1: {{0}}, x2: {{1}}, y1: {{2}}, y2: {{3}}", x1, x2, y1, y2))
+        // Scale each enlarged coord down to the actual pixel value
+        // on the sprite
+        var j1 = Math.floor(x1 / self.cellSize),
+            j2 = Math.floor(x2 / self.cellSize),
+            i1 = Math.floor(y1 / self.cellSize),
+            i2 = Math.floor(y2 / self.cellSize);
+        ///console.log(String.format("j1: {{0}}, j2: {{1}}, i1: {{2}}, i2: {{3}}", j1, j2, i1, i2))
+        // Now that we have a bounding box of pixels, enumerate through all
+        // pixels in this bounding box
+        for (var i=i1; i<=i2; i++) {
+          for (var j=j1; j<=j2; j++) {
+            //var x = j * self.cellSize,
+            //    y = i * self.cellSize;
+            var row = self.cells[i];
+            if (row && row[j]) {
+              currentCells.push(row[j]);
+            }
+          }
+        }
+        self.currentCells = currentCells;
       },
       
-      _setCurrentCellToFilled: function() {
+      _unsetCurrentCells: function() {
         var self = this;
-        if (self.currentCell) {
-          // Clone so when changing the current color we don't change all cells
-          // filled with that color
-          self.currentCell.color = Object.extend({}, self.currentColor);
+        self.currentCells = null;
+      },
+      
+      _setCurrentCellsToFilled: function() {
+        var self = this;
+        if (self.currentCells) {
+          _.each(self.currentCells, function(cell) {
+            // Clone so when changing the current color we don't change all cells
+            // filled with that color
+            cell.color = Object.extend({}, self.currentColor);
+          })
         }
       },
       
-      _setCurrentCellToUnfilled: function() {
+      _setCurrentCellsToUnfilled: function() {
         var self = this;
-        if (self.currentCell) {
-          self.currentCell.color = null;
+        if (self.currentCells) {
+          _.each(self.currentCells, function(cell) {
+            cell.color = null;
+          })
         }
       },
       
       _setFilledCellsLikeCurrentCell: function() {
         var self = this;
         // Copy this as the color of the current cell will change during this loop
-        var currentCellColor = Object.extend({}, self.currentCell.color);
+        var currentCellColor = Object.extend({}, self.currentCells[0].color);
         // Look for all cells with the color (or non-color) of the current cell
         // and mark them as filled with the current color
         _.each(self.cells, function(row, i) {
@@ -425,15 +470,15 @@
         self.canvas.ctx.drawImage(self.gridCanvas.element, 0, 0);
       },
       
-      _highlightCurrentCell: function() {
+      _highlightCurrentCells: function() {
         var self = this;
         var ctx = self.canvas.ctx;
-        if (self.currentCell && !(self.dragging || self.pressedKeys[16])) {
-          var cx = self.currentCell.enlarged.x;
-          var cy = self.currentCell.enlarged.y;
+        if (self.currentCells && !(self.dragging || self.pressedKeys[16])) {
           ctx.save();
             ctx.fillStyle = 'rgba('+self._rgb(self.currentColor)+',0.5)';
-            ctx.fillRect(cx+1, cy+1, self.cellSize-1, self.cellSize-1);
+            _.each(self.currentCells, function(cell) {
+              ctx.fillRect(cell.enlarged.x+1, cell.enlarged.y+1, self.cellSize-1, self.cellSize-1);
+            })
           ctx.restore();
         }
       },
