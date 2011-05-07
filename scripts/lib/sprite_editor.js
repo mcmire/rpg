@@ -67,13 +67,13 @@
       init: function() {
         var self = this;
         self._initCells();
-        self._createCanvas();
+        self._createWrapperDivs();
         self._createGridCanvas();
-        self._createRightPane();
-        self._createToolbox();
-        self._createBrushSizes();
-        self._createColorControls();
-        self._createPreview();
+        self._createCanvas();
+        self._createToolBox();
+        self._createBrushSizesBox();
+        self._createColorBox();
+        self._createPreviewBox();
         self._addEvents();
         self.redraw();
         return self;
@@ -90,7 +90,6 @@
         self._clearCanvas();
         self._clearPreviewCanvas();
         self._clearTiledPreviewCanvas();
-        self._drawGrid();
         self._highlightCurrentCells();
         self._fillCells();
         self._updateTiledPreviewCanvas();
@@ -122,47 +121,51 @@
         }
       },
       
+      _createWrapperDivs: function() {
+        var self = this;
+        
+        self.leftPane = document.createElement("div");
+        self.leftPane.id = "left_pane";
+        document.body.appendChild(self.leftPane);
+        
+        self.centerPane = document.createElement("div");
+        self.centerPane.id = "center_pane";
+        document.body.appendChild(self.centerPane);
+        
+        self.rightPane = document.createElement("div");
+        self.rightPane.id = "right_pane";
+        document.body.appendChild(self.rightPane);
+      },
+      
+      _createGridCanvas: function() {
+        var self = this;
+        self.gridCanvas = Canvas.create(self.cellSize, self.cellSize, function(c) {
+          c.ctx.strokeStyle = "#eee";
+          c.ctx.beginPath();
+            // Draw a vertical line on the left
+            // We use 0.5 instead of 0 because this is the midpoint of the path we want to stroke
+            // See: <http://diveintohtml5.org/canvas.html#pixel-madness>
+            c.ctx.moveTo(0.5, 0);
+            c.ctx.lineTo(0.5, c.element.height);
+            // Draw a horizontal line on top
+            c.ctx.moveTo(0, 0.5);
+            c.ctx.lineTo(c.element.width, 0.5);
+          c.ctx.stroke();
+          c.ctx.closePath();
+        });
+      },
+      
       _createCanvas: function() {
         var self = this;
         self.width = self.widthInCells * self.cellSize;
         self.height = self.heightInCells * self.cellSize;
         self.canvas = Canvas.create(self.width, self.height);
         self.canvas.element.id = "enlarged_canvas";
-        document.body.appendChild(self.canvas.element);
+        self.canvas.element.style.backgroundImage = 'url('+self.gridCanvas.element.toDataURL("image/png")+')';
+        self.centerPane.appendChild(self.canvas.element);
       },
       
-      _createGridCanvas: function() {
-        // TODO: Use canvas.toDataURL() to save as a PNG and use as background
-        // image for the canvas which we draw once at init
-        var self = this;
-        self.gridCanvas = Canvas.create(self.width, self.height, function(c) {
-          c.ctx.strokeStyle = "#eee";
-          c.ctx.beginPath();
-            // Draw vertical lines
-            // We start at 0.5 because this is the midpoint of the path we want to stroke
-            // See: <http://diveintohtml5.org/canvas.html#pixel-madness>
-            for (var x = 0.5; x < self.width; x += self.cellSize) {
-              c.ctx.moveTo(x, 0);
-              c.ctx.lineTo(x, self.height);
-            }
-            // Draw horizontal lines
-            for (var y = 0.5; y < self.height; y += self.cellSize) {
-              c.ctx.moveTo(0, y);
-              c.ctx.lineTo(self.width, y);
-            }
-            c.ctx.stroke();
-          c.ctx.closePath();
-        });
-      },
-      
-      _createRightPane: function() {
-        var self = this;
-        self.rightPane = document.createElement("div");
-        self.rightPane.id = "right_pane";
-        document.body.appendChild(self.rightPane);
-      },
-      
-      _createColorControls: function() {
+      _createColorBox: function() {
         var self = this;
         
         var boxDiv = document.createElement("div");
@@ -210,7 +213,7 @@
         boxDiv.appendChild(colorSampleDiv);
       },
       
-      _createPreview: function() {
+      _createPreviewBox: function() {
         var self = this;
         
         var boxDiv = document.createElement("div");
@@ -231,19 +234,21 @@
         boxDiv.appendChild(self.tiledPreviewCanvas.element);
       },
       
-      _createToolbox: function() {
+      _createToolBox: function() {
         var self = this;
         
         var boxDiv = document.createElement("div");
         boxDiv.id = "tool_box";
         boxDiv.className = "box";
-        self.rightPane.appendChild(boxDiv);
+        self.leftPane.appendChild(boxDiv);
         
         var h3 = document.createElement("h3");
         h3.innerHTML = "Toolbox";
         boxDiv.appendChild(h3);
         
         var ul = document.createElement("ul");
+        boxDiv.appendChild(ul);
+        
         var imgs = [];
         _.each(["pencil", "bucket"], function(tool) {
           var li = document.createElement("li");
@@ -265,16 +270,15 @@
           
           if (self.currentTool == tool) bean.fire(img, 'click');
         })
-        boxDiv.appendChild(ul);
       },
       
-      _createBrushSizes: function() {
+      _createBrushSizesBox: function() {
         var self = this;
         
         var boxDiv = document.createElement("div");
         boxDiv.id = "sizes_box";
         boxDiv.className = "box";
-        self.rightPane.appendChild(boxDiv);
+        self.leftPane.appendChild(boxDiv);
         
         var h3 = document.createElement("h3");
         h3.innerHTML = "Sizes";
@@ -480,11 +484,6 @@
         var self = this;
         var ptc = self.tiledPreviewCanvas;
         ptc.ctx.clearRect(0, 0, ptc.element.width, ptc.element.height);
-      },
-      
-      _drawGrid: function() {
-        var self = this;
-        self.canvas.ctx.drawImage(self.gridCanvas.element, 0, 0);
       },
       
       _highlightCurrentCells: function() {
