@@ -1,26 +1,26 @@
-body {
-  margin: 30px;
-  font-family: Helvetica;
-}
-
 canvas {
   display: block;
 }
 
+#enlarged_canvas, #right_pane {
+  display: inline-block;
+  vertical-align: top;
+}
 #enlarged_canvas {
-  float: left;
   border: 1px solid red;
   cursor: pointer;
 }
+#right_pane {
+  margin-left: 30px;
+}
 
-#color_controls, #preview, #toolbox {
-  float: left;
-  margin-left: 20px;
+.box {
   border: 1px solid #333;
   border-radius: 4px;
   padding: 10px;
+  float: left;
 }
-#color_controls h3, #preview h3, #toolbox h3 {
+.box h3 {
   margin: -10px;
   margin-bottom: 10px;
   background-color: #333;
@@ -30,40 +30,79 @@ canvas {
   text-align: center;
 }
 
-#color_controls {
-  width: 250px;
-  height: 400px;
+#tool_box {
+  width: 100px;
+  height: 150px;
+  overflow: auto;
+  margin-bottom: 20px;
 }
-#color_controls input {
+#tool_box ul, #tool_box li {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+#tool_box li {
+  margin: 10px;
+  float: left;
+}
+#tool_box .tool {
+  opacity: 0.5;
+  cursor: pointer;
+}
+#tool_box .tool:hover, #tool_box .tool.selected {
+  opacity: 1;
+  border-bottom: 2px solid gray;
+}
+
+#sizes_box {
+  width: 400px;
+  height: 150px;
+  margin-left: 20px;
+  margin-bottom: 20px;
+}
+#sizes_box canvas {
+  border: 1px solid rgba(255, 0, 0, 0.5);
+  margin-right: 20px;
+  display: inline-block;
   vertical-align: middle;
+  cursor: pointer;
+}
+#sizes_box canvas:hover {
+  border: 1px solid rgba(255, 0, 0, 1);
+}
+
+#color_box {
+  width: 230px;
+  height: 250px;
+  clear: left;
+  margin-bottom: 20px;
+  text-align: center;
+}
+#color_box input {
+  vertical-align: middle;
+}
+/*
+#color_controls, #color_sample {
+  display: inline-block;
+  vertical-align: middle;
+}
+*/
+#color_controls {
+  margin-bottom: 10px;
 }
 #color_sample {
   width: 100px;
   height: 100px;
   border: 1px solid black;
-  margin: 10px auto;
+  margin: 0 auto;
 }
 
-#preview {
+#preview_box {
   width: 200px;
-  height: 300px;
+  height: 250px;
+  margin-left: 20px;
 }
-#preview canvas {
-  border: 1px solid red;
-  margin: 30px auto;
-}
-
-#toolbox ul, #toolbox li {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-}
-#toolbox li {
-  margin: 10px;
-}
-#toolbox .tool {
-  cursor: pointer;
-}
-#toolbox .tool.selected {
-  border: 1px solid black;
+#preview_box canvas {
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  margin: 0 auto 20px auto;
 }

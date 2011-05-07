@@ -10,6 +10,34 @@
     if (callback) callback(c);
     return c;
   }
+  
+  window.Grid = {};
+  Grid.create = function(editor, width, height) {
+    return Canvas.create(width, height, function(c) {
+      c.ctx.strokeStyle = "#eee";
+      c.ctx.beginPath();
+        // Draw vertical lines
+        // We start at 0.5 because this is the midpoint of the path we want to stroke
+        // See: <http://diveintohtml5.org/canvas.html#pixel-madness>
+        for (var x = 0.5; x < width; x += editor.cellSize) {
+          c.ctx.moveTo(x, 0);
+          c.ctx.lineTo(x, height);
+        }
+        // Draw horizontal lines
+        for (var y = 0.5; y < height; y += editor.cellSize) {
+          c.ctx.moveTo(0, y);
+          c.ctx.lineTo(width, y);
+        }
+        c.ctx.stroke();
+      c.ctx.closePath();
+      
+      var fontSize = 11;
+      c.ctx.font = fontSize+"px Helvetica";
+      var text = (width / editor.cellSize) + "px";
+      var metrics = c.ctx.measureText(text);
+      c.ctx.fillText(text, width/2-metrics.width/2, height/2+fontSize/4);
+    });
+  }
 
   window.SpriteEditor = (function() {
     var editor = {};
@@ -40,7 +68,9 @@
         self._initCells();
         self._createCanvas();
         self._createGridCanvas();
+        self._createRightPane();
         self._createToolbox();
+        self._createBrushSizes();
         self._createColorControls();
         self._createPreview();
         self._addEvents();
@@ -124,25 +154,37 @@
         });
       },
       
+      _createRightPane: function() {
+        var self = this;
+        self.rightPane = document.createElement("div");
+        self.rightPane.id = "right_pane";
+        document.body.appendChild(self.rightPane);
+      },
+      
       _createColorControls: function() {
         var self = this;
         
-        var wrapperDiv = document.createElement("div");
-        wrapperDiv.id = "color_controls";
-        document.body.appendChild(wrapperDiv);
+        var boxDiv = document.createElement("div");
+        boxDiv.id = "color_box";
+        boxDiv.className = "box";
+        self.rightPane.appendChild(boxDiv);
         
         var h3 = document.createElement("h3");
         h3.innerHTML = "Color";
-        wrapperDiv.appendChild(h3);
+        boxDiv.appendChild(h3);
         
         var colorSampleDiv = document.createElement("div");
         colorSampleDiv.id = "color_sample";
+        
+        var colorControlsDiv = document.createElement("div");
+        colorControlsDiv.id = "color_controls";
+        boxDiv.appendChild(colorControlsDiv);
         
         var colors = [["red", "Red"], ["green", "Green"], ["blue", "Blue"]];
         _.each(colors, function(_) {
           var id = _[0], name = _[1];
           var colorDiv = document.createElement("div");
-          wrapperDiv.appendChild(colorDiv);
+          colorControlsDiv.appendChild(colorDiv);
           
           colorDiv.appendChild(document.createTextNode(name + " "));
           
@@ -164,39 +206,41 @@
           bean.fire(colorSlider, 'change');
         })
         
-        wrapperDiv.appendChild(colorSampleDiv);
+        boxDiv.appendChild(colorSampleDiv);
       },
       
       _createPreview: function() {
         var self = this;
         
-        var wrapperDiv = document.createElement("div");
-        wrapperDiv.id = "preview";
-        document.body.appendChild(wrapperDiv);
+        var boxDiv = document.createElement("div");
+        boxDiv.id = "preview_box";
+        boxDiv.className = "box";
+        self.rightPane.appendChild(boxDiv);
         
         var h3 = document.createElement("h3");
         h3.innerHTML = "Preview";
-        wrapperDiv.appendChild(h3);
+        boxDiv.appendChild(h3);
         
         self.previewCanvas = Canvas.create(self.widthInCells, self.heightInCells);
         self.previewCanvas.element.id = "preview_canvas";
-        wrapperDiv.appendChild(self.previewCanvas.element);
+        boxDiv.appendChild(self.previewCanvas.element);
         
         self.tiledPreviewCanvas = Canvas.create(self.widthInCells * 9, self.heightInCells * 9);
         self.tiledPreviewCanvas.element.id = "tiled_preview_canvas";
-        wrapperDiv.appendChild(self.tiledPreviewCanvas.element);
+        boxDiv.appendChild(self.tiledPreviewCanvas.element);
       },
       
       _createToolbox: function() {
         var self = this;
         
-        var wrapperDiv = document.createElement("div");
-        wrapperDiv.id = "toolbox";
-        document.body.appendChild(wrapperDiv);
+        var boxDiv = document.createElement("div");
+        boxDiv.id = "tool_box";
+        boxDiv.className = "box";
+        self.rightPane.appendChild(boxDiv);
         
         var h3 = document.createElement("h3");
         h3.innerHTML = "Toolbox";
-        wrapperDiv.appendChild(h3);
+        boxDiv.appendChild(h3);
         
         var ul = document.createElement("ul");
         var imgs = [];
@@ -220,7 +264,28 @@
           
           if (self.currentTool == tool) bean.fire(img, 'click');
         })
-        wrapperDiv.appendChild(ul);
+        boxDiv.appendChild(ul);
+      },
+      
+      _createBrushSizes: function() {
+        var self = this;
+        
+        var boxDiv = document.createElement("div");
+        boxDiv.id = "sizes_box";
+        boxDiv.className = "box";
+        self.rightPane.appendChild(boxDiv);
+        
+        var h3 = document.createElement("h3");
+        h3.innerHTML = "Sizes";
+        boxDiv.appendChild(h3);
+        
+        _.each([1, 2, 3, 4], function(brushSize) {
+          grid = Grid.create(self, self.cellSize*brushSize, self.cellSize*brushSize);
+          boxDiv.appendChild(grid.element);
+          bean.add(grid.element, 'click', function() {
+            self.currentBrushSize = brushSize;
+          })
+        })
       },
       
       _addEvents: function() {
