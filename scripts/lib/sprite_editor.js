@@ -35,17 +35,105 @@
       c.ctx.font = fontSize+"px Helvetica";
       var text = (width / editor.cellSize) + "px";
       var metrics = c.ctx.measureText(text);
+      // I don't know why it's /4 here, but it is...
       c.ctx.fillText(text, width/2-metrics.width/2, height/2+fontSize/4);
     });
   }
+  
+  window.Color = function() {
+    Color.prototype.init.apply(this, arguments);
+  }
+  Object.extend(Color.prototype, {
+    init: function(red, green, blue) {
+      var self = this;
+      self.red = red;
+      self.green = green;
+      self.blue = blue;
+    },
+    clone: function() {
+      var self = this;
+      return new Color(self.red, self.green, self.blue);
+    },
+    toString: function() {
+      var self = this;
+      return [self.red, self.green, self.blue].join(",");
+    },
+    isEqual: function(other) {
+      var self = this;
+      return other && other.red == self.red && other.green == self.green && other.blue == self.blue;
+    }
+  })
+  
+  window.Cell = function() {
+    Cell.prototype.init.apply(this, arguments);
+  }
+  Object.extend(Cell.prototype, {
+    init: function(editor, x, y) {
+      var self = this;
+      self.editor = editor;
+      self.j = x;
+      self.i = y;
+      self.actual = {x: x, y: y};
+      self.enlarged = {x: x*editor.cellSize, y: y*editor.cellSize};
+    },
+    key: function() {
+      var self = this;
+      return [self.actual.x, self.actual.y].join(",")
+    },
+    clone: function() {
+      var self = this;
+      var cell = new Cell(self.editor, self.actual.x, self.actual.y);
+      if (self.color) cell.color = self.color.clone();
+      return cell;
+    }
+  })
+  
+  window.CellHistory = {
+    fixedSize: 100, // # of actions
+    init: function(editor) {
+      var self = this;
+      self.editor = editor;
+      self.events = [];
+      self.currentEvent = { // Set
+        hash: null,
+        array: null
+      };
+      return self;
+    },
+    open: function() {
+      var self = this;
+      // Limit history to a fixed size
+      if (self.events.length == self.fixedSize) self.events.shift();
+      self.currentEvent.array = [];
+      self.currentEvent.hash = {};
+    },
+    close: function() {
+      var self = this;
+      if (self.currentEvent.array.length > 0) {
+        self.events.push(self.currentEvent.array);
+      }
+      self.currentEvent.array = null;
+      self.currentEvent.hash = null;
+    },
+    add: function(cell) {
+      var self = this;
+      cell = cell.clone();
+      if (!(cell.key() in self.currentEvent.hash)) {
+        self.currentEvent.hash[cell.key()] = cell;
+        self.currentEvent.array.push(cell);
+      }
+    },
+    undo: function() {
+      var self = this;
+      var cells = self.events.pop();
+      _.each(cells, function(cell) {
+        self.editor.cells[cell.i][cell.j] = cell;
+      })
+    }
+  };
 
   window.SpriteEditor = (function() {
     var editor = {};
-    
-    editor.tickInterval = 30; // ms/frame
-    editor.widthInCells = 16; // cells
-    editor.heightInCells = 16; // cells
-    editor.cellSize = 30; // pixels
     
     editor.timer = null;
     editor.width = null;
@@ -55,13 +143,21 @@
     editor.previewCanvas = null;
     editor.currentCell = null;
     editor.cells = [];
-    editor.currentColor = {red: 172, green: 85, blue: 255}
-    editor.dragging = false;
-    editor.mouseDownAt = null;
+    editor.currentColor = new Color(172, 85, 255);
+    editor.mouse = {
+      dragging: false,
+      downAt: null
+    };
     editor.pressedKeys = {};
     editor.currentTool = "pencil";
     editor.currentCellToStartFill = null;
     editor.currentBrushSize = 1;
+    editor.cellHistory = CellHistory.init(editor);
+    
+    editor.tickInterval = 30; // ms/frame
+    editor.widthInCells = 16; // cells
+    editor.heightInCells = 16; // cells
+    editor.cellSize = 30; // pixels
     
     Object.extend(editor, {
       init: function() {
@@ -106,17 +202,7 @@
         for (var i=0; i<self.heightInCells; i++) {
           var row = self.cells[i] = [];
           for (var j=0; j<self.widthInCells; j++) {
-            row[j] = {
-              actual: {
-                x: j,
-                y: i
-              },
-              enlarged: {
-                x: j*self.cellSize,
-                y: i*self.cellSize
-              },
-              color: null
-            };
+            row[j] = new Cell(self, j, i);
           }
         }
       },
@@ -205,7 +291,7 @@
           bean.add(colorSlider, 'change', function() {
             colorValueSpan.innerHTML = " " + colorSlider.value;
             self.currentColor[id] = parseInt(colorSlider.value);
-            colorSampleDiv.style.backgroundColor = 'rgb('+self._rgb(self.currentColor)+')';
+            colorSampleDiv.style.backgroundColor = 'rgb('+self.currentColor+')';
           })
           bean.fire(colorSlider, 'change');
         })
@@ -310,15 +396,19 @@
             self._setCurrentCells(mouse);
             
             // If dragging isn't set yet, set it until the mouse is lifted off
-            if (self.mouseDownAt) {
-              if (!self.dragging) {
-                self.dragging = (self._distance(self.mouseDownAt, mouse) > 3);
+            if (self.mouse.downAt) {
+              if (!self.mouse.dragging) {
+                self.mouse.dragging = (self._distance(self.mouse.downAt, mouse) > 3);
+                self.selectedCells = [];
               }
             } else {
-              self.dragging = false;
+              self.mouse.dragging = false;
             }
             
-            if (self.dragging && self.currentTool == "pencil") {
+            if (self.mouse.dragging && self.currentTool == "pencil") {
+              // FIXME: If you drag too fast it will skip some cells!
+              // Use the current mouse position and the last mouse position and
+              //  fill in or erase cells in between.
               if (event.rightClick || self.pressedKeys[16]) {
                 self._setCurrentCellsToUnfilled();
               } else {
@@ -327,11 +417,12 @@
             }
           },
           mousedown: function(event) {
-            self.mouseDownAt = {x: event.pageX, y: event.pageY};
+            self.mouse.downAt = {x: event.pageX, y: event.pageY};
+            self.cellHistory.open();
             event.preventDefault();
           },
           mouseup: function(event) {
-            if (!self.dragging) {
+            if (!self.mouse.dragging) {
               switch (self.currentTool) {
                 case "pencil":
                   if (event.rightClick || self.pressedKeys[16]) {
@@ -349,7 +440,8 @@
                   break;
               }
             }
-            self.mouseDownAt = null;
+            self.cellHistory.close();
+            self.mouse.downAt = null;
             event.preventDefault();
           },
           mouseout: function(event) {
@@ -367,9 +459,18 @@
         bean.add(document, {
           keydown: function(event) {
             self.pressedKeys[event.keyCode] = true;
+            if (event.keyCode == 90 && (event.ctrlKey || event.metaKey)) {
+              // Undo last action
+              self.cellHistory.undo();
+            }
           },
           keyup: function(event) {
-            self.pressedKeys[event.keyCode] = false;
+            delete self.pressedKeys[event.keyCode];
+          }
+        });
+        bean.add(window, {
+          blur: function() {
+            self.stop();
           }
         })
       },
@@ -416,9 +517,10 @@
         var self = this;
         if (self.currentCells) {
           _.each(self.currentCells, function(cell) {
+            self.cellHistory.add(cell);
             // Clone so when changing the current color we don't change all cells
             // filled with that color
-            cell.color = Object.extend({}, self.currentColor);
+            cell.color = self.currentColor.clone();
           })
         }
       },
@@ -427,6 +529,7 @@
         var self = this;
         if (self.currentCells) {
           _.each(self.currentCells, function(cell) {
+            self.cellHistory.add(cell);
             cell.color = null;
           })
         }
@@ -436,13 +539,13 @@
         var self = this;
         // Copy this as the color of the current cell will change during this loop
         var currentCellColor = self.currentCells[0].color;
-        if (currentCellColor) Object.extend({}, currentCellColor);
+        if (currentCellColor) currentCellColor = currentCellColor.clone();
         // Look for all cells with the color (or non-color) of the current cell
         // and mark them as filled with the current color
         _.each(self.cells, function(row, i) {
           _.each(row, function(cell, j) {
-            if ((!cell.color && !currentCellColor) || self._colorsEqual(cell.color, currentCellColor)) {
-              cell.color = Object.extend({}, self.currentColor);
+            if ((!cell.color && !currentCellColor) || cell.color.isEqual(currentCellColor)) {
+              cell.color = self.currentColor.clone();
             }
           })
         })
@@ -452,12 +555,12 @@
         var self = this;
         // Copy this as the color of the current cell will change during this loop
         var currentCellColor = self.currentCells[0].color;
-        if (currentCellColor) Object.extend({}, currentCellColor);
+        if (currentCellColor) currentCellColor = currentCellColor.clone();
         // Look for all cells with the color of the current cell
         // and mark them as unfilled
         _.each(self.cells, function(row, i) {
           _.each(row, function(cell, j) {
-            if (cell.color && self._colorsEqual(cell.color, currentCellColor)) {
+            if (cell.color && cell.color.isEqual(currentCellColor)) {
               cell.color = null;
             }
           })
@@ -489,9 +592,9 @@
       _highlightCurrentCells: function() {
         var self = this;
         var ctx = self.canvas.ctx;
-        if (self.currentCells && !(self.dragging || self.pressedKeys[16]) && self.currentTool == "pencil") {
+        if (self.currentCells && !(self.mouse.dragging || self.pressedKeys[16]) && self.currentTool == "pencil") {
           ctx.save();
-            ctx.fillStyle = 'rgba('+self._rgb(self.currentColor)+',0.5)';
+            ctx.fillStyle = 'rgba('+self.currentColor+',0.5)';
             _.each(self.currentCells, function(cell) {
               ctx.fillRect(cell.enlarged.x+1, cell.enlarged.y+1, self.cellSize-1, self.cellSize-1);
             })
@@ -507,7 +610,7 @@
           _.each(self.cells, function(row, i) {
             _.each(row, function(cell, j) {
               if (cell.color) {
-                c.ctx.fillStyle = 'rgb('+self._rgb(cell.color)+')';
+                c.ctx.fillStyle = 'rgb('+cell.color+')';
                 c.ctx.fillRect(cell.enlarged.x+1, cell.enlarged.y+1, self.cellSize-1, self.cellSize-1);
                 pc.imageData.fillPixel(cell.actual.x, cell.actual.y, cell.color.red, cell.color.green, cell.color.blue, 255);
               }
@@ -536,14 +639,6 @@
           this.data[index+2] = b;
           this.data[index+3] = a;
         }
-      },
-      
-      _rgb: function(c) {
-        return [c.red, c.green, c.blue].join(",");
-      },
-      
-      _colorsEqual: function(c1, c2) {
-        return c1 && c2 && c1.red == c2.red && c1.green == c2.green && c1.blue == c2.blue;
       },
       
       _distance: function(v1, v2) {
