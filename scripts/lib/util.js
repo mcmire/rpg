@@ -56,4 +56,9 @@
     return str;
   };
   
+  String.capitalize = function(str) {
+    if (!str) return "";
+    return str[0].toUpperCase() + str.slice(1);
+  }
+  
 })(window, window.document, window.$);
