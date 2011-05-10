@@ -279,20 +279,20 @@
             
             var label = document.createElement("label");
             label.innerHTML = String.capitalize(component.name);
-            colorControlsDiv.appendChild(label);
+            colorDiv.appendChild(label);
 
             var colorSlider = document.createElement("input");
             colorSlider.type = "range";
             colorSlider.min = 0;
             colorSlider.max = component.max;
             colorSlider.value = self.currentColor[component.name];
-            label.appendChild(colorSlider);
+            colorDiv.appendChild(colorSlider);
             colorSliders[ctype][component.name].slider = colorSlider;
 
             var colorValueSpan = document.createElement("span");
             colorValueSpan.innerHTML = self.currentColor[component.name];
-            label.appendChild(document.createTextNode(" "))
-            label.appendChild(colorValueSpan);
+            colorDiv.appendChild(document.createTextNode(" "))
+            colorDiv.appendChild(colorValueSpan);
             colorSliders[ctype][component.name].sliderSpan = colorValueSpan;
 
             bean.add(colorSlider, 'change', function() {
@@ -303,7 +303,9 @@
                 self.currentColor.refreshRGB();
               }
               _.each(colorSliders[ctype == "rgb" ? "hsl" : "rgb"], function(o, componentName) {
-                o.slider.value = o.sliderSpan.innerHTML = self.currentColor[componentName];
+                var val = self.currentColor[componentName];
+                // Hue may be null, so check for that
+                if (val !== null) o.slider.value = o.sliderSpan.innerHTML = val;
               });
               colorValueSpan.innerHTML = self.currentColor[component.name];
               colorSampleDiv.style.backgroundColor = 'rgb('+self.currentColor.toRGBString()+')';

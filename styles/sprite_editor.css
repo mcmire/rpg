@@ -98,26 +98,25 @@ canvas {
   clear: left;
   margin-bottom: 20px;
   /*margin-right: 20px;*/
-  text-align: center;
+  /*text-align: center;*/
 }
 #color_box input {
   vertical-align: middle;
 }
-#color_controls, #color_sample {
-  display: inline-block;
-  vertical-align: middle;
-}
-/*
-#color_controls {
-  margin-bottom: 10px;
-}
-*/
 #color_sample {
   width: 60px;
   height: 60px;
   border: 1px solid black;
   margin: 0 auto;
-  margin-left: 20px;
+}
+.color_controls, #color_sample {
+  margin-top: 10px;
+}
+.color_controls label, .color_controls input, .color_controls span {
+  display: inline-block;
+}
+.color_controls label {
+  width: 75px;
 }
 
 #preview_box {
