@@ -2,6 +2,21 @@ canvas {
   display: block;
 }
 
+header {
+  margin-bottom: 30px;
+}
+header h1, header div {
+  display: inline-block;
+  vertical-align: middle;
+}
+header h1 {
+  letter-spacing: -1px;
+  margin: 0;
+}
+header div {
+  margin-left: 10px;
+}
+
 #left_pane, #center_pane, #right_pane {
   display: inline-block;
   vertical-align: top;
