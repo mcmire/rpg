@@ -1,38 +1,92 @@
+html, body {
+  width: 100%;
+}
+
+body {
+  background-color: silver;
+  margin: 0;
+  padding: 0;
+}
+
 canvas {
   display: block;
+  background-color: white;
 }
 
-header {
-  margin-bottom: 30px;
+/*
+#wrapper {
+  width: 1100px;
+  margin: 0 auto;
 }
-header h1, header div {
-  display: inline-block;
-  vertical-align: middle;
+*/
+
+#header {
+  width: 100%;
+  height: 60px;
+  line-height: 60px;
+  background-color: white;
+  overflow: auto;
 }
-header h1 {
-  letter-spacing: -1px;
+#header h1 {
+  font-size: 35px;
+  float: left;
   margin: 0;
+  margin-left: 15px;
+  letter-spacing: -1px;
+  z-index: 20;
 }
-header div {
-  margin-left: 10px;
+#help {
+  float: right;
+  margin-right: 15px;
+}
+#help a {
+  color: #666;
+  font-weight: bold;
+  text-decoration: none;
+  border-bottom: 1px dotted #666;
+}
+#help_box {
+  position: absolute;
+  top: 50px;
+  right: 100px;
+  width: 300px;
+  background-color: #333;
+  color: white;
+  font-size: 12px;
+  line-height: normal;
+  padding: 0 10px;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.8);
+  -webkit-transition: opacity 0.3s ease-in-out;
+}
+#help_box p {
+  margin: 10px 0;
+}
+#help_box a {
+  color: lightyellow;
+  text-decoration: none;
+  border-bottom: 1px dotted lightyellow;
 }
 
-#left_pane, #center_pane, #right_pane {
-  display: inline-block;
-  vertical-align: top;
+#main {
+  padding: 15px;
 }
+
 #left_pane {
+  float: left;
   width: 170px;
   margin-right: 30px;
 }
 #center_pane {
-  margin-right: 30px;
+  text-align: center;
 }
 #enlarged_canvas {
   border: 1px solid red;
   cursor: pointer;
+  display: inline;
 }
 #right_pane {
+  float: right;
   width: 350px;
 }
 
@@ -42,6 +96,7 @@ header div {
   padding: 20px;
   /*float: left;*/
   overflow: auto;
+  background-color: white;
 }
 .box h3 {
   margin: -20px;

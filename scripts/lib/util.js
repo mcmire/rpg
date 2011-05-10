@@ -1,10 +1,10 @@
-(function(window, document, $, undefined) {
+(function(window, document, $, _, undefined) {
 
   window.$ = function(id) {
     if (typeof id == "function") {
       bean.add(document, 'DOMContentLoaded', id);
     } else {
-      document.getElementById(id);
+      return document.getElementById(id);
     }
   };
 
@@ -61,4 +61,4 @@
     return str[0].toUpperCase() + str.slice(1);
   }
   
-})(window, window.document, window.$);
+})(window, window.document, window.$, window._);

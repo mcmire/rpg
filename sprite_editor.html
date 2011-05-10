@@ -2,22 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>sprite editor</title>
+  <title>it's a sprite editor!</title>
   <link rel="stylesheet" href="styles/global.css" />
   <link rel="stylesheet" href="styles/sprite_editor.css" />
 </head>
 <body>
-  <header>
-    <h1>sprite editor!</h1>
-    <div class="help">
-      how does it work?
-      <div class="help-text">
+  <div id="header">
+    <div id="header-inner">
+      <h1>sprite editor</h1>
+      <div id="help"><a href="#" id="help_menu_text">Help! What can I do with this?</a></div>
+      <div id="help_box" style="height: 0; opacity: 0">
         <p><b>Pencil tool:</b> Click on a cell to fill it in, right-click to delete (shift-click works too). You can also drag across the grid to quickly fill in or delete cells.</p>
         <p><b>Paint bucket tool:</b> Click on a cell to fill in all like cells with the current color. Right- or shift-click to clear all like cells.</p>
         <p>Ctrl-Z (or Command-Z) will undo the last action.</p>
+        <p style="text-align: center">
+          <b><a href="#" id="help_box_close">Okay, thanks!</a></b>
+        </p>
       </div>
     </div>
   </div>
+  <div id="main">
+  </di>
   
   <script src="scripts/vendor/underscore-1.1.6.min.js"></script>
   <script src="scripts/vendor/bean.min.js"></script>
@@ -25,8 +30,25 @@
   <script src="scripts/lib/color.js"></script>
   <script src="scripts/lib/sprite_editor.js"></script>
   <script>
-    $(function(){
+    $(function() {
       SpriteEditor.init();
+      
+      bean.add($('help'), 'click', function(event) {
+        var box = $('help_box');
+        if (box.style.opacity == 0) {
+          box.style.height = "auto";
+          box.style.opacity = 1;
+        } else {
+          box.style.opacity = 0;
+          setTimeout(function() { box.style.height = 0 }, 300); // wait for webkit animation to finish
+        }
+        event.preventDefault();
+      })
+      bean.add($('help_box_close'), 'click', function(event) {
+        $('help_box').style.opacity = 0;
+        $('help_box').style.display = "none";
+        event.preventDefault();
+      })
     })
   </script>
 </body>

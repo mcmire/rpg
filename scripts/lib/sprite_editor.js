@@ -138,6 +138,7 @@
     Object.extend(editor, {
       init: function() {
         var self = this;
+        self.container = $('main');
         self._initCells();
         self._createWrapperDivs();
         self._createGridCanvas();
@@ -188,15 +189,15 @@
         
         self.leftPane = document.createElement("div");
         self.leftPane.id = "left_pane";
-        document.body.appendChild(self.leftPane);
-        
-        self.centerPane = document.createElement("div");
-        self.centerPane.id = "center_pane";
-        document.body.appendChild(self.centerPane);
+        self.container.appendChild(self.leftPane);
         
         self.rightPane = document.createElement("div");
         self.rightPane.id = "right_pane";
-        document.body.appendChild(self.rightPane);
+        self.container.appendChild(self.rightPane);
+        
+        self.centerPane = document.createElement("div");
+        self.centerPane.id = "center_pane";
+        self.container.appendChild(self.centerPane);
       },
       
       _createGridCanvas: function() {
@@ -639,7 +640,7 @@
           _.each(self.cells, function(row, i) {
             _.each(row, function(cell, j) {
               if (cell.color) {
-                c.ctx.fillStyle = 'rgb('+cell.color+')';
+                c.ctx.fillStyle = 'rgb('+cell.color.toRGBString()+')';
                 c.ctx.fillRect(cell.enlarged.x+1, cell.enlarged.y+1, self.cellSize-1, self.cellSize-1);
                 pc.imageData.fillPixel(cell.actual.x, cell.actual.y, cell.color.red, cell.color.green, cell.color.blue, 255);
               }
@@ -676,7 +677,6 @@
     })
     
     return editor;
-    
   })();
 
 })(window, window.document, window.$, window._);
