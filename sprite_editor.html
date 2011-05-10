@@ -3,10 +3,6 @@
 <head>
   <meta charset="utf-8" />
   <title>sprite editor</title>
-  <script src="scripts/vendor/underscore-1.1.6.min.js"></script>
-  <script src="scripts/vendor/bean.min.js"></script>
-  <script src="scripts/lib/util.js"></script>
-  <script src="scripts/lib/sprite_editor.js"></script>
   <link rel="stylesheet" href="styles/global.css" />
   <link rel="stylesheet" href="styles/sprite_editor.css" />
 </head>
@@ -22,5 +18,16 @@
       </div>
     </div>
   </div>
+  
+  <script src="scripts/vendor/underscore-1.1.6.min.js"></script>
+  <script src="scripts/vendor/bean.min.js"></script>
+  <script src="scripts/lib/util.js"></script>
+  <script src="scripts/lib/color.js"></script>
+  <script src="scripts/lib/sprite_editor.js"></script>
+  <script>
+    $(function(){
+      SpriteEditor.init();
+    })
+  </script>
 </body>
 </html>

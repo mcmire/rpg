@@ -1,6 +1,6 @@
 (function(window, document, $, _, undefined) {
   
-  window.Keyboard = {
+  var Keyboard = {
     keys: {
       LEFT_ARROW: 37,
       RIGHT_ARROW: 39,
@@ -459,10 +459,5 @@
     
     return game;
   })();
-
-  $(function() {
-    Game.init();
-    Game.ready(function() { Game.run() });
-  })
   
 })(window, window.document, window.$, window._);

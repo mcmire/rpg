@@ -1,4 +1,5 @@
 (function(window, document, $, _, undefined) {
+  
   window.Editor = (function(){
     var editor = {};
 
@@ -102,7 +103,4 @@
     return editor;
   })();
 
-  $(function(){
-    Editor.init();
-  })
 })(window, window.document, window.$, window._);
