@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>THE GAME</title>
+  <link rel="stylesheet" href="/stylesheets/game.css">
+</head>
+<body>
+  <p>Use WASD (or arrow keys) to move around.</p>
+
+  <div id="main"></div>
+
+  <%= scripts %>
+  <script>
+    $.domReady(function() {
+      var main = Game.Main.init();
+      main.attachTo('#main');
+      //main.addEvents();
+      //main.ready(function() { main.run() });
+    })
+  </script>
+</body>
+</html>
