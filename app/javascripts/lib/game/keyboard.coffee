@@ -1,72 +1,96 @@
-$.export "SpriteEditor.Keyboard", (SpriteEditor) ->
+game = window.game
+{DOMEventHelpers} = game
 
-  Keyboard = {}
-  SpriteEditor.DOMEventHelpers.mixin(Keyboard, "SpriteEditor_Keyboard")
+game.util.module 'game.Keyboard', [DOMEventHelpers],
+  keys:
+    KEY_TAB: 9
+    KEY_ESC: 27
+    KEY_SHIFT: 16
+    KEY_CTRL: 17
+    KEY_ALT: 18
+    KEY_META: 91
+    KEY_UP: 38
+    KEY_DOWN: 40
+    KEY_LEFT: 37
+    KEY_RIGHT: 39
+    KEY_W: 87
+    KEY_A: 65
+    KEY_S: 83
+    KEY_D: 68
 
-  # TODO: Make these key names the same as in the LWJGL library
-  keys =
-    TAB_KEY: 9
-    ESC_KEY: 27
-    SHIFT_KEY: 16
-    CTRL_KEY: 17
-    ALT_KEY: 18
-    META_KEY: 91
-    KEY_1: 49
-    KEY_2: 50
-    KEY_3: 51
-    KEY_4: 52
-    E_KEY: 69
-    G_KEY: 71
-    Q_KEY: 81
-    S_KEY: 83
-    X_KEY: 88
-    Z_KEY: 90
+  modifierKeys: [16, 17, 18, 91]
 
-  # This is only here for compatibility, remove when fixed
-  $.extend Keyboard, keys
+  keyHandlers: {},
 
-  $.extend Keyboard,
-    keys: keys
-    modifierKeys: [16, 17, 18, 91]
+  init: ->
+    unless @isInit
+      @reset()
+      @isInit = true
+    return this
 
-    init: ->
-      unless @isInitialized
-        @reset()
-        @isInitialized = true
-      return this
+  reset: ->
+    @pressedKeys = {}
+    # Clear the cached handlers to prevent stuck keys
+    @activeKeyHandlers = {}
+    return this
 
-    reset: ->
-      @pressedKeys = {}
-      return this
+  destroy: ->
+    if @isInit
+      @reset()
+      @removeEvents()
+      @isInit = false
+    return this
 
-    destroy: ->
-      if @isInitialized
-        @reset()
-        @removeEvents()
-        @isInitialized = false
-      return this
+  addEvents: ->
+    self = this
 
-    addEvents: ->
-      self = this
-      @_bindEvents document,
-        keydown: (event) -> self.pressedKeys[event.keyCode] = 1
-        keyup: (event) -> delete self.pressedKeys[event.keyCode]
-      @_bindEvents window,
-        blur: (event) -> self.reset()
-      return this
+    @bindEvents document,
+      keydown: (event) ->
+        key = event.keyCode
+        # Keep track of which keys are being held down at any given time
+        self.pressedKeys[key] = 1
+        # Cache handlers for keys which are currently being held down
+        # so that it is faster when iterating through them
+        if key of self.keyHandlers
+          self.activeKeyHandlers[key] ||= self.keyHandlers[key]
+          self.globalKeyHandler?()
+          event.preventDefault()
 
-    removeEvents: ->
-      @_unbindEvents document, "keydown", "keyup"
-      @_unbindEvents window, "blur"
-      return this
+      keyup: (event) ->
+        key = event.keyCode
+        delete self.pressedKeys[key]
+        delete self.activeKeyHandlers[key]
+        event.preventDefault()
 
-    isKeyPressed: (key) ->
-      if typeof key is "string"
-        unless key = @keys[key]
-          throw new Error("'#{key}' is not a valid key")
-      @pressedKeys.hasOwnProperty(key)
+    @bindEvents window,
+      blur: (event) ->
+        self.reset()
 
-    modifierKeyPressed: (event) ->
-      (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey)
+    return this
 
-  return Keyboard
+  removeEvents: ->
+    @unbindEvents document, "keydown", "keyup"
+    @unbindEvents window, "blur"
+    return this
+
+  runHandlers: ->
+    handler() for key, handler of @activeKeyHandlers
+
+  addKeyHandler: (keyNames..., callback) ->
+    if keyNames.length
+      for keyName in keyNames
+        @keyHandlers[@keys[keyName]] = callback
+    else
+      @globalKeyHandler = callback
+
+  isKeyPressed: (arg) ->
+    if typeof arg is "string"
+      keyCode = @keys[arg]
+      throw new Error("'#{arg}' is not a valid key") unless keyCode
+    else
+      keyCode = arg
+
+    @pressedKeys.hasOwnProperty(keyCode)
+
+  modifierKeyPressed: (event) ->
+    event.shiftKey or event.ctrlKey or event.altKey or event.metaKey

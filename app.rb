@@ -11,7 +11,10 @@ helpers do
       vendor/ender.js
       vendor/bowser.js
       lib/ender_ext.js
-      #lib/game/util.js
+      lib/game/util.js
+      lib/game/dom_event_helpers.js
+      lib/game/keyboard.js
+      lib/game/canvas.js
       lib/game/main.js
     )
     html = ""

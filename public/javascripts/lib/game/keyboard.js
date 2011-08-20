@@ -1,84 +1,121 @@
 (function() {
-  $["export"]("SpriteEditor.Keyboard", function(SpriteEditor) {
-    var Keyboard, keys;
-    Keyboard = {};
-    SpriteEditor.DOMEventHelpers.mixin(Keyboard, "SpriteEditor_Keyboard");
-    keys = {
-      TAB_KEY: 9,
-      ESC_KEY: 27,
-      SHIFT_KEY: 16,
-      CTRL_KEY: 17,
-      ALT_KEY: 18,
-      META_KEY: 91,
-      KEY_1: 49,
-      KEY_2: 50,
-      KEY_3: 51,
-      KEY_4: 52,
-      E_KEY: 69,
-      G_KEY: 71,
-      Q_KEY: 81,
-      S_KEY: 83,
-      X_KEY: 88,
-      Z_KEY: 90
-    };
-    $.extend(Keyboard, keys);
-    $.extend(Keyboard, {
-      keys: keys,
-      modifierKeys: [16, 17, 18, 91],
-      init: function() {
-        if (!this.isInitialized) {
-          this.reset();
-          this.isInitialized = true;
-        }
-        return this;
-      },
-      reset: function() {
-        this.pressedKeys = {};
-        return this;
-      },
-      destroy: function() {
-        if (this.isInitialized) {
-          this.reset();
-          this.removeEvents();
-          this.isInitialized = false;
-        }
-        return this;
-      },
-      addEvents: function() {
-        var self;
-        self = this;
-        this._bindEvents(document, {
-          keydown: function(event) {
-            return self.pressedKeys[event.keyCode] = 1;
-          },
-          keyup: function(event) {
-            return delete self.pressedKeys[event.keyCode];
-          }
-        });
-        this._bindEvents(window, {
-          blur: function(event) {
-            return self.reset();
-          }
-        });
-        return this;
-      },
-      removeEvents: function() {
-        this._unbindEvents(document, "keydown", "keyup");
-        this._unbindEvents(window, "blur");
-        return this;
-      },
-      isKeyPressed: function(key) {
-        if (typeof key === "string") {
-          if (!(key = this.keys[key])) {
-            throw new Error("'" + key + "' is not a valid key");
-          }
-        }
-        return this.pressedKeys.hasOwnProperty(key);
-      },
-      modifierKeyPressed: function(event) {
-        return event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
+  var DOMEventHelpers, game;
+  var __slice = Array.prototype.slice;
+  game = window.game;
+  DOMEventHelpers = game.DOMEventHelpers;
+  game.util.module('game.Keyboard', [DOMEventHelpers], {
+    keys: {
+      KEY_TAB: 9,
+      KEY_ESC: 27,
+      KEY_SHIFT: 16,
+      KEY_CTRL: 17,
+      KEY_ALT: 18,
+      KEY_META: 91,
+      KEY_UP: 38,
+      KEY_DOWN: 40,
+      KEY_LEFT: 37,
+      KEY_RIGHT: 39,
+      KEY_W: 87,
+      KEY_A: 65,
+      KEY_S: 83,
+      KEY_D: 68
+    },
+    modifierKeys: [16, 17, 18, 91],
+    keyHandlers: {},
+    init: function() {
+      if (!this.isInit) {
+        this.reset();
+        this.isInit = true;
       }
-    });
-    return Keyboard;
+      return this;
+    },
+    reset: function() {
+      this.pressedKeys = {};
+      this.activeKeyHandlers = {};
+      return this;
+    },
+    destroy: function() {
+      if (this.isInit) {
+        this.reset();
+        this.removeEvents();
+        this.isInit = false;
+      }
+      return this;
+    },
+    addEvents: function() {
+      var self;
+      self = this;
+      this.bindEvents(document, {
+        keydown: function(event) {
+          var key, _base;
+          key = event.keyCode;
+          self.pressedKeys[key] = 1;
+          if (key in self.keyHandlers) {
+            (_base = self.activeKeyHandlers)[key] || (_base[key] = self.keyHandlers[key]);
+            if (typeof self.globalKeyHandler === "function") {
+              self.globalKeyHandler();
+            }
+            return event.preventDefault();
+          }
+        },
+        keyup: function(event) {
+          var key;
+          key = event.keyCode;
+          delete self.pressedKeys[key];
+          delete self.activeKeyHandlers[key];
+          return event.preventDefault();
+        }
+      });
+      this.bindEvents(window, {
+        blur: function(event) {
+          return self.reset();
+        }
+      });
+      return this;
+    },
+    removeEvents: function() {
+      this.unbindEvents(document, "keydown", "keyup");
+      this.unbindEvents(window, "blur");
+      return this;
+    },
+    runHandlers: function() {
+      var handler, key, _ref, _results;
+      _ref = this.activeKeyHandlers;
+      _results = [];
+      for (key in _ref) {
+        handler = _ref[key];
+        _results.push(handler());
+      }
+      return _results;
+    },
+    addKeyHandler: function() {
+      var callback, keyName, keyNames, _i, _j, _len, _results;
+      keyNames = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), callback = arguments[_i++];
+      if (keyNames.length) {
+        _results = [];
+        for (_j = 0, _len = keyNames.length; _j < _len; _j++) {
+          keyName = keyNames[_j];
+          _results.push(this.keyHandlers[this.keys[keyName]] = callback);
+        }
+        return _results;
+      } else {
+        return this.globalKeyHandler = callback;
+      }
+    },
+    isKeyPressed: function(arg) {
+      var keyCode;
+      if (typeof arg === "string") {
+        keyCode = this.keys[arg];
+        if (!keyCode) {
+          throw new Error("'" + arg + "' is not a valid key");
+        }
+      } else {
+        keyCode = arg;
+      }
+      return this.pressedKeys.hasOwnProperty(keyCode);
+    },
+    modifierKeyPressed: function(event) {
+      return event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
+    }
   });
 }).call(this);

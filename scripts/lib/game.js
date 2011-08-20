@@ -1,5 +1,5 @@
 (function(window, document, $, _, undefined) {
-  
+
   var Keyboard = {
     keys: {
       LEFT_ARROW: 37,
@@ -7,20 +7,20 @@
       UP_ARROW: 38,
       DOWN_ARROW: 40,
       A_KEY: 65,
-      D_KEY: 68, 
+      D_KEY: 68,
       W_KEY: 87,
       S_KEY: 83
     },
-    
+
     game: null,
     globalKeyHandler: null,
     keyHandlers: {},
     activeKeyHandlers: {},
-    
+
     init: function(game) {
       var self = this;
       self.game = game;
-      
+
       bean.add(document, 'keydown', function(event) {
         var key = event.keyCode;
         if (key in self.keyHandlers) {
@@ -31,26 +31,26 @@
           event.preventDefault();
         }
       });
-      
+
       bean.add(document, 'keyup', function(event) {
         var key = event.keyCode;
         delete self.activeKeyHandlers[key];
         event.preventDefault();
       })
-      
+
       bean.add(window, 'blur', function(event) {
         // Clear all the handlers to prevent stuck keys
         self.activeKeyHandlers = {};
       })
     },
-    
+
     runHandlers: function() {
       var self = this;
       for (key in self.activeKeyHandlers) {
         self.activeKeyHandlers[key]();
       }
     },
-    
+
     addKeyHandler: function(/* [key1, key2, ..., ]callback */) {
       var self = this;
       var keyNames = Array.prototype.slice.call(arguments);
@@ -64,25 +64,25 @@
       }
     }
   };
-  
+
   window.Game = (function() {
     var game = {};
-    
+
     // Here are the variables that we'll we working with.
     // Some of these we don't technically need to initialize, they're just
     //  here for documentation.
-    
+
     game.canvas = null;
     game.ctx = null;
-    
+
     game.imagesLoaded = false;
     game.mapLoaded = false;
-    
+
     game.tickInterval = 30; // ms/frame
     //game.tickInterval = 150; // ms/frame
-    
+
     game.tileSize = 32; // pixels
-    
+
     game.viewport = {
       height: null,
       width: null,
@@ -94,17 +94,17 @@
       },
       playerPadding: 30
     };
-    
+
     game.map = {
       data: []
     };
-    
+
     game.bg = {
       canvas: null,
       ctx: null,
       offset: {x: 0, y: 0}
     }
-    
+
     game.player = {
       viewport: {
         pos: {x: 0, y: 0},
@@ -116,7 +116,7 @@
       },
       speed: 10
     };
-    
+
     game.imagePath = "images";
     game.sprite = {
       names: ["player"],
@@ -127,7 +127,7 @@
       names: ["grass", "snow", "water", "dirt"],
       instances: []
     }
-    
+
     Object.extend(game, {
       init: function(callback) {
         var self = this;
@@ -143,12 +143,12 @@
         self.canvas.width = self.viewport.width.pixels;
         self.canvas.height = self.viewport.height.pixels;
         document.body.appendChild(self.canvas);
-        
+
         self._initKeyboard();
-        
+
         self._loadMap(function() {
           self.mapLoaded = true;
-          
+
           // Initialize the dimensions of the map based on the data
           self.map.width = self._dim(self.map.data[0].length, 'tiles');
           self.map.height = self._dim(self.map.data.length, 'tiles');
@@ -166,7 +166,7 @@
           self._preloadImages();
         });
       },
-      
+
       ready: function(callback) {
         var self = this;
         // Keep checking the flag that we set in _preloadImages().
@@ -181,17 +181,17 @@
 
       run: function() {
         var self = this;
-        
+
         self._renderMap();
         self._initViewport();
-        
+
         // Initialize the player's position on the map
         self.player.map.pos.x = self.viewport.bounds.x1 + (self.viewport.width.pixels / 2);
         self.player.map.pos.y = self.viewport.bounds.y1 + (self.viewport.width.pixels / 2);
-        
+
         self._debugViewport();
         self._debugPlayer();
-        
+
         // Start the game loop
         setInterval(function() { self._redraw() }, self.tickInterval);
         //self._redraw();
@@ -229,23 +229,23 @@
 
       _redraw: function() {
         var self = this;
-        
+
         // Respond to keystrokes executed during the "dead time", i.e., the time
         // between the end of last iteration and the start of this iteration
         Keyboard.runHandlers();
-        
+
         // Draw the background
         self.ctx.drawImage(self.map.canvas, -self.viewport.bounds.x1, -self.viewport.bounds.y1);
-        
+
         // Draw the player
         self.ctx.drawImage(self.sprite.instances["player"], self.player.viewport.pos.x, self.player.viewport.pos.y);
       },
-      
+
       _initKeyboard: function() {
         var self = this;
-        
+
         Keyboard.init(self);
-        
+
         /*
         Keyboard.addKeyHandler(function() {
           self._debugViewport();
@@ -383,7 +383,7 @@
           }
         });
       },
-      
+
       // One of the things we need to during our game loop is to redraw the
       // map. The thing is, the map is made up of tiles, and redrawing every
       // tile of the map every iteration is really not optimal. We can actually
@@ -396,7 +396,7 @@
       _renderMap: function() {
         var self = this;
         Object.extend(self.map, self._newCanvas(self.map.width.pixels, self.map.height.pixels));
-        
+
         // Fill up the map canvas with the map data
         for (var i=0; i<self.map.height.tiles; i++) {
           for (var j=0; j<self.map.width.tiles; j++) {
@@ -406,7 +406,7 @@
           }
         }
       },
-      
+
       _initViewport: function() {
         var self = this;
         // Pick a random range of pixels on the map for the viewport
@@ -415,19 +415,19 @@
         self.viewport.bounds.y1 = Math.randomInt(0, self.map.height.pixels - self.viewport.height.pixels);
         self.viewport.bounds.y2 = self.viewport.bounds.y1 + self.viewport.height.pixels;
       },
-      
+
       _debugViewport: function() {
         var self = this;
         console.log("self.viewport.bounds = (" + self.viewport.bounds.x1 + ".." + self.viewport.bounds.x2 + ", " + self.viewport.bounds.y1 + ".." + self.viewport.bounds.y2 + ")");
       },
-      
+
       _debugPlayer: function() {
         var self = this;
         console.log("self.player.viewport.pos = (" + self.player.viewport.pos.x + ", " + self.player.viewport.pos.y + ")");
         console.log("self.player.viewport.offset = (" + self.player.viewport.offset.x + ", " + self.player.viewport.offset.y + ")");
         console.log("self.player.map.pos = (" + self.player.map.pos.x + ", " + self.player.map.pos.y + ")");
       },
-      
+
       _newCanvas: function(width, height) {
         var self = this;
         var o = {};
@@ -439,7 +439,7 @@
         o.height = self._dim(height, "pixels");
         return o;
       },
-      
+
       _dim: function(value, unit) {
         var self = this;
         var d = {};
@@ -456,8 +456,8 @@
         return d;
       }
     })
-    
+
     return game;
   })();
-  
+
 })(window, window.document, window.$, window._);
