@@ -5,6 +5,8 @@ set :views, "app/views"
 
 helpers do
   def scripts
+    path = "/javascripts"
+    dir = File.expand_path("../public/javascripts", __FILE__)
     scripts = %w(
       vendor/ender.js
       vendor/bowser.js
@@ -15,7 +17,8 @@ helpers do
     html = ""
     scripts.each do |script|
       next if script =~ /^#/
-      html << %{<script src="#{script}"></script>}
+      mtime = File.mtime("#{dir}/#{script}")
+      html << %{<script src="/javascripts/#{script}?#{mtime.to_i}"></script>\n}
     end
     html
   end

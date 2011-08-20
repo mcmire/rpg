@@ -13,7 +13,7 @@
   <%= scripts %>
   <script>
     $.domReady(function() {
-      var main = Game.Main.init();
+      var main = window.game.Main.init();
       main.attachTo('#main');
       //main.addEvents();
       //main.ready(function() { main.run() });
