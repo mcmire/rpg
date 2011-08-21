@@ -18,13 +18,18 @@
       KEY_W: 87,
       KEY_A: 65,
       KEY_S: 83,
-      KEY_D: 68
+      KEY_D: 68,
+      KEY_H: 72,
+      KEY_J: 74,
+      KEY_K: 75,
+      KEY_L: 76
     },
     modifierKeys: [16, 17, 18, 91],
     keyHandlers: {},
     init: function() {
       if (!this.isInit) {
         this.reset();
+        this.debugTimer = new Date();
         this.isInit = true;
       }
       return this;
@@ -47,14 +52,11 @@
       self = this;
       this.bindEvents(document, {
         keydown: function(event) {
-          var key, _base;
+          var handler, key, _base;
           key = event.keyCode;
           self.pressedKeys[key] = 1;
-          if (key in self.keyHandlers) {
-            (_base = self.activeKeyHandlers)[key] || (_base[key] = self.keyHandlers[key]);
-            if (typeof self.globalKeyHandler === "function") {
-              self.globalKeyHandler();
-            }
+          if ((handler = self.keyHandlers[key])) {
+            (_base = self.activeKeyHandlers)[key] || (_base[key] = handler);
             return event.preventDefault();
           }
         },
@@ -62,8 +64,10 @@
           var key;
           key = event.keyCode;
           delete self.pressedKeys[key];
-          delete self.activeKeyHandlers[key];
-          return event.preventDefault();
+          if (key in self.activeKeyHandlers) {
+            delete self.activeKeyHandlers[key];
+            return event.preventDefault();
+          }
         }
       });
       this.bindEvents(window, {
@@ -79,7 +83,14 @@
       return this;
     },
     runHandlers: function() {
-      var handler, key, _ref, _results;
+      var date, handler, key, _ref, _results;
+      date = new Date();
+      if ((date - this.debugTimer) >= 1000) {
+        if (typeof this.globalKeyHandler === "function") {
+          this.globalKeyHandler();
+        }
+        this.debugTimer = date;
+      }
       _ref = this.activeKeyHandlers;
       _results = [];
       for (key in _ref) {

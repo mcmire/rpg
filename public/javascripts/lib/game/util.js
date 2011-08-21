@@ -26,6 +26,7 @@
     if (typeof chainStrs === "string") {
       chainStrs = chainStrs.split(".");
     }
+    newObj.__name = chainStrs.join(".");
     newIdStr = chainStrs.pop();
     tail = _ns(chainStrs);
     chain = _chain(chainStrs);
@@ -47,7 +48,7 @@
       name = chainStrs.slice(0, i + 1).join(".");
       if ((_ref = context[idStr]) == null) {
         context[idStr] = {
-          name: name
+          __name: name
         };
       }
       context = context[idStr];

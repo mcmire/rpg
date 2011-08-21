@@ -1,8 +1,8 @@
 (function() {
-  var Canvas, Keyboard, defaults, game, _dim;
+  var Canvas, DOMEventHelpers, Keyboard, defaults, game, _dim;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   game = window.game;
-  Keyboard = game.Keyboard, Canvas = game.Canvas;
+  Keyboard = game.Keyboard, DOMEventHelpers = game.DOMEventHelpers, Canvas = game.Canvas;
   defaults = {};
   _dim = function(value, unit) {
     var d;
@@ -28,11 +28,11 @@
   defaults.mapLoaded = false;
   defaults.numSpritesLoaded = 0;
   defaults.spritesLoaded = false;
-  defaults.viewportWidth = _dim(24, 'tiles');
-  defaults.viewportHeight = _dim(16, 'tiles');
   defaults.mapWidth = _dim(1280, 'pixels');
   defaults.mapHeight = _dim(800, 'pixels');
-  game.util.module("game.Main", [defaults], {
+  defaults.viewportWidth = _dim(600, 'pixels');
+  defaults.viewportHeight = _dim(400, 'pixels');
+  game.util.module("game.Main", [DOMEventHelpers, defaults], {
     init: function() {
       if (!this.isInit) {
         this.reset();
@@ -114,11 +114,22 @@
       return this;
     },
     addEvents: function() {
+      var self;
+      self = this;
       Keyboard.addEvents();
+      this.bindEvents(window, {
+        blur: function() {
+          return self.suspend();
+        },
+        focus: function() {
+          return self.resume();
+        }
+      });
       return this;
     },
     removeEvents: function() {
       Keyboard.removeEvents();
+      this.unbindEvents(window, 'blur', 'focus');
       return this;
     },
     attachTo: function(wrapper) {
@@ -173,6 +184,22 @@
         }), this.drawInterval);
       }
     },
+    suspend: function() {
+      if (!this.stateBeforeSuspend) {
+        this.stateBeforeSuspend = {
+          wasDrawing: !!this.isDrawing
+        };
+        return this.stopDrawing();
+      }
+    },
+    resume: function() {
+      if (this.stateBeforeSuspend) {
+        if (this.stateBeforeSuspend.wasDrawing) {
+          this.startDrawing();
+        }
+        return this.stateBeforeSuspend = null;
+      }
+    },
     _assignKeyHandlers: function() {
       var self;
       self = this;
@@ -180,16 +207,16 @@
         self._debugViewport();
         return self._debugPlayer();
       });
-      Keyboard.addKeyHandler('KEY_A', 'KEY_LEFT', function() {
+      Keyboard.addKeyHandler('KEY_A', 'KEY_LEFT', 'KEY_H', function() {
         return self._movePlayerLeft();
       });
-      Keyboard.addKeyHandler('KEY_D', 'KEY_RIGHT', function() {
+      Keyboard.addKeyHandler('KEY_D', 'KEY_RIGHT', 'KEY_L', function() {
         return self._movePlayerRight();
       });
-      Keyboard.addKeyHandler('KEY_W', 'KEY_UP', function() {
+      Keyboard.addKeyHandler('KEY_W', 'KEY_UP', 'KEY_K', function() {
         return self._movePlayerUp();
       });
-      return Keyboard.addKeyHandler('KEY_S', 'KEY_DOWN', function() {
+      return Keyboard.addKeyHandler('KEY_S', 'KEY_DOWN', 'KEY_J', function() {
         return self._movePlayerDown();
       });
     },
@@ -314,18 +341,23 @@
       return _results;
     },
     _initPlayerWithinViewport: function() {
-      this.player.viewport.pos.x = this.viewport.width.pixels / 2;
-      this.player.viewport.pos.y = this.viewport.height.pixels / 2;
+      this.player.viewport.pos.x = 0;
+      this.player.viewport.pos.y = 0;
       return this.player.viewport.fenceDistance = (this.viewport.width.pixels / 2) - this.viewport.playerPadding;
     },
     _renderMap: function() {
       this.viewport.$element.css('background-image', "url(" + this.imagesPath + "/map.png)");
       return this.viewport.$element.css('background-repeat', 'no-repeat');
     },
-    _initViewportBounds: function() {},
+    _initViewportBounds: function() {
+      this.viewport.bounds.x1 = 0;
+      this.viewport.bounds.x2 = this.viewport.width.pixels;
+      this.viewport.bounds.y1 = 0;
+      return this.viewport.bounds.y2 = this.viewport.height.pixels;
+    },
     _initPlayerOnMap: function() {
-      this.player.map.pos.x = this.viewport.bounds.x1 + (this.viewport.width.pixels / 2);
-      return this.player.map.pos.y = this.viewport.bounds.y1 + (this.viewport.height.pixels / 2);
+      this.player.map.pos.x = this.viewport.bounds.x1 + this.player.viewport.pos.x;
+      return this.player.map.pos.y = this.viewport.bounds.y1 + this.player.viewport.pos.y;
     },
     _debugViewport: function() {
       return console.log("@viewport.bounds = (" + this.viewport.bounds.x1 + ".." + this.viewport.bounds.x2 + ", " + this.viewport.bounds.y1 + ".." + this.viewport.bounds.y2 + ")");

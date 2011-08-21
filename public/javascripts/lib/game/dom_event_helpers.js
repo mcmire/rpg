@@ -8,7 +8,7 @@
       namespacedEvents = {};
       for (name in events) {
         fn = events[name];
-        namespacedEvents[name + "." + this.moduleName] = fn;
+        namespacedEvents[name + "." + this.__name] = fn;
       }
       return $(elem).bind(namespacedEvents);
     },
@@ -20,7 +20,7 @@
         _results = [];
         for (_i = 0, _len = args.length; _i < _len; _i++) {
           name = args[_i];
-          _results.push(name + "." + this.moduleName);
+          _results.push(name + "." + this.__name);
         }
         return _results;
       }).call(this);
