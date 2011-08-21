@@ -132,7 +132,6 @@
     ready: function(callback) {
       var timer;
       return timer = setInterval(__bind(function() {
-        console.log("Checking to see if map/sprites loaded...");
         if (this.mapLoaded && this.spritesLoaded) {
           clearInterval(timer);
           return callback();
@@ -182,93 +181,105 @@
         return self._debugPlayer();
       });
       Keyboard.addKeyHandler('KEY_A', 'KEY_LEFT', function() {
-        if ((self.viewport.bounds.x1 - self.player.speed) >= 0) {
-          if ((self.player.viewport.pos.x - self.player.speed) >= self.viewport.playerPadding) {
-            self.player.viewport.pos.x -= self.player.speed;
-            self.player.viewport.offset.x -= self.player.speed;
-          } else {
-            self.viewport.bounds.x1 -= self.player.speed;
-            self.viewport.bounds.x2 -= self.player.speed;
-          }
-          return self.player.map.pos.x -= self.player.speed;
-        } else if ((self.player.viewport.pos.x - self.player.speed) >= 0) {
-          self.player.viewport.pos.x -= self.player.speed;
-          self.player.viewport.offset.x -= self.player.speed;
-          return self.player.map.pos.x -= self.player.speed;
-        } else {
-          self.player.viewport.pos.x -= self.player.viewport.pos.x;
-          self.player.viewport.offset.x -= self.player.viewport.pos.x;
-          return self.player.map.pos.x -= self.player.viewport.pos.x;
-        }
+        return self._movePlayerLeft();
       });
       Keyboard.addKeyHandler('KEY_D', 'KEY_RIGHT', function() {
-        var dist;
-        if ((self.viewport.bounds.x2 + self.player.speed) <= self.map.width.pixels) {
-          if ((self.viewport.width.pixels - (self.player.viewport.pos.x + self.tileSize + self.player.speed)) >= self.viewport.playerPadding) {
-            self.player.viewport.pos.x += self.player.speed;
-            self.player.viewport.offset.x += self.player.speed;
-          } else {
-            self.viewport.bounds.x1 += self.player.speed;
-            self.viewport.bounds.x2 += self.player.speed;
-          }
-          return self.player.map.pos.x += self.player.speed;
-        } else {
-          dist = (self.player.viewport.pos.x + self.tileSize) - self.viewport.width.pixels;
-          if ((dist + self.player.speed) < 0) {
-            self.player.viewport.pos.x += self.player.speed;
-            self.player.viewport.offset.x += self.player.speed;
-            return self.player.map.pos.x += self.player.speed;
-          } else {
-            self.player.viewport.pos.x += -dist;
-            self.player.viewport.offset.x += -dist;
-            return self.player.map.pos.x += -dist;
-          }
-        }
+        return self._movePlayerRight();
       });
       Keyboard.addKeyHandler('KEY_W', 'KEY_UP', function() {
-        if ((self.viewport.bounds.y1 - self.player.speed) >= 0) {
-          if ((self.player.viewport.pos.y - self.player.speed) >= self.viewport.playerPadding) {
-            self.player.viewport.pos.y -= self.player.speed;
-            self.player.viewport.offset.y -= self.player.speed;
-          } else {
-            self.viewport.bounds.y1 -= self.player.speed;
-            self.viewport.bounds.y2 -= self.player.speed;
-          }
-          return self.player.map.pos.y -= self.player.speed;
-        } else if ((self.player.viewport.pos.y - self.player.speed) >= 0) {
-          self.player.viewport.pos.y -= self.player.speed;
-          self.player.viewport.offset.y -= self.player.speed;
-          return self.player.map.pos.y -= self.player.speed;
-        } else {
-          self.player.viewport.pos.y -= self.player.viewport.pos.y;
-          self.player.viewport.offset.y -= self.player.viewport.pos.y;
-          return self.player.map.pos.y -= self.player.viewport.pos.y;
-        }
+        return self._movePlayerUp();
       });
       return Keyboard.addKeyHandler('KEY_S', 'KEY_DOWN', function() {
-        var dist;
-        if ((self.viewport.bounds.y2 + self.player.speed) <= self.map.height.pixels) {
-          if ((self.viewport.height.pixels - (self.player.viewport.pos.y + self.tileSize + self.player.speed)) >= self.viewport.playerPadding) {
-            self.player.viewport.pos.y += self.player.speed;
-            self.player.viewport.offset.y += self.player.speed;
-          } else {
-            self.viewport.bounds.y1 += self.player.speed;
-            self.viewport.bounds.y2 += self.player.speed;
-          }
-          return self.player.map.pos.y += self.player.speed;
-        } else {
-          dist = (self.player.viewport.pos.y + self.tileSize) - self.viewport.height.pixels;
-          if ((dist + self.player.speed) < 0) {
-            self.player.viewport.pos.y += self.player.speed;
-            self.player.viewport.offset.y += self.player.speed;
-            return self.player.map.pos.y += self.player.speed;
-          } else {
-            self.player.viewport.pos.y += -dist;
-            self.player.viewport.offset.y += -dist;
-            return self.player.map.pos.y += -dist;
-          }
-        }
+        return self._movePlayerDown();
       });
+    },
+    _movePlayerLeft: function() {
+      if ((this.viewport.bounds.x1 - this.player.speed) >= 0) {
+        if ((this.player.viewport.pos.x - this.player.speed) >= this.viewport.playerPadding) {
+          this.player.viewport.pos.x -= this.player.speed;
+          this.player.viewport.offset.x -= this.player.speed;
+        } else {
+          this.viewport.bounds.x1 -= this.player.speed;
+          this.viewport.bounds.x2 -= this.player.speed;
+        }
+        return this.player.map.pos.x -= this.player.speed;
+      } else if ((this.player.viewport.pos.x - this.player.speed) >= 0) {
+        this.player.viewport.pos.x -= this.player.speed;
+        this.player.viewport.offset.x -= this.player.speed;
+        return this.player.map.pos.x -= this.player.speed;
+      } else {
+        this.player.viewport.pos.x -= this.player.viewport.pos.x;
+        this.player.viewport.offset.x -= this.player.viewport.pos.x;
+        return this.player.map.pos.x -= this.player.viewport.pos.x;
+      }
+    },
+    _movePlayerRight: function() {
+      var dist;
+      if ((this.viewport.bounds.x2 + this.player.speed) <= this.map.width.pixels) {
+        if ((this.viewport.width.pixels - (this.player.viewport.pos.x + this.tileSize + this.player.speed)) >= this.viewport.playerPadding) {
+          this.player.viewport.pos.x += this.player.speed;
+          this.player.viewport.offset.x += this.player.speed;
+        } else {
+          this.viewport.bounds.x1 += this.player.speed;
+          this.viewport.bounds.x2 += this.player.speed;
+        }
+        return this.player.map.pos.x += this.player.speed;
+      } else {
+        dist = (this.player.viewport.pos.x + this.tileSize) - this.viewport.width.pixels;
+        if ((dist + this.player.speed) < 0) {
+          this.player.viewport.pos.x += this.player.speed;
+          this.player.viewport.offset.x += this.player.speed;
+          return this.player.map.pos.x += this.player.speed;
+        } else {
+          this.player.viewport.pos.x += -dist;
+          this.player.viewport.offset.x += -dist;
+          return this.player.map.pos.x += -dist;
+        }
+      }
+    },
+    _movePlayerUp: function() {
+      if ((this.viewport.bounds.y1 - this.player.speed) >= 0) {
+        if ((this.player.viewport.pos.y - this.player.speed) >= this.viewport.playerPadding) {
+          this.player.viewport.pos.y -= this.player.speed;
+          this.player.viewport.offset.y -= this.player.speed;
+        } else {
+          this.viewport.bounds.y1 -= this.player.speed;
+          this.viewport.bounds.y2 -= this.player.speed;
+        }
+        return this.player.map.pos.y -= this.player.speed;
+      } else if ((this.player.viewport.pos.y - this.player.speed) >= 0) {
+        this.player.viewport.pos.y -= this.player.speed;
+        this.player.viewport.offset.y -= this.player.speed;
+        return this.player.map.pos.y -= this.player.speed;
+      } else {
+        this.player.viewport.pos.y -= this.player.viewport.pos.y;
+        this.player.viewport.offset.y -= this.player.viewport.pos.y;
+        return this.player.map.pos.y -= this.player.viewport.pos.y;
+      }
+    },
+    _movePlayerDown: function() {
+      var dist;
+      if ((this.viewport.bounds.y2 + this.player.speed) <= this.map.height.pixels) {
+        if ((this.viewport.height.pixels - (this.player.viewport.pos.y + this.tileSize + this.player.speed)) >= this.viewport.playerPadding) {
+          this.player.viewport.pos.y += this.player.speed;
+          this.player.viewport.offset.y += this.player.speed;
+        } else {
+          this.viewport.bounds.y1 += this.player.speed;
+          this.viewport.bounds.y2 += this.player.speed;
+        }
+        return this.player.map.pos.y += this.player.speed;
+      } else {
+        dist = (this.player.viewport.pos.y + this.tileSize) - this.viewport.height.pixels;
+        if ((dist + this.player.speed) < 0) {
+          this.player.viewport.pos.y += this.player.speed;
+          this.player.viewport.offset.y += this.player.speed;
+          return this.player.map.pos.y += this.player.speed;
+        } else {
+          this.player.viewport.pos.y += -dist;
+          this.player.viewport.offset.y += -dist;
+          return this.player.map.pos.y += -dist;
+        }
+      }
     },
     _initViewport: function() {
       this.viewport.width = this.viewportWidth;
@@ -308,7 +319,8 @@
       return this.player.viewport.fenceDistance = (this.viewport.width.pixels / 2) - this.viewport.playerPadding;
     },
     _renderMap: function() {
-      return this.viewport.$element.css('background-image', "url(" + this.imagesPath + "/map.png)");
+      this.viewport.$element.css('background-image', "url(" + this.imagesPath + "/map.png)");
+      return this.viewport.$element.css('background-repeat', 'no-repeat');
     },
     _initViewportBounds: function() {},
     _initPlayerOnMap: function() {

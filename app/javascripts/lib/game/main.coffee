@@ -122,7 +122,6 @@ game.util.module "game.Main", [defaults],
 
   ready: (callback) ->
     timer = setInterval =>
-      console.log "Checking to see if map/sprites loaded..."
       if @mapLoaded and @spritesLoaded
         clearInterval(timer)
         callback()
@@ -176,125 +175,127 @@ game.util.module "game.Main", [defaults],
       self._debugViewport()
       self._debugPlayer()
 
-    Keyboard.addKeyHandler 'KEY_A', 'KEY_LEFT', ->
-      # The idea here is that we move the player sprite left until it
-      # reaches a certain point (we call it the "fence"), after which we
-      # continue the appearance of movement by shifting the viewport
-      # leftward along the map. We do this until we've reached the left
-      # edge of the map and can scroll no longer, at which point we move
-      # the player left until it touches the left edge of the map.
-      #
-      if (self.viewport.bounds.x1 - self.player.speed) >= 0
-        if (self.player.viewport.pos.x - self.player.speed) >= self.viewport.playerPadding
-          # Move player left
-          self.player.viewport.pos.x -= self.player.speed
-          self.player.viewport.offset.x -= self.player.speed
-        else
-          # Player has hit fence: shift viewport left
-          self.viewport.bounds.x1 -= self.player.speed
-          self.viewport.bounds.x2 -= self.player.speed
-        self.player.map.pos.x -= self.player.speed
-      else if (self.player.viewport.pos.x - self.player.speed) >= 0
-        # Left edge of map hit: move player left
-        self.player.viewport.pos.x -= self.player.speed
-        self.player.viewport.offset.x -= self.player.speed
-        self.player.map.pos.x -= self.player.speed
-      else
-        # Put player at left edge of map
-        self.player.viewport.pos.x -= self.player.viewport.pos.x
-        self.player.viewport.offset.x -= self.player.viewport.pos.x
-        self.player.map.pos.x -= self.player.viewport.pos.x
+    Keyboard.addKeyHandler 'KEY_A', 'KEY_LEFT',  -> self._movePlayerLeft()
+    Keyboard.addKeyHandler 'KEY_D', 'KEY_RIGHT', -> self._movePlayerRight()
+    Keyboard.addKeyHandler 'KEY_W', 'KEY_UP',    -> self._movePlayerUp()
+    Keyboard.addKeyHandler 'KEY_S', 'KEY_DOWN',  -> self._movePlayerDown()
 
-    Keyboard.addKeyHandler 'KEY_D', 'KEY_RIGHT', ->
-      # Similar to moving leftward, we move the player sprite right until
-      # it hits the fence, after which we continue the appearance of
-      # movement by shifting the viewport rightward along the map. We do
-      # this until we've reached the right edge of the map and can scroll
-      # no longer, at which point we move the player right until it touches
-      # the right edge of the map.
-      #
-      if (self.viewport.bounds.x2 + self.player.speed) <= self.map.width.pixels
-        if (self.viewport.width.pixels - (self.player.viewport.pos.x + self.tileSize + self.player.speed)) >= self.viewport.playerPadding
-          # Move player right
-          self.player.viewport.pos.x += self.player.speed
-          self.player.viewport.offset.x += self.player.speed
-        else
-          # Player has hit fence: shift viewport right
-          self.viewport.bounds.x1 += self.player.speed
-          self.viewport.bounds.x2 += self.player.speed
-        self.player.map.pos.x += self.player.speed
+  # The idea here is that we move the player sprite left until it reaches a
+  # certain point (we call it the "fence"), after which we continue the
+  # appearance of movement by shifting the viewport leftward along the map. We
+  # do this until we've reached the left edge of the map and can scroll no
+  # longer, at which point we move the player left until it touches the left
+  # edge of the map.
+  #
+  _movePlayerLeft: ->
+    if (@viewport.bounds.x1 - @player.speed) >= 0
+      if (@player.viewport.pos.x - @player.speed) >= @viewport.playerPadding
+        # Move player left
+        @player.viewport.pos.x -= @player.speed
+        @player.viewport.offset.x -= @player.speed
       else
-        dist = (self.player.viewport.pos.x + self.tileSize) - self.viewport.width.pixels
-        if (dist + self.player.speed) < 0
-          # Right edge of map hit: move player right
-          self.player.viewport.pos.x += self.player.speed
-          self.player.viewport.offset.x += self.player.speed
-          self.player.map.pos.x += self.player.speed
-        else
-          # Put player at right edge of map
-          self.player.viewport.pos.x += -dist
-          self.player.viewport.offset.x += -dist
-          self.player.map.pos.x += -dist
+        # Player has hit fence: shift viewport left
+        @viewport.bounds.x1 -= @player.speed
+        @viewport.bounds.x2 -= @player.speed
+      @player.map.pos.x -= @player.speed
+    else if (@player.viewport.pos.x - @player.speed) >= 0
+      # Left edge of map hit: move player left
+      @player.viewport.pos.x -= @player.speed
+      @player.viewport.offset.x -= @player.speed
+      @player.map.pos.x -= @player.speed
+    else
+      # Put player at left edge of map
+      @player.viewport.pos.x -= @player.viewport.pos.x
+      @player.viewport.offset.x -= @player.viewport.pos.x
+      @player.map.pos.x -= @player.viewport.pos.x
 
-    Keyboard.addKeyHandler 'KEY_W', 'KEY_UP', ->
-      # Similar to moving leftward, we move the player sprite upward until
-      # it hits the fence, after which we continue the appearance of
-      # movement by shifting the viewport upward along the map. We do
-      # this until we've reached the top edge of the map and can scroll
-      # no longer, at which point we move the player up until it touches
-      # the top edge of the map.
-      #
-      if (self.viewport.bounds.y1 - self.player.speed) >= 0
-        if (self.player.viewport.pos.y - self.player.speed) >= self.viewport.playerPadding
-          # Move player up
-          self.player.viewport.pos.y -= self.player.speed
-          self.player.viewport.offset.y -= self.player.speed
-        else
-          # Player has hit fence: shift viewport up
-          self.viewport.bounds.y1 -= self.player.speed
-          self.viewport.bounds.y2 -= self.player.speed
-        self.player.map.pos.y -= self.player.speed
-      else if (self.player.viewport.pos.y - self.player.speed) >= 0
-        # Left edge of map hit: move player up
-        self.player.viewport.pos.y -= self.player.speed
-        self.player.viewport.offset.y -= self.player.speed
-        self.player.map.pos.y -= self.player.speed
+  # Similar to moving leftward, we move the player sprite right until it hits
+  # the fence, after which we continue the appearance of movement by shifting
+  # the viewport rightward along the map. We do this until we've reached the
+  # right edge of the map and can scroll no longer, at which point we move the
+  # player right until it touches the right edge of the map.
+  #
+  _movePlayerRight: ->
+    if (@viewport.bounds.x2 + @player.speed) <= @map.width.pixels
+      if (@viewport.width.pixels - (@player.viewport.pos.x + @tileSize + @player.speed)) >= @viewport.playerPadding
+        # Move player right
+        @player.viewport.pos.x += @player.speed
+        @player.viewport.offset.x += @player.speed
       else
-        # Put player at top edge of map
-        self.player.viewport.pos.y -= self.player.viewport.pos.y
-        self.player.viewport.offset.y -= self.player.viewport.pos.y
-        self.player.map.pos.y -= self.player.viewport.pos.y
+        # Player has hit fence: shift viewport right
+        @viewport.bounds.x1 += @player.speed
+        @viewport.bounds.x2 += @player.speed
+      @player.map.pos.x += @player.speed
+    else
+      dist = (@player.viewport.pos.x + @tileSize) - @viewport.width.pixels
+      if (dist + @player.speed) < 0
+        # Right edge of map hit: move player right
+        @player.viewport.pos.x += @player.speed
+        @player.viewport.offset.x += @player.speed
+        @player.map.pos.x += @player.speed
+      else
+        # Put player at right edge of map
+        @player.viewport.pos.x += -dist
+        @player.viewport.offset.x += -dist
+        @player.map.pos.x += -dist
 
-    Keyboard.addKeyHandler 'KEY_S', 'KEY_DOWN', ->
-      # Similar to moving leftward, we move the player sprite downward
-      # until it hits the fence, after which we continue the appearance of
-      # movement by shifting the viewport downard along the map. We do
-      # this until we've reached the bottom edge of the map and can scroll
-      # no longer, at which point we move the player down until it touches
-      # the bottom edge of the map.
-      #
-      if (self.viewport.bounds.y2 + self.player.speed) <= self.map.height.pixels
-        if (self.viewport.height.pixels - (self.player.viewport.pos.y + self.tileSize + self.player.speed)) >= self.viewport.playerPadding
-          # Move player down
-          self.player.viewport.pos.y += self.player.speed
-          self.player.viewport.offset.y += self.player.speed
-        else
-          # Player has hit fence: shift viewport down
-          self.viewport.bounds.y1 += self.player.speed
-          self.viewport.bounds.y2 += self.player.speed
-        self.player.map.pos.y += self.player.speed
+  # Similar to moving leftward, we move the player sprite upward until it hits
+  # the fence, after which we continue the appearance of movement by shifting
+  # the viewport upward along the map. We do this until we've reached the top
+  # edge of the map and can scroll no longer, at which point we move the player
+  # up until it touches the top edge of the map.
+  #
+  _movePlayerUp: ->
+    if (@viewport.bounds.y1 - @player.speed) >= 0
+      if (@player.viewport.pos.y - @player.speed) >= @viewport.playerPadding
+        # Move player up
+        @player.viewport.pos.y -= @player.speed
+        @player.viewport.offset.y -= @player.speed
       else
-        dist = (self.player.viewport.pos.y + self.tileSize) - self.viewport.height.pixels
-        if (dist + self.player.speed) < 0
-          # Bottom edge of map hit: move player down
-          self.player.viewport.pos.y += self.player.speed
-          self.player.viewport.offset.y += self.player.speed
-          self.player.map.pos.y += self.player.speed
-        else
-          # Put player at bottom edge of map
-          self.player.viewport.pos.y += -dist
-          self.player.viewport.offset.y += -dist
-          self.player.map.pos.y += -dist
+        # Player has hit fence: shift viewport up
+        @viewport.bounds.y1 -= @player.speed
+        @viewport.bounds.y2 -= @player.speed
+      @player.map.pos.y -= @player.speed
+    else if (@player.viewport.pos.y - @player.speed) >= 0
+      # Left edge of map hit: move player up
+      @player.viewport.pos.y -= @player.speed
+      @player.viewport.offset.y -= @player.speed
+      @player.map.pos.y -= @player.speed
+    else
+      # Put player at top edge of map
+      @player.viewport.pos.y -= @player.viewport.pos.y
+      @player.viewport.offset.y -= @player.viewport.pos.y
+      @player.map.pos.y -= @player.viewport.pos.y
+
+  # Similar to moving leftward, we move the player sprite downward until it
+  # hits the fence, after which we continue the appearance of movement by
+  # shifting the viewport downard along the map. We do this until we've reached
+  # the bottom edge of the map and can scroll no longer, at which point we move
+  # the player down until it touches the bottom edge of the map.
+  #
+  _movePlayerDown: ->
+    if (@viewport.bounds.y2 + @player.speed) <= @map.height.pixels
+      if (@viewport.height.pixels - (@player.viewport.pos.y + @tileSize + @player.speed)) >= @viewport.playerPadding
+        # Move player down
+        @player.viewport.pos.y += @player.speed
+        @player.viewport.offset.y += @player.speed
+      else
+        # Player has hit fence: shift viewport down
+        @viewport.bounds.y1 += @player.speed
+        @viewport.bounds.y2 += @player.speed
+      @player.map.pos.y += @player.speed
+    else
+      dist = (@player.viewport.pos.y + @tileSize) - @viewport.height.pixels
+      if (dist + @player.speed) < 0
+        # Bottom edge of map hit: move player down
+        @player.viewport.pos.y += @player.speed
+        @player.viewport.offset.y += @player.speed
+        @player.map.pos.y += @player.speed
+      else
+        # Put player at bottom edge of map
+        @player.viewport.pos.y += -dist
+        @player.viewport.offset.y += -dist
+        @player.map.pos.y += -dist
 
   _initViewport: ->
     @viewport.width = @viewportWidth
@@ -335,6 +336,7 @@ game.util.module "game.Main", [defaults],
 
   _renderMap: ->
     @viewport.$element.css('background-image', "url(#{@imagesPath}/map.png)")
+    @viewport.$element.css('background-repeat', 'no-repeat')
 
   _initViewportBounds: ->
     # (just leave the viewport at (0, 0) for now)
