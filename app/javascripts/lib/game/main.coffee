@@ -175,10 +175,10 @@ game.util.module "game.Main", [defaults],
       self._debugViewport()
       self._debugPlayer()
 
-    Keyboard.addKeyHandler 'KEY_A', 'KEY_LEFT',  -> self._movePlayerLeft()
-    Keyboard.addKeyHandler 'KEY_D', 'KEY_RIGHT', -> self._movePlayerRight()
-    Keyboard.addKeyHandler 'KEY_W', 'KEY_UP',    -> self._movePlayerUp()
-    Keyboard.addKeyHandler 'KEY_S', 'KEY_DOWN',  -> self._movePlayerDown()
+    Keyboard.addKeyHandler 'KEY_A', 'KEY_LEFT',  'KEY_H', -> self._movePlayerLeft()
+    Keyboard.addKeyHandler 'KEY_D', 'KEY_RIGHT', 'KEY_L', -> self._movePlayerRight()
+    Keyboard.addKeyHandler 'KEY_W', 'KEY_UP',    'KEY_K', -> self._movePlayerUp()
+    Keyboard.addKeyHandler 'KEY_S', 'KEY_DOWN',  'KEY_J', -> self._movePlayerDown()
 
   # The idea here is that we move the player sprite left until it reaches a
   # certain point (we call it the "fence"), after which we continue the
