@@ -25,6 +25,7 @@ game.util.module 'game.Keyboard', [DOMEventHelpers],
   init: ->
     unless @isInit
       @reset()
+      @debugTimer = new Date()
       @isInit = true
     return this
 
@@ -51,16 +52,16 @@ game.util.module 'game.Keyboard', [DOMEventHelpers],
         self.pressedKeys[key] = 1
         # Cache handlers for keys which are currently being held down
         # so that it is faster when iterating through them
-        if key of self.keyHandlers
-          self.activeKeyHandlers[key] ||= self.keyHandlers[key]
-          self.globalKeyHandler?()
+        if (handler = self.keyHandlers[key])
+          self.activeKeyHandlers[key] ||= handler
           event.preventDefault()
 
       keyup: (event) ->
         key = event.keyCode
         delete self.pressedKeys[key]
-        delete self.activeKeyHandlers[key]
-        event.preventDefault()
+        if key of self.activeKeyHandlers
+          delete self.activeKeyHandlers[key]
+          event.preventDefault()
 
     @bindEvents window,
       blur: (event) ->
@@ -74,6 +75,11 @@ game.util.module 'game.Keyboard', [DOMEventHelpers],
     return this
 
   runHandlers: ->
+    date = new Date()
+    # don't want to print debug info to the console *every* draw, just once per second
+    if (date - @debugTimer) >= 1000
+      @globalKeyHandler?()
+      @debugTimer = date
     handler() for key, handler of @activeKeyHandlers
 
   addKeyHandler: (keyNames..., callback) ->
