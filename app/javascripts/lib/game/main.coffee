@@ -35,6 +35,8 @@ defaults.viewportHeight = _dim(400, 'pixels')
 # defaults.viewportWidth = defaults.mapWidth
 # defaults.viewportHeight = defaults.mapHeight
 
+defaults.debug = false
+
 game.util.module "game.Main", [DOMEventHelpers, defaults],
   init: ->
     unless @isInit
@@ -141,8 +143,9 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     @_initViewportBounds()
     @_initPlayerOnMap()
 
-    @_debugViewport()
-    @_debugPlayer()
+    if @debug
+      @_debugViewport()
+      @_debugPlayer()
 
     @startDrawing()
 
@@ -190,9 +193,10 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
   _assignKeyHandlers: ->
     self = this
 
-    Keyboard.addKeyHandler ->
-      self._debugViewport()
-      self._debugPlayer()
+    if @debug
+      Keyboard.addKeyHandler ->
+        self._debugViewport()
+        self._debugPlayer()
 
     Keyboard.addKeyHandler 'KEY_A', 'KEY_LEFT',  'KEY_H', -> self._movePlayerLeft()
     Keyboard.addKeyHandler 'KEY_D', 'KEY_RIGHT', 'KEY_L', -> self._movePlayerRight()
@@ -321,7 +325,7 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     @viewport.height = @viewportHeight
 
   _preloadMap: ->
-    # ... load the map tiles here ...
+    # ... fetch the map data here ...
     @map.width = @mapWidth
     @map.height = @mapHeight
     @mapLoaded = true
@@ -342,7 +346,7 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
         @spritesLoaded = true if @numSpritesLoaded == len
       @sprite.instances[name] = image
       i++
-    # ( load map tiles here )
+    # ... load map tiles here ...
 
   _initPlayerWithinViewport: ->
     # Initialize the player's position on the map
