@@ -99,7 +99,7 @@ game.util.module "game.Main", [defaults],
       speed: @playerSpeed
     }
     @sprite = {
-      names: ["player"]
+      names: ["link"]
       instances: {}
     }
     return this
@@ -160,7 +160,7 @@ game.util.module "game.Main", [defaults],
     @canvas.ctx.clearRect(0, 0, @viewport.width.pixels, @viewport.height.pixels)
 
     # Draw the player
-    @canvas.ctx.drawImage(@sprite.instances['player'], @player.viewport.pos.x, @player.viewport.pos.y)
+    @canvas.ctx.drawImage(@sprite.instances['link'], 0, 0, 17, 24, @player.viewport.pos.x, @player.viewport.pos.y, 17, 24)
 
   _keepDrawing: ->
     self = this
@@ -315,7 +315,7 @@ game.util.module "game.Main", [defaults],
 
     while i < len
       name = @sprite.names[i]
-      image = new Image(@tileSize, @tileSize)
+      image = new Image()
       image.src = "#{@imagesPath}/#{name}.gif"
       image.onload = =>
         @numSpritesLoaded++

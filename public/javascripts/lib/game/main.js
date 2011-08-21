@@ -108,7 +108,7 @@
         speed: this.playerSpeed
       };
       this.sprite = {
-        names: ["player"],
+        names: ["link"],
         instances: {}
       };
       return this;
@@ -162,7 +162,7 @@
       Keyboard.runHandlers();
       this.viewport.$element.css('background-position', [-this.viewport.bounds.x1 + 'px', -this.viewport.bounds.y1 + 'px'].join(" "));
       this.canvas.ctx.clearRect(0, 0, this.viewport.width.pixels, this.viewport.height.pixels);
-      return this.canvas.ctx.drawImage(this.sprite.instances['player'], this.player.viewport.pos.x, this.player.viewport.pos.y);
+      return this.canvas.ctx.drawImage(this.sprite.instances['link'], 0, 0, 17, 24, this.player.viewport.pos.x, this.player.viewport.pos.y, 17, 24);
     },
     _keepDrawing: function() {
       var self;
@@ -289,7 +289,7 @@
       _results = [];
       while (i < len) {
         name = this.sprite.names[i];
-        image = new Image(this.tileSize, this.tileSize);
+        image = new Image();
         image.src = "" + this.imagesPath + "/" + name + ".gif";
         image.onload = __bind(function() {
           this.numSpritesLoaded++;
