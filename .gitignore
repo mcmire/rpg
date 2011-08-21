@@ -6,3 +6,4 @@ tags
 tmp
 public/stylesheets
 public/javascripts
+app/javascripts/lib/game/*.js
