@@ -1,6 +1,6 @@
 game = window.game
 
-# A module is just an object, but which has a 'name' property equal to its
+# A module is just an object, but which has a '__name' property equal to its
 # object path. An object path is just a string of identifiers, separated by
 # ".". With that in mind, this method creates an object at the given object
 # path. Any objects leading up to the final module object will be
@@ -13,9 +13,9 @@ game = window.game
 #
 # is equivalent to doing the following:
 #
-#   Foo = {name: "Foo"}
-#   Foo.Bar = {name: "Foo.Bar"}
-#   Foo.Bar.Baz = {name: "Foo.Bar.Baz", bleep: true, bloop: "foo"}
+#   Foo = {__name: "Foo"}
+#   Foo.Bar = {__name: "Foo.Bar"}
+#   Foo.Bar.Baz = {__name: "Foo.Bar.Baz", bleep: true, bloop: "foo"}
 #
 # Optionally, an array of objects may be specified as the second
 # argument before the given initial object value. These objects will be
@@ -30,8 +30,8 @@ game = window.game
 #
 # results in this:
 #
-#   Foo = {name: "Foo"}
-#   Foo.Bar = {name: "Foo.Bar"}
+#   Foo = {__name: "Foo"}
+#   Foo.Bar = {__name: "Foo.Bar"}
 #   Foo.Bar.Baz = {
 #     bleep: true
 #     bloop: "foo"
@@ -62,6 +62,7 @@ _module = (chainStrs, args...) ->
     $.extend newObj, mixin for mixin in mixins
 
   chainStrs = chainStrs.split(".") if typeof chainStrs is "string"
+  newObj.__name = chainStrs.join(".")
   newIdStr = chainStrs.pop()
   tail = _ns(chainStrs)
   chain = _chain(chainStrs)
@@ -84,7 +85,7 @@ _ns = (chainStrs) ->
   while i < chainStrs.length
     idStr = chainStrs[i]
     name = chainStrs.slice(0, i+1).join(".")
-    context[idStr] ?= {name: name}
+    context[idStr] ?= {__name: name}
     context = context[idStr]
     i++
   context
