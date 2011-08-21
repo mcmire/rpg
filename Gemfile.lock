@@ -1,4 +1,13 @@
 GIT
+  remote: http://github.com/chriseppstein/compass
+  revision: 4187f889700abf570302f0f96360c0e37cfe8368
+  specs:
+    compass (0.12.0.alpha.0.4187f88)
+      chunky_png (~> 1.2)
+      fssm (>= 0.2.7)
+      sass (~> 3.1)
+
+GIT
   remote: http://github.com/guard/guard
   revision: b144514b06357a890b19d29b6001eaf2d686800b
   specs:
@@ -8,17 +17,15 @@ GIT
 GEM
   remote: http://rubygems.org/
   specs:
-    chunky_png (1.1.2)
+    chunky_png (1.2.1)
     coffee-script (2.2.0)
       coffee-script-source
       execjs
     coffee-script-source (1.1.2)
     colored (1.2)
-    compass (0.11.beta.7)
-      chunky_png (~> 1.1.0)
-      sass (>= 3.1.0.alpha.249)
     execjs (1.2.4)
       multi_json (~> 1.0)
+    fssm (0.2.7)
     growl (1.0.3)
     guard-coffeescript (0.3.3)
       coffee-script (>= 2.2.0)
@@ -28,7 +35,7 @@ GEM
     multi_json (1.0.3)
     rack (1.3.2)
     rb-fsevent (0.4.3.1)
-    sass (3.2.0.alpha.11)
+    sass (3.1.7)
     shotgun (0.9)
       rack (>= 1.0)
     sinatra (1.2.6)
@@ -42,7 +49,7 @@ PLATFORMS
 
 DEPENDENCIES
   colored
-  compass (= 0.11.beta.7)
+  compass!
   growl
   guard!
   guard-coffeescript
