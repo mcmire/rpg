@@ -339,7 +339,10 @@ game.util.module "game.Main", [defaults],
     @viewport.$element.css('background-repeat', 'no-repeat')
 
   _initViewportBounds: ->
-    # (just leave the viewport at (0, 0) for now)
+    @viewport.bounds.x1 = 0
+    @viewport.bounds.x2 = @viewport.width.pixels
+    @viewport.bounds.y1 = 0
+    @viewport.bounds.y2 = @viewport.height.pixels
 
   _initPlayerOnMap: ->
     @player.map.pos.x = @viewport.bounds.x1 + (@viewport.width.pixels / 2)
