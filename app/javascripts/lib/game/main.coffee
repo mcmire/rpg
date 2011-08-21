@@ -1,5 +1,5 @@
 game = window.game
-{Keyboard, Canvas} = game
+{Keyboard, DOMEventHelpers, Canvas} = game
 
 defaults = {}
 
@@ -25,13 +25,17 @@ defaults.mapLoaded        = false
 defaults.numSpritesLoaded = 0
 defaults.spritesLoaded    = false
 
-defaults.viewportWidth  = _dim(24, 'tiles')
-defaults.viewportHeight = _dim(16, 'tiles')
-
 defaults.mapWidth = _dim(1280, 'pixels')
 defaults.mapHeight = _dim(800, 'pixels')
 
-game.util.module "game.Main", [defaults],
+# defaults.viewportWidth  = _dim(24, 'tiles')
+# defaults.viewportHeight = _dim(16, 'tiles')
+defaults.viewportWidth = _dim(600, 'pixels')
+defaults.viewportHeight = _dim(400, 'pixels')
+# defaults.viewportWidth = defaults.mapWidth
+# defaults.viewportHeight = defaults.mapHeight
+
+game.util.module "game.Main", [DOMEventHelpers, defaults],
   init: ->
     unless @isInit
       @reset()
@@ -105,11 +109,16 @@ game.util.module "game.Main", [defaults],
     return this
 
   addEvents: ->
+    self = this
     Keyboard.addEvents()
+    @bindEvents window,
+      blur: -> self.suspend()
+      focus: -> self.resume()
     return this
 
   removeEvents: ->
     Keyboard.removeEvents()
+    @unbindEvents window, 'blur', 'focus'
     return this
 
   attachTo: (wrapper) ->
@@ -167,6 +176,16 @@ game.util.module "game.Main", [defaults],
     # Use setTimeout here instead of setInterval so we can guarantee that
     # we can stop the loop, if we need to
     setTimeout (-> self._keepDrawing()), @drawInterval if @isDrawing
+
+  suspend: ->
+    unless @stateBeforeSuspend
+      @stateBeforeSuspend = {wasDrawing: !!@isDrawing}
+      @stopDrawing()
+
+  resume: ->
+    if @stateBeforeSuspend
+      @startDrawing() if @stateBeforeSuspend.wasDrawing
+      @stateBeforeSuspend = null
 
   _assignKeyHandlers: ->
     self = this
@@ -327,8 +346,11 @@ game.util.module "game.Main", [defaults],
 
   _initPlayerWithinViewport: ->
     # Initialize the player's position on the map
-    @player.viewport.pos.x = @viewport.width.pixels / 2
-    @player.viewport.pos.y = @viewport.height.pixels / 2
+    # @player.viewport.pos.x = @viewport.width.pixels / 2
+    # @player.viewport.pos.y = @viewport.height.pixels / 2
+    @player.viewport.pos.x = 0
+    @player.viewport.pos.y = 0
+
     # Initialize the "fence" distance -- the distance the player can travel from
     # the center of the viewport to the edge of the viewport before it starts
     # scrolling
@@ -345,8 +367,8 @@ game.util.module "game.Main", [defaults],
     @viewport.bounds.y2 = @viewport.height.pixels
 
   _initPlayerOnMap: ->
-    @player.map.pos.x = @viewport.bounds.x1 + (@viewport.width.pixels / 2)
-    @player.map.pos.y = @viewport.bounds.y1 + (@viewport.height.pixels / 2)
+    @player.map.pos.x = @viewport.bounds.x1 + @player.viewport.pos.x
+    @player.map.pos.y = @viewport.bounds.y1 + @player.viewport.pos.y
 
   _debugViewport: ->
     console.log "@viewport.bounds = (#{@viewport.bounds.x1}..#{@viewport.bounds.x2}, #{@viewport.bounds.y1}..#{@viewport.bounds.y2})"
