@@ -147,7 +147,9 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     return this
 
   stopDrawing: ->
-    clearInterval @drawTimer if @drawTimer
+    if @drawTimer
+      clearInterval @drawTimer
+      @drawTimer = null
     return this
 
   draw: ->
