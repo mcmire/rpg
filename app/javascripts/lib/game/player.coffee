@@ -42,7 +42,7 @@ class game.Player
     @map.pos.y = @main.viewport.bounds.y1 + @viewport.pos.y
 
   draw: ->
-    #console.log(@action)
+    console.log(@action)
     @animations[@action].step(@viewport.pos.x, @viewport.pos.y)
     # @main.canvas.ctx.drawImage(@sprite, 0, 0, 17, 24, @viewport.pos.x, @viewport.pos.y, 17, 24)
 
