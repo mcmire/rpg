@@ -1,5 +1,5 @@
 game = window.game
-{Keyboard, DOMEventHelpers, Canvas, Player} = game
+{Keyboard, DOMEventHelpers, Canvas, CollisionLayer, Player} = game
 
 defaults = {}
 
@@ -17,13 +17,11 @@ _dim = (value, unit) ->
 defaults.drawInterval  = 30   # ms/frame
 defaults.tileSize      = 64   # pixels
 defaults.playerPadding = 30   # pixels
-defaults.playerSpeed   = 10   # pixels/frame
 
 defaults.imagesPath = "/images"
 
 defaults.mapLoaded = false
 defaults.entities = []
-defaults.numEntitiesLoaded = 0
 
 defaults.mapWidth = _dim(2560, 'pixels')
 defaults.mapHeight = _dim(1600, 'pixels')
@@ -50,18 +48,20 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
         .css('width', @viewport.width.pixels)
         .css('height', @viewport.height.pixels)
 
+      @collisionLayer = CollisionLayer.init(this)
+      #@viewport.$element.append(@collisionLayer.$debugMask)
+
       @canvas = Canvas.create(
         @viewport.width.pixels,
         @viewport.height.pixels
       )
       @viewport.$element.append(@canvas.$element)
+      #@collisionLayer.$debugMask.append(@canvas.$element)
+
+      @_preloadMap()
 
       @player = new Player(this)
       @entities.push(@player)
-
-      @_preloadMap()
-      @_preloadSprites()
-      @player.initWithinViewport()
 
       @isInit = true
     return this
@@ -77,7 +77,7 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     return this
 
   reset: ->
-    @isDrawing = false
+    @stopDrawing()
     @data = []
     @viewport = {
       width: null
@@ -119,8 +119,12 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
 
   ready: (callback) ->
     timer = setInterval =>
-      #console.log entities: @entities, numEntitiesLoaded: @numEntitiesLoaded
-      if @mapLoaded and @numEntitiesLoaded == @entities.length
+      console.log "Checking to see if all grobs are loaded..."
+      if (
+        @mapLoaded and
+        @collisionLayer.isLoaded and
+        $.v.every @entities, (entity) -> entity.isLoaded
+      )
         clearInterval(timer)
         callback()
     , 100
@@ -138,13 +142,12 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     @startDrawing()
 
   startDrawing: ->
-    unless @isDrawing
-      @isDrawing = true
-      @_keepDrawing()
+    self = this
+    @drawTimer = setInterval (-> self.draw()), @drawInterval unless @drawTimer
     return this
 
   stopDrawing: ->
-    @isDrawing = false
+    clearInterval @drawTimer if @drawTimer
     return this
 
   draw: ->
@@ -153,7 +156,9 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     Keyboard.runHandlers()
 
     # Reposition the background
-    @viewport.$element.css('background-position', [-@viewport.bounds.x1 + 'px', -@viewport.bounds.y1 + 'px'].join(" "))
+    positionStr = [-@viewport.bounds.x1 + 'px', -@viewport.bounds.y1 + 'px'].join(" ")
+    @viewport.$element.css('background-position', positionStr)
+    #@collisionLayer.$debugMask.css('background-position', positionStr)
 
     # Clear the canvas
     @canvas.ctx.clearRect(0, 0, @viewport.width.pixels, @viewport.height.pixels)
@@ -165,17 +170,9 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     @globalCounter++
     @globalCounter %= 10
 
-
-  _keepDrawing: ->
-    self = this
-    @draw()
-    # Use setTimeout here instead of setInterval so we can guarantee that
-    # we can stop the loop, if we need to
-    setTimeout (-> self._keepDrawing()), @drawInterval if @isDrawing
-
   suspend: ->
     unless @stateBeforeSuspend
-      @stateBeforeSuspend = {wasDrawing: !!@isDrawing}
+      @stateBeforeSuspend = {wasDrawing: !!@drawTimer}
       @stopDrawing()
 
   resume: ->
@@ -205,9 +202,6 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     @map.width = @mapWidth
     @map.height = @mapHeight
     @mapLoaded = true
-
-  _preloadSprites: ->
-    # needed anymore?
 
   _renderMap: ->
     @viewport.$element.css('background-image', "url(#{@imagesPath}/map2x.png)")

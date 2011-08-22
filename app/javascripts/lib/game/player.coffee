@@ -4,7 +4,7 @@ class game.Player
   constructor: (@main) ->
     imagePath = "#{@main.imagesPath}/link2x.gif"
     @spriteSheet = new game.SpriteSheet(imagePath, 34,48)
-    @spriteSheet.image.onload = => @main.numEntitiesLoaded++
+    @spriteSheet.image.onload = => @isLoaded = true
     @spriteSheet.image.onerror = => throw "Image #{imagePath} failed to load!"
     @action = 'idleRight'
     @animations = {}
@@ -14,29 +14,28 @@ class game.Player
     @animations['runDown'] = new game.SpriteAnimation(@spriteSheet, 4, [16,17,18,19,20,21,22])
     @animations['runUp'] = new game.SpriteAnimation(@spriteSheet, 4, [23,24,25,26,27,28])
 
+    @spriteWidth = 16
+    @spriteHeight = 24
+
     @viewport = {
       pos: {x: 0, y: 0}
       offset: {x: 0, y: 0}
-      fenceDistance: null
     }
     @map = {
       pos: {x: 0, y: 0}
       width: @main.mapWidth
       height: @main.mapHeight
     }
-    @speed = @main.playerSpeed
+    @speed = 7  # px/frame
 
-  initWithinViewport: ->
+    @_initWithinViewport()
+
+  _initWithinViewport: ->
     # Initialize the player's position on the map
     # @viewport.pos.x = @main.viewport.width.pixels / 2
     # @viewport.pos.y = @main.viewport.height.pixels / 2
     @viewport.pos.x = 0
     @viewport.pos.y = 0
-
-    # Initialize the "fence" distance -- the distance the player can travel from
-    # the center of the viewport to the edge of the viewport before it starts
-    # scrolling
-    @viewport.fenceDistance = (@main.viewport.width.pixels / 2) - @main.viewport.playerPadding
 
   initOnMap: ->
     @map.pos.x = @main.viewport.bounds.x1 + @viewport.pos.x
@@ -56,6 +55,10 @@ class game.Player
   #
   moveLeft: ->
     @action = 'runLeft'
+
+    # return if @_collidesMovingLeftAt(@map.pos.x - @speed)
+    return if @main.collisionLayer.isCollision(@map.pos.x - @speed, @map.pos.y)
+
     if (@main.viewport.bounds.x1 - @speed) >= 0
       if (@viewport.pos.x - @speed) >= @main.viewport.playerPadding
         # Move player left
@@ -77,6 +80,9 @@ class game.Player
       @viewport.offset.x -= @viewport.pos.x
       @map.pos.x -= @viewport.pos.x
 
+  _collidesMovingLeftAt: (x) ->
+    @main.collisionLayer.isRightEdgeCollision(x)
+
   # Similar to moving leftward, we move the player sprite right until it hits
   # the fence, after which we continue the appearance of movement by shifting
   # the viewport rightward along the map. We do this until we've reached the
@@ -85,8 +91,12 @@ class game.Player
   #
   moveRight: ->
     @action = 'runRight'
+
+    # return if @_collidesMovingRightAt(@map.pos.x + @spriteWidth + @speed)
+    return if @main.collisionLayer.isCollision(@map.pos.x + @spriteWidth + @speed, @map.pos.y)
+
     if (@main.viewport.bounds.x2 + @speed) <= @main.map.width.pixels
-      if (@main.viewport.width.pixels - (@viewport.pos.x + @main.tileSize + @speed)) >= @main.viewport.playerPadding
+      if (@main.viewport.width.pixels - (@viewport.pos.x + @spriteWidth + @speed)) >= @main.viewport.playerPadding
         # Move player right
         @viewport.pos.x += @speed
         @viewport.offset.x += @speed
@@ -96,7 +106,7 @@ class game.Player
         @main.viewport.bounds.x2 += @speed
       @map.pos.x += @speed
     else
-      dist = (@viewport.pos.x + @main.tileSize) - @main.viewport.width.pixels
+      dist = (@viewport.pos.x + @spriteWidth) - @main.viewport.width.pixels
       if (dist + @speed) < 0
         # Right edge of map hit: move player right
         @viewport.pos.x += @speed
@@ -108,6 +118,9 @@ class game.Player
         @viewport.offset.x += -dist
         @map.pos.x += -dist
 
+  _collidesMovingRightAt: (x) ->
+    @main.collisionLayer.isLeftEdgeCollision(x)
+
   # Similar to moving leftward, we move the player sprite upward until it hits
   # the fence, after which we continue the appearance of movement by shifting
   # the viewport upward along the map. We do this until we've reached the top
@@ -116,6 +129,10 @@ class game.Player
   #
   moveUp: ->
     @action = 'runUp'
+
+    # return if @_collidesMovingUpAt(@map.pos.y - @speed)
+    return if @main.collisionLayer.isCollision(@map.pos.x, @map.pos.y - @speed)
+
     if (@main.viewport.bounds.y1 - @speed) >= 0
       if (@viewport.pos.y - @speed) >= @main.viewport.playerPadding
         # Move player up
@@ -137,6 +154,9 @@ class game.Player
       @viewport.offset.y -= @viewport.pos.y
       @map.pos.y -= @viewport.pos.y
 
+  _collidesMovingUpAt: (y) ->
+    @main.collisionLayer.isBottomEdgeCollision(y)
+
   # Similar to moving leftward, we move the player sprite downward until it
   # hits the fence, after which we continue the appearance of movement by
   # shifting the viewport downard along the map. We do this until we've reached
@@ -145,8 +165,12 @@ class game.Player
   #
   moveDown: ->
     @action = 'runDown'
+
+    # return if @_collidesMovingDownAt(@map.pos.y + @spriteHeight + @speed)
+    return if @main.collisionLayer.isCollision(@map.pos.x, @map.pos.y + @spriteHeight + @speed)
+
     if (@main.viewport.bounds.y2 + @speed) <= @main.map.height.pixels
-      if (@main.viewport.height.pixels - (@viewport.pos.y + @main.tileSize + @speed)) >= @main.viewport.playerPadding
+      if (@main.viewport.height.pixels - (@viewport.pos.y + @spriteHeight + @speed)) >= @main.viewport.playerPadding
         # Move player down
         @viewport.pos.y += @speed
         @viewport.offset.y += @speed
@@ -156,7 +180,7 @@ class game.Player
         @main.viewport.bounds.y2 += @speed
       @map.pos.y += @speed
     else
-      dist = (@viewport.pos.y + @main.tileSize) - @main.viewport.height.pixels
+      dist = (@viewport.pos.y + @spriteHeight) - @main.viewport.height.pixels
       if (dist + @speed) < 0
         # Bottom edge of map hit: move player down
         @viewport.pos.y += @speed
@@ -168,5 +192,9 @@ class game.Player
         @viewport.offset.y += -dist
         @map.pos.y += -dist
 
+  _collidesMovingDownAt: (y) ->
+    @main.collisionLayer.isTopEdgeCollision(y)
+
   debug: ->
     console.log "@viewport.pos = (#{@main.viewport.pos.x}, #{@main.viewport.pos.y})"
+

@@ -15,6 +15,7 @@ helpers do
       lib/game/dom_event_helpers.js
       lib/game/keyboard.js
       lib/game/canvas.js
+      lib/game/collision_layer.js
       lib/game/player.js
       lib/game/main.js
       lib/game/sprite.js
