@@ -17,6 +17,17 @@ game.util.module "game.CollisionLayer",
         {x1: 96, x2: 352, y1: 79, y2: 108}
       ]
 
+      c = @debugCanvas = Canvas.create(@width, @height)
+      for range in @collisionRanges
+        c.ctx.beginPath()
+        c.ctx.moveTo(range.x1-0.5, range.y1-0.5)
+        c.ctx.lineTo(range.x2-0.5, range.y1-0.5)
+        c.ctx.lineTo(range.x2-0.5, range.y2-0.5)
+        c.ctx.lineTo(range.x1-0.5, range.y2-0.5)
+        c.ctx.lineTo(range.x1-0.5, range.y1-0.5)
+        c.ctx.strokeStyle = "#ff0000"
+        c.ctx.stroke()
+
       @$debugMask = $('<div />')
         .css('width', @width)
         .css('height', @height)

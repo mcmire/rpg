@@ -41,7 +41,7 @@ $.extend Canvas,
         alpha: data[i + 3]
       }
 
-    setPixel: (x, y, r, g, b, a) ->
+    setPixel: (x, y, r, g, b, a=255) ->
       i = (x + (y * @width)) * 4
       @data[i + 0] = r
       @data[i + 1] = g

@@ -168,6 +168,9 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     # Draw the player
     @player.draw()
 
+    # test
+    @canvas.ctx.drawImage(@collisionLayer.debugCanvas.element, 0, 0)
+
     #increment the global counter
     @globalCounter++
     @globalCounter %= 10
