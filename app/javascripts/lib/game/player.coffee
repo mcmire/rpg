@@ -14,8 +14,8 @@ class game.Player
     @animations['runDown'] = new game.SpriteAnimation(@spriteSheet, 4, [16,17,18,19,20,21,22])
     @animations['runUp'] = new game.SpriteAnimation(@spriteSheet, 4, [23,24,25,26,27,28])
 
-    @spriteWidth = 16
-    @spriteHeight = 24
+    @spriteWidth = 32
+    @spriteHeight = 48
 
     @viewport = {
       pos: {x: 0, y: 0}
