@@ -2,11 +2,17 @@ game = window.game
 
 class game.Player
   constructor: (@main) ->
-    imagePath = "#{@main.imagesPath}/link.gif"
-    @sprite = new Image(imagePath, 65, 188)
-    @sprite.src = imagePath
-    @sprite.onload = => @main.numEntitiesLoaded++
-    @sprite.onerror = => throw "Image #{imagePath} failed to load!"
+    imagePath = "#{@main.imagesPath}/link2x.gif"
+    @spriteSheet = new game.SpriteSheet(imagePath, 34,48)
+    @spriteSheet.image.onload = => @main.numEntitiesLoaded++
+    @spriteSheet.image.onerror = => throw "Image #{imagePath} failed to load!"
+    @action = 'idleRight'
+    @animations = {}
+    @animations['idleRight'] = new game.SpriteAnimation(@spriteSheet, 4, [8])
+    @animations['runRight']  = new game.SpriteAnimation(@spriteSheet, 4, [8,9,10,11,12,13,14,15])
+    @animations['runLeft'] = new game.SpriteAnimation(@spriteSheet, 4, [0,1,2,3,4,5,6,7])
+    @animations['runDown'] = new game.SpriteAnimation(@spriteSheet, 4, [16,17,18,19,20,21,22])
+    @animations['runUp'] = new game.SpriteAnimation(@spriteSheet, 4, [23,24,25,26,27,28])
 
     @viewport = {
       pos: {x: 0, y: 0}
@@ -37,7 +43,9 @@ class game.Player
     @map.pos.y = @main.viewport.bounds.y1 + @viewport.pos.y
 
   draw: ->
-    @main.canvas.ctx.drawImage(@sprite, 0, 0, 17, 24, @viewport.pos.x, @viewport.pos.y, 17, 24)
+    console.log(@action)
+    @animations[@action].step(@viewport.pos.x, @viewport.pos.y)
+    # @main.canvas.ctx.drawImage(@sprite, 0, 0, 17, 24, @viewport.pos.x, @viewport.pos.y, 17, 24)
 
   # The idea here is that we move the player sprite left until it reaches a
   # certain point (we call it the "fence"), after which we continue the
@@ -47,6 +55,7 @@ class game.Player
   # edge of the map.
   #
   moveLeft: ->
+    @action = 'runLeft'
     if (@main.viewport.bounds.x1 - @speed) >= 0
       if (@viewport.pos.x - @speed) >= @main.viewport.playerPadding
         # Move player left
@@ -75,6 +84,7 @@ class game.Player
   # player right until it touches the right edge of the map.
   #
   moveRight: ->
+    @action = 'runRight'
     if (@main.viewport.bounds.x2 + @speed) <= @main.map.width.pixels
       if (@main.viewport.width.pixels - (@viewport.pos.x + @main.tileSize + @speed)) >= @main.viewport.playerPadding
         # Move player right
@@ -105,6 +115,7 @@ class game.Player
   # up until it touches the top edge of the map.
   #
   moveUp: ->
+    @action = 'runUp'
     if (@main.viewport.bounds.y1 - @speed) >= 0
       if (@viewport.pos.y - @speed) >= @main.viewport.playerPadding
         # Move player up
@@ -133,6 +144,7 @@ class game.Player
   # the player down until it touches the bottom edge of the map.
   #
   moveDown: ->
+    @action = 'runDown'
     if (@main.viewport.bounds.y2 + @speed) <= @main.map.height.pixels
       if (@main.viewport.height.pixels - (@viewport.pos.y + @main.tileSize + @speed)) >= @main.viewport.playerPadding
         # Move player down

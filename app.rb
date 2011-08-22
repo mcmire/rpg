@@ -17,6 +17,7 @@ helpers do
       lib/game/canvas.js
       lib/game/player.js
       lib/game/main.js
+      lib/game/sprite.js
     )
     html = ""
     scripts.each do |script|

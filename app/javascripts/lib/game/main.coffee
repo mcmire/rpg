@@ -15,7 +15,7 @@ _dim = (value, unit) ->
   return d
 
 defaults.drawInterval  = 30   # ms/frame
-defaults.tileSize      = 32   # pixels
+defaults.tileSize      = 64   # pixels
 defaults.playerPadding = 30   # pixels
 defaults.playerSpeed   = 10   # pixels/frame
 
@@ -25,8 +25,8 @@ defaults.mapLoaded = false
 defaults.entities = []
 defaults.numEntitiesLoaded = 0
 
-defaults.mapWidth = _dim(1280, 'pixels')
-defaults.mapHeight = _dim(800, 'pixels')
+defaults.mapWidth = _dim(2560, 'pixels')
+defaults.mapHeight = _dim(1600, 'pixels')
 
 # defaults.viewportWidth  = _dim(24, 'tiles')
 # defaults.viewportHeight = _dim(16, 'tiles')
@@ -126,6 +126,7 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     , 100
 
   run: ->
+    @globalCounter = 0
     @_renderMap()
     @_initViewportBounds()
     @player.initOnMap()
@@ -159,6 +160,11 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
 
     # Draw the player
     @player.draw()
+
+    #increment the global counter
+    @globalCounter++
+    @globalCounter %= 10
+
 
   _keepDrawing: ->
     self = this
@@ -204,7 +210,7 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     # needed anymore?
 
   _renderMap: ->
-    @viewport.$element.css('background-image', "url(#{@imagesPath}/map.png)")
+    @viewport.$element.css('background-image', "url(#{@imagesPath}/map2x.png)")
     @viewport.$element.css('background-repeat', 'no-repeat')
 
   _initViewportBounds: ->
