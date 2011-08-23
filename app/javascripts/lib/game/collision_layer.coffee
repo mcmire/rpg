@@ -37,60 +37,6 @@ game.util.module "game.CollisionLayer",
       @isInit = true
     return this
 
-  # Given an x-coordinate and y-coordinate of an entity as well as a speed in
-  # the X direction and speed in the Y direction in which that entity is
-  # moving, offsets the coordinates by the speed and then determines whether
-  # the coordinates would be in the inside of a collision box.
-  #
-  # If the movement of the coordinates results in a collision, returns a value
-  # which represents the X- or Y-value of the closest side of the box with
-  # which the coordinates would have collided. The axis of the value, as well
-  # as which side is represented in the value, corresponds to the direction the
-  # coordinates were moved. This direction is determined from the axis of the
-  # speed given and what the sign of the speed is. So:
-  #
-  # * s.x > 0, s.y = 0: Coordinates are moved right, and on collision, the
-  #   X-value of the left edge of the colliding box is returned.
-  # * s.x < 0, s.y = 0: Leftward movement, X-value of right edge is returned.
-  # * s.x = 0, s.y > 0: Downward movement, Y-value of top edge is returned.
-  # * s.x = 0, s.y < 0: Upward movement, Y-value of bottom edge is returned.
-  #
-  collision: (p, s) ->
-    # Step the coordinates into the next frame
-    pp = p.shiftBy(s)
-
-    # Determine the direction of movement
-    if s.x and not s.y
-      dir = 1 if s.x > 0
-      dir = 2 if s.x < 0
-    else if s.y and not s.x
-      dir = 3 if s.y > 0
-      dir = 4 if s.y < 0
-    else # if not s.x and not s.y
-      dir = 0
-
-    for box in @collisionBoxes
-      collisionOnBoxLeft = (
-        box.y1 >= ent.y1 and
-        box.y2 <= ent.y2 and
-        box.x2 >= ent.x1
-      )
-      isCollision = (
-        box.x1 <= pp.x <= box.x2 and
-        box.y1 <= pp.y <= box.y2
-      )
-      if isCollision
-        # Determine the edge of the colliding box to return
-        edge = switch dir
-          when 1 then box.x1
-          when 2 then box.x2
-          when 3 then box.y1
-          when 4 then box.y2
-        return edge
-
-    # If we're here, no collision took place
-    return null
-
   # Called when an entity is moving right. Given the coordinates of an entity in
   # the position it is about to be moved to, returns the left edge of a box on
   # the collision layer that the coordinates collide with. This edge (which is
