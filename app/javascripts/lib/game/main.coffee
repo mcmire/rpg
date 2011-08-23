@@ -60,7 +60,7 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
 
       @_preloadMap()
 
-      @player = new Player(this)
+      @player = new Link(this, 'link2x.gif', width: 34, height: 48 )
       @entities.push(@player)
 
       @isInit = true

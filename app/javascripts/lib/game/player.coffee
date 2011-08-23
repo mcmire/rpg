@@ -1,22 +1,31 @@
 game = window.game
 
 class game.Player
-  constructor: (@main) ->
-    imagePath = "#{@main.imagesPath}/link2x.gif"
-    @spriteSheet = new game.SpriteSheet(imagePath, 34,48)
+  constructor: (@main, spriteSheet, @dimensions) ->
+    @_init(spriteSheet)
+    @initialize()
+
+  initialize: () ->
+    throw "Your player needs an initialize method"
+
+  addAnimation: (name, frequency, frames) ->
+    @animations[name] = new game.SpriteAnimation(@spriteSheet, frequency, frames)
+
+  _initWithinViewport: ->
+    # Initialize the player's position on the map
+    # @viewport.pos.x = @main.viewport.width.pixels / 2
+    # @viewport.pos.y = @main.viewport.height.pixels / 2
+    @viewport.pos.x = 0
+    @viewport.pos.y = 0
+
+  _init:(spriteSheet) ->
+    imagePath = "#{@main.imagesPath}/#{spriteSheet}"
+    @spriteSheet = new game.SpriteSheet(imagePath, @dimensions.width, @dimensions.height)
     @spriteSheet.image.onload = => @isLoaded = true
     @spriteSheet.image.onerror = => throw "Image #{imagePath} failed to load!"
     @action = 'idleRight'
     @animations = {}
-    @animations['idleRight'] = new game.SpriteAnimation(@spriteSheet, 4, [8])
-    @animations['runRight']  = new game.SpriteAnimation(@spriteSheet, 4, [8,9,10,11,12,13,14,15])
-    @animations['runLeft'] = new game.SpriteAnimation(@spriteSheet, 4, [0,1,2,3,4,5,6,7])
-    @animations['runDown'] = new game.SpriteAnimation(@spriteSheet, 4, [16,17,18,19,20,21,22])
-    @animations['runUp'] = new game.SpriteAnimation(@spriteSheet, 4, [23,24,25,26,27,28])
-
-    @spriteWidth = 32
-    @spriteHeight = 48
-
+    [@spriteWidth, @spriteHeight] = [@dimensions.width, @dimensions.height]
     @viewport = {
       pos: {x: 0, y: 0}
       offset: {x: 0, y: 0}
@@ -30,21 +39,13 @@ class game.Player
 
     @_initWithinViewport()
 
-  _initWithinViewport: ->
-    # Initialize the player's position on the map
-    # @viewport.pos.x = @main.viewport.width.pixels / 2
-    # @viewport.pos.y = @main.viewport.height.pixels / 2
-    @viewport.pos.x = 0
-    @viewport.pos.y = 0
 
   initOnMap: ->
     @map.pos.x = @main.viewport.bounds.x1 + @viewport.pos.x
     @map.pos.y = @main.viewport.bounds.y1 + @viewport.pos.y
 
   draw: ->
-    console.log(@action)
     @animations[@action].step(@viewport.pos.x, @viewport.pos.y)
-    # @main.canvas.ctx.drawImage(@sprite, 0, 0, 17, 24, @viewport.pos.x, @viewport.pos.y, 17, 24)
 
   # The idea here is that we move the player sprite left until it reaches a
   # certain point (we call it the "fence"), after which we continue the
@@ -202,3 +203,11 @@ class game.Player
   debug: ->
     console.log "@viewport.pos = (#{@main.viewport.pos.x}, #{@main.viewport.pos.y})"
 
+window.Link = class Link extends game.Player
+
+  initialize: ->
+    @addAnimation('idleRight', 4, [8])
+    @addAnimation('runRight', 4, [8,9,10,11,12,13,14,15])
+    @addAnimation('runLeft', 4, [0,1,2,3,4,5,6,7])
+    @addAnimation('runDown', 4, [16,17,18,19,20,21,22])
+    @addAnimation('runUp', 4, [23,24,25,26,27,28])
