@@ -234,7 +234,6 @@ class game.Player
         @shiftBounds(y: @speed)
 
   debug: ->
-    console.log "@viewport.pos = (#{@main.viewport.pos.x}, #{@main.viewport.pos.y})"
     console.log "player.bounds.inViewport = #{@bounds.inViewport.inspect()}"
     console.log "player.bounds.OnMap = #{@bounds.onMap.inspect()}"
 
