@@ -11,20 +11,20 @@ game.util.module "game.CollisionLayer",
 
       @imagePath = "#{@main.imagesPath}/mask.gif"
       @_loadImage =>
-        #@_createCollisionRanges()
-      @collisionRanges = [
+        #@_createCollisionBoxes()
+      @collisionBoxes = [
         # Note that y2 is offset by 8 pixels (16 pixels at 2x scale)
         {x1: 96, x2: 352, y1: 79, y2: 108}
       ]
 
       c = @debugCanvas = Canvas.create(@width, @height)
-      for range in @collisionRanges
+      for box in @collisionBoxes
         c.ctx.beginPath()
-        c.ctx.moveTo(range.x1-0.5, range.y1-0.5)
-        c.ctx.lineTo(range.x2-0.5, range.y1-0.5)
-        c.ctx.lineTo(range.x2-0.5, range.y2-0.5)
-        c.ctx.lineTo(range.x1-0.5, range.y2-0.5)
-        c.ctx.lineTo(range.x1-0.5, range.y1-0.5)
+        c.ctx.moveTo(box.x1-0.5, box.y1-0.5)
+        c.ctx.lineTo(box.x2-0.5, box.y1-0.5)
+        c.ctx.lineTo(box.x2-0.5, box.y2-0.5)
+        c.ctx.lineTo(box.x1-0.5, box.y2-0.5)
+        c.ctx.lineTo(box.x1-0.5, box.y1-0.5)
         c.ctx.strokeStyle = "#ff0000"
         c.ctx.stroke()
 
@@ -37,50 +37,169 @@ game.util.module "game.CollisionLayer",
       @isInit = true
     return this
 
-  isCollision: (x, y) ->
-    for range in @collisionRanges
-      return true if range.x1 <= x <= range.x2 and range.y1 <= y <= range.y2
-    return false
-
-  # This method will be called with the x-value of the right edge of an
-  # entity when is moving rightward. Here we look at the left edge of
-  # each collision box; if the x-value crosses one of them, then we
-  # return true, otherwise we return false.
+  # Given an x-coordinate and y-coordinate of an entity as well as a speed in
+  # the X direction and speed in the Y direction in which that entity is
+  # moving, offsets the coordinates by the speed and then determines whether
+  # the coordinates would be in the inside of a collision box.
   #
-  isLeftEdgeCollision: (x, y) ->
-    for range in @collisionRanges
-      return true if range.y1 >= y <= range.y2 and range.x1 <= x <= range.x2
-    return false
-
-  # This method will be called with the x-value of the left edge of an
-  # entity when is moving leftward. Here we look at the right edge of
-  # each collision box; if the x-value crosses one of them, then we
-  # return true, otherwise we return false.
+  # If the movement of the coordinates results in a collision, returns a value
+  # which represents the X- or Y-value of the closest side of the box with
+  # which the coordinates would have collided. The axis of the value, as well
+  # as which side is represented in the value, corresponds to the direction the
+  # coordinates were moved. This direction is determined from the axis of the
+  # speed given and what the sign of the speed is. So:
   #
-  isRightEdgeCollision: (x) ->
-    for range in @collisionRanges
-      return true if x > range.x1 and x <= range.x2
-    return false
-
-  # This method will be called with the y-value of the bottom edge of an
-  # entity when is moving downward. Here we look at the top edge of each
-  # collision box; if the y-value crosses one of them, then we return
-  # true, otherwise we return false.
+  # * s.x > 0, s.y = 0: Coordinates are moved right, and on collision, the
+  #   X-value of the left edge of the colliding box is returned.
+  # * s.x < 0, s.y = 0: Leftward movement, X-value of right edge is returned.
+  # * s.x = 0, s.y > 0: Downward movement, Y-value of top edge is returned.
+  # * s.x = 0, s.y < 0: Upward movement, Y-value of bottom edge is returned.
   #
-  isTopEdgeCollision: (y) ->
-    for range in @collisionRanges
-      return true if y < range.y2 and y >= range.y1
-    return false
+  collision: (p, s) ->
+    # Step the coordinates into the next frame
+    pp = p.shiftBy(s)
 
-  # This method will be called with the y-value of the bottom edge of an
-  # entity when is moving downward. Here we look at the top edge of each
-  # collision box; if the y-value crosses one of them, then we return
-  # true, otherwise we return false.
+    # Determine the direction of movement
+    if s.x and not s.y
+      dir = 1 if s.x > 0
+      dir = 2 if s.x < 0
+    else if s.y and not s.x
+      dir = 3 if s.y > 0
+      dir = 4 if s.y < 0
+    else # if not s.x and not s.y
+      dir = 0
+
+    for box in @collisionBoxes
+      collisionOnBoxLeft = (
+        box.y1 >= ent.y1 and
+        box.y2 <= ent.y2 and
+        box.x2 >= ent.x1
+      )
+      isCollision = (
+        box.x1 <= pp.x <= box.x2 and
+        box.y1 <= pp.y <= box.y2
+      )
+      if isCollision
+        # Determine the edge of the colliding box to return
+        edge = switch dir
+          when 1 then box.x1
+          when 2 then box.x2
+          when 3 then box.y1
+          when 4 then box.y2
+        return edge
+
+    # If we're here, no collision took place
+    return null
+
+  # Called when an entity is moving right. Given the coordinates of an entity in
+  # the position it is about to be moved to, returns the left edge of a box on
+  # the collision layer that the coordinates collide with. This edge (which is
+  # an X-value in this case) will then be used to position the entity
+  # appropriately.
   #
-  isBottomEdgeCollision: (y) ->
-    for range in @collisionRanges
-      return true if y > range.y1 and y <= range.y2
-    return false
+  # The collision should be detected correctly whether the entity is taller
+  # than the colliding box, or shorter. In other words, both of these cases are
+  # prevented:
+  #
+  #        E     B           E     B
+  #             ____        ____
+  #      ______|_   |   => |   _|_____
+  #   => |     : |  |   => |  : |     |
+  #   => |_____:_|  |   => |  :_|_____|
+  #            |____|   => |____|
+  #
+  getBlockingLeftEdge: (e) ->
+    for box in @collisionBoxes
+      return box.x1 if (
+        e.x2 >= box.x1 and (
+          (e.y1 >= box.y1 and e.y2 <= box.y2) or
+          (box.y1 >= e.y1 and box.y2 <= e.y2)
+        )
+      )
+    return null
+
+  # Called when an entity is moving left. Given the coordinates of an entity in
+  # the position it is about to be moved to, returns the right edge of a box on
+  # the collision layer that the coordinates collide with. This edge (which is
+  # an X-value in this case) will then be used to position the entity
+  # appropriately.
+  #
+  # The collision should be detected correctly whether the entity is taller
+  # than the colliding box, or shorter. In other words, both of these cases are
+  # prevented:
+  #
+  #     B     E            B     E
+  #    ____                    ____
+  #   |   _|_____        _____|_   | <=
+  #   |  | :     | <=   |     | :  | <=
+  #   |  |_:_____| <=   |_____|_:  | <=
+  #   |____|                  |____| <=
+  #
+  getBlockingRightEdge: (e) ->
+    for box in @collisionBoxes
+      return box.x2 if (
+        e.x1 <= box.x2 and (
+          (e.y1 >= box.y1 and e.y2 <= box.y2) or
+          (box.y1 >= e.y1 and box.y2 <= e.y2)
+        )
+      )
+    return null
+
+  # Called when an entity is moving down. Given the coordinates of an entity in
+  # the position it is about to be moved to, returns the top edge of a box on
+  # the collision layer that the coordinates collide with. This edge (which is
+  # an Y-value in this case) will then be used to position the entity
+  # appropriately.
+  #
+  # The collision should be detected correctly whether the entity is taller
+  # than the colliding box, or shorter. In other words, both of these cases are
+  # prevented:
+  #
+  #        |  |               |  |
+  #        v  v               v  v
+  #        ____             ________
+  #   E   |    |        E  |  ....  |
+  #      _|....|_          |_|____|_|
+  #   B | |____| |      B    |    |
+  #     |________|           |____|
+  #
+  getBlockingTopEdge: (e) ->
+    for box in @collisionBoxes
+      return box.y1 if (
+        e.y2 >= box.y1 and (
+          (e.x1 >= box.x1 and e.x2 <= box.x2) or
+          (box.x1 >= e.x1 and box.x2 <= e.x2)
+        )
+      )
+    return null
+
+  # Called when an entity is moving up. Given the coordinates of an entity in
+  # the position it is about to be moved to, returns the bottom edge of a box on
+  # the collision layer that the coordinates collide with. This edge (which is
+  # an Y-value in this case) will then be used to position the entity
+  # appropriately.
+  #
+  # The collision should be detected correctly whether the entity is taller
+  # than the colliding box, or shorter. In other words, both of these cases are
+  # prevented:
+  #
+  #       ________           ____
+  #   B  |  ____  |     B   |    |
+  #      |_|....|_|        _|____|_
+  #   E    |    |       E | |....| |
+  #        |____|         |________|
+  #         ^  ^             ^  ^
+  #         |  |             |  |
+  #
+  getBlockingBottomEdge: (e) ->
+    for box in @collisionBoxes
+      return box.y2 if (
+        e.y1 <= box.y2 and (
+          (e.x1 >= box.x1 and e.x2 <= box.x2) or
+          (box.x1 >= e.x1 and box.x2 <= e.x2)
+        )
+      )
+    return null
 
   _loadImage: (success) ->
     @image = document.createElement('img')
@@ -101,7 +220,7 @@ game.util.module "game.CollisionLayer",
   #---
   # TODO...........
   #
-  _createCollisionRanges: ->
+  _createCollisionBoxes: ->
     canvas = Canvas.create(@width, @height)
     canvas.ctx.drawImage(@image, 0, 0)
     imageData = canvas.ctx.getImageData(0, 0, @width, @height)
@@ -145,6 +264,6 @@ game.util.module "game.CollisionLayer",
           curBox.y2 = pixel.y
       lastY = pixel.y
 
-    ranges.push(range) if range
+    boxes.push(box) if box
 
-    @collisionRanges = ranges
+    @collisionBoxes = boxes

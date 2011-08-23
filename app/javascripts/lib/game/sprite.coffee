@@ -15,3 +15,14 @@ class game.SpriteAnimation
     @currentFrame = ((@currentFrame + 1) % @totalFrames) if game.Main.globalCounter % @frequency == 0
     yOffset = @frames[@currentFrame] * @height
     game.Main.canvas.ctx.drawImage(@spriteSheet.image, 0, yOffset, @width, @height, x, y, @width, @height)
+
+    # DEBUG
+    ctx = game.Main.canvas.ctx
+    ctx.beginPath()
+    ctx.moveTo(x+0.5, y+0.5)
+    ctx.lineTo(x+@width+0.5, y+0.5)
+    ctx.lineTo(x+@width+0.5, y+@height+0.5)
+    ctx.lineTo(x+0.5, y+@height+0.5)
+    ctx.lineTo(x+0.5, y+0.5)
+    ctx.strokeStyle = "#00ff00"
+    ctx.stroke()

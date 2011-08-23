@@ -1,5 +1,5 @@
 game = window.game
-{Keyboard, DOMEventHelpers, Canvas, CollisionLayer, Player} = game
+{Keyboard, DOMEventHelpers, Canvas, CollisionLayer, Viewport, Player} = game
 
 defaults = {}
 
@@ -16,7 +16,6 @@ _dim = (value, unit) ->
 
 defaults.drawInterval  = 30   # ms/frame
 defaults.tileSize      = 64   # pixels
-defaults.playerPadding = 30   # pixels
 
 defaults.imagesPath = "/images"
 
@@ -33,7 +32,7 @@ defaults.viewportHeight = _dim(400, 'pixels')
 # defaults.viewportWidth = defaults.mapWidth
 # defaults.viewportHeight = defaults.mapHeight
 
-defaults.debug = false
+defaults.debug = true
 
 game.util.module "game.Main", [DOMEventHelpers, defaults],
   init: ->
@@ -42,7 +41,7 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
 
       Keyboard.init()
 
-      @_initViewport()
+      @viewport = Viewport.init(this)
 
       @viewport.$element = $('<div id="viewport" />')
         .css('width', @viewport.width.pixels)
@@ -79,19 +78,14 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
   reset: ->
     @stopDrawing()
     @data = []
-    @viewport = {
-      width: null
-      height: null
-      bounds: {x1: 0, x2: 0, y1: 0, y2: 0}
-      playerPadding: @playerPadding
-    }
     @map = {
-      width: null
-      height: null
+      # (width: null)
+      # (height: null)
       data: []
     }
+    # OLD?
     @bg = {
-      offset: {x: 0, y: 0}
+      offset: {} # x, y
     }
     return this
 
@@ -132,11 +126,11 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
   run: ->
     @globalCounter = 0
     @_renderMap()
-    @_initViewportBounds()
-    @player.initOnMap()
+    @viewport.initBounds()
+    @player.initBoundsOnMap()
 
     if @debug
-      @_debugViewport()
+      @viewport.debug()
       @player.debug()
 
     @startDrawing()
@@ -158,7 +152,7 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     Keyboard.runHandlers()
 
     # Reposition the background
-    positionStr = [-@viewport.bounds.x1 + 'px', -@viewport.bounds.y1 + 'px'].join(" ")
+    positionStr = [-@viewport.frame.bounds.x1 + 'px', -@viewport.frame.bounds.y1 + 'px'].join(" ")
     @viewport.$element.css('background-position', positionStr)
     #@collisionLayer.$debugMask.css('background-position', positionStr)
 
@@ -190,17 +184,13 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
 
     if @debug
       Keyboard.addKeyHandler ->
-        self._debugViewport()
+        self.viewport.debug()
         self.player.debug()
 
     Keyboard.addKeyHandler 'KEY_A', 'KEY_LEFT',  'KEY_H', -> self.player.moveLeft()
     Keyboard.addKeyHandler 'KEY_D', 'KEY_RIGHT', 'KEY_L', -> self.player.moveRight()
     Keyboard.addKeyHandler 'KEY_W', 'KEY_UP',    'KEY_K', -> self.player.moveUp()
     Keyboard.addKeyHandler 'KEY_S', 'KEY_DOWN',  'KEY_J', -> self.player.moveDown()
-
-  _initViewport: ->
-    @viewport.width = @viewportWidth
-    @viewport.height = @viewportHeight
 
   _preloadMap: ->
     # ... fetch the map data here ...
@@ -211,12 +201,3 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
   _renderMap: ->
     @viewport.$element.css('background-image', "url(#{@imagesPath}/map2x.png)")
     @viewport.$element.css('background-repeat', 'no-repeat')
-
-  _initViewportBounds: ->
-    @viewport.bounds.x1 = 0
-    @viewport.bounds.x2 = @viewport.width.pixels
-    @viewport.bounds.y1 = 0
-    @viewport.bounds.y2 = @viewport.height.pixels
-
-  _debugViewport: ->
-    console.log "@viewport.bounds = (#{@viewport.bounds.x1}..#{@viewport.bounds.x2}, #{@viewport.bounds.y1}..#{@viewport.bounds.y2})"
