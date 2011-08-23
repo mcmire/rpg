@@ -41,16 +41,16 @@ class game.Player
 
   _initBoundsInViewport: ->
     x1 = 0
-    x2 = x1 + @spriteSheet.width
+    x2 = x1 + @spriteWidth
     y1 = 0
-    y2 = y1 + @spriteSheet.height
+    y2 = y1 + @spriteHeight
     @bounds.inViewport = new Bounds(x1, x2, y1, y2)
 
   initBoundsOnMap: ->
     x1 = @main.viewport.frame.bounds.x1 + @bounds.inViewport.x1
-    x2 = x1 + @spriteSheet.width
+    x2 = x1 + @spriteWidth
     y1 = @main.viewport.frame.bounds.y1 + @bounds.inViewport.y1
-    y2 = y1 + @spriteSheet.height
+    y2 = y1 + @spriteHeight
     @bounds.onMap = new Bounds(x1, x2, y1, y2)
 
   draw: ->
