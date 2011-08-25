@@ -115,11 +115,11 @@ class game.Player
         # Move player left
         @shiftBounds(x: -@speed)
     else
-      leftViewportPad = @main.viewport.padding.boundsInFrame.x1
-      if nextBoundsInViewport.x1 < leftViewportPad
+      leftEdgeOfFence = @main.viewport.padding.boundsInFrame.x1
+      if nextBoundsInViewport.x1 < leftEdgeOfFence
         # Player is at the left edge of the fence;
         # shift viewport left
-        diff = @bounds.inViewport.moveTo('x1', leftViewportPad)
+        diff = @bounds.inViewport.moveTo('x1', leftEdgeOfFence)
         @bounds.onMap.shift(x: -(@speed + diff))
         @main.viewport.shiftBounds(x: -(@speed + diff))
       else
@@ -146,7 +146,7 @@ class game.Player
     mapWidth = @main.map.width.pixels
     if nextViewportBounds.x2 > mapWidth
       # Viewport is at the right edge of the map
-      @main.viewport.moveFrameBoundsTo('x2', mapWidth)
+      @main.viewport.frame.boundsOnMap.moveTo('x2', mapWidth)
       if nextBoundsOnMap.x2 > mapWidth
         # Player is at the right edge of the map
         @bounds.onMap.moveTo('x2', mapWidth)
@@ -155,11 +155,11 @@ class game.Player
         # Move player right
         @shiftBounds(x: @speed)
     else
-      rightViewportPad = @main.viewport.padding.boundsInFrame.x2
-      if nextBoundsInViewport.x2 > rightViewportPad
+      rightEdgeOfFence = @main.viewport.padding.boundsInFrame.x2
+      if nextBoundsInViewport.x2 > rightEdgeOfFence
         # Player is at the right side of the fence;
         # shift viewport right
-        diff = @bounds.inViewport.moveTo('x2', rightViewportPad)
+        diff = @bounds.inViewport.moveTo('x2', rightEdgeOfFence)
         @bounds.onMap.shift(x: @speed - diff)
         @main.viewport.shiftBounds(x: @speed - diff)
       else
@@ -194,11 +194,11 @@ class game.Player
         # Move player top
         @shiftBounds(y: -@speed)
     else
-      topViewportPad = @main.viewport.padding.boundsInFrame.y1
-      if nextBoundsInViewport.y1 < topViewportPad
+      topEdgeOfFence = @main.viewport.padding.boundsInFrame.y1
+      if nextBoundsInViewport.y1 < topEdgeOfFence
         # Player is at the top edge of the fence;
         # shift viewport up
-        diff = @bounds.inViewport.moveTo('y1', topViewportPad)
+        diff = @bounds.inViewport.moveTo('y1', topEdgeOfFence)
         @bounds.onMap.shift(y: -(@speed - diff))
         @main.viewport.shiftBounds(y: -(@speed - diff))
       else
@@ -225,7 +225,7 @@ class game.Player
     mapHeight = @main.map.height.pixels
     if nextViewportBounds.y2 > mapHeight
       # Viewport is at the bottom edge of the map
-      @main.viewport.moveFrameBoundsTo('y2', mapHeight)
+      @main.viewport.frame.boundsOnMap.moveTo('y2', mapHeight)
       if nextBoundsOnMap.y2 > mapHeight
         # Player is at the bottom edge of the map
         @bounds.onMap.moveTo('y2', mapHeight)
@@ -234,24 +234,13 @@ class game.Player
         # Move player bottom
         @shiftBounds(y: @speed)
     else
-      bottomViewportPad = @main.viewport.padding.boundsInFrame.y2
-      if nextBoundsInViewport.y2 > bottomViewportPad
+      bottomEdgeOfFence = @main.viewport.padding.boundsInFrame.y2
+      if nextBoundsInViewport.y2 > bottomEdgeOfFence
         # Player is at the bottom side of the fence;
         # shift viewport down
-        biv = @bounds.inViewport.clone()
-        bom = @bounds.onMap.clone()
-        vbm = @main.viewport.frame.boundsOnMap.clone()
-        # console.log "bounds.inViewport:         #{biv.inspect()}"
-        # console.log "bounds.onMap:              #{bom.inspect()}"
-        # console.log "viewport.bounds.onMap:     #{vbm.inspect()}"
-        diff = @bounds.inViewport.moveTo('y2', bottomViewportPad)
+        diff = @bounds.inViewport.moveTo('y2', bottomEdgeOfFence)
         @bounds.onMap.shift(y: @speed - diff)
         @main.viewport.shiftBounds(y: @speed - diff)
-        # console.log "diff:                      #{diff}"
-        # console.log "moving bounds by:          #{@speed - diff}"
-        # console.log "now bounds.inViewport:     #{@bounds.inViewport.inspect()}"
-        # console.log "now bounds.onMap:          #{@bounds.onMap.inspect()}"
-        # console.log "now viewport.bounds.onMap: #{@main.viewport.frame.boundsOnMap.inspect()}"
       else
         # Move player bottom
         @shiftBounds(y: @speed)
