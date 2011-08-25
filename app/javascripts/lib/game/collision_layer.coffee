@@ -13,8 +13,7 @@ game.util.module "game.CollisionLayer",
       @_loadImage =>
         #@_createCollisionBoxes()
       @collisionBoxes = [
-        # Note that y2 is offset by 8 pixels (16 pixels at 2x scale)
-        {x1: 96, x2: 352, y1: 79, y2: 108}
+        {x1: 96, x2: 352, y1: 96, y2: 112}
       ]
 
       c = @debugCanvas = Canvas.create(@width, @height)
