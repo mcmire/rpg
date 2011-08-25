@@ -14,7 +14,7 @@ _dim = (value, unit) ->
       d.tiles = value / defaults.tileSize
   return d
 
-defaults.drawInterval  = 90   # ms/frame
+defaults.drawInterval  = 30   # ms/frame
 defaults.tileSize      = 64   # pixels
 
 defaults.imagesPath = "/images"
@@ -218,13 +218,13 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     #       "player: #{self.player.inspect()}"
     #     ]
 
-    Keyboard.addKeyHandler ->
-      biv = self.player.bounds.inViewport
-      bom = self.player.bounds.onMap
-      vbm = self.viewport.frame.boundsOnMap
-      console.log "bounds.inViewport:         #{biv.inspect()}"
-      console.log "bounds.onMap:              #{bom.inspect()}"
-      console.log "viewport.bounds.onMap:     #{vbm.inspect()}"
+    # Keyboard.addKeyHandler ->
+    #   biv = self.player.bounds.inViewport
+    #   bom = self.player.bounds.onMap
+    #   vbm = self.viewport.frame.boundsOnMap
+    #   console.log "bounds.inViewport:         #{biv.inspect()}"
+    #   console.log "bounds.onMap:              #{bom.inspect()}"
+    #   console.log "viewport.bounds.onMap:     #{vbm.inspect()}"
 
     Keyboard.addKeyHandler 'KEY_A', 'KEY_LEFT',  'KEY_H', -> self.player.moveLeft()
     Keyboard.addKeyHandler 'KEY_D', 'KEY_RIGHT', 'KEY_L', -> self.player.moveRight()

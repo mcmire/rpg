@@ -35,7 +35,7 @@ class game.Player
       onMap: new Bounds()
       inViewport: new Bounds()
     }
-    @speed = 20  # px/frame
+    @speed = 5  # px/frame
 
     @_initBoundsInViewport()
 
