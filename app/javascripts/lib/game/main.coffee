@@ -117,7 +117,7 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
 
   ready: (callback) ->
     timer = setInterval =>
-      console.log "Checking to see if all grobs are loaded..."
+      console.log "Checking to see if all entities are loaded..."
       if (
         @mapLoaded and
         @collisionLayer.isLoaded and
