@@ -35,7 +35,7 @@ class game.Player
       onMap: new Bounds()
       inViewport: new Bounds()
     }
-    @speed = 7  # px/frame
+    @speed = 20  # px/frame
 
     @_initBoundsInViewport()
 
@@ -47,9 +47,9 @@ class game.Player
     @bounds.inViewport = new Bounds(x1, x2, y1, y2)
 
   initBoundsOnMap: ->
-    x1 = @main.viewport.frame.bounds.x1 + @bounds.inViewport.x1
+    x1 = @main.viewport.frame.boundsOnMap.x1 + @bounds.inViewport.x1
     x2 = x1 + @spriteWidth
-    y1 = @main.viewport.frame.bounds.y1 + @bounds.inViewport.y1
+    y1 = @main.viewport.frame.boundsOnMap.y1 + @bounds.inViewport.y1
     y2 = y1 + @spriteHeight
     @bounds.onMap = new Bounds(x1, x2, y1, y2)
 
@@ -81,8 +81,10 @@ class game.Player
   #   Bounds#moveTo
   #
   moveMapBoundsTo: (key, val) ->
+    [axis, side] = key
     diff = @bounds.onMap.moveTo(key, val)
-    @bounds.inViewport.shift(diff)
+    #diff = -diff if side is "1"
+    @bounds.inViewport.shift(axis, diff)
 
   # The idea here is that we move the player sprite left until it reaches a
   # certain point (we call it the "fence"), after which we continue the
@@ -96,28 +98,30 @@ class game.Player
 
     nextBoundsOnMap = @bounds.onMap.subtract(x: @speed)
     nextBoundsInViewport = @bounds.inViewport.subtract(x: @speed)
-    nextViewportBounds = @main.viewport.frame.bounds.subtract(x: @speed)
+    nextViewportBounds = @main.viewport.frame.boundsOnMap.subtract(x: @speed)
 
     if x = @main.collisionLayer.getBlockingRightEdge(nextBoundsOnMap)
-      @moveMapBoundsTo('x1', x+1)
+      @moveMapBoundsTo('x1', x)
       return
 
     if nextViewportBounds.x1 < 0
       # Viewport is at the left edge of the map
-      @main.viewport.moveFrameBoundsTo('x1', 0)
-      if nextBoundsInViewport.x1 < 0
+      @main.viewport.frame.boundsOnMap.moveTo('x1', 0)
+      if nextBoundsOnMap.x1 < 0
         # Player is at the left edge of the map
-        @moveMapBoundsTo('x1', 0)
+        @bounds.onMap.moveTo('x1', 0)
+        @bounds.inViewport.moveTo('x1', 0)
       else
         # Move player left
         @shiftBounds(x: -@speed)
     else
-      if nextBoundsInViewport.x1 < @main.viewport.padding.bounds.x1
+      leftViewportPad = @main.viewport.padding.boundsInFrame.x1
+      if nextBoundsInViewport.x1 < leftViewportPad
         # Player is at the left edge of the fence;
         # shift viewport left
-        @bounds.inViewport.moveTo('x2', @main.viewport.padding.bounds.x1)
-        @bounds.onMap.shift(x: -@speed)
-        @main.viewport.shiftBounds(x: -@speed)
+        diff = @bounds.inViewport.moveTo('x1', leftViewportPad)
+        @bounds.onMap.shift(x: -(@speed + diff))
+        @main.viewport.shiftBounds(x: -(@speed + diff))
       else
         # Move player left
         @shiftBounds(x: -@speed)
@@ -133,28 +137,31 @@ class game.Player
 
     nextBoundsOnMap = @bounds.onMap.add(x: @speed)
     nextBoundsInViewport = @bounds.inViewport.add(x: @speed)
-    nextViewportBounds = @main.viewport.frame.bounds.add(x: @speed)
+    nextViewportBounds = @main.viewport.frame.boundsOnMap.add(x: @speed)
 
     if x = @main.collisionLayer.getBlockingLeftEdge(nextBoundsOnMap)
-      @moveMapBoundsTo('x2', x-1)
+      @moveMapBoundsTo('x2', x)
       return
 
-    if nextViewportBounds.x2 > @main.map.width.pixels
+    mapWidth = @main.map.width.pixels
+    if nextViewportBounds.x2 > mapWidth
       # Viewport is at the right edge of the map
-      @main.viewport.moveFrameBoundsTo('x2', @main.map.width.pixels)
-      if nextBoundsInViewport.x2 > @main.map.width.pixels
+      @main.viewport.moveFrameBoundsTo('x2', mapWidth)
+      if nextBoundsOnMap.x2 > mapWidth
         # Player is at the right edge of the map
-        @moveMapBoundsTo('x2', @main.viewport.width.pixels)
+        @bounds.onMap.moveTo('x2', mapWidth)
+        @bounds.inViewport.moveTo('x2', @main.viewport.width.pixels)
       else
         # Move player right
         @shiftBounds(x: @speed)
     else
-      if nextBoundsInViewport.x2 > @main.viewport.padding.bounds.x2
+      rightViewportPad = @main.viewport.padding.boundsInFrame.x2
+      if nextBoundsInViewport.x2 > rightViewportPad
         # Player is at the right side of the fence;
         # shift viewport right
-        @bounds.inViewport.moveTo('x2', @main.viewport.padding.bounds.x2)
-        @bounds.onMap.shift(x: @speed)
-        @main.viewport.shiftBounds(x: @speed)
+        diff = @bounds.inViewport.moveTo('x2', rightViewportPad)
+        @bounds.onMap.shift(x: @speed - diff)
+        @main.viewport.shiftBounds(x: @speed - diff)
       else
         # Move player right
         @shiftBounds(x: @speed)
@@ -170,28 +177,30 @@ class game.Player
 
     nextBoundsOnMap = @bounds.onMap.subtract(y: @speed)
     nextBoundsInViewport = @bounds.inViewport.subtract(y: @speed)
-    nextViewportBounds = @main.viewport.frame.bounds.subtract(y: @speed)
+    nextViewportBounds = @main.viewport.frame.boundsOnMap.subtract(y: @speed)
 
     if y = @main.collisionLayer.getBlockingBottomEdge(nextBoundsOnMap)
-      @moveMapBoundsTo('y1', y+1)
+      @moveMapBoundsTo('y1', y)
       return
 
     if nextViewportBounds.y1 < 0
       # Viewport is at the top edge of the map
-      @main.viewport.moveFrameBoundsTo('y1', 0)
-      if nextBoundsInViewport.y1 < 0
+      @main.viewport.frame.boundsOnMap.moveTo('y1', 0)
+      if nextBoundsOnMap.y1 < 0
         # Player is at the top edge of the map
-        @moveMapBoundsTo('y1', 0)
+        @bounds.onMap.moveTo('y1', 0)
+        @bounds.inViewport.moveTo('y1', 0)
       else
         # Move player top
         @shiftBounds(y: -@speed)
     else
-      if nextBoundsInViewport.y1 < @main.viewport.padding.bounds.y1
+      topViewportPad = @main.viewport.padding.boundsInFrame.y1
+      if nextBoundsInViewport.y1 < topViewportPad
         # Player is at the top edge of the fence;
         # shift viewport up
-        @bounds.inViewport.moveTo('y1', @main.viewport.padding.bounds.y1)
-        @bounds.onMap.shift(y: -@speed)
-        @main.viewport.shiftBounds(y: -@speed)
+        diff = @bounds.inViewport.moveTo('y1', topViewportPad)
+        @bounds.onMap.shift(y: -(@speed - diff))
+        @main.viewport.shiftBounds(y: -(@speed - diff))
       else
         # Move player top
         @shiftBounds(y: -@speed)
@@ -207,31 +216,51 @@ class game.Player
 
     nextBoundsOnMap = @bounds.onMap.add(y: @speed)
     nextBoundsInViewport = @bounds.inViewport.add(y: @speed)
-    nextViewportBounds = @main.viewport.frame.bounds.add(y: @speed)
+    nextViewportBounds = @main.viewport.frame.boundsOnMap.add(y: @speed)
 
     if y = @main.collisionLayer.getBlockingTopEdge(nextBoundsOnMap)
-      @moveMapBoundsTo('y2', y-5)
+      @moveMapBoundsTo('y2', y)
       return
 
-    if nextViewportBounds.y2 > @main.map.height.pixels
+    mapHeight = @main.map.height.pixels
+    if nextViewportBounds.y2 > mapHeight
       # Viewport is at the bottom edge of the map
-      @main.viewport.moveFrameBoundsTo('y2', @main.map.height.pixels)
-      if nextBoundsInViewport.y2 > @main.map.height.pixels
+      @main.viewport.moveFrameBoundsTo('y2', mapHeight)
+      if nextBoundsOnMap.y2 > mapHeight
         # Player is at the bottom edge of the map
-        @moveMapBoundsTo('y2', @main.map.height.pixels)
+        @bounds.onMap.moveTo('y2', mapHeight)
+        @bounds.inViewport.moveTo('y2', @main.viewport.height.pixels)
       else
         # Move player bottom
         @shiftBounds(y: @speed)
     else
-      if nextBoundsInViewport.y2 > @main.viewport.padding.bounds.y2
+      bottomViewportPad = @main.viewport.padding.boundsInFrame.y2
+      if nextBoundsInViewport.y2 > bottomViewportPad
         # Player is at the bottom side of the fence;
         # shift viewport down
-        @bounds.inViewport.moveTo('y2', @main.viewport.padding.bounds.y2)
-        @bounds.onMap.shift(y: @speed)
-        @main.viewport.shiftBounds(y: @speed)
+        biv = @bounds.inViewport.clone()
+        bom = @bounds.onMap.clone()
+        vbm = @main.viewport.frame.boundsOnMap.clone()
+        # console.log "bounds.inViewport:         #{biv.inspect()}"
+        # console.log "bounds.onMap:              #{bom.inspect()}"
+        # console.log "viewport.bounds.onMap:     #{vbm.inspect()}"
+        diff = @bounds.inViewport.moveTo('y2', bottomViewportPad)
+        @bounds.onMap.shift(y: @speed - diff)
+        @main.viewport.shiftBounds(y: @speed - diff)
+        # console.log "diff:                      #{diff}"
+        # console.log "moving bounds by:          #{@speed - diff}"
+        # console.log "now bounds.inViewport:     #{@bounds.inViewport.inspect()}"
+        # console.log "now bounds.onMap:          #{@bounds.onMap.inspect()}"
+        # console.log "now viewport.bounds.onMap: #{@main.viewport.frame.boundsOnMap.inspect()}"
       else
         # Move player bottom
         @shiftBounds(y: @speed)
+
+  inspect: ->
+    JSON.stringify(
+      "bounds.inViewport": @bounds.inViewport.inspect(),
+      "bounds.onMap": @bounds.onMap.inspect()
+    )
 
   debug: ->
     console.log "player.bounds.inViewport = #{@bounds.inViewport.inspect()}"

@@ -20,11 +20,11 @@ game.util.module "game.CollisionLayer",
       c = @debugCanvas = Canvas.create(@width, @height)
       for box in @collisionBoxes
         c.ctx.beginPath()
-        c.ctx.moveTo(box.x1-0.5, box.y1-0.5)
-        c.ctx.lineTo(box.x2-0.5, box.y1-0.5)
-        c.ctx.lineTo(box.x2-0.5, box.y2-0.5)
-        c.ctx.lineTo(box.x1-0.5, box.y2-0.5)
-        c.ctx.lineTo(box.x1-0.5, box.y1-0.5)
+        c.ctx.moveTo(box.x1+0.5, box.y1+0.5)
+        c.ctx.lineTo(box.x2+0.5, box.y1+0.5)
+        c.ctx.lineTo(box.x2+0.5, box.y2+0.5)
+        c.ctx.lineTo(box.x1+0.5, box.y2+0.5)
+        c.ctx.lineTo(box.x1+0.5, box.y1+0.5)
         c.ctx.strokeStyle = "#ff0000"
         c.ctx.stroke()
 
@@ -57,9 +57,11 @@ game.util.module "game.CollisionLayer",
   getBlockingLeftEdge: (e) ->
     for box in @collisionBoxes
       return box.x1 if (
-        e.x2 >= box.x1 and (
-          (e.y1 >= box.y1 and e.y2 <= box.y2) or
-          (box.y1 >= e.y1 and box.y2 <= e.y2)
+        (e.x1 <= box.x1 and e.x2 >= box.x1) and
+        (
+          (box.y1 <= e.y1 <= box.y2) or
+          (box.y1 <= e.y2 <= box.y2) or
+          (e.y1 < box.y1 and e.y2 > box.y2)
         )
       )
     return null
@@ -84,9 +86,11 @@ game.util.module "game.CollisionLayer",
   getBlockingRightEdge: (e) ->
     for box in @collisionBoxes
       return box.x2 if (
-        e.x1 <= box.x2 and (
-          (e.y1 >= box.y1 and e.y2 <= box.y2) or
-          (box.y1 >= e.y1 and box.y2 <= e.y2)
+        (e.x1 <= box.x2 and e.x2 >= box.x2) and
+        (
+          (box.y1 <= e.y1 <= box.y2) or
+          (box.y1 <= e.y2 <= box.y2) or
+          (e.y1 < box.y1 and e.y2 > box.y2)
         )
       )
     return null
@@ -112,9 +116,11 @@ game.util.module "game.CollisionLayer",
   getBlockingTopEdge: (e) ->
     for box in @collisionBoxes
       return box.y1 if (
-        e.y2 >= box.y1 and (
-          (e.x1 >= box.x1 and e.x2 <= box.x2) or
-          (box.x1 >= e.x1 and box.x2 <= e.x2)
+        (e.y1 <= box.y1 and e.y2 >= box.y1) and
+        (
+          (box.x1 <= e.x1 <= box.x2) or
+          (box.x1 <= e.x2 <= box.x2) or
+          (e.x1 < box.x1 and e.x2 > box.x2)
         )
       )
     return null
@@ -140,9 +146,11 @@ game.util.module "game.CollisionLayer",
   getBlockingBottomEdge: (e) ->
     for box in @collisionBoxes
       return box.y2 if (
-        e.y1 <= box.y2 and (
-          (e.x1 >= box.x1 and e.x2 <= box.x2) or
-          (box.x1 >= e.x1 and box.x2 <= e.x2)
+        (e.y1 <= box.y2 and e.y2 >= box.y2) and
+        (
+          (box.x1 <= e.x1 <= box.x2) or
+          (box.x1 <= e.x2 <= box.x2) or
+          (e.x1 < box.x1 and e.x2 > box.x2)
         )
       )
     return null

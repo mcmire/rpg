@@ -79,11 +79,11 @@ game.util.module 'game.Keyboard', [DOMEventHelpers],
     return this
 
   runHandlers: ->
-    date = new Date()
-    # don't want to print debug info to the console *every* draw, just once per second
-    if (date - @debugTimer) >= 1000
-      @globalKeyHandler?()
-      @debugTimer = date
+    #date = new Date()
+    ## don't want to print debug info to the console *every* draw, just once per second
+    #if (date - @debugTimer) >= 1000
+    @globalKeyHandler?()
+      #@debugTimer = date
     handler() for key, handler of @activeKeyHandlers
 
   addKeyHandler: (keyNames..., callback) ->

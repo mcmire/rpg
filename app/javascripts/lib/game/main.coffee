@@ -14,7 +14,7 @@ _dim = (value, unit) ->
       d.tiles = value / defaults.tileSize
   return d
 
-defaults.drawInterval  = 30   # ms/frame
+defaults.drawInterval  = 90   # ms/frame
 defaults.tileSize      = 64   # pixels
 
 defaults.imagesPath = "/images"
@@ -71,12 +71,14 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
       @detach()
       Keyboard.destroy()
       @stopDrawing()
+      @stopLogging()
       @reset()
       @isInit = false
     return this
 
   reset: ->
     @stopDrawing()
+    @stopLogging()
     @data = []
     @map = {
       # (width: null)
@@ -87,6 +89,8 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     @bg = {
       offset: {} # x, y
     }
+    @logQueue = {}
+    @logQueueMessages = []
     return this
 
   addEvents: ->
@@ -129,11 +133,12 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     @viewport.initBounds()
     @player.initBoundsOnMap()
 
-    if @debug
-      @viewport.debug()
-      @player.debug()
+    # if @debug
+    #   @viewport.debug()
+    #   @player.debug()
 
     @startDrawing()
+    @startLogging()
 
   startDrawing: ->
     self = this
@@ -152,7 +157,7 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     Keyboard.runHandlers()
 
     # Reposition the background
-    positionStr = [-@viewport.frame.bounds.x1 + 'px', -@viewport.frame.bounds.y1 + 'px'].join(" ")
+    positionStr = [-@viewport.frame.boundsOnMap.x1 + 'px', -@viewport.frame.boundsOnMap.y1 + 'px'].join(" ")
     @viewport.$element.css('background-position', positionStr)
     #@collisionLayer.$debugMask.css('background-position', positionStr)
 
@@ -179,13 +184,47 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
       @startDrawing() if @stateBeforeSuspend.wasDrawing
       @stateBeforeSuspend = null
 
+  startLogging: ->
+    self = this
+    @logTimer = setInterval (-> self.flushLogQueue()), 1000 unless @logTimer
+    return this
+
+  stopLogging: ->
+    if @logTimer
+      clearInterval @logTimer
+      @logTimer = null
+    return this
+
+  flushLogQueue: ->
+    for name in @logQueueMessages
+      msgs = @logQueue[name]()
+      msgs = [msgs] unless $.v.is.arr(msgs)
+      console.log(msg) for msg in msgs
+    @logQueue = {}
+    @logQueueMessages = []
+
+  log: (name, fn) ->
+    unless @logQueue.hasOwnProperty(name)
+      @logQueue[name] = fn
+      @logQueueMessages.push(name)
+
   _assignKeyHandlers: ->
     self = this
 
-    if @debug
-      Keyboard.addKeyHandler ->
-        self.viewport.debug()
-        self.player.debug()
+    # if @debug
+    #   Keyboard.addKeyHandler ->
+    #     self.log "debug viewport and player on keypress", -> [
+    #       "viewport: #{self.viewport.inspect()}",
+    #       "player: #{self.player.inspect()}"
+    #     ]
+
+    Keyboard.addKeyHandler ->
+      biv = self.player.bounds.inViewport
+      bom = self.player.bounds.onMap
+      vbm = self.viewport.frame.boundsOnMap
+      console.log "bounds.inViewport:         #{biv.inspect()}"
+      console.log "bounds.onMap:              #{bom.inspect()}"
+      console.log "viewport.bounds.onMap:     #{vbm.inspect()}"
 
     Keyboard.addKeyHandler 'KEY_A', 'KEY_LEFT',  'KEY_H', -> self.player.moveLeft()
     Keyboard.addKeyHandler 'KEY_D', 'KEY_RIGHT', 'KEY_L', -> self.player.moveRight()

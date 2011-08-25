@@ -23,13 +23,23 @@ class game.Bounds
       bounds.y2 -= vec.y
     bounds
 
-  shift: (vec) ->
+  # shift(axis, value)
+  # shift(vector)
+  #
+  shift: (args...) ->
+    if args.length == 2
+      vec = {}
+      vec[args[0]] = args[1]
+    else
+      vec = args[0]
+
     if vec.x?
       @x1 += vec.x
       @x2 += vec.x
     if vec.y?
       @y1 += vec.y
       @y2 += vec.y
+
     return this
 
   # This method is really hard to explain, so I'll give an example and
@@ -57,9 +67,10 @@ class game.Bounds
     @[otherKey] = otherVal
 
     diff = @[a1] - old
-    ret = {}
-    ret[axis] = diff
-    ret
+    #ret = {}
+    #ret[axis] = diff
+    #ret
+    diff
 
   clone: ->
     new Bounds(@x1, @x2, @y1, @y2)
