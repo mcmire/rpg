@@ -10,6 +10,7 @@ helpers do
     scripts = %w(
       vendor/ender.js
       vendor/bowser.js
+      vendor/request_anim_shims.js
       lib/ender_ext.js
       lib/game/util.js
       lib/game/dom_event_helpers.js

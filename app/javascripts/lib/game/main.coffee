@@ -34,7 +34,35 @@ defaults.viewportHeight = _dim(400, 'pixels')
 
 defaults.debug = true
 
-game.util.module "game.Main", [DOMEventHelpers, defaults],
+Main = game.util.module "game.Main"
+$.extend Main, DOMEventHelpers, defaults
+
+draw = ->
+  # Respond to keystrokes executed during the "dead time", i.e., the time
+  # between the end of the last iteration and the start of this iteration
+  Keyboard.runHandlers()
+
+  # Reposition the background
+  positionStr = [-Main.viewport.frame.boundsOnMap.x1 + 'px', -Main.viewport.frame.boundsOnMap.y1 + 'px'].join(" ")
+  Main.viewport.$element.css('background-position', positionStr)
+  #Main.collisionLayer.$debugMask.css('background-position', positionStr)
+
+  # Clear the canvas
+  # TODO: Keep track of the last position of each entity and use this to clear
+  # the canvas selectively
+  Main.canvas.ctx.clearRect(0, 0, Main.viewport.width.pixels, Main.viewport.height.pixels)
+
+  # Draw the player
+  Main.player.draw()
+
+  # test
+  Main.canvas.ctx.drawImage(Main.collisionLayer.debugCanvas.element, 0, 0)
+
+  #increment the global counter
+  Main.globalCounter++
+  Main.globalCounter %= 10
+
+$.extend Main,
   init: ->
     unless @isInit
       @reset()
@@ -97,14 +125,14 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     self = this
     Keyboard.addEvents()
     @_assignKeyHandlers()
-    @bindEvents window,
-      blur: -> self.suspend()
-      focus: -> self.resume()
+    #@bindEvents window,
+    #  blur: -> self.suspend()
+    #  focus: -> self.resume()
     return this
 
   removeEvents: ->
     Keyboard.removeEvents()
-    @unbindEvents window, 'blur', 'focus'
+    #@unbindEvents window, 'blur', 'focus'
     return this
 
   attachTo: (wrapper) ->
@@ -141,59 +169,33 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     @startLogging()
 
   startDrawing: ->
-    self = this
-    @drawTimer = setInterval (-> self.draw()), @drawInterval unless @drawTimer
+    @isDrawing = true
+    @keepDrawing()
     return this
 
   stopDrawing: ->
-    if @drawTimer
-      clearInterval @drawTimer
-      @drawTimer = null
+    @isDrawing = false
+    clearRequestInterval @drawTimer if @drawTimer
     return this
 
-  draw: ->
-    # Respond to keystrokes executed during the "dead time", i.e., the time
-    # between the end of the last iteration and the start of this iteration
-    Keyboard.runHandlers()
-
-    # Reposition the background
-    positionStr = [-@viewport.frame.boundsOnMap.x1 + 'px', -@viewport.frame.boundsOnMap.y1 + 'px'].join(" ")
-    @viewport.$element.css('background-position', positionStr)
-    #@collisionLayer.$debugMask.css('background-position', positionStr)
-
-    # Clear the canvas
-    @canvas.ctx.clearRect(0, 0, @viewport.width.pixels, @viewport.height.pixels)
-
-    # Draw the player
-    @player.draw()
-
-    # test
-    @canvas.ctx.drawImage(@collisionLayer.debugCanvas.element, 0, 0)
-
-    #increment the global counter
-    @globalCounter++
-    @globalCounter %= 10
-
-  suspend: ->
-    unless @stateBeforeSuspend
-      @stateBeforeSuspend = {wasDrawing: !!@drawTimer}
-      @stopDrawing()
-
-  resume: ->
-    if @stateBeforeSuspend
-      @startDrawing() if @stateBeforeSuspend.wasDrawing
-      @stateBeforeSuspend = null
+  keepDrawing: ->
+    self = this
+    @drawTimer = requestInterval draw, @drawInterval if @isDrawing
 
   startLogging: ->
     self = this
-    @logTimer = setInterval (-> self.flushLogQueue()), 1000 unless @logTimer
+    @isLogging = true
+    @keepLogging()
     return this
 
   stopLogging: ->
-    if @logTimer
-      clearInterval @logTimer
-      @logTimer = null
+    @isLogging = false
     return this
+
+  keepLogging: ->
+    self = this
+    @flushLogQueue()
+    setTimeout (-> self.keepLogging()), 1000 if @isLogging
 
   flushLogQueue: ->
     for name in @logQueueMessages
@@ -207,6 +209,18 @@ game.util.module "game.Main", [DOMEventHelpers, defaults],
     unless @logQueue.hasOwnProperty(name)
       @logQueue[name] = fn
       @logQueueMessages.push(name)
+
+  suspend: ->
+    unless @stateBeforeSuspend
+      @stateBeforeSuspend = {wasDrawing: @isDrawing, wasLogging: @isLogging}
+      @stopDrawing()
+      @stopLogging()
+
+  resume: ->
+    if @stateBeforeSuspend
+      @startDrawing() if @stateBeforeSuspend.wasDrawing
+      @startLogging() if @stateBeforeSuspend.wasLogging
+      @stateBeforeSuspend = null
 
   _assignKeyHandlers: ->
     self = this
