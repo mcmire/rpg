@@ -35,6 +35,9 @@ class game.Player
       onMap: new Bounds()
       inViewport: new Bounds()
     }
+    @lastBounds = {
+      inViewport: new Bounds()
+    }
     @speed = 5  # px/frame
 
     @_initBoundsInViewport()
@@ -44,7 +47,7 @@ class game.Player
     x2 = x1 + @spriteWidth
     y1 = 0
     y2 = y1 + @spriteHeight
-    @bounds.inViewport = new Bounds(x1, x2, y1, y2)
+    @bounds.inViewport = @lastBounds.inViewport = new Bounds(x1, x2, y1, y2)
 
   initBoundsOnMap: ->
     x1 = @main.viewport.frame.boundsOnMap.x1 + @bounds.inViewport.x1
@@ -55,6 +58,7 @@ class game.Player
 
   draw: ->
     @animations[@action].step(@bounds.inViewport.x1, @bounds.inViewport.y1)
+    @lastBounds.inViewport = @bounds.inViewport.clone()
 
   # Shifts the viewport and map bounds by the given vector.
   #

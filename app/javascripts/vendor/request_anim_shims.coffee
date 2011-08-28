@@ -15,12 +15,18 @@ nativeRequestAnimationFrame =
   window.oRequestAnimationFrame or
   window.msRequestAnimationFrame
 
+fallbackRequestAnimationFrame = (callback) ->
+  # cap at 60 fps
+  window.setTimeout(callback, 1000 / 60)
+
 nativeCancelRequestAnimationFrame =
   window.cancelAnimationFrame or
   window.webkitCancelRequestAnimationFrame or
   window.mozCancelRequestAnimationFrame or
   window.oCancelRequestAnimationFrame or
   window.msCancelRequestAnimationFrame
+
+fallbackCancelRequestAnimationFrame = window.clearTimeout
 
 # requestAnimationFrame() shim by Paul Irish
 #
@@ -31,8 +37,11 @@ nativeCancelRequestAnimationFrame =
 #
 window.requestAnimFrame =
   nativeRequestAnimationFrame or
-  # cap at 60 fps
-  window.setTimeout(callback, 1000 / 60)
+  fallbackRequestAnimationFrame
+
+window.cancelRequestAnimFrame =
+  nativeCancelRequestAnimationFrame or
+  fallbackCancelRequestAnimationFrame
 
 # Shim that behaves the same as setInterval except uses requestAnimationFrame()
 # where possible for better performance.

@@ -14,7 +14,7 @@ _dim = (value, unit) ->
       d.tiles = value / defaults.tileSize
   return d
 
-defaults.drawInterval  = 30   # ms/frame
+defaults.drawInterval  = 90   # ms/frame
 defaults.tileSize      = 64   # pixels
 
 defaults.imagesPath = "/images"
@@ -37,6 +37,9 @@ defaults.debug = true
 Main = game.util.module "game.Main"
 $.extend Main, DOMEventHelpers, defaults
 
+# numDrawCalls = 0
+# numDrawCallsTime = (new Date()).getTime()
+
 draw = ->
   # Respond to keystrokes executed during the "dead time", i.e., the time
   # between the end of the last iteration and the start of this iteration
@@ -50,7 +53,9 @@ draw = ->
   # Clear the canvas
   # TODO: Keep track of the last position of each entity and use this to clear
   # the canvas selectively
-  Main.canvas.ctx.clearRect(0, 0, Main.viewport.width.pixels, Main.viewport.height.pixels)
+  # Main.canvas.ctx.clearRect(0, 0, Main.viewport.width.pixels, Main.viewport.height.pixels)
+  playerBounds = Main.player.lastBounds.inViewport
+  Main.canvas.ctx.clearRect(playerBounds.x1, playerBounds.y1, playerBounds.x2, playerBounds.y2)
 
   # Draw the player
   Main.player.draw()
@@ -61,6 +66,17 @@ draw = ->
   #increment the global counter
   Main.globalCounter++
   Main.globalCounter %= 10
+
+  # numDrawCalls++
+  # d = (new Date()).getTime()
+  # duration = d - numDrawCallsTime
+  # if duration >= 1000
+  #   ndcps = ((numDrawCalls / duration) * 1000).toFixed(1)
+  #   console.log "draw calls/sec: #{ndcps}"
+  #   numDrawCallsTime = (new Date()).getTime()
+  #   numDrawCalls = 0
+
+  Main.drawTimer = window.requestAnimFrame(draw, Main.canvas.element) if Main.isDrawing
 
 $.extend Main,
   init: ->
@@ -125,14 +141,18 @@ $.extend Main,
     self = this
     Keyboard.addEvents()
     @_assignKeyHandlers()
-    #@bindEvents window,
-    #  blur: -> self.suspend()
-    #  focus: -> self.resume()
+    @bindEvents window,
+     blur: ->
+       # console.log "blurrr"
+       self.suspend()
+     focus: ->
+       # console.log "focussss"
+       self.resume()
     return this
 
   removeEvents: ->
     Keyboard.removeEvents()
-    #@unbindEvents window, 'blur', 'focus'
+    @unbindEvents window, 'blur', 'focus'
     return this
 
   attachTo: (wrapper) ->
@@ -166,21 +186,26 @@ $.extend Main,
     #   @player.debug()
 
     @startDrawing()
-    @startLogging()
+    #@startLogging()
 
   startDrawing: ->
+    # console.log "start drawing"
     @isDrawing = true
-    @keepDrawing()
+    # @drawTimer = requestInterval draw, @drawInterval if @isDrawing
+    @drawTimer = window.requestAnimFrame(draw, @canvas.element) unless @drawTimer
     return this
 
   stopDrawing: ->
+    # console.log "stop drawing"
     @isDrawing = false
-    clearRequestInterval @drawTimer if @drawTimer
+    if @drawTimer
+      window.cancelRequestAnimFrame(@drawTimer)
+      @drawTimer = null
     return this
 
-  keepDrawing: ->
-    self = this
-    @drawTimer = requestInterval draw, @drawInterval if @isDrawing
+  # keepDrawing: ->
+  #   self = this
+  #   @drawTimer = requestInterval draw, @drawInterval if @isDrawing
 
   startLogging: ->
     self = this
@@ -214,12 +239,12 @@ $.extend Main,
     unless @stateBeforeSuspend
       @stateBeforeSuspend = {wasDrawing: @isDrawing, wasLogging: @isLogging}
       @stopDrawing()
-      @stopLogging()
+      #@stopLogging()
 
   resume: ->
     if @stateBeforeSuspend
       @startDrawing() if @stateBeforeSuspend.wasDrawing
-      @startLogging() if @stateBeforeSuspend.wasLogging
+      #@startLogging() if @stateBeforeSuspend.wasLogging
       @stateBeforeSuspend = null
 
   _assignKeyHandlers: ->
