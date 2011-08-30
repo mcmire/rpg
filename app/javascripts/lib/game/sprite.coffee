@@ -1,4 +1,5 @@
 game = window.game
+
 class game.SpriteSheet
   constructor: (path, width, height) ->
     @image = new Image()
@@ -11,18 +12,13 @@ class game.SpriteAnimation
     @totalFrames = @frames.length
     [@width, @height] = [@spriteSheet.width, @spriteSheet.height]
 
-  step: (x, y)->
+  step: (canvas, x, y)->
+    c = canvas.ctx
+
     @currentFrame = ((@currentFrame + 1) % @totalFrames) if game.Main.globalCounter % @frequency == 0
     yOffset = @frames[@currentFrame] * @height
-    game.Main.canvas.ctx.drawImage(@spriteSheet.image, 0, yOffset, @width, @height, x, y, @width, @height)
+    c.drawImage(@spriteSheet.image, 0, yOffset, @width, @height, x, y, @width, @height)
 
     # DEBUG
-    ctx = game.Main.canvas.ctx
-    ctx.beginPath()
-    ctx.moveTo(x+0.5, y+0.5)
-    ctx.lineTo(x+@width+0.5, y+0.5)
-    ctx.lineTo(x+@width+0.5, y+@height+0.5)
-    ctx.lineTo(x+0.5, y+@height+0.5)
-    ctx.lineTo(x+0.5, y+0.5)
-    ctx.strokeStyle = "#00ff00"
-    ctx.stroke()
+    c.strokeStyle = '#00ff00'
+    c.strokeRect(x+0.5, y+0.5, @width, @height)

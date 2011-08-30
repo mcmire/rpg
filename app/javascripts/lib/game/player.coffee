@@ -56,8 +56,14 @@ class game.Player
     y2 = y1 + @spriteHeight
     @bounds.onMap = new Bounds(x1, x2, y1, y2)
 
-  draw: ->
-    @animations[@action].step(@bounds.inViewport.x1, @bounds.inViewport.y1)
+  draw: (canvas) ->
+    canvas.ctx.clearRect(
+      @lastBounds.inViewport.x1,
+      @lastBounds.inViewport.y1,
+      @lastBounds.inViewport.x2,
+      @lastBounds.inViewport.y2
+    )
+    @animations[@action].step(canvas, @bounds.inViewport.x1, @bounds.inViewport.y1)
     @lastBounds.inViewport = @bounds.inViewport.clone()
 
   # Shifts the viewport and map bounds by the given vector.

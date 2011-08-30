@@ -1,5 +1,13 @@
 game = window.game
-{Keyboard, DOMEventHelpers, Canvas, CollisionLayer, Viewport, Player} = game
+{
+  Keyboard,
+  DOMEventHelpers,
+  Canvas,
+  CollisionLayer,
+  Viewport,
+  Player,
+  FpsReporter
+} = game
 
 defaults = {}
 
@@ -37,46 +45,36 @@ defaults.debug = true
 Main = game.util.module "game.Main"
 $.extend Main, DOMEventHelpers, defaults
 
-# numDrawCalls = 0
-# numDrawCallsTime = (new Date()).getTime()
-
 draw = ->
+  self = Main
+
   # Respond to keystrokes executed during the "dead time", i.e., the time
   # between the end of the last iteration and the start of this iteration
   Keyboard.runHandlers()
 
   # Reposition the background
-  positionStr = [-Main.viewport.frame.boundsOnMap.x1 + 'px', -Main.viewport.frame.boundsOnMap.y1 + 'px'].join(" ")
-  Main.viewport.$element.css('background-position', positionStr)
-  #Main.collisionLayer.$debugMask.css('background-position', positionStr)
+  positionStr = [-self.viewport.frame.boundsOnMap.x1 + 'px', -self.viewport.frame.boundsOnMap.y1 + 'px'].join(" ")
+  self.viewport.$element.css('background-position', positionStr)
+  #self.collisionLayer.$debugMask.css('background-position', positionStr)
 
   # Clear the canvas
   # TODO: Keep track of the last position of each entity and use this to clear
   # the canvas selectively
-  # Main.canvas.ctx.clearRect(0, 0, Main.viewport.width.pixels, Main.viewport.height.pixels)
-  playerBounds = Main.player.lastBounds.inViewport
-  Main.canvas.ctx.clearRect(playerBounds.x1, playerBounds.y1, playerBounds.x2, playerBounds.y2)
+  # self.canvas.ctx.clearRect(0, 0, self.viewport.width.pixels, self.viewport.height.pixels)
 
   # Draw the player
-  Main.player.draw()
+  self.player.draw(self.canvas)
 
-  # test
-  Main.canvas.ctx.drawImage(Main.collisionLayer.debugCanvas.element, 0, 0)
+  # TEST - TODO: Move this to a background image
+  self.canvas.ctx.drawImage(self.collisionLayer.debugCanvas.element, 0, 0)
 
-  #increment the global counter
-  Main.globalCounter++
-  Main.globalCounter %= 10
+  # Increment the global counter
+  self.globalCounter++
+  self.globalCounter %= 10
 
-  # numDrawCalls++
-  # d = (new Date()).getTime()
-  # duration = d - numDrawCallsTime
-  # if duration >= 1000
-  #   ndcps = ((numDrawCalls / duration) * 1000).toFixed(1)
-  #   console.log "draw calls/sec: #{ndcps}"
-  #   numDrawCallsTime = (new Date()).getTime()
-  #   numDrawCalls = 0
+  self.fpsReporter.draw(self.canvas)
 
-  Main.drawTimer = window.requestAnimFrame(draw, Main.canvas.element) if Main.isDrawing
+  self.drawTimer = window.requestAnimFrame(draw, self.canvas.element) if self.isDrawing
 
 $.extend Main,
   init: ->
@@ -90,6 +88,8 @@ $.extend Main,
       @viewport.$element = $('<div id="viewport" />')
         .css('width', @viewport.width.pixels)
         .css('height', @viewport.height.pixels)
+
+      @fpsReporter = FpsReporter.init(this)
 
       @collisionLayer = CollisionLayer.init(this)
       #@viewport.$element.append(@collisionLayer.$debugMask)
@@ -155,12 +155,14 @@ $.extend Main,
     @unbindEvents window, 'blur', 'focus'
     return this
 
-  attachTo: (wrapper) ->
-    $(wrapper).append(@viewport.$element)
+  attachTo: (element) ->
+    @fpsReporter.attachTo(@viewport.$element)
+    $(element).append(@viewport.$element)
     return this
 
   detach: ->
     @canvas.$element.detach()
+    @fpsReporter.detach()
     return this
 
   ready: (callback) ->

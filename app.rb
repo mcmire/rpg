@@ -21,6 +21,7 @@ helpers do
       lib/game/collision_layer.js
       lib/game/player.js
       lib/game/sprite.js
+      lib/game/fps_reporter.js
       lib/game/main.js
     )
     html = ""
