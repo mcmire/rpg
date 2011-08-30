@@ -19,7 +19,7 @@ class game.Player
     @viewport.pos.x = 0
     @viewport.pos.y = 0
 
-  _init:(spriteSheet) ->
+  _init: (spriteSheet) ->
     imagePath = "#{@main.imagesPath}/#{spriteSheet}"
     @spriteSheet = new game.SpriteSheet(imagePath, @dimensions.width, @dimensions.height)
     @spriteSheet.image.onload = => @isLoaded = true
@@ -92,9 +92,9 @@ class game.Player
   #
   moveMapBoundsTo: (key, val) ->
     [axis, side] = key
-    diff = @bounds.onMap.moveTo(key, val)
-    #diff = -diff if side is "1"
-    @bounds.inViewport.shift(axis, diff)
+    distMoved = @bounds.onMap.moveTo(key, val)
+    #distMoved = -distMoved if side is "1"
+    @bounds.inViewport.shift(axis, distMoved)
 
   # The idea here is that we move the player sprite left until it reaches a
   # certain point (we call it the "fence"), after which we continue the
@@ -129,9 +129,9 @@ class game.Player
       if nextBoundsInViewport.x1 < leftEdgeOfFence
         # Player is at the left edge of the fence;
         # shift viewport left
-        diff = @bounds.inViewport.moveTo('x1', leftEdgeOfFence)
-        @bounds.onMap.shift(x: -(@speed + diff))
-        @main.viewport.shiftBounds(x: -(@speed + diff))
+        distMoved = @bounds.inViewport.moveTo('x1', leftEdgeOfFence)
+        @bounds.onMap.shift(x: -(@speed + distMoved))
+        @main.viewport.shiftBounds(x: -(@speed + distMoved))
       else
         # Move player left
         @shiftBounds(x: -@speed)
@@ -169,9 +169,9 @@ class game.Player
       if nextBoundsInViewport.x2 > rightEdgeOfFence
         # Player is at the right side of the fence;
         # shift viewport right
-        diff = @bounds.inViewport.moveTo('x2', rightEdgeOfFence)
-        @bounds.onMap.shift(x: @speed - diff)
-        @main.viewport.shiftBounds(x: @speed - diff)
+        distMoved = @bounds.inViewport.moveTo('x2', rightEdgeOfFence)
+        @bounds.onMap.shift(x: @speed - distMoved)
+        @main.viewport.shiftBounds(x: @speed - distMoved)
       else
         # Move player right
         @shiftBounds(x: @speed)
@@ -208,9 +208,9 @@ class game.Player
       if nextBoundsInViewport.y1 < topEdgeOfFence
         # Player is at the top edge of the fence;
         # shift viewport up
-        diff = @bounds.inViewport.moveTo('y1', topEdgeOfFence)
-        @bounds.onMap.shift(y: -(@speed - diff))
-        @main.viewport.shiftBounds(y: -(@speed - diff))
+        distMoved = @bounds.inViewport.moveTo('y1', topEdgeOfFence)
+        @bounds.onMap.shift(y: -(@speed - distMoved))
+        @main.viewport.shiftBounds(y: -(@speed - distMoved))
       else
         # Move player top
         @shiftBounds(y: -@speed)
@@ -248,9 +248,9 @@ class game.Player
       if nextBoundsInViewport.y2 > bottomEdgeOfFence
         # Player is at the bottom side of the fence;
         # shift viewport down
-        diff = @bounds.inViewport.moveTo('y2', bottomEdgeOfFence)
-        @bounds.onMap.shift(y: @speed - diff)
-        @main.viewport.shiftBounds(y: @speed - diff)
+        distMoved = @bounds.inViewport.moveTo('y2', bottomEdgeOfFence)
+        @bounds.onMap.shift(y: @speed - distMoved)
+        @main.viewport.shiftBounds(y: @speed - distMoved)
       else
         # Move player bottom
         @shiftBounds(y: @speed)
