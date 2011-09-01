@@ -102,7 +102,7 @@ class game.Player
 
     if nextViewportBounds.x1 < 0
       # Viewport is at the left edge of the map
-      @main.viewport.frame.boundsOnMap.moveTo('x1', 0)
+      @main.viewport.moveBoundsTo('x1', 0)
       if nextBoundsOnMap.x1 < 0
         # Player is at the left edge of the map
         @bounds.onMap.moveTo('x1', 0)
@@ -143,7 +143,7 @@ class game.Player
     mapWidth = @main.map.width.pixels
     if nextViewportBounds.x2 > mapWidth
       # Viewport is at the right edge of the map
-      @main.viewport.frame.boundsOnMap.moveTo('x2', mapWidth)
+      @main.viewport.moveBoundsTo('x2', mapWidth)
       if nextBoundsOnMap.x2 > mapWidth
         # Player is at the right edge of the map
         @bounds.onMap.moveTo('x2', mapWidth)
@@ -183,7 +183,7 @@ class game.Player
 
     if nextViewportBounds.y1 < 0
       # Viewport is at the top edge of the map
-      @main.viewport.frame.boundsOnMap.moveTo('y1', 0)
+      @main.viewport.moveBoundsTo('y1', 0)
       if nextBoundsOnMap.y1 < 0
         # Player is at the top edge of the map
         @bounds.onMap.moveTo('y1', 0)
@@ -205,7 +205,7 @@ class game.Player
 
   # Similar to moving leftward, we move the player sprite downward until it
   # hits the fence, after which we continue the appearance of movement by
-  # shifting the viewport downard along the map. We do this until we've reached
+  # shifting the viewport downward along the map. We do this until we've reached
   # the bottom edge of the map and can scroll no longer, at which point we move
   # the player down until it touches the bottom edge of the map.
   #
@@ -224,7 +224,7 @@ class game.Player
     mapHeight = @main.map.height.pixels
     if nextViewportBounds.y2 > mapHeight
       # Viewport is at the bottom edge of the map
-      @main.viewport.frame.boundsOnMap.moveTo('y2', mapHeight)
+      @main.viewport.moveBoundsTo('y2', mapHeight)
       if nextBoundsOnMap.y2 > mapHeight
         # Player is at the bottom edge of the map
         @bounds.onMap.moveTo('y2', mapHeight)

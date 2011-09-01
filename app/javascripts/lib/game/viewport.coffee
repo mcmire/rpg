@@ -50,36 +50,39 @@ game.util.module "game.Viewport", [EventHelpers],
     positionStr = [-bom.x1 + 'px', -bom.y1 + 'px'].join(" ")
     @$element.css('background-position', positionStr)
 
-  # Shifts the frame and padding bounds by the given vector.
+  # Moves the bounds of the viewport frame by the given vector.
+  #
+  # The "move" event is also triggered, which is currently used by the collision
+  # layer to shift the collision box overlay along with the map.
   #
   # Examples:
   #
-  #   shiftBounds(x: 20)
+  #   shiftBounds('x', 20)
   #   shiftBounds(x: 2, y: -9)
   #
-  shiftBounds: (vec) ->
-    @frame.boundsOnMap.shift(vec)
-    # @padding.bounds.shift(vec)
+  shiftBounds: (args...) ->
+    ret = @frame.boundsOnMap.shift(args...)
     $(this).trigger('move')
+    return ret
 
-  # Shifts the frame and padding bounds by a vector such that the given key
-  # (e.g., "x1", "y2) ends up being the given value for the corresponding
-  # key in the frame bounds. The padding bounds will be re-calculated
-  # appropriately.
+  # Moves the bounds of the viewport frame by a vector such that the given
+  # bound corner ends up being the given value. The bound corner on the other
+  # side of the given bound corner is moved proportionally.
+  #
+  # The "move" event is also triggered, which is currently used by the collision
+  # layer to shift the collision box overlay along with the map.
+  #
+  # Returns the distance the bounds were moved.
   #
   # Examples:
   #
-  #   moveFrameBoundsTo("x2", 2000)
-  #   moveFrameBoundsTo("y1", 0)
+  #   moveBoundsTo('x1', 80)
+  #   moveBoundsTo('y2', 3)
   #
-  # Also see:
-  #
-  #   Bounds#moveTo
-  #
-  moveFrameBoundsTo: (key, val) ->
-    diff = @frame.boundsOnMap.moveTo(key, val)
-    #axis = key[0]
-    #@padding.bounds.shift(axis, diff)
+  moveBoundsTo: (key, val) ->
+    ret = @frame.boundsOnMap.moveTo(key, val)
+    $(this).trigger('move')
+    return ret
 
   inspect: ->
     JSON.stringify(

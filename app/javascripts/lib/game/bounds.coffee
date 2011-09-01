@@ -23,8 +23,12 @@ class game.Bounds
       bounds.y2 -= vec.y
     bounds
 
-  # shift(axis, value)
-  # shift(vector)
+  # Moves the bounds by the given vector according to the given axis (or axes).
+  #
+  # Examples:
+  #
+  #   shift('x', 3)
+  #   shift(x: 4, y: 3)
   #
   shift: (args...) ->
     if args.length == 2
@@ -42,15 +46,17 @@ class game.Bounds
 
     return this
 
-  # This method is really hard to explain, so I'll give an example and
-  # you should be able to figure it out pretty quickly. Say that we have bounds
-  # {x1: 10, x2: 20, y1: 100, y2: 200}. Now let's say we want to shift
-  # both X-values of these bounds by a number so that the x2 value ends up
-  # being 80. That is exactly what this does:
+  # Moves the bounds by a vector such that the given bound corner (so, "x1" or
+  # "y2") ends up being the given value. The corresponding bound corner on the
+  # other side (so, "x2" if the given bound corner is "x1", or "y1" if given
+  # "y2") is moved proportionally.
   #
-  #   set('x2', 80)
+  # Returns the distance the bounds were moved.
   #
-  # Returns the distance the bounds were moved as x/y coordinates.
+  # Examples:
+  #
+  #   moveTo('x1', 80)
+  #   moveTo('y2', 3)
   #
   moveTo: (key, val) ->
     # picking characters from the string, that's all we're doing
@@ -66,11 +72,8 @@ class game.Bounds
     @[key] = val
     @[otherKey] = otherVal
 
-    diff = @[a1] - old
-    #ret = {}
-    #ret[axis] = diff
-    #ret
-    diff
+    distMoved = @[a1] - old
+    return distMoved
 
   clone: ->
     new Bounds(@x1, @x2, @y1, @y2)

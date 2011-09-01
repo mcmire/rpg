@@ -33,12 +33,14 @@ draw = ->
 
   Main.viewport.draw()
   everySecond (df, dt) ->
+    # console.log "player: #{Main.player.inspect()}"
+    # console.log "viewport: #{Main.viewport.inspect()}"
     Main.fpsReporter.draw(df, dt)
 
   Main.player.draw(canvas)
 
 $.extend Main,
-  drawInterval: 90   # ms/frame
+  drawInterval: 30   # ms/frame
   tileSize: 64   # pixels
 
   imagesPath: "/images"
