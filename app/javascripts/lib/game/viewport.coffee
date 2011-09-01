@@ -1,5 +1,5 @@
 game = window.game
-{EventEmitter, EventHelpers, Canvas, Bounds, FpsReporter, CollisionLayer} = game
+{EventHelpers, Canvas, Bounds, FpsReporter, CollisionLayer} = game
 
 game.util.module "game.Viewport", [EventHelpers],
   playerPadding: 30  # pixels

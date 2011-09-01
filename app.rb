@@ -14,7 +14,6 @@ helpers do
       lib/ender_ext.js
       lib/game/util.js
       lib/game/event_helpers.js
-      lib/game/event_emitter.js
       lib/game/keyboard.js
       lib/game/canvas.js
       lib/game/bounds.js
