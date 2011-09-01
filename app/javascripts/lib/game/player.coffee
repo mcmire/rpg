@@ -112,7 +112,7 @@ class game.Player
 
     collisionLayer = @main.collisionLayer
     if x = collisionLayer.getBlockingRightEdge(nextBoundsOnMap)
-      @moveMapBoundsTo('x1', x)
+      @moveMapBoundsTo('x1', x+1)
       return
 
     if nextViewportBounds.x1 < 0
@@ -152,7 +152,7 @@ class game.Player
 
     collisionLayer = @main.collisionLayer
     if x = collisionLayer.getBlockingLeftEdge(nextBoundsOnMap)
-      @moveMapBoundsTo('x2', x)
+      @moveMapBoundsTo('x2', x-1)
       return
 
     mapWidth = @main.map.width.pixels
@@ -193,7 +193,7 @@ class game.Player
 
     collisionLayer = @main.collisionLayer
     if y = collisionLayer.getBlockingBottomEdge(nextBoundsOnMap)
-      @moveMapBoundsTo('y1', y)
+      @moveMapBoundsTo('y1', y+1)
       return
 
     if nextViewportBounds.y1 < 0
@@ -233,7 +233,7 @@ class game.Player
 
     collisionLayer = @main.collisionLayer
     if y = collisionLayer.getBlockingTopEdge(nextBoundsOnMap)
-      @moveMapBoundsTo('y2', y)
+      @moveMapBoundsTo('y2', y-1)
       return
 
     mapHeight = @main.map.height.pixels
