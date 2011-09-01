@@ -28,16 +28,6 @@ game.util.module "game.FpsReporter",
   detach: ->
     @$div.detach()
 
-  draw: (canvas) ->
-    @numFramesSinceDraw++
-    d = (new Date()).getTime()
-    duration = d - @timeSinceDraw
-    if duration >= @drawInterval
-      fps = ((@numFramesSinceDraw / duration) * 1000).toFixed(1)
-      @_draw(canvas, fps)
-      @timeSinceDraw = (new Date()).getTime()
-      @numFramesSinceDraw = 0
-    return this
-
-  _draw: (canvas, fps) ->
+  draw: (df, dt) ->
+    fps = ((df / dt) * 1000).toFixed(1)
     @$div.text("#{fps} FPS")
