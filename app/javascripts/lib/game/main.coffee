@@ -1,67 +1,45 @@
 game = window.game
-{Keyboard, EventHelpers, Viewport, CollisionLayer, FpsReporter, Player} = game
+{Keyboard, EventHelpers, Viewport, CollisionLayer, FpsReporter, Link} = game
 
-defaults = {}
-
-_dim = (value, unit) ->
-  d = {}
-  switch unit
-    when "tile", "tiles"
-      d.tiles = value;
-      d.pixels = value * defaults.tileSize
-    when "pixel", "pixels"
-      d.pixels = value;
-      d.tiles = value / defaults.tileSize
-  return d
-
-defaults.drawInterval  = 90   # ms/frame
-defaults.tileSize      = 64   # pixels
-
-defaults.imagesPath = "/images"
-
-defaults.entities = []
-
-defaults.mapWidth = _dim(2560, 'pixels')
-defaults.mapHeight = _dim(1600, 'pixels')
-
-# defaults.viewportWidth  = _dim(24, 'tiles')
-# defaults.viewportHeight = _dim(16, 'tiles')
-defaults.viewportWidth = _dim(600, 'pixels')
-defaults.viewportHeight = _dim(400, 'pixels')
-# defaults.viewportWidth = defaults.mapWidth
-# defaults.viewportHeight = defaults.mapHeight
-
-defaults.debug = true
-
-Main = game.util.module "game.Main"
-$.extend Main, EventHelpers, defaults
+Main = game.util.module "game.Main", EventHelpers
 
 draw = ->
-  self = Main
-
   # Respond to keystrokes executed during the "dead time", i.e., the time
   # between the end of the last iteration and the start of this iteration
   Keyboard.runHandlers()
 
-  self.viewport.draw()
-  self.fpsReporter.draw(self.viewport.canvas)
+  Main.viewport.draw()
+  Main.fpsReporter.draw(Main.viewport.canvas)
 
-  self.player.draw(self.viewport.canvas)
+  Main.player.draw(Main.viewport.canvas)
 
   # Increment the global counter
-  self.globalCounter++
-  self.globalCounter %= 10
+  Main.globalCounter++
+  Main.globalCounter %= 10
 
-  self.drawTimer = window.requestAnimFrame(draw, self.viewport.canvas.element) if self.isDrawing
+  Main.drawTimer = window.requestAnimFrame(draw, Main.viewport.canvas.element) if Main.isDrawing
 
 $.extend Main,
+  drawInterval: 90   # ms/frame
+  tileSize: 64   # pixels
+
+  imagesPath: "/images"
+
+  entities: []
+
+  debug: true
+
   init: ->
     unless @isInit
       @reset()
 
       Keyboard.init()
 
-      @_initMap()
+      # init map
+      @map = {
+        width:  @dim(2560, 'pixels')
+        height: @dim(1600, 'pixels')
+      }
 
       @viewport = Viewport.init(this)
       @fpsReporter = FpsReporter.init(this)
@@ -78,6 +56,9 @@ $.extend Main,
       @removeEvents()
       @detach()
       Keyboard.destroy()
+      @viewport.destroy()
+      @fpsReporter.destroy()
+      @collisionLayer.destroy()
       @stopDrawing()
       @stopLogging()
       @reset()
@@ -87,16 +68,7 @@ $.extend Main,
   reset: ->
     @stopDrawing()
     @stopLogging()
-    @data = []
-    @map = {
-      # (width: null)
-      # (height: null)
-      data: []
-    }
-    # OLD?
-    @bg = {
-      offset: {} # x, y
-    }
+    @globalCounter = 0
     @logQueue = {}
     @logQueueMessages = []
     return this
@@ -144,15 +116,6 @@ $.extend Main,
     , 100
 
   run: ->
-    @globalCounter = 0
-    @_renderMap()
-    @viewport.initBounds()
-    @player.initBoundsOnMap()
-
-    # if @debug
-    #   @viewport.debug()
-    #   @player.debug()
-
     @startDrawing()
     #@startLogging()
 
@@ -215,6 +178,17 @@ $.extend Main,
       #@startLogging() if @stateBeforeSuspend.wasLogging
       @stateBeforeSuspend = null
 
+  dim: (value, unit) ->
+    d = {}
+    switch unit
+      when "tile", "tiles"
+        d.tiles = value;
+        d.pixels = value * @tileSize
+      when "pixel", "pixels"
+        d.pixels = value;
+        d.tiles = value / @tileSize
+    return d
+
   _assignKeyHandlers: ->
     self = this
 
@@ -237,12 +211,3 @@ $.extend Main,
     Keyboard.addKeyHandler 'KEY_D', 'KEY_RIGHT', 'KEY_L', -> self.player.moveRight()
     Keyboard.addKeyHandler 'KEY_W', 'KEY_UP',    'KEY_K', -> self.player.moveUp()
     Keyboard.addKeyHandler 'KEY_S', 'KEY_DOWN',  'KEY_J', -> self.player.moveDown()
-
-  _initMap: ->
-    # ... fetch the map data here ...
-    @map.width = @mapWidth
-    @map.height = @mapHeight
-
-  _renderMap: ->
-    @viewport.$element.css('background-image', "url(#{@imagesPath}/map2x.png)")
-    @viewport.$element.css('background-repeat', 'no-repeat')

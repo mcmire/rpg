@@ -17,13 +17,12 @@ game = window.game
 #   Foo.Bar = {__name: "Foo.Bar"}
 #   Foo.Bar.Baz = {__name: "Foo.Bar.Baz", bleep: true, bloop: "foo"}
 #
-# Optionally, an array of objects may be specified as the second
-# argument before the given initial object value. These objects will be
-# mixed into the final object. For instance, this:
+# Optionally, a list of existing objects may be specified before the object
+# literal. These objects will be mixed into the final object. For instance, this:
 #
 #   mixin1 = {zing: "blaz"}
 #   mixin2 = {zang: "flaz"}
-#   util.module "Foo.Bar.Baz", [mixin1, mixin2], {
+#   util.module "Foo.Bar.Baz", mixin1, mixin2, {
 #     bleep: true
 #     bloop: "foo"
 #   }
@@ -50,16 +49,10 @@ game = window.game
 #     bloop: "foo"
 #   }
 #
-_module = (chainStrs, args...) ->
+_module = (chainStrs, objs...) ->
   newObj = {}
-  mixins = []
-  switch args.length
-    when 2 then [mixins, newObj] = args
-    when 1 then newObj = args[0]
-
-  if mixins
-    mixins = [mixins] unless $.v.is.arr(mixins)
-    $.extend newObj, mixin for mixin in mixins
+  objs = $.v.flatten(objs)
+  $.extend newObj, obj for obj in objs
 
   chainStrs = chainStrs.split(".") if typeof chainStrs is "string"
   newObj.__name = chainStrs.join(".")

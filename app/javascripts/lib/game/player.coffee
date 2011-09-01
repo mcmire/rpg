@@ -2,6 +2,8 @@ game = window.game
 {Bounds} = game
 
 class game.Player
+  @speed: 5 # px/frame
+
   constructor: (@main, spriteSheet, @dimensions) ->
     @_init(spriteSheet)
     @initialize()
@@ -12,44 +14,27 @@ class game.Player
   addAnimation: (name, frequency, frames) ->
     @animations[name] = new game.SpriteAnimation(@spriteSheet, frequency, frames)
 
-  _initWithinViewport: ->
-    # Initialize the player's position on the map
-    # @viewport.pos.x = @main.viewport.width.pixels / 2
-    # @viewport.pos.y = @main.viewport.height.pixels / 2
-    @viewport.pos.x = 0
-    @viewport.pos.y = 0
-
   _init: (spriteSheet) ->
     imagePath = "#{@main.imagesPath}/#{spriteSheet}"
     @spriteSheet = new game.SpriteSheet(imagePath, @dimensions.width, @dimensions.height)
-    @spriteSheet.image.onload = => @isLoaded = true
+    @spriteSheet.image.onload  = => @isLoaded = true
     @spriteSheet.image.onerror = => throw "Image #{imagePath} failed to load!"
+
     @action = 'idleRight'
     @animations = {}
     [@spriteWidth, @spriteHeight] = [@dimensions.width, @dimensions.height]
-    @viewport = {
-      pos: {x: 0, y: 0}
-      offset: {x: 0, y: 0}
-    }
-    @bounds = {
-      onMap: new Bounds()
-      inViewport: new Bounds()
-    }
-    @lastBounds = {
-      inViewport: new Bounds()
-    }
-    @speed = 5  # px/frame
 
-    @_initBoundsInViewport()
+    @bounds = {}
+    @lastBounds = {}
 
-  _initBoundsInViewport: ->
+    # bounds in viewport
     x1 = 0
     x2 = x1 + @spriteWidth
     y1 = 0
     y2 = y1 + @spriteHeight
     @bounds.inViewport = @lastBounds.inViewport = new Bounds(x1, x2, y1, y2)
 
-  initBoundsOnMap: ->
+    # bounds on map
     x1 = @main.viewport.frame.boundsOnMap.x1 + @bounds.inViewport.x1
     x2 = x1 + @spriteWidth
     y1 = @main.viewport.frame.boundsOnMap.y1 + @bounds.inViewport.y1
@@ -106,9 +91,9 @@ class game.Player
   moveLeft: ->
     @action = 'runLeft'
 
-    nextBoundsOnMap = @bounds.onMap.subtract(x: @speed)
-    nextBoundsInViewport = @bounds.inViewport.subtract(x: @speed)
-    nextViewportBounds = @main.viewport.frame.boundsOnMap.subtract(x: @speed)
+    nextBoundsOnMap = @bounds.onMap.subtract(x: Player.speed)
+    nextBoundsInViewport = @bounds.inViewport.subtract(x: Player.speed)
+    nextViewportBounds = @main.viewport.frame.boundsOnMap.subtract(x: Player.speed)
 
     collisionLayer = @main.collisionLayer
     if x = collisionLayer.getBlockingRightEdge(nextBoundsOnMap)
@@ -124,18 +109,18 @@ class game.Player
         @bounds.inViewport.moveTo('x1', 0)
       else
         # Move player left
-        @shiftBounds(x: -@speed)
+        @shiftBounds(x: -Player.speed)
     else
       leftEdgeOfFence = @main.viewport.padding.boundsInFrame.x1
       if nextBoundsInViewport.x1 < leftEdgeOfFence
         # Player is at the left edge of the fence;
         # shift viewport left
         distMoved = @bounds.inViewport.moveTo('x1', leftEdgeOfFence)
-        @bounds.onMap.shift(x: -(@speed + distMoved))
-        @main.viewport.shiftBounds(x: -(@speed + distMoved))
+        @bounds.onMap.shift(x: -(Player.speed + distMoved))
+        @main.viewport.shiftBounds(x: -(Player.speed + distMoved))
       else
         # Move player left
-        @shiftBounds(x: -@speed)
+        @shiftBounds(x: -Player.speed)
 
   # Similar to moving leftward, we move the player sprite right until it hits
   # the fence, after which we continue the appearance of movement by shifting
@@ -146,9 +131,9 @@ class game.Player
   moveRight: ->
     @action = 'runRight'
 
-    nextBoundsOnMap = @bounds.onMap.add(x: @speed)
-    nextBoundsInViewport = @bounds.inViewport.add(x: @speed)
-    nextViewportBounds = @main.viewport.frame.boundsOnMap.add(x: @speed)
+    nextBoundsOnMap = @bounds.onMap.add(x: Player.speed)
+    nextBoundsInViewport = @bounds.inViewport.add(x: Player.speed)
+    nextViewportBounds = @main.viewport.frame.boundsOnMap.add(x: Player.speed)
 
     collisionLayer = @main.collisionLayer
     if x = collisionLayer.getBlockingLeftEdge(nextBoundsOnMap)
@@ -165,18 +150,18 @@ class game.Player
         @bounds.inViewport.moveTo('x2', @main.viewport.width.pixels)
       else
         # Move player right
-        @shiftBounds(x: @speed)
+        @shiftBounds(x: Player.speed)
     else
       rightEdgeOfFence = @main.viewport.padding.boundsInFrame.x2
       if nextBoundsInViewport.x2 > rightEdgeOfFence
         # Player is at the right side of the fence;
         # shift viewport right
         distMoved = @bounds.inViewport.moveTo('x2', rightEdgeOfFence)
-        @bounds.onMap.shift(x: @speed - distMoved)
-        @main.viewport.shiftBounds(x: @speed - distMoved)
+        @bounds.onMap.shift(x: Player.speed - distMoved)
+        @main.viewport.shiftBounds(x: Player.speed - distMoved)
       else
         # Move player right
-        @shiftBounds(x: @speed)
+        @shiftBounds(x: Player.speed)
 
   # Similar to moving leftward, we move the player sprite upward until it hits
   # the fence, after which we continue the appearance of movement by shifting
@@ -187,9 +172,9 @@ class game.Player
   moveUp: ->
     @action = 'runUp'
 
-    nextBoundsOnMap = @bounds.onMap.subtract(y: @speed)
-    nextBoundsInViewport = @bounds.inViewport.subtract(y: @speed)
-    nextViewportBounds = @main.viewport.frame.boundsOnMap.subtract(y: @speed)
+    nextBoundsOnMap = @bounds.onMap.subtract(y: Player.speed)
+    nextBoundsInViewport = @bounds.inViewport.subtract(y: Player.speed)
+    nextViewportBounds = @main.viewport.frame.boundsOnMap.subtract(y: Player.speed)
 
     collisionLayer = @main.collisionLayer
     if y = collisionLayer.getBlockingBottomEdge(nextBoundsOnMap)
@@ -205,18 +190,18 @@ class game.Player
         @bounds.inViewport.moveTo('y1', 0)
       else
         # Move player top
-        @shiftBounds(y: -@speed)
+        @shiftBounds(y: -Player.speed)
     else
       topEdgeOfFence = @main.viewport.padding.boundsInFrame.y1
       if nextBoundsInViewport.y1 < topEdgeOfFence
         # Player is at the top edge of the fence;
         # shift viewport up
         distMoved = @bounds.inViewport.moveTo('y1', topEdgeOfFence)
-        @bounds.onMap.shift(y: -(@speed - distMoved))
-        @main.viewport.shiftBounds(y: -(@speed - distMoved))
+        @bounds.onMap.shift(y: -(Player.speed - distMoved))
+        @main.viewport.shiftBounds(y: -(Player.speed - distMoved))
       else
         # Move player top
-        @shiftBounds(y: -@speed)
+        @shiftBounds(y: -Player.speed)
 
   # Similar to moving leftward, we move the player sprite downward until it
   # hits the fence, after which we continue the appearance of movement by
@@ -227,9 +212,9 @@ class game.Player
   moveDown: ->
     @action = 'runDown'
 
-    nextBoundsOnMap = @bounds.onMap.add(y: @speed)
-    nextBoundsInViewport = @bounds.inViewport.add(y: @speed)
-    nextViewportBounds = @main.viewport.frame.boundsOnMap.add(y: @speed)
+    nextBoundsOnMap = @bounds.onMap.add(y: Player.speed)
+    nextBoundsInViewport = @bounds.inViewport.add(y: Player.speed)
+    nextViewportBounds = @main.viewport.frame.boundsOnMap.add(y: Player.speed)
 
     collisionLayer = @main.collisionLayer
     if y = collisionLayer.getBlockingTopEdge(nextBoundsOnMap)
@@ -246,18 +231,18 @@ class game.Player
         @bounds.inViewport.moveTo('y2', @main.viewport.height.pixels)
       else
         # Move player bottom
-        @shiftBounds(y: @speed)
+        @shiftBounds(y: Player.speed)
     else
       bottomEdgeOfFence = @main.viewport.padding.boundsInFrame.y2
       if nextBoundsInViewport.y2 > bottomEdgeOfFence
         # Player is at the bottom side of the fence;
         # shift viewport down
         distMoved = @bounds.inViewport.moveTo('y2', bottomEdgeOfFence)
-        @bounds.onMap.shift(y: @speed - distMoved)
-        @main.viewport.shiftBounds(y: @speed - distMoved)
+        @bounds.onMap.shift(y: Player.speed - distMoved)
+        @main.viewport.shiftBounds(y: Player.speed - distMoved)
       else
         # Move player bottom
-        @shiftBounds(y: @speed)
+        @shiftBounds(y: Player.speed)
 
   inspect: ->
     JSON.stringify(
@@ -269,8 +254,7 @@ class game.Player
     console.log "player.bounds.inViewport = #{@bounds.inViewport.inspect()}"
     console.log "player.bounds.OnMap = #{@bounds.onMap.inspect()}"
 
-window.Link = class Link extends game.Player
-
+class game.Link extends game.Player
   initialize: ->
     @addAnimation('idleRight', 4, [8])
     @addAnimation('runRight', 4, [8,9,10,11,12,13,14,15])

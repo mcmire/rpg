@@ -6,14 +6,25 @@ game.util.module "game.Viewport", [EventHelpers],
 
   init: (@main) ->
     unless @isInit
-      @reset()
+      @width = @main.dim(600, 'pixels')
+      @height = @main.dim(400, 'pixels')
 
-      @width = @main.viewportWidth
-      @height = @main.viewportHeight
+      @frame = {}
+      bom = @frame.boundsOnMap = new Bounds(0, @width.pixels, 0, @height.pixels)
+
+      @padding = {}
+      @padding.boundsInFrame = new Bounds(
+        bom.x1 + @playerPadding
+        bom.x2 - @playerPadding
+        bom.y1 + @playerPadding
+        bom.y2 - @playerPadding
+      )
 
       @$element = $('<div id="viewport" />').css(
         width: @width.pixels
         height: @height.pixels
+        'background-image': "url(#{@main.imagesPath}/map2x.png)"
+        'background-repeat': 'no-repeat'
       )
       @canvas = Canvas.create(@width.pixels, @height.pixels)
       @canvas.element.id = 'canvas'
@@ -28,32 +39,11 @@ game.util.module "game.Viewport", [EventHelpers],
       @isInit = false
     return this
 
-  reset: ->
-    # (width: null)
-    # (height: null)
-    @frame = {
-      boundsOnMap: new Bounds()
-    }
-    @padding = {
-      boundsInFrame: new Bounds()
-    }
-    return this
-
   attachTo: (element) ->
     $(element).append(@$element)
 
   detach: ->
     @$element.detach()
-
-  initBounds: ->
-    bom = @frame.boundsOnMap = new Bounds(0, @width.pixels, 0, @height.pixels)
-    @padding.boundsInFrame = new Bounds(
-      bom.x1 + @playerPadding
-      bom.x2 - @playerPadding
-      bom.y1 + @playerPadding
-      bom.y2 - @playerPadding
-    )
-    return this
 
   draw: ->
     bom = @frame.boundsOnMap
