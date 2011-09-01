@@ -4,20 +4,11 @@ game = window.game
 game.util.module "game.FpsReporter",
   drawInterval: 1000 # ms
 
-  init: (@main) ->
+  init: (@viewport) ->
     unless @isInit
       @reset()
       #@canvas = Canvas.create(100, 40)
-      @$div = $('<div />').css(
-        width: '85px'
-        height: '40px'
-        'line-height': '40px'
-        'text-align': 'center'
-        'background-color': 'white'
-        position: 'absolute'
-        right: 0
-        bottom: 0
-      )
+      @$div = $('<div id="fps-reporter" />')
       @isInit = true
     return this
 

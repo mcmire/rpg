@@ -9,3 +9,20 @@ body {
   // margin-right: 20px;
   position: relative
 }
+
+#fps-reporter {
+  width: 85px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  background-color: white;
+  position: absolute;
+  right: 0;
+  bottom: 0
+}
+
+#collision-layer-debug-overlay {
+  position: absolute;
+  top: 0;
+  left: 0
+}

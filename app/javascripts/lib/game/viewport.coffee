@@ -1,14 +1,27 @@
 game = window.game
-{Bounds} = game
+{EventEmitter, EventHelpers, Canvas, Bounds, FpsReporter, CollisionLayer} = game
 
-game.util.module "game.Viewport",
+game.util.module "game.Viewport", [EventHelpers],
   playerPadding: 30  # pixels
 
   init: (@main) ->
     unless @isInit
       @reset()
+
       @width = @main.viewportWidth
       @height = @main.viewportHeight
+
+      @$element = $('<div id="viewport" />').css(
+        width: @width.pixels
+        height: @height.pixels
+      )
+      @canvas = Canvas.create(@width.pixels, @height.pixels)
+      @canvas.element.id = 'canvas'
+      @$element.append(@canvas.$element)
+
+      @fpsReporter = FpsReporter.init(this)
+      @collisionLayer = CollisionLayer.init(this)
+
       @isInit = true
     return this
 
@@ -29,15 +42,37 @@ game.util.module "game.Viewport",
     }
     return this
 
+  addEvents: ->
+    @collisionLayer.addEvents()
+
+  removeEvents: ->
+    @collisionLayer.removeEvents()
+
+  attachTo: (element) ->
+    $(element).append(@$element)
+    @fpsReporter.attachTo(@$element)
+    @collisionLayer.attachTo(@$element)
+
+  detach: ->
+    @$element.detach()
+    @fpsReporter.detach()
+    @collisionLayer.detach()
+
   initBounds: ->
-    @frame.boundsOnMap = new Bounds(0, @width.pixels, 0, @height.pixels)
+    bom = @frame.boundsOnMap = new Bounds(0, @width.pixels, 0, @height.pixels)
     @padding.boundsInFrame = new Bounds(
-      @frame.boundsOnMap.x1 + @playerPadding
-      @frame.boundsOnMap.x2 - @playerPadding
-      @frame.boundsOnMap.y1 + @playerPadding
-      @frame.boundsOnMap.y2 - @playerPadding
+      bom.x1 + @playerPadding
+      bom.x2 - @playerPadding
+      bom.y1 + @playerPadding
+      bom.y2 - @playerPadding
     )
     return this
+
+  draw: ->
+    bom = @frame.boundsOnMap
+    positionStr = [-bom.x1 + 'px', -bom.y1 + 'px'].join(" ")
+    @$element.css('background-position', positionStr)
+    @fpsReporter.draw(@canvas)
 
   # Shifts the frame and padding bounds by the given vector.
   #
@@ -49,6 +84,7 @@ game.util.module "game.Viewport",
   shiftBounds: (vec) ->
     @frame.boundsOnMap.shift(vec)
     # @padding.bounds.shift(vec)
+    $(this).trigger('move')
 
   # Shifts the frame and padding bounds by a vector such that the given key
   # (e.g., "x1", "y2) ends up being the given value for the corresponding

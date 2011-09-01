@@ -110,7 +110,8 @@ class game.Player
     nextBoundsInViewport = @bounds.inViewport.subtract(x: @speed)
     nextViewportBounds = @main.viewport.frame.boundsOnMap.subtract(x: @speed)
 
-    if x = @main.collisionLayer.getBlockingRightEdge(nextBoundsOnMap)
+    collisionLayer = @main.viewport.collisionLayer
+    if x = collisionLayer.getBlockingRightEdge(nextBoundsOnMap)
       @moveMapBoundsTo('x1', x)
       return
 
@@ -149,7 +150,8 @@ class game.Player
     nextBoundsInViewport = @bounds.inViewport.add(x: @speed)
     nextViewportBounds = @main.viewport.frame.boundsOnMap.add(x: @speed)
 
-    if x = @main.collisionLayer.getBlockingLeftEdge(nextBoundsOnMap)
+    collisionLayer = @main.viewport.collisionLayer
+    if x = collisionLayer.getBlockingLeftEdge(nextBoundsOnMap)
       @moveMapBoundsTo('x2', x)
       return
 
@@ -189,7 +191,8 @@ class game.Player
     nextBoundsInViewport = @bounds.inViewport.subtract(y: @speed)
     nextViewportBounds = @main.viewport.frame.boundsOnMap.subtract(y: @speed)
 
-    if y = @main.collisionLayer.getBlockingBottomEdge(nextBoundsOnMap)
+    collisionLayer = @main.viewport.collisionLayer
+    if y = collisionLayer.getBlockingBottomEdge(nextBoundsOnMap)
       @moveMapBoundsTo('y1', y)
       return
 
@@ -228,7 +231,8 @@ class game.Player
     nextBoundsInViewport = @bounds.inViewport.add(y: @speed)
     nextViewportBounds = @main.viewport.frame.boundsOnMap.add(y: @speed)
 
-    if y = @main.collisionLayer.getBlockingTopEdge(nextBoundsOnMap)
+    collisionLayer = @main.viewport.collisionLayer
+    if y = collisionLayer.getBlockingTopEdge(nextBoundsOnMap)
       @moveMapBoundsTo('y2', y)
       return
 

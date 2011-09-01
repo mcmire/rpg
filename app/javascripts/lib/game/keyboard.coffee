@@ -1,7 +1,7 @@
 game = window.game
-{DOMEventHelpers} = game
+{EventHelpers} = game
 
-game.util.module 'game.Keyboard', [DOMEventHelpers],
+game.util.module 'game.Keyboard', [EventHelpers],
   keys:
     KEY_TAB: 9
     KEY_ESC: 27

@@ -13,15 +13,16 @@ helpers do
       vendor/request_anim_shims.js
       lib/ender_ext.js
       lib/game/util.js
-      lib/game/dom_event_helpers.js
+      lib/game/event_helpers.js
+      lib/game/event_emitter.js
       lib/game/keyboard.js
       lib/game/canvas.js
       lib/game/bounds.js
-      lib/game/viewport.js
+      lib/game/fps_reporter.js
       lib/game/collision_layer.js
+      lib/game/viewport.js
       lib/game/player.js
       lib/game/sprite.js
-      lib/game/fps_reporter.js
       lib/game/main.js
     )
     html = ""

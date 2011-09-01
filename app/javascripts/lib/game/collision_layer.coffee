@@ -1,40 +1,51 @@
 game = window.game
-{Canvas} = game
+{Canvas, EventHelpers} = game
 
-game.util.module "game.CollisionLayer",
-  init: (@main) ->
+game.util.module "game.CollisionLayer", [EventHelpers],
+  init: (@viewport) ->
     unless @isInit
       @isLoaded = false
       #[@width, @height] = [10, 10]  # just temporary for now
-      @width = @main.viewport.width.pixels
-      @height = @main.viewport.height.pixels
+      @width = @viewport.width.pixels
+      @height = @viewport.height.pixels
 
-      @imagePath = "#{@main.imagesPath}/mask.gif"
+      @imagePath = "#{@viewport.main.imagesPath}/mask.gif"
       @_loadImage =>
         #@_createCollisionBoxes()
       @collisionBoxes = [
         {x1: 96, x2: 352, y1: 96, y2: 112}
       ]
 
-      c = @debugCanvas = Canvas.create(@width, @height)
-      for box in @collisionBoxes
-        c.ctx.beginPath()
-        c.ctx.moveTo(box.x1+0.5, box.y1+0.5)
-        c.ctx.lineTo(box.x2+0.5, box.y1+0.5)
-        c.ctx.lineTo(box.x2+0.5, box.y2+0.5)
-        c.ctx.lineTo(box.x1+0.5, box.y2+0.5)
-        c.ctx.lineTo(box.x1+0.5, box.y1+0.5)
-        c.ctx.strokeStyle = "#ff0000"
-        c.ctx.stroke()
+      @_createDebugOverlay()
 
-      @$debugMask = $('<div />')
-        .css('width', @width)
-        .css('height', @height)
-        .css('background-image', 'url(/images/mask.gif)')
-        .css('background-repeat', 'no-repeat')
+      # @$debugMask = $('<div />')
+      #   .css('width', @width)
+      #   .css('height', @height)
+      #   .css('background-image', 'url(/images/mask.gif)')
+      #   .css('background-repeat', 'no-repeat')
 
       @isInit = true
     return this
+
+  addEvents: ->
+    self = this
+    @bindEvents @viewport, move: -> self.draw()
+
+  removeEvents: ->
+    @unbindEvents @viewport, 'move'
+
+  attachTo: (element) ->
+    $(element).append(@$debugOverlay)
+
+  detach: ->
+    @debugOverlay.$element.detach()
+
+  draw: ->
+    bom = @viewport.frame.boundsOnMap
+    positionStr = [-bom.x1 + 'px', -bom.y1 + 'px'].join(" ")
+    @$debugOverlay.css('background-position', positionStr)
+    #self.collisionLayer.$debugMask.css('background-position', positionStr)
+    #self.canvas.ctx.drawImage(self.collisionLayer.debugCanvas.element, 0, 0)
 
   # Called when an entity is moving right. Given the coordinates of an entity in
   # the position it is about to be moved to, returns the left edge of a box on
@@ -153,6 +164,18 @@ game.util.module "game.CollisionLayer",
         )
       )
     return null
+
+  _createDebugOverlay: ->
+    map = @viewport.main.map
+    [width, height] = [map.width.pixels, map.height.pixels]
+    @$debugOverlay = $('<div id="collision-layer-debug-overlay" />')
+      .css(width: width, height: height)
+    @debugOverlayCanvas = Canvas.create(width, height)
+    c = @debugOverlayCanvas.ctx
+    c.strokeStyle = "#ff0000"
+    for box in @collisionBoxes
+      c.strokeRect(box.x1+0.5, box.y1+0.5, box.x2-box.x1, box.y2-box.y1)
+    @$debugOverlay.css('background-image', "url(#{@debugOverlayCanvas.element.toDataURL()})")
 
   _loadImage: (success) ->
     @image = document.createElement('img')

@@ -1,13 +1,5 @@
 game = window.game
-{
-  Keyboard,
-  DOMEventHelpers,
-  Canvas,
-  CollisionLayer,
-  Viewport,
-  Player,
-  FpsReporter
-} = game
+{Keyboard, EventHelpers, Viewport, Player} = game
 
 defaults = {}
 
@@ -27,7 +19,6 @@ defaults.tileSize      = 64   # pixels
 
 defaults.imagesPath = "/images"
 
-defaults.mapLoaded = false
 defaults.entities = []
 
 defaults.mapWidth = _dim(2560, 'pixels')
@@ -43,7 +34,7 @@ defaults.viewportHeight = _dim(400, 'pixels')
 defaults.debug = true
 
 Main = game.util.module "game.Main"
-$.extend Main, DOMEventHelpers, defaults
+$.extend Main, EventHelpers, defaults
 
 draw = ->
   self = Main
@@ -52,29 +43,15 @@ draw = ->
   # between the end of the last iteration and the start of this iteration
   Keyboard.runHandlers()
 
-  # Reposition the background
-  positionStr = [-self.viewport.frame.boundsOnMap.x1 + 'px', -self.viewport.frame.boundsOnMap.y1 + 'px'].join(" ")
-  self.viewport.$element.css('background-position', positionStr)
-  #self.collisionLayer.$debugMask.css('background-position', positionStr)
+  self.viewport.draw()
 
-  # Clear the canvas
-  # TODO: Keep track of the last position of each entity and use this to clear
-  # the canvas selectively
-  # self.canvas.ctx.clearRect(0, 0, self.viewport.width.pixels, self.viewport.height.pixels)
-
-  # Draw the player
-  self.player.draw(self.canvas)
-
-  # TEST - TODO: Move this to a background image
-  self.canvas.ctx.drawImage(self.collisionLayer.debugCanvas.element, 0, 0)
+  self.player.draw(self.viewport.canvas)
 
   # Increment the global counter
   self.globalCounter++
   self.globalCounter %= 10
 
-  self.fpsReporter.draw(self.canvas)
-
-  self.drawTimer = window.requestAnimFrame(draw, self.canvas.element) if self.isDrawing
+  self.drawTimer = window.requestAnimFrame(draw, self.viewport.canvas.element) if self.isDrawing
 
 $.extend Main,
   init: ->
@@ -83,27 +60,11 @@ $.extend Main,
 
       Keyboard.init()
 
+      @_initMap()
+
       @viewport = Viewport.init(this)
 
-      @viewport.$element = $('<div id="viewport" />')
-        .css('width', @viewport.width.pixels)
-        .css('height', @viewport.height.pixels)
-
-      @fpsReporter = FpsReporter.init(this)
-
-      @collisionLayer = CollisionLayer.init(this)
-      #@viewport.$element.append(@collisionLayer.$debugMask)
-
-      @canvas = Canvas.create(
-        @viewport.width.pixels,
-        @viewport.height.pixels
-      )
-      @viewport.$element.append(@canvas.$element)
-      #@collisionLayer.$debugMask.append(@canvas.$element)
-
-      @_preloadMap()
-
-      @player = new Link(this, 'link2x.gif', width: 34, height: 48 )
+      @player = new Link(this, 'link2x.gif', width: 34, height: 48)
       @entities.push(@player)
 
       @isInit = true
@@ -139,38 +100,36 @@ $.extend Main,
 
   addEvents: ->
     self = this
+
     Keyboard.addEvents()
     @_assignKeyHandlers()
+    @viewport.addEvents()
+
     @bindEvents window,
-     blur: ->
-       # console.log "blurrr"
-       self.suspend()
-     focus: ->
-       # console.log "focussss"
-       self.resume()
+      blur: -> self.suspend()
+      focus: -> self.resume()
+
     return this
 
   removeEvents: ->
     Keyboard.removeEvents()
+    @viewport.removeEvents()
     @unbindEvents window, 'blur', 'focus'
     return this
 
   attachTo: (element) ->
-    @fpsReporter.attachTo(@viewport.$element)
-    $(element).append(@viewport.$element)
+    @viewport.attachTo(element)
     return this
 
   detach: ->
-    @canvas.$element.detach()
-    @fpsReporter.detach()
+    @viewport.detach()
     return this
 
   ready: (callback) ->
     timer = setInterval =>
       console.log "Checking to see if all entities are loaded..."
       if (
-        @mapLoaded and
-        @collisionLayer.isLoaded and
+        @viewport.collisionLayer.isLoaded and
         $.v.every @entities, (entity) -> entity.isLoaded
       )
         clearInterval(timer)
@@ -194,7 +153,7 @@ $.extend Main,
     # console.log "start drawing"
     @isDrawing = true
     # @drawTimer = requestInterval draw, @drawInterval if @isDrawing
-    @drawTimer = window.requestAnimFrame(draw, @canvas.element) unless @drawTimer
+    @drawTimer = window.requestAnimFrame(draw, @viewport.canvas.element) unless @drawTimer
     return this
 
   stopDrawing: ->
@@ -272,11 +231,10 @@ $.extend Main,
     Keyboard.addKeyHandler 'KEY_W', 'KEY_UP',    'KEY_K', -> self.player.moveUp()
     Keyboard.addKeyHandler 'KEY_S', 'KEY_DOWN',  'KEY_J', -> self.player.moveDown()
 
-  _preloadMap: ->
+  _initMap: ->
     # ... fetch the map data here ...
     @map.width = @mapWidth
     @map.height = @mapHeight
-    @mapLoaded = true
 
   _renderMap: ->
     @viewport.$element.css('background-image', "url(#{@imagesPath}/map2x.png)")
