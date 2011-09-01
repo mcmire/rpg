@@ -3,40 +3,46 @@ game = window.game
 
 Main = game.util.module "game.Main", EventHelpers
 
-everySecond = (->
-  df = 0
-  t0 = (new Date()).getTime()
-  (fn) ->
-    df++
-    t = (new Date()).getTime()
-    dt = t - t0
-    if dt >= 1000
-      fn(df, dt)
-      t0 = (new Date()).getTime()
-      df = 0
-)()
+class IntervalTimer
+  constructor: (@interval, @fn) ->
+    @df = 0
+    @t0 = (new Date()).getTime()
 
-tick = ->
+  tryRun: ->
+    @df++
+    t = (new Date()).getTime()
+    dt = t - @t0
+    if dt >= @interval
+      @fn(@df, dt)
+      @t0 = (new Date()).getTime()
+      @df = 0
+
+# we want a max of 30 fps
+fpsThrottlerTimer = new IntervalTimer (1000 / 30), (df, dt) ->
   # Respond to keystrokes executed during the "dead time", i.e., the time
   # between the end of the last iteration and the start of this iteration
   Keyboard.runHandlers()
 
   draw()
 
+  fpsReporterTimer.tryRun()
+
   # Increment the global counter
   Main.globalCounter = (Main.globalCounter + 1) % 10
 
-  Main.tickTimer = window.requestAnimFrame(tick, Main.viewport.canvas.element) if Main.isTicking
+fpsReporterTimer = new IntervalTimer 1000, (df, dt) ->
+  # console.log "player: #{Main.player.inspect()}"
+  # console.log "viewport: #{Main.viewport.inspect()}"
+  Main.fpsReporter.draw(df, dt)
+
+tick = ->
+  fpsThrottlerTimer.tryRun()
+  if Main.isTicking
+    Main.tickLoopHandle = window.requestAnimFrame(tick, Main.viewport.canvas.element)
 
 draw = ->
   canvas = Main.viewport.canvas
-
   Main.viewport.draw()
-  everySecond (df, dt) ->
-    # console.log "player: #{Main.player.inspect()}"
-    # console.log "viewport: #{Main.viewport.inspect()}"
-    Main.fpsReporter.draw(df, dt)
-
   Main.player.draw(canvas)
 
 $.extend Main,
@@ -141,15 +147,17 @@ $.extend Main,
 
   startTicking: ->
     @isTicking = true
-    @tickTimer = window.requestAnimFrame(tick, @viewport.canvas.element) unless @tickTimer
+    @tickLoopHandle = window.requestAnimFrame(tick, @viewport.canvas.element) unless @tickLoopHandle
     return this
 
   stopTicking: ->
     @isTicking = false
-    if @tickTimer
-      window.cancelRequestAnimFrame(@tickTimer)
-      @tickTimer = null
+    if @tickLoopHandle
+      window.cancelRequestAnimFrame(@tickLoopHandle)
+      @tickLoopHandle = null
     return this
+
+  # the logging stuff here is kind of old, I may remove it
 
   startLogging: ->
     self = this
