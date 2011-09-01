@@ -2,14 +2,15 @@ game = window.game
 {Canvas, EventHelpers} = game
 
 game.util.module "game.CollisionLayer", [EventHelpers],
-  init: (@viewport) ->
+  init: (@main) ->
     unless @isInit
       @isLoaded = false
+      @viewport = @main.viewport
       #[@width, @height] = [10, 10]  # just temporary for now
       @width = @viewport.width.pixels
       @height = @viewport.height.pixels
 
-      @imagePath = "#{@viewport.main.imagesPath}/mask.gif"
+      @imagePath = "#{@main.imagesPath}/mask.gif"
       @_loadImage =>
         #@_createCollisionBoxes()
       @collisionBoxes = [

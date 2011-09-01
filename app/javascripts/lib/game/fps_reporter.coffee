@@ -4,10 +4,9 @@ game = window.game
 game.util.module "game.FpsReporter",
   drawInterval: 1000 # ms
 
-  init: (@viewport) ->
+  init: (@main) ->
     unless @isInit
       @reset()
-      #@canvas = Canvas.create(100, 40)
       @$div = $('<div id="fps-reporter" />')
       @isInit = true
     return this
@@ -42,14 +41,3 @@ game.util.module "game.FpsReporter",
 
   _draw: (canvas, fps) ->
     @$div.text("#{fps} FPS")
-    # c = canvas.ctx
-    # x1 = canvas.width - @canvas.width
-    # y1 = canvas.height - @canvas.height
-    # c.save()
-    # c.fillStyle = '#ffffff'
-    # c.fillRect(x1, y1, x1 + @canvas.width, y1 + @canvas.height)
-    # c.fillStyle = '#ff0000'
-    # c.font = '20px sans-serif'
-    # c.textBaseline = 'top'
-    # c.fillText("#{fps} FPS", x1+7, y1+10)
-    # c.restore()

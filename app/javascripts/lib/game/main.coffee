@@ -1,5 +1,5 @@
 game = window.game
-{Keyboard, EventHelpers, Viewport, Player} = game
+{Keyboard, EventHelpers, Viewport, CollisionLayer, FpsReporter, Player} = game
 
 defaults = {}
 
@@ -44,6 +44,7 @@ draw = ->
   Keyboard.runHandlers()
 
   self.viewport.draw()
+  self.fpsReporter.draw(self.viewport.canvas)
 
   self.player.draw(self.viewport.canvas)
 
@@ -63,6 +64,8 @@ $.extend Main,
       @_initMap()
 
       @viewport = Viewport.init(this)
+      @fpsReporter = FpsReporter.init(this)
+      @collisionLayer = CollisionLayer.init(this)
 
       @player = new Link(this, 'link2x.gif', width: 34, height: 48)
       @entities.push(@player)
@@ -103,7 +106,7 @@ $.extend Main,
 
     Keyboard.addEvents()
     @_assignKeyHandlers()
-    @viewport.addEvents()
+    @collisionLayer.addEvents()
 
     @bindEvents window,
       blur: -> self.suspend()
@@ -113,23 +116,27 @@ $.extend Main,
 
   removeEvents: ->
     Keyboard.removeEvents()
-    @viewport.removeEvents()
+    @collisionLayer.removeEvents()
     @unbindEvents window, 'blur', 'focus'
     return this
 
   attachTo: (element) ->
     @viewport.attachTo(element)
+    @fpsReporter.attachTo(@viewport.$element)
+    @collisionLayer.attachTo(@viewport.$element)
     return this
 
   detach: ->
     @viewport.detach()
+    @fpsReporter.detach()
+    @collisionLayer.detach()
     return this
 
   ready: (callback) ->
     timer = setInterval =>
       console.log "Checking to see if all entities are loaded..."
       if (
-        @viewport.collisionLayer.isLoaded and
+        @collisionLayer.isLoaded and
         $.v.every @entities, (entity) -> entity.isLoaded
       )
         clearInterval(timer)

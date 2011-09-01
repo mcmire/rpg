@@ -1,5 +1,5 @@
 game = window.game
-{EventHelpers, Canvas, Bounds, FpsReporter, CollisionLayer} = game
+{EventHelpers, Canvas, Bounds} = game
 
 game.util.module "game.Viewport", [EventHelpers],
   playerPadding: 30  # pixels
@@ -18,9 +18,6 @@ game.util.module "game.Viewport", [EventHelpers],
       @canvas = Canvas.create(@width.pixels, @height.pixels)
       @canvas.element.id = 'canvas'
       @$element.append(@canvas.$element)
-
-      @fpsReporter = FpsReporter.init(this)
-      @collisionLayer = CollisionLayer.init(this)
 
       @isInit = true
     return this
@@ -42,21 +39,11 @@ game.util.module "game.Viewport", [EventHelpers],
     }
     return this
 
-  addEvents: ->
-    @collisionLayer.addEvents()
-
-  removeEvents: ->
-    @collisionLayer.removeEvents()
-
   attachTo: (element) ->
     $(element).append(@$element)
-    @fpsReporter.attachTo(@$element)
-    @collisionLayer.attachTo(@$element)
 
   detach: ->
     @$element.detach()
-    @fpsReporter.detach()
-    @collisionLayer.detach()
 
   initBounds: ->
     bom = @frame.boundsOnMap = new Bounds(0, @width.pixels, 0, @height.pixels)
@@ -72,7 +59,6 @@ game.util.module "game.Viewport", [EventHelpers],
     bom = @frame.boundsOnMap
     positionStr = [-bom.x1 + 'px', -bom.y1 + 'px'].join(" ")
     @$element.css('background-position', positionStr)
-    @fpsReporter.draw(@canvas)
 
   # Shifts the frame and padding bounds by the given vector.
   #
