@@ -17,7 +17,9 @@ class IntervalTimer
       @t0 = (new Date()).getTime()
       @df = 0
 
-# we want a max of 30 fps
+# We want a max of 30 fps
+# TODO: We are currently only getting 10 fps less than this... any ideas why?
+#
 fpsThrottlerTimer = new IntervalTimer (1000 / 30), (df, dt) ->
   # Respond to keystrokes executed during the "dead time", i.e., the time
   # between the end of the last iteration and the start of this iteration
