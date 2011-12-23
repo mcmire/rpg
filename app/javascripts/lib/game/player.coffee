@@ -34,7 +34,8 @@ class game.Player
   addAnimation: (name, frequency, frames) ->
     @animations[name] = new game.SpriteAnimation(@spriteSheet, frequency, frames)
 
-  draw: (canvas) ->
+  draw: ->
+    canvas = @main.viewport.canvas
     canvas.ctx.clearRect(
       @lastBounds.inViewport.x1,
       @lastBounds.inViewport.y1,
