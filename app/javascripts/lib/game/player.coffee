@@ -5,16 +5,6 @@ class game.Player
   @speed: 5 # px/frame
 
   constructor: (@main, spriteSheet, @dimensions) ->
-    @_init(spriteSheet)
-    @initialize()
-
-  initialize: () ->
-    throw "Your player needs an initialize method"
-
-  addAnimation: (name, frequency, frames) ->
-    @animations[name] = new game.SpriteAnimation(@spriteSheet, frequency, frames)
-
-  _init: (spriteSheet) ->
     imagePath = "#{@main.imagesPath}/#{spriteSheet}"
     @spriteSheet = new game.SpriteSheet(imagePath, @dimensions.width, @dimensions.height)
     @spriteSheet.image.onload  = => @isLoaded = true
@@ -40,6 +30,9 @@ class game.Player
     y1 = @main.viewport.frame.boundsOnMap.y1 + @bounds.inViewport.y1
     y2 = y1 + @spriteHeight
     @bounds.onMap = new Bounds(x1, x2, y1, y2)
+
+  addAnimation: (name, frequency, frames) ->
+    @animations[name] = new game.SpriteAnimation(@spriteSheet, frequency, frames)
 
   draw: (canvas) ->
     canvas.ctx.clearRect(
@@ -255,7 +248,8 @@ class game.Player
     console.log "player.bounds.OnMap = #{@bounds.onMap.inspect()}"
 
 class game.Link extends game.Player
-  initialize: ->
+  constructor: ->
+    super
     @addAnimation('idleRight', 4, [8])
     @addAnimation('runRight', 4, [8,9,10,11,12,13,14,15])
     @addAnimation('runLeft', 4, [0,1,2,3,4,5,6,7])
