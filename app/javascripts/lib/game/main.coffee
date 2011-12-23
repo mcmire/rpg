@@ -3,60 +3,87 @@ game = window.game
 
 Main = game.util.module "game.Main", EventHelpers
 
-class IntervalTimer
-  constructor: (@interval, @fn) ->
-    @df = 0
-    @t0 = (new Date()).getTime()
+$.extend Main,
+  # tickInterval: 30   # ms/frame
+  frameRate: 50  # fps
+  tileSize: 64   # pixels
+  imagesPath: "/images"
 
-  tryRun: ->
-    @df++
+  entities: []
+  debug: true
+  frameIndex: 0
+  lastDrawTime: null
+
+Main.tickInterval = 1000 / Main.frameRate
+
+reportingTime = (name, fn) ->
+  t = (new Date()).getTime()
+  fn()
+  t2 = (new Date()).getTime()
+  ms = t2 - t
+  console.log "#{name}: #{ms} ms"
+
+createIntervalTimer = (interval, fn) ->
+  # [t0, f0] = []
+  # reset = ->
+  t0 = (new Date()).getTime()
+  f0 = Main.frameIndex
+  # reset()
+  return ->
     t = (new Date()).getTime()
-    dt = t - @t0
-    if dt >= @interval
-      @fn(@df, dt)
-      @t0 = (new Date()).getTime()
-      @df = 0
+    dt = t - t0
+    df = Main.frameIndex - f0
+    if dt >= interval
+      fn(df, dt)
+      # reset()
+      t0 = (new Date()).getTime()
+      f0 = Main.frameIndex
 
-# We want a max of 30 fps
-# TODO: We are currently only getting 10 fps less than this... any ideas why?
-#
-fpsThrottlerTimer = new IntervalTimer (1000 / 30), (df, dt) ->
-  # Respond to keystrokes executed during the "dead time", i.e., the time
-  # between the end of the last iteration and the start of this iteration
-  Keyboard.runHandlers()
-
+fpsThrottlerTimer = createIntervalTimer Main.tickInterval, (df, dt) ->
   draw()
 
-  fpsReporterTimer.tryRun()
-
-  # Increment the global counter
-  Main.globalCounter = (Main.globalCounter + 1) % 10
-
-fpsReporterTimer = new IntervalTimer 1000, (df, dt) ->
+fpsReporterTimer = createIntervalTimer 1000, (df, dt) ->
   # console.log "player: #{Main.player.inspect()}"
   # console.log "viewport: #{Main.viewport.inspect()}"
   Main.fpsReporter.draw(df, dt)
 
 tick = ->
-  fpsThrottlerTimer.tryRun()
-  if Main.isTicking
-    Main.tickLoopHandle = window.requestAnimFrame(tick, Main.viewport.canvas.element)
+  return if not Main.isTicking
+
+  t = (new Date()).getTime()
+  Main.msSinceLastDraw = if Main.lastDrawTime then (t - Main.lastDrawTime) else 0
+  console.log "msSinceLastDraw: #{Main.msSinceLastDraw}"
+
+  # Respond to keystrokes executed during the "dead time", i.e., the time
+  # between the end of the last iteration and the start of this iteration
+  Keyboard.runHandlers()
+
+  # fpsThrottlerTimer()
+  draw()
+  # fpsReporterTimer()
+
+  t2 = (new Date()).getTime()
+  msDrawTime = t2 - t
+  Main.lastDrawTime = t
+
+  # console.log "msDrawTime: #{msDrawTime}"
+
+  # Try to call the tick function as fast as possible
+  # Main.tickLoopHandle = window.requestAnimFrame(tick, Main.viewport.canvas.element)
+
+  # Ensure that ticks happen at exact regular intervals by discounting the time
+  # it takes to draw (as this interval is variable)
+  # Main.tickLoopHandle = window.setTimeout(tick, Main.tickInterval)
+  Main.tickLoopHandle = window.setTimeout(tick, Main.tickInterval - msDrawTime)
 
 draw = ->
-  canvas = Main.viewport.canvas
   Main.viewport.draw()
-  Main.player.draw(canvas)
+  Main.player.draw()
+  # TODO: This should not be here, this should be in Player or something
+  Main.globalCounter = (Main.globalCounter + 1) % 10
+  Main.frameIndex++
 
 $.extend Main,
-  drawInterval: 30   # ms/frame
-  tileSize: 64   # pixels
-
-  imagesPath: "/images"
-
-  entities: []
-
-  debug: true
-
   init: ->
     unless @isInit
       @reset()
