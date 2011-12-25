@@ -13,10 +13,10 @@
   <%= scripts %>
   <script>
     $.domReady(function() {
-      var main = window.game.Main.init();
-      main.attachTo('#main');
-      main.addEvents();
-      main.ready(function() { main.run() });
+      window.game.main.init()
+        .attachTo('#main')
+        .addEvents()
+        .runWhenReady()
     })
   </script>
 </body>

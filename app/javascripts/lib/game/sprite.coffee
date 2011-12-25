@@ -15,7 +15,7 @@ class game.SpriteAnimation
   step: (canvas, x, y)->
     c = canvas.ctx
 
-    @currentFrame = ((@currentFrame + 1) % @totalFrames) if game.Main.globalCounter % @frequency == 0
+    @currentFrame = ((@currentFrame + 1) % @totalFrames) if game.main.globalCounter % @frequency == 0
     yOffset = @frames[@currentFrame] * @height
     c.drawImage(@spriteSheet.image, 0, yOffset, @width, @height, x, y, @width, @height)
 
