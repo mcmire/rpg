@@ -20,6 +20,7 @@ helpers do
       lib/game/fps_reporter.js
       lib/game/collision_layer.js
       lib/game/viewport.js
+      lib/game/mob.js
       lib/game/player.js
       lib/game/sprite.js
       lib/game/main.js

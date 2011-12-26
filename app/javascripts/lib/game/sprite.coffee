@@ -1,4 +1,5 @@
 game = window.game
+
 class SpriteSheet
   constructor: (@mob, path, @width, @height) ->
     @imagePath = "#{@mob.main.imagesPath}/#{path}"
