@@ -3,21 +3,19 @@ game = window.game
 
 main = game.util.module "game.main", EventHelpers
 
-#main.tickInterval = 30
 main.frameRate = 30  # fps
 main.tileSize = 64   # pixels
 main.imagesPath = '/images'
+# main.animMethod = 'setTimeout'
+main.animMethod = 'requestAnimFrame'
 
 main.entities = []
 main.debug = true
-main.frameIndex = 0
+main.numDraws = 0
 main.lastDrawTime = null
 main.numTicks = 0
 
 main.tickInterval = 1000 / main.frameRate
-
-main.animMethod = 'setTimeout'
-# main.animMethod = 'requestAnimFrame'
 
 main.init = ->
   unless @isInit
@@ -150,7 +148,7 @@ main.tick = ->
   # between the end of the last iteration and the start of this iteration
   keyboard.runHandlers()
 
-  if true or main.animMethod is 'setTimeout'
+  if main.animMethod is 'setTimeout'
     main.draw()
   else
     main._fpsThrottlerTimer()
@@ -175,7 +173,7 @@ main.tick = ->
 main.draw = ->
   main.viewport.draw()
   main.player.draw()
-  main.frameIndex++
+  main.numDraws++
 
 main.startLogging = ->
   self = this
@@ -216,25 +214,23 @@ main._reportingTime = (name, fn) ->
   ms = t2 - t
   console.log "#{name}: #{ms} ms"
 
+# TODO: This doesn't work quite right on Firefox (certain frames are skipped
+# every once in a while)
 main._createIntervalTimer = (arg, fn) ->
   if arg is true
     always = true
   else
     interval = arg
-  # [t0, f0] = []
-  # reset = ->
   t0 = (new Date()).getTime()
-  f0 = main.frameIndex
-  # reset()
+  f0 = main.numDraws
   return ->
     t = (new Date()).getTime()
     dt = t - t0
-    df = main.frameIndex - f0
+    df = main.numDraws - f0
     if always or dt >= interval
       fn(df, dt)
-      # reset()
       t0 = (new Date()).getTime()
-      f0 = main.frameIndex
+      f0 = main.numDraws
 
 main._fpsThrottlerTimer = main._createIntervalTimer main.tickInterval, (df, dt) ->
   main.draw()

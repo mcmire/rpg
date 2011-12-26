@@ -53,7 +53,7 @@ class AnimationSequence
 
     ctx.restore()
 
-    if (@spriteSheet.mob.main.numTicks % @skipFreq) is 0
+    if (@spriteSheet.mob.main.numDraws % @skipFreq) is 0
       @currentFrame = (@currentFrame + 1) % @numFrames
 
 game.SpriteSheet = SpriteSheet
