@@ -21,7 +21,7 @@ main.init = ->
   unless @isInit
     @reset()
 
-    keyboard.init()
+    @keyboard = keyboard.init()
 
     # init map
     @map = {
@@ -34,10 +34,14 @@ main.init = ->
     @collisionLayer = collisionLayer.init(this)
 
     @player = new Player(this, 'link2x.gif', 34, 48)
-    @entities.push(@player)
+    @addEntity(@player)
 
     @isInit = true
   return this
+
+main.addEntity = (entity) ->
+  @entities.push(entity)
+  entity.onAdded()
 
 main.destroy = ->
   if @isInit
@@ -64,7 +68,6 @@ main.addEvents = ->
   self = this
 
   keyboard.addEvents()
-  @_assignKeyHandlers()
   @collisionLayer.addEvents()
 
   @bindEvents window,
@@ -200,12 +203,6 @@ main.dim = (value, unit) ->
       d.pixels = value;
       d.tiles = value / @tileSize
   return d
-
-main._assignKeyHandlers = ->
-  keyboard.addKeyHandler 'KEY_A', 'KEY_LEFT',  'KEY_H', -> main.player.moveLeft()
-  keyboard.addKeyHandler 'KEY_D', 'KEY_RIGHT', 'KEY_L', -> main.player.moveRight()
-  keyboard.addKeyHandler 'KEY_W', 'KEY_UP',    'KEY_K', -> main.player.moveUp()
-  keyboard.addKeyHandler 'KEY_S', 'KEY_DOWN',  'KEY_J', -> main.player.moveDown()
 
 main._reportingTime = (name, fn) ->
   t = (new Date()).getTime()

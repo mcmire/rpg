@@ -92,11 +92,25 @@ keyboard.runHandlers = ->
   handler() for key, handler of @activeKeyHandlers
 
 keyboard.addKeyHandler = (keyNames..., callback) ->
+  keyNames = $.flatten(keyNames)
   if keyNames.length
     for keyName in keyNames
       @keyHandlers[@keys[keyName]] = callback
   else
     @globalKeyHandler = callback
+keyboard.addKeyHandlers = keyboard.addKeyHandler
+
+keyboard.addGlobalKeyHandler = (callback) ->
+  @globalKeyHandler = callback
+
+keyboard.removeKeyHandlers = (keyNames...) ->
+  keyNames = $.flatten(keyNames)
+  for keyName in keyNames
+    delete @keyHandlers[@keys[keyName]]
+keyboard.removeKeyHandlers = keyboard.removeKeyHandler
+
+keyboard.removeGlobalKeyHandler = ->
+  @globalKeyHandler = null
 
 keyboard.isKeyPressed = (arg) ->
   if typeof arg is "string"

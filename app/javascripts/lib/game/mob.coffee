@@ -8,6 +8,18 @@ game.Mob = class Mob
     @_initBounds()
     @isLoaded = false
 
+  destroy: ->
+    # does nothing by default
+
+  addEvents: ->
+    # does nothing by default
+
+  removeEvents: ->
+    # does nothing by default
+
+  onAdded: ->
+    # does nothing by default
+
   draw: ->
     canvas = @viewport.canvas
     canvas.ctx.clearRect(

@@ -1,10 +1,40 @@
 game = window.game
 {Mob} = game
 
+leftKeys  = ['KEY_A', 'KEY_LEFT',  'KEY_H']
+rightKeys = ['KEY_D', 'KEY_RIGHT', 'KEY_L']
+upKeys    = ['KEY_W', 'KEY_UP',    'KEY_K']
+downKeys  = ['KEY_S', 'KEY_DOWN',  'KEY_J']
+
 game.Player = class Player extends Mob
   constructor: ->
     super
     @speed = 7  # px/frame
+
+  # override
+  destroy: ->
+    @removeEvents()
+
+  # override
+  addEvents: ->
+    self = this
+    keyboard = @main.keyboard
+    keyboard.addKeyHandler leftKeys,  -> self.moveLeft()
+    keyboard.addKeyHandler rightKeys, -> self.moveRight()
+    keyboard.addKeyHandler upKeys,    -> self.moveUp()
+    keyboard.addKeyHandler downKeys,  -> self.moveDown()
+
+  # override
+  removeEvents: ->
+    keyboard = @main.keyboard
+    keyboard.removeKeyHandler leftKeys
+    keyboard.removeKeyHandler rightKeys
+    keyboard.removeKeyHandler upKeys
+    keyboard.removeKeyHandler downKeys
+
+  # override
+  onAdded: ->
+    @addEvents()
 
   # The idea here is that we move the player sprite left until it reaches a
   # certain point (we call it the "fence"), after which we continue the
