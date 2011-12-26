@@ -1,5 +1,5 @@
 game = window.game
-{keyboard, EventHelpers, viewport, collisionLayer, FpsReporter, Link} = game
+{keyboard, EventHelpers, viewport, collisionLayer, FpsReporter, Player} = game
 
 main = game.util.module "game.main", EventHelpers
 
@@ -12,6 +12,7 @@ main.entities = []
 main.debug = true
 main.frameIndex = 0
 main.lastDrawTime = null
+main.numTicks = 0
 
 main.tickInterval = 1000 / main.frameRate
 
@@ -34,7 +35,7 @@ main.init = ->
     @fpsReporter = FpsReporter.init(this)
     @collisionLayer = collisionLayer.init(this)
 
-    @player = new Link(this, 'link2x.gif', width: 34, height: 48)
+    @player = new Player(this, 'link2x.gif', 34, 48)
     @entities.push(@player)
 
     @isInit = true
@@ -57,7 +58,6 @@ main.destroy = ->
 main.reset = ->
   @stopTicking()
   @stopLogging()
-  @globalCounter = 0
   @logQueue = {}
   @logQueueMessages = []
   return this
@@ -164,17 +164,17 @@ main.tick = ->
   if main.animMethod is 'setTimeout'
     # Ensure that ticks happen at exact regular intervals by discounting the time
     # it takes to draw (as this interval is variable)
-    main.tickLoopHandle = window.setTimeout(main.tick, main.tickInterval)
-    # main.tickLoopHandle = window.setTimeout(main.tick, main.tickInterval - msDrawTime)
+    # main.tickLoopHandle = window.setTimeout(main.tick, main.tickInterval)
+    main.tickLoopHandle = window.setTimeout(main.tick, main.tickInterval - msDrawTime)
   else
     # Try to call the tick function as fast as possible
     main.tickLoopHandle = window.requestAnimFrame(main.tick, viewport.canvas.element)
 
+  main.numTicks++
+
 main.draw = ->
   main.viewport.draw()
   main.player.draw()
-  # TODO: This should not be here, this should be in Player or something
-  main.globalCounter = (main.globalCounter + 1) % 10
   main.frameIndex++
 
 main.startLogging = ->

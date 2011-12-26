@@ -1,49 +1,24 @@
 game = window.game
 {Bounds} = game
 
-class game.Player
+class Mob
   @speed: 5 # px/frame
-  # @speed: 0.2  # px/ms
 
-  constructor: (@main, spriteSheet, @dimensions) ->
-    imagePath = "#{@main.imagesPath}/#{spriteSheet}"
-    @spriteSheet = new game.SpriteSheet(imagePath, @dimensions.width, @dimensions.height)
-    @spriteSheet.image.onload  = => @isLoaded = true
-    @spriteSheet.image.onerror = => throw "Image #{imagePath} failed to load!"
-
-    @action = 'idleRight'
-    @animations = {}
-    [@spriteWidth, @spriteHeight] = [@dimensions.width, @dimensions.height]
-
-    @bounds = {}
-    @lastBounds = {}
-
-    # bounds in viewport
-    x1 = 0
-    x2 = x1 + @spriteWidth
-    y1 = 0
-    y2 = y1 + @spriteHeight
-    @bounds.inViewport = @lastBounds.inViewport = new Bounds(x1, x2, y1, y2)
-
-    # bounds on map
-    x1 = @main.viewport.frame.boundsOnMap.x1 + @bounds.inViewport.x1
-    x2 = x1 + @spriteWidth
-    y1 = @main.viewport.frame.boundsOnMap.y1 + @bounds.inViewport.y1
-    y2 = y1 + @spriteHeight
-    @bounds.onMap = new Bounds(x1, x2, y1, y2)
-
-  addAnimation: (name, frequency, frames) ->
-    @animations[name] = new game.SpriteAnimation(@spriteSheet, frequency, frames)
+  constructor: (@main, spritePath, spriteWidth, spriteHeight) ->
+    @viewport = @main.viewport
+    @_initSpriteSheet(spritePath, spriteWidth, spriteHeight)
+    @_initBounds()
+    @isLoaded = false
 
   draw: ->
-    canvas = @main.viewport.canvas
+    canvas = @viewport.canvas
     canvas.ctx.clearRect(
       @lastBounds.inViewport.x1,
       @lastBounds.inViewport.y1,
       @lastBounds.inViewport.x2,
       @lastBounds.inViewport.y2
     )
-    @animations[@action].step(canvas, @bounds.inViewport.x1, @bounds.inViewport.y1)
+    @spriteSheet.draw()
     @lastBounds.inViewport = @bounds.inViewport.clone()
 
   # Shifts the viewport and map bounds by the given vector.
@@ -84,23 +59,22 @@ class game.Player
   # edge of the map.
   #
   moveLeft: ->
-    @action = 'runLeft'
+    @spriteSheet.useSequence 'runLeft'
 
     # dist = Math.round(Player.speed * @main.msSinceLastDraw)
     dist = Player.speed
 
     nextBoundsOnMap = @bounds.onMap.subtract(x: dist)
     nextBoundsInViewport = @bounds.inViewport.subtract(x: dist)
-    nextViewportBounds = @main.viewport.frame.boundsOnMap.subtract(x: dist)
+    nextViewportBounds = @viewport.frame.boundsOnMap.subtract(x: dist)
 
-    collisionLayer = @main.collisionLayer
-    if x = collisionLayer.getBlockingRightEdge(nextBoundsOnMap)
+    if x = @main.collisionLayer.getBlockingRightEdge(nextBoundsOnMap)
       @moveMapBoundsTo('x1', x+1)
       return
 
     if nextViewportBounds.x1 < 0
       # Viewport is at the left edge of the map
-      @main.viewport.moveBoundsTo('x1', 0)
+      @viewport.moveBoundsTo('x1', 0)
       if nextBoundsOnMap.x1 < 0
         # Player is at the left edge of the map
         @bounds.onMap.moveTo('x1', 0)
@@ -109,13 +83,13 @@ class game.Player
         # Move player left
         @shiftBounds(x: -dist)
     else
-      leftEdgeOfFence = @main.viewport.padding.boundsInFrame.x1
+      leftEdgeOfFence = @viewport.padding.boundsInFrame.x1
       if nextBoundsInViewport.x1 < leftEdgeOfFence
         # Player is at the left edge of the fence;
         # shift viewport left
         distMoved = @bounds.inViewport.moveTo('x1', leftEdgeOfFence)
         @bounds.onMap.shift(x: -(dist + distMoved))
-        @main.viewport.shiftBounds(x: -(dist + distMoved))
+        @viewport.shiftBounds(x: -(dist + distMoved))
       else
         # Move player left
         @shiftBounds(x: -dist)
@@ -127,39 +101,38 @@ class game.Player
   # player right until it touches the right edge of the map.
   #
   moveRight: ->
-    @action = 'runRight'
+    @spriteSheet.useSequence 'runRight'
 
     # dist = Math.round(Player.speed * @main.msSinceLastDraw)
     dist = Player.speed
 
     nextBoundsOnMap = @bounds.onMap.add(x: dist)
     nextBoundsInViewport = @bounds.inViewport.add(x: dist)
-    nextViewportBounds = @main.viewport.frame.boundsOnMap.add(x: dist)
+    nextViewportBounds = @viewport.frame.boundsOnMap.add(x: dist)
 
-    collisionLayer = @main.collisionLayer
-    if x = collisionLayer.getBlockingLeftEdge(nextBoundsOnMap)
+    if x = @main.collisionLayer.getBlockingLeftEdge(nextBoundsOnMap)
       @moveMapBoundsTo('x2', x-1)
       return
 
     mapWidth = @main.map.width.pixels
     if nextViewportBounds.x2 > mapWidth
       # Viewport is at the right edge of the map
-      @main.viewport.moveBoundsTo('x2', mapWidth)
+      @viewport.moveBoundsTo('x2', mapWidth)
       if nextBoundsOnMap.x2 > mapWidth
         # Player is at the right edge of the map
         @bounds.onMap.moveTo('x2', mapWidth)
-        @bounds.inViewport.moveTo('x2', @main.viewport.width.pixels)
+        @bounds.inViewport.moveTo('x2', @viewport.width.pixels)
       else
         # Move player right
         @shiftBounds(x: dist)
     else
-      rightEdgeOfFence = @main.viewport.padding.boundsInFrame.x2
+      rightEdgeOfFence = @viewport.padding.boundsInFrame.x2
       if nextBoundsInViewport.x2 > rightEdgeOfFence
         # Player is at the right side of the fence;
         # shift viewport right
         distMoved = @bounds.inViewport.moveTo('x2', rightEdgeOfFence)
         @bounds.onMap.shift(x: dist - distMoved)
-        @main.viewport.shiftBounds(x: dist - distMoved)
+        @viewport.shiftBounds(x: dist - distMoved)
       else
         # Move player right
         @shiftBounds(x: dist)
@@ -171,23 +144,22 @@ class game.Player
   # up until it touches the top edge of the map.
   #
   moveUp: ->
-    @action = 'runUp'
+    @spriteSheet.useSequence('runUp')
 
     # dist = Math.round(Player.speed * @main.msSinceLastDraw)
     dist = Player.speed
 
     nextBoundsOnMap = @bounds.onMap.subtract(y: dist)
     nextBoundsInViewport = @bounds.inViewport.subtract(y: dist)
-    nextViewportBounds = @main.viewport.frame.boundsOnMap.subtract(y: dist)
+    nextViewportBounds = @viewport.frame.boundsOnMap.subtract(y: dist)
 
-    collisionLayer = @main.collisionLayer
-    if y = collisionLayer.getBlockingBottomEdge(nextBoundsOnMap)
+    if y = @main.collisionLayer.getBlockingBottomEdge(nextBoundsOnMap)
       @moveMapBoundsTo('y1', y+1)
       return
 
     if nextViewportBounds.y1 < 0
       # Viewport is at the top edge of the map
-      @main.viewport.moveBoundsTo('y1', 0)
+      @viewport.moveBoundsTo('y1', 0)
       if nextBoundsOnMap.y1 < 0
         # Player is at the top edge of the map
         @bounds.onMap.moveTo('y1', 0)
@@ -196,13 +168,13 @@ class game.Player
         # Move player top
         @shiftBounds(y: -dist)
     else
-      topEdgeOfFence = @main.viewport.padding.boundsInFrame.y1
+      topEdgeOfFence = @viewport.padding.boundsInFrame.y1
       if nextBoundsInViewport.y1 < topEdgeOfFence
         # Player is at the top edge of the fence;
         # shift viewport up
         distMoved = @bounds.inViewport.moveTo('y1', topEdgeOfFence)
         @bounds.onMap.shift(y: -(dist - distMoved))
-        @main.viewport.shiftBounds(y: -(dist - distMoved))
+        @viewport.shiftBounds(y: -(dist - distMoved))
       else
         # Move player top
         @shiftBounds(y: -dist)
@@ -214,39 +186,38 @@ class game.Player
   # the player down until it touches the bottom edge of the map.
   #
   moveDown: ->
-    @action = 'runDown'
+    @spriteSheet.useSequence('runDown')
 
     # dist = Math.round(Player.speed * @main.msSinceLastDraw)
     dist = Player.speed
 
     nextBoundsOnMap = @bounds.onMap.add(y: dist)
     nextBoundsInViewport = @bounds.inViewport.add(y: dist)
-    nextViewportBounds = @main.viewport.frame.boundsOnMap.add(y: dist)
+    nextViewportBounds = @viewport.frame.boundsOnMap.add(y: dist)
 
-    collisionLayer = @main.collisionLayer
-    if y = collisionLayer.getBlockingTopEdge(nextBoundsOnMap)
+    if y = @main.collisionLayer.getBlockingTopEdge(nextBoundsOnMap)
       @moveMapBoundsTo('y2', y-1)
       return
 
     mapHeight = @main.map.height.pixels
     if nextViewportBounds.y2 > mapHeight
       # Viewport is at the bottom edge of the map
-      @main.viewport.moveBoundsTo('y2', mapHeight)
+      @viewport.moveBoundsTo('y2', mapHeight)
       if nextBoundsOnMap.y2 > mapHeight
         # Player is at the bottom edge of the map
         @bounds.onMap.moveTo('y2', mapHeight)
-        @bounds.inViewport.moveTo('y2', @main.viewport.height.pixels)
+        @bounds.inViewport.moveTo('y2', @viewport.height.pixels)
       else
         # Move player bottom
         @shiftBounds(y: dist)
     else
-      bottomEdgeOfFence = @main.viewport.padding.boundsInFrame.y2
+      bottomEdgeOfFence = @viewport.padding.boundsInFrame.y2
       if nextBoundsInViewport.y2 > bottomEdgeOfFence
         # Player is at the bottom side of the fence;
         # shift viewport down
         distMoved = @bounds.inViewport.moveTo('y2', bottomEdgeOfFence)
         @bounds.onMap.shift(y: dist - distMoved)
-        @main.viewport.shiftBounds(y: dist - distMoved)
+        @viewport.shiftBounds(y: dist - distMoved)
       else
         # Move player bottom
         @shiftBounds(y: dist)
@@ -261,11 +232,35 @@ class game.Player
     console.log "player.bounds.inViewport = #{@bounds.inViewport.inspect()}"
     console.log "player.bounds.OnMap = #{@bounds.onMap.inspect()}"
 
-class game.Link extends game.Player
-  constructor: ->
-    super
-    @addAnimation('idleRight', 4, [8])
-    @addAnimation('runRight', 4, [8,9,10,11,12,13,14,15])
-    @addAnimation('runLeft', 4, [0,1,2,3,4,5,6,7])
-    @addAnimation('runDown', 4, [16,17,18,19,20,21,22])
-    @addAnimation('runUp', 4, [23,24,25,26,27,28])
+  _initBounds: ->
+    @bounds = {}
+    @lastBounds = {}
+    @_initBoundsInViewport()
+    @_initBoundsOnMap()
+
+  _initBoundsInViewport: ->
+    x1 = 0
+    x2 = x1 + @spriteSheet.width
+    y1 = 0
+    y2 = y1 + @spriteSheet.height
+    @bounds.inViewport = @lastBounds.inViewport = new Bounds(x1, x2, y1, y2)
+
+  _initBoundsOnMap: ->
+    x1 = @viewport.frame.boundsOnMap.x1 + @bounds.inViewport.x1
+    x2 = x1 + @spriteSheet.width
+    y1 = @viewport.frame.boundsOnMap.y1 + @bounds.inViewport.y1
+    y2 = y1 + @spriteSheet.height
+    @bounds.onMap = new Bounds(x1, x2, y1, y2)
+
+class Player extends Mob
+  _initSpriteSheet: (spritePath, spriteWidth, spriteHeight) ->
+    @spriteSheet = new game.SpriteSheet(this, spritePath, spriteWidth, spriteHeight)
+    @spriteSheet.addSequence 'idleRight', 4, [8]
+    @spriteSheet.addSequence 'runLeft',   4, [0,1,2,3,4,5,6,7]
+    @spriteSheet.addSequence 'runRight',  4, [8,9,10,11,12,13,14,15]
+    @spriteSheet.addSequence 'runDown',   4, [16,17,18,19,20,21,22]
+    @spriteSheet.addSequence 'runUp',     4, [23,24,25,26,27,28]
+    @spriteSheet.useSequence 'idleRight'
+
+game.Mob    = Mob
+game.Player = Player
