@@ -2,7 +2,7 @@ game = window.game
 {Bounds} = game
 
 class Mob
-  @speed: 5 # px/frame
+  @speed: 7 # px/frame
 
   constructor: (@main, spritePath, spriteWidth, spriteHeight) ->
     @viewport = @main.viewport

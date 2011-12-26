@@ -6,8 +6,8 @@ main = game.util.module "game.main", EventHelpers
 main.frameRate = 30  # fps
 main.tileSize = 64   # pixels
 main.imagesPath = '/images'
-# main.animMethod = 'setTimeout'
-main.animMethod = 'requestAnimFrame'
+main.animMethod = 'setTimeout'
+# main.animMethod = 'requestAnimFrame'
 
 main.entities = []
 main.debug = true
@@ -214,8 +214,7 @@ main._reportingTime = (name, fn) ->
   ms = t2 - t
   console.log "#{name}: #{ms} ms"
 
-# TODO: This doesn't work quite right on Firefox (certain frames are skipped
-# every once in a while)
+# TODO: This produces an FPS which is 10 less than the desired FPS... any idea why?
 main._createIntervalTimer = (arg, fn) ->
   if arg is true
     always = true
