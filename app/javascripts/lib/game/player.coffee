@@ -2,8 +2,6 @@ game = window.game
 {Bounds} = game
 
 class Mob
-  @speed: 7 # px/frame
-
   constructor: (@main, spritePath, spriteWidth, spriteHeight) ->
     @viewport = @main.viewport
     @_initSpriteSheet(spritePath, spriteWidth, spriteHeight)
@@ -48,8 +46,42 @@ class Mob
   moveMapBoundsTo: (key, val) ->
     [axis, side] = key
     distMoved = @bounds.onMap.moveTo(key, val)
-    #distMoved = -distMoved if side is "1"
     @bounds.inViewport.shift(axis, distMoved)
+
+  inspect: ->
+    JSON.stringify(
+      "bounds.inViewport": @bounds.inViewport.inspect(),
+      "bounds.onMap": @bounds.onMap.inspect()
+    )
+
+  debug: ->
+    console.log "player.bounds.inViewport = #{@bounds.inViewport.inspect()}"
+    console.log "player.bounds.OnMap = #{@bounds.onMap.inspect()}"
+
+  _initBounds: ->
+    @bounds = {}
+    @lastBounds = {}
+    @_initBoundsInViewport()
+    @_initBoundsOnMap()
+
+  _initBoundsInViewport: ->
+    x1 = 0
+    x2 = x1 + @spriteSheet.width
+    y1 = 0
+    y2 = y1 + @spriteSheet.height
+    @bounds.inViewport = @lastBounds.inViewport = new Bounds(x1, x2, y1, y2)
+
+  _initBoundsOnMap: ->
+    x1 = @viewport.frame.boundsOnMap.x1 + @bounds.inViewport.x1
+    x2 = x1 + @spriteSheet.width
+    y1 = @viewport.frame.boundsOnMap.y1 + @bounds.inViewport.y1
+    y2 = y1 + @spriteSheet.height
+    @bounds.onMap = new Bounds(x1, x2, y1, y2)
+
+class Player extends Mob
+  constructor: ->
+    super
+    @speed = 7  # px/frame
 
   # The idea here is that we move the player sprite left until it reaches a
   # certain point (we call it the "fence"), after which we continue the
@@ -61,8 +93,8 @@ class Mob
   moveLeft: ->
     @spriteSheet.useSequence 'runLeft'
 
-    # dist = Math.round(Player.speed * @main.msSinceLastDraw)
-    dist = Player.speed
+    # dist = Math.round(@speed * @main.msSinceLastDraw)
+    dist = @speed
 
     nextBoundsOnMap = @bounds.onMap.subtract(x: dist)
     nextBoundsInViewport = @bounds.inViewport.subtract(x: dist)
@@ -103,8 +135,8 @@ class Mob
   moveRight: ->
     @spriteSheet.useSequence 'runRight'
 
-    # dist = Math.round(Player.speed * @main.msSinceLastDraw)
-    dist = Player.speed
+    # dist = Math.round(@speed * @main.msSinceLastDraw)
+    dist = @speed
 
     nextBoundsOnMap = @bounds.onMap.add(x: dist)
     nextBoundsInViewport = @bounds.inViewport.add(x: dist)
@@ -146,8 +178,8 @@ class Mob
   moveUp: ->
     @spriteSheet.useSequence('runUp')
 
-    # dist = Math.round(Player.speed * @main.msSinceLastDraw)
-    dist = Player.speed
+    # dist = Math.round(@speed * @main.msSinceLastDraw)
+    dist = @speed
 
     nextBoundsOnMap = @bounds.onMap.subtract(y: dist)
     nextBoundsInViewport = @bounds.inViewport.subtract(y: dist)
@@ -188,8 +220,8 @@ class Mob
   moveDown: ->
     @spriteSheet.useSequence('runDown')
 
-    # dist = Math.round(Player.speed * @main.msSinceLastDraw)
-    dist = Player.speed
+    # dist = Math.round(@speed * @main.msSinceLastDraw)
+    dist = @speed
 
     nextBoundsOnMap = @bounds.onMap.add(y: dist)
     nextBoundsInViewport = @bounds.inViewport.add(y: dist)
@@ -222,37 +254,7 @@ class Mob
         # Move player bottom
         @shiftBounds(y: dist)
 
-  inspect: ->
-    JSON.stringify(
-      "bounds.inViewport": @bounds.inViewport.inspect(),
-      "bounds.onMap": @bounds.onMap.inspect()
-    )
-
-  debug: ->
-    console.log "player.bounds.inViewport = #{@bounds.inViewport.inspect()}"
-    console.log "player.bounds.OnMap = #{@bounds.onMap.inspect()}"
-
-  _initBounds: ->
-    @bounds = {}
-    @lastBounds = {}
-    @_initBoundsInViewport()
-    @_initBoundsOnMap()
-
-  _initBoundsInViewport: ->
-    x1 = 0
-    x2 = x1 + @spriteSheet.width
-    y1 = 0
-    y2 = y1 + @spriteSheet.height
-    @bounds.inViewport = @lastBounds.inViewport = new Bounds(x1, x2, y1, y2)
-
-  _initBoundsOnMap: ->
-    x1 = @viewport.frame.boundsOnMap.x1 + @bounds.inViewport.x1
-    x2 = x1 + @spriteSheet.width
-    y1 = @viewport.frame.boundsOnMap.y1 + @bounds.inViewport.y1
-    y2 = y1 + @spriteSheet.height
-    @bounds.onMap = new Bounds(x1, x2, y1, y2)
-
-class Player extends Mob
+  # Override to add animations
   _initSpriteSheet: (spritePath, spriteWidth, spriteHeight) ->
     @spriteSheet = new game.SpriteSheet(this, spritePath, spriteWidth, spriteHeight)
     @spriteSheet.addSequence 'idleRight', 4, [8]
