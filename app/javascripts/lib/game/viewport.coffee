@@ -1,4 +1,4 @@
-{EventHelpers, Canvas, Bounds} = game
+{EventHelpers, Canvas, Bounds} = game = window.game
 
 viewport = game.util.module "game.viewport", [EventHelpers]
 
@@ -9,16 +9,8 @@ viewport.init = (@main) ->
     @width = @main.dim(600, 'pixels')
     @height = @main.dim(400, 'pixels')
 
-    @frame = {}
-    bom = @frame.boundsOnMap = new Bounds(0, @width.pixels, 0, @height.pixels)
-
-    @padding = {}
-    @padding.boundsInFrame = new Bounds(
-      bom.x1 + @playerPadding
-      bom.x2 - @playerPadding
-      bom.y1 + @playerPadding
-      bom.y2 - @playerPadding
-    )
+    # formerly @frame.boundsOnMap
+    @frameBoundsOnMap = new Bounds(@width.pixels, @height.pixels)
 
     @$element = $('<div id="viewport" />').css(
       width: @width.pixels
@@ -46,7 +38,7 @@ viewport.detach = ->
   @$element.detach()
 
 viewport.draw = ->
-  bom = @frame.boundsOnMap
+  bom = @frameBoundsOnMap
   positionStr = [-bom.x1 + 'px', -bom.y1 + 'px'].join(" ")
   @$element.css('background-position', positionStr)
 
@@ -57,11 +49,11 @@ viewport.draw = ->
 #
 # Examples:
 #
-#   shiftBounds('x', 20)
-#   shiftBounds(x: 2, y: -9)
+#   translateBounds('x', 20)
+#   translateBounds(x: 2, y: -9)
 #
-viewport.shiftBounds = (args...) ->
-  ret = @frame.boundsOnMap.shift(args...)
+viewport.translateBounds = (args...) ->
+  ret = @frameBoundsOnMap.translate(args...)
   $(this).trigger('move')
   return ret
 
@@ -76,18 +68,17 @@ viewport.shiftBounds = (args...) ->
 #
 # Examples:
 #
-#   moveBoundsTo('x1', 80)
-#   moveBoundsTo('y2', 3)
+#   moveBoundsCorner('x1', 80)
+#   moveBoundsCorner('y2', 3)
 #
-viewport.moveBoundsTo = (key, val) ->
-  ret = @frame.boundsOnMap.moveTo(key, val)
+viewport.moveBoundsCorner = (key, val) ->
+  ret = @frameBoundsOnMap.moveCorner(key, val)
   $(this).trigger('move')
   return ret
 
 viewport.inspect = ->
   JSON.stringify(
-    "frame.boundsOnMap": @frame.boundsOnMap.inspect()
-    "padding.boundsInFrame": @padding.boundsInFrame.inspect()
+    "frameBoundsOnMap": @frameBoundsOnMap.inspect()
   )
 
 viewport.debug = ->

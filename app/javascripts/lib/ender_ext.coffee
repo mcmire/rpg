@@ -66,6 +66,16 @@ $.ender {
     fn(obj)
     obj
 
+  randomItem: (arr) ->
+    this.randomInt(arr.length-1)
+
+  randomInt: (args...) ->
+    if args.length is 1
+      [min, max] = [0, args[0]]
+    else
+      [min, max] = args
+    Math.floor(Math.random() * (max - min + 1)) + min
+
   # Given a string which represents a chain of objects (separated by "."),
   # ensures that all objects in the chain exist (by creating them if they don't),
   # and then returns the final object. For instance, given "Foo.Bar.Baz",

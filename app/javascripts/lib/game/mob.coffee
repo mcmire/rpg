@@ -1,12 +1,46 @@
-game = window.game
-{Bounds} = game
+{Bounds} = game = window.game
 
-game.Mob = class Mob
-  constructor: (@main, spritePath, spriteWidth, spriteHeight) ->
-    @viewport = @main.viewport
-    @_initSpriteSheet(spritePath, spriteWidth, spriteHeight)
+class game.Mob
+  constructor: (@main) ->
+    {@viewport, @map, @collisionLayer} = @main
+
+    @initSpriteSheet()
+    @width = @spriteSheet.width
+    @height = @spriteSheet.height
+
     @_initBounds()
+
     @isLoaded = false
+
+  _initBounds: ->
+    @bounds = {}
+    @lastBounds = {}
+    @bounds.onMap = @lastBounds.onMap = new Bounds(@width, @height)
+    @bounds.inViewport = @lastBounds.inViewport = new Bounds(@width, @height)
+
+    @initFence()
+    @initTopLeftBoundsOnMap()
+    @initTopLeftBoundsInViewport()
+
+  initTopLeftBoundsOnMap: ->
+    @bounds.onMap.anchor(0, 0)
+
+  initTopLeftBoundsInViewport: ->
+    @_recalculateViewportBounds()
+
+  _recalculateViewportBounds: ->
+    # take the bounds.onMap and map them to viewport bounds
+    bom = @bounds.onMap
+    vb = @main.viewport.frameBoundsOnMap
+    x1 = bom.x1 - vb.x1
+    y1 = bom.y1 - vb.y1
+    @bounds.inViewport.anchor(x1, y1)
+
+  initFence: ->
+    @bounds.fenceOnMap = new Bounds(
+      @main.map.width.pixels,
+      @main.map.height.pixels
+    )
 
   destroy: ->
     # does nothing by default
@@ -18,6 +52,9 @@ game.Mob = class Mob
     # does nothing by default
 
   onAdded: ->
+    # does nothing by default
+
+  update: ->
     # does nothing by default
 
   draw: ->
@@ -35,12 +72,12 @@ game.Mob = class Mob
   #
   # Examples:
   #
-  #   shiftBounds(x: 20)
-  #   shiftBounds(x: 2, y: -9)
+  #   translateBounds(x: 20)
+  #   translateBounds(x: 2, y: -9)
   #
-  shiftBounds: (vec) ->
-    @bounds.inViewport.shift(vec)
-    @bounds.onMap.shift(vec)
+  translateBounds: (vec) ->
+    @bounds.inViewport.translate(vec)
+    @bounds.onMap.translate(vec)
 
   # Shifts the viewport and map bounds by a vector such that the given key
   # (e.g., "x1", "y2) ends up being the value for the corresponding key
@@ -48,17 +85,17 @@ game.Mob = class Mob
   #
   # Examples:
   #
-  #   moveMapBoundsTo("x2", 2000)
-  #   moveMapBoundsTo("y1", 0)
+  #   moveBoundsCorner("x2", 2000)
+  #   moveBoundsCorner("y1", 0)
   #
   # Also see:
   #
   #   Bounds#moveTo
   #
-  moveMapBoundsTo: (key, val) ->
+  moveBoundsCorner: (key, val) ->
     [axis, side] = key
-    distMoved = @bounds.onMap.moveTo(key, val)
-    @bounds.inViewport.shift(axis, distMoved)
+    distMoved = @bounds.onMap.moveCorner(key, val)
+    @bounds.inViewport.translate(axis, distMoved)
 
   inspect: ->
     JSON.stringify(
@@ -69,23 +106,3 @@ game.Mob = class Mob
   debug: ->
     console.log "player.bounds.inViewport = #{@bounds.inViewport.inspect()}"
     console.log "player.bounds.OnMap = #{@bounds.onMap.inspect()}"
-
-  _initBounds: ->
-    @bounds = {}
-    @lastBounds = {}
-    @_initBoundsInViewport()
-    @_initBoundsOnMap()
-
-  _initBoundsInViewport: ->
-    x1 = 0
-    x2 = x1 + @spriteSheet.width
-    y1 = 0
-    y2 = y1 + @spriteSheet.height
-    @bounds.inViewport = @lastBounds.inViewport = new Bounds(x1, x2, y1, y2)
-
-  _initBoundsOnMap: ->
-    x1 = @viewport.frame.boundsOnMap.x1 + @bounds.inViewport.x1
-    x2 = x1 + @spriteSheet.width
-    y1 = @viewport.frame.boundsOnMap.y1 + @bounds.inViewport.y1
-    y2 = y1 + @spriteSheet.height
-    @bounds.onMap = new Bounds(x1, x2, y1, y2)

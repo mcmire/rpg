@@ -54,15 +54,56 @@ collisionLayer.draw = ->
   #self.collisionLayer.$debugMask.css('background-position', positionStr)
   #self.canvas.ctx.drawImage(self.collisionLayer.debugCanvas.element, 0, 0)
 
-# Called when an entity is moving right. Given the coordinates of an entity in
-# the position it is about to be moved to, returns the left edge of a box on
-# the collision layer that the coordinates collide with. This edge (which is
-# an X-value in this case) will then be used to position the entity
-# appropriately.
+# Public: Calculate the pixel amount required to correct a bounds box heading
+# in a direction toward a box on the collision layer such that it buts against
+# it rather than intersecting it.
 #
-# The collision should be detected correctly whether the entity is taller
-# than the colliding box, or shorter. In other words, both of these cases are
-# prevented:
+# This is used when moving the player so that it does not collide with a box in
+# the collision layer.
+#
+# direction - A String: 'up', 'down', 'left' or 'right'.
+# bounds    - The calculated next Bounds of the player.
+#
+# Returns a positive integer if the Bounds collides with a collision box, or 0
+# otherwise.
+#
+collisionLayer.offsetToNotCollide = (direction, bounds) ->
+  switch direction
+    when 'left'
+      bounds.x1 - @getBlockingRightEdge(bounds)
+    when 'right'
+      @getBlockingLeftEdge(bounds) - bounds.x2
+    when 'up'
+      @getBlockingBottomEdge(bounds) - bounds.y2
+    when 'down'
+      bounds.y1 - @getBlockingTopEdge(bounds)
+
+# Public: Return whether the given bounds intersects with a box in the collision
+# layer.
+#
+# The collision should be detected correctly whether the given box is taller or
+# shorter than the collision box in question.
+#
+# b - An instance of Bounds.
+#
+# Returns true or false.
+#
+collisionLayer.isIntersection = (b) ->
+  for box in @collisionBoxes
+    one   = (box.x1 <= b.x1 <= box.x2)
+    two   = (box.x1 <= b.x2 <= box.x2)
+    three = (box.y1 <= b.y1 <= box.y2)
+    four  = (box.y1 <= b.y2 <= box.y2)
+    return true if ((one or two) and (three or four))
+  return false
+
+# Public: Calculate a value that should be subtracted from the x1 coordinate of
+# a bounds box to prevent it from colliding with a box in the collision layer
+# when moving rightward.
+#
+# The collision should be detected correctly whether the given box is taller or
+# shorter than the collision box in question. In other words, both of these
+# cases are prevented:
 #
 #        E     B           E     B
 #             ____        ____
@@ -71,27 +112,31 @@ collisionLayer.draw = ->
 #   => |_____:_|  |   => |  :_|_____|
 #            |____|   => |____|
 #
-collisionLayer.getBlockingLeftEdge = (e) ->
+# b - An instance of Bounds.
+#
+# Returns the integer X-coordinate of the left side of the collision box that
+# the given box collides with if one exists, or null otherwise.
+#
+collisionLayer.getBlockingLeftEdge = (b) ->
   for box in @collisionBoxes
     return box.x1 if (
-      (e.x1 <= box.x1 and e.x2 >= box.x1) and
+      # (b.x1 <= box.x1 and b.x2 >= box.x1) and
+      (b.x1 <= box.x1 <= b.x2) and
       (
-        (box.y1 <= e.y1 <= box.y2) or
-        (box.y1 <= e.y2 <= box.y2) or
-        (e.y1 < box.y1 and e.y2 > box.y2)
+        (box.y1 <= b.y1 <= box.y2) or
+        (box.y1 <= b.y2 <= box.y2) or
+        (b.y1 < box.y1 and b.y2 > box.y2)
       )
     )
   return null
 
-# Called when an entity is moving left. Given the coordinates of an entity in
-# the position it is about to be moved to, returns the right edge of a box on
-# the collision layer that the coordinates collide with. This edge (which is
-# an X-value in this case) will then be used to position the entity
-# appropriately.
+# Public: Calculate a value that should be subtracted from the x2 coordinate of
+# a bounds box to prevent it from colliding with a box in the collision layer
+# when moving leftward.
 #
-# The collision should be detected correctly whether the entity is taller
-# than the colliding box, or shorter. In other words, both of these cases are
-# prevented:
+# The collision should be detected correctly whether the given box is taller or
+# shorter than the collision box in question. In other words, both of these
+# cases are prevented:
 #
 #     B     E            B     E
 #    ____                    ____
@@ -100,27 +145,31 @@ collisionLayer.getBlockingLeftEdge = (e) ->
 #   |  |_:_____| <=   |_____|_:  | <=
 #   |____|                  |____| <=
 #
-collisionLayer.getBlockingRightEdge = (e) ->
+# bounds - An instance of Bounds.
+#
+# Returns the integer X-coordinate of the right side of the collision box that
+# the given box collides with if one exists, or null otherwise.
+#
+collisionLayer.getBlockingRightEdge = (b) ->
   for box in @collisionBoxes
     return box.x2 if (
-      (e.x1 <= box.x2 and e.x2 >= box.x2) and
+      # (b.x1 <= box.x2 and b.x2 >= box.x2) and
+      (b.x1 <= box.x2 <= b.x2) and
       (
-        (box.y1 <= e.y1 <= box.y2) or
-        (box.y1 <= e.y2 <= box.y2) or
-        (e.y1 < box.y1 and e.y2 > box.y2)
+        (box.y1 <= b.y1 <= box.y2) or
+        (box.y1 <= b.y2 <= box.y2) or
+        (b.y1 < box.y1 and b.y2 > box.y2)
       )
     )
   return null
 
-# Called when an entity is moving down. Given the coordinates of an entity in
-# the position it is about to be moved to, returns the top edge of a box on
-# the collision layer that the coordinates collide with. This edge (which is
-# an Y-value in this case) will then be used to position the entity
-# appropriately.
+# Public: Calculate a value that should be subtracted from the y2 coordinate of
+# a bounds box to prevent it from colliding with a box in the collision layer
+# when moving downward.
 #
-# The collision should be detected correctly whether the entity is taller
-# than the colliding box, or shorter. In other words, both of these cases are
-# prevented:
+# The collision should be detected correctly whether the given box is taller or
+# shorter than the collision box in question. In other words, both of these
+# cases are prevented:
 #
 #        |  |               |  |
 #        v  v               v  v
@@ -130,27 +179,31 @@ collisionLayer.getBlockingRightEdge = (e) ->
 #   B | |____| |      B    |    |
 #     |________|           |____|
 #
-collisionLayer.getBlockingTopEdge = (e) ->
+# bounds - An instance of Bounds.
+#
+# Returns the integer Y-coordinate of the top side of the collision box that the
+# given box collides with if one exists, or null otherwise.
+#
+collisionLayer.getBlockingTopEdge = (b) ->
   for box in @collisionBoxes
     return box.y1 if (
-      (e.y1 <= box.y1 and e.y2 >= box.y1) and
+      # (b.y1 <= box.y1 and b.y2 >= box.y1) and
+      (b.y1 <= box.y1 <= b.y2) and
       (
-        (box.x1 <= e.x1 <= box.x2) or
-        (box.x1 <= e.x2 <= box.x2) or
-        (e.x1 < box.x1 and e.x2 > box.x2)
+        (box.x1 <= b.x1 <= box.x2) or
+        (box.x1 <= b.x2 <= box.x2) or
+        (b.x1 < box.x1 and b.x2 > box.x2)
       )
     )
   return null
 
-# Called when an entity is moving up. Given the coordinates of an entity in
-# the position it is about to be moved to, returns the bottom edge of a box on
-# the collision layer that the coordinates collide with. This edge (which is
-# an Y-value in this case) will then be used to position the entity
-# appropriately.
+# Public: Calculate a value that should be subtracted from the y1 coordinate of
+# a bounds box to prevent it from colliding with a box in the collision layer
+# when moving upward.
 #
-# The collision should be detected correctly whether the entity is taller
-# than the colliding box, or shorter. In other words, both of these cases are
-# prevented:
+# The collision should be detected correctly whether the given box is taller or
+# shorter than the collision box in question. In other words, both of these
+# cases are prevented:
 #
 #       ________           ____
 #   B  |  ____  |     B   |    |
@@ -160,14 +213,20 @@ collisionLayer.getBlockingTopEdge = (e) ->
 #         ^  ^             ^  ^
 #         |  |             |  |
 #
-collisionLayer.getBlockingBottomEdge = (e) ->
+# bounds - An instance of Bounds.
+#
+# Returns the integer Y-coordinate of the bottom side of the collision box that
+# the given box collides with if one exists, or null otherwise.
+#
+collisionLayer.getBlockingBottomEdge = (b) ->
   for box in @collisionBoxes
     return box.y2 if (
-      (e.y1 <= box.y2 and e.y2 >= box.y2) and
+      # (b.y1 <= box.y2 and b.y2 >= box.y2) and
+      (b.y1 <= box.y2 <= b.y2) and
       (
-        (box.x1 <= e.x1 <= box.x2) or
-        (box.x1 <= e.x2 <= box.x2) or
-        (e.x1 < box.x1 and e.x2 > box.x2)
+        (box.x1 <= b.x1 <= box.x2) or
+        (box.x1 <= b.x2 <= box.x2) or
+        (b.x1 < box.x1 and b.x2 > box.x2)
       )
     )
   return null

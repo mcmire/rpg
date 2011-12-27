@@ -1,5 +1,10 @@
-game = window.game
-{keyboard, EventHelpers, viewport, collisionLayer, FpsReporter, Player} = game
+{keyboard,
+ EventHelpers,
+ viewport,
+ collisionLayer,
+ FpsReporter,
+ Player,
+ Enemy} = game = window.game
 
 main = game.util.module "game.main", EventHelpers
 
@@ -33,8 +38,7 @@ main.init = ->
     @fpsReporter = FpsReporter.init(this)
     @collisionLayer = collisionLayer.init(this)
 
-    @player = new Player(this, 'link2x.gif', 34, 48)
-    @addEntity(@player)
+    @_addMobs()
 
     @isInit = true
   return this
@@ -179,19 +183,14 @@ main.draw = ->
   main.numDraws++
 
 main.startLogging = ->
-  self = this
-  @isLogging = true
-  @log()
+  @logLoopHandle = window.setInterval(@_fpsReporterTimer, 1000)
   return this
 
 main.stopLogging = ->
-  @isLogging = false
+  if @logLoopHandle
+    window.clearInterval(@logLoopHandle)
+    @logLoopHandle = null
   return this
-
-main.log = ->
-  return unless main.isLogging
-  main._fpsReporterTimer()
-  setTimeout(main.log, 1000)
 
 main.dim = (value, unit) ->
   d = {}
@@ -203,6 +202,13 @@ main.dim = (value, unit) ->
       d.pixels = value;
       d.tiles = value / @tileSize
   return d
+
+main._addMobs = ->
+  @player = new Player(this)
+  @addEntity(@player)
+
+  @enemy = new Enemy(this)
+  @addEntity(@enemy)
 
 main._reportingTime = (name, fn) ->
   t = (new Date()).getTime()

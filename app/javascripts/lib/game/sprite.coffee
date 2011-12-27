@@ -16,22 +16,26 @@ class SpriteSheet
     @image.onload  = -> self.mob.isLoaded = true
     @image.onerror = -> throw "Image #{self.imagePath} failed to load!"
 
-  addSequence: (name, skipFreq, frames) ->
-    @sequences[name] = new AnimationSequence(this, skipFreq, frames)
+  addSequence: (name, skipFreq, frames, opts={}) ->
+    opts.repeat ?= true
+    @sequences[name] =
+      new AnimationSequence(this, skipFreq, frames, opts.repeat, opts.then)
 
   useSequence: (name) ->
     if name isnt @currentSequence
       @currentSequence = name
-      @sequences[@currentSequence].use()
+      @sequences[@currentSequence].reset()
 
   draw: ->
-    @sequences[@currentSequence].draw()
+    seq = @sequences[@currentSequence]
+    seq.draw()
+    @useSequence(seq.afterFinish) if seq.isFinished() and seq.afterFinish
 
 class AnimationSequence
-  constructor: (@spriteSheet, @skipFreq, @frames) ->
+  constructor: (@spriteSheet, @skipFreq, @frames, @repeat, @afterFinish) ->
     @numFrames = @frames.length
 
-  use: ->
+  reset: ->
     @currentFrame = 0
 
   draw: ->
@@ -55,6 +59,10 @@ class AnimationSequence
     ctx.restore()
 
     if (@spriteSheet.mob.main.numDraws % @skipFreq) is 0
-      @currentFrame = (@currentFrame + 1) % @numFrames
+      @currentFrame++
+      @currentFrame %= @numFrames if @repeat
+
+  isFinished: ->
+    @currentFrame >= @numFrames
 
 game.SpriteSheet = SpriteSheet
