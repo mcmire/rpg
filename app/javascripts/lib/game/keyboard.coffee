@@ -57,20 +57,26 @@ keyboard.addEvents = ->
   @bindEvents document,
     keydown: (event) ->
       key = event.keyCode
+      # console.log "keydown #{key}"
       # Keep track of which keys are being held down at any given time
       self.pressedKeys[key] = 1
       # Cache handlers for keys which are currently being held down
       # so that it is faster when iterating through them
-      if (handler = self.keyHandlers[key])
-        self.activeKeyHandlers[key] ||= handler
+      if callbacks = self.keyHandlers[key]
+        self.activeKeyHandlers["#{key}.keydown"] = callbacks.keydown
         event.preventDefault()
 
     keyup: (event) ->
       key = event.keyCode
+      # console.log "keyup #{key}"
       delete self.pressedKeys[key]
-      if key of self.activeKeyHandlers
-        delete self.activeKeyHandlers[key]
+      if callbacks = self.keyHandlers[key]
+        self.activeKeyHandlers["#{key}.keyup"] = callbacks.keyup
         event.preventDefault()
+
+    # keypress: (event) ->
+    #   key = event.keyCode
+    #   console.log "keypress #{key}"
 
   @bindEvents window,
     blur: (event) ->
@@ -90,18 +96,19 @@ keyboard.runHandlers = ->
   @globalKeyHandler?()
     #@debugTimer = date
   handler() for key, handler of @activeKeyHandlers
+  @activeKeyHandlers = {}
 
-keyboard.addKeyHandler = (keyNames..., callback) ->
+keyboard.addKeyHandler = (keyNames..., callbacks) ->
   keyNames = $.flatten(keyNames)
   if keyNames.length
     for keyName in keyNames
-      @keyHandlers[@keys[keyName]] = callback
+      @keyHandlers[@keys[keyName]] = callbacks
   else
-    @globalKeyHandler = callback
+    @globalKeyHandler = callbacks
 keyboard.addKeyHandlers = keyboard.addKeyHandler
 
-keyboard.addGlobalKeyHandler = (callback) ->
-  @globalKeyHandler = callback
+keyboard.addGlobalKeyHandler = (callbacks) ->
+  @globalKeyHandler = callbacks
 
 keyboard.removeKeyHandlers = (keyNames...) ->
   keyNames = $.flatten(keyNames)
