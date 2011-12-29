@@ -40,9 +40,7 @@ $.ender {
 
     return target
 
-  # Makes a shallow clone of the given object. That is, any properties which
-  # are objects will be copied by reference, not value, so if you change them
-  # you'll be changing the original objects.
+  # Makes a deep clone of the given object.
   #
   clone: (obj) -> $.extend({}, obj)
 
@@ -75,6 +73,13 @@ $.ender {
     else
       [min, max] = args
     Math.floor(Math.random() * (max - min + 1)) + min
+
+  capitalize: (str) ->
+    str[0].toUpperCase() + str[1..-1]
+
+  ensureArray: (arr) ->
+    arr = arr[0] if arr.length is 1 and $.is.arr(arr[0])
+    return arr
 
   # Given a string which represents a chain of objects (separated by "."),
   # ensures that all objects in the chain exist (by creating them if they don't),

@@ -24,10 +24,13 @@ class SpriteSheet
   useSequence: (name) ->
     if name isnt @currentSequence
       @currentSequence = name
-      @sequences[@currentSequence].reset()
+      seq = @sequences[@currentSequence]
+      throw "#{name} is not a sequence" if not seq
+      seq.reset()
 
   draw: ->
     seq = @sequences[@currentSequence]
+    throw "#{name} is not a sequence" if not seq
     seq.draw()
     @useSequence(seq.afterFinish) if seq.isFinished() and seq.afterFinish
 

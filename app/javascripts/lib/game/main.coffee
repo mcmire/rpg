@@ -15,9 +15,9 @@ main.animMethod = 'setTimeout'
 # main.animMethod = 'requestAnimFrame'
 
 main.entities = []
-main.debug = true
+main.debug = false # true
 main.numDraws = 0
-main.lastDrawTime = null
+main.lastTickTime = null
 main.numTicks = 0
 
 main.tickInterval = 1000 / main.frameRate
@@ -148,34 +148,46 @@ main.tick = ->
   return if not main.isTicking
 
   t = (new Date()).getTime()
-  main.msSinceLastDraw = if main.lastDrawTime then (t - main.lastDrawTime) else 0
-  # console.log "msSinceLastDraw: #{main.msSinceLastDraw}"
 
-  # Respond to keystrokes executed during the "dead time", i.e., the time
-  # between the end of the last iteration and the start of this iteration
-  keyboard.runHandlers()
+  if main.debug
+    main.msSinceLastDraw = if main.lastTickTime then (t - main.lastTickTime) else 0
+    console.log "msSinceLastDraw: #{main.msSinceLastDraw}"
+
+  main.update()
 
   if main.animMethod is 'setTimeout'
     main.draw()
   else
     main._fpsThrottlerTimer()
 
-  t2 = (new Date()).getTime()
-  msDrawTime = t2 - t
-  main.lastDrawTime = t
+  if main.debug
+    t2 = (new Date()).getTime()
+    msDrawTime = t2 - t
+    main.lastTickTime = t
+    console.log "msDrawTime: #{msDrawTime}"
 
-  # console.log "msDrawTime: #{msDrawTime}"
+  # Reset "stuck" keys every so often.
+  # Pressing an arrow key in conjunction with the Command key can result in the
+  # keyup event never getting fired for the arrow key, which will cause the
+  # player to continue moving forever, so prevent this from happening.
+  # TODO: This sometimes causes stutters
+  keyboard.clearStuckKeys(t) if (main.numTicks % 100) == 0
 
   if main.animMethod is 'setTimeout'
     # Ensure that ticks happen at exact regular intervals by discounting the time
     # it takes to draw (as this interval is variable)
-    # main.tickLoopHandle = window.setTimeout(main.tick, main.tickInterval)
-    main.tickLoopHandle = window.setTimeout(main.tick, main.tickInterval - msDrawTime)
+    main.tickLoopHandle = window.setTimeout(main.tick, main.tickInterval)
+    # main.tickLoopHandle = window.setTimeout(main.tick, main.tickInterval - msDrawTime)
   else
     # Try to call the tick function as fast as possible
     main.tickLoopHandle = window.requestAnimFrame(main.tick, viewport.canvas.element)
 
   main.numTicks++
+
+main.update = ->
+  # Respond to keystrokes executed during the "dead time", i.e., the time
+  # between the end of the last iteration and the start of this iteration
+  main.player.update()
 
 main.draw = ->
   main.viewport.draw()

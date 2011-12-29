@@ -1,14 +1,27 @@
-{Mob, SpriteSheet} = game = window.game
+{keyboard, Mob, SpriteSheet} = game = window.game
 
-leftKeys  = ['KEY_A', 'KEY_LEFT',  'KEY_H']
-rightKeys = ['KEY_D', 'KEY_RIGHT', 'KEY_L']
-upKeys    = ['KEY_W', 'KEY_UP',    'KEY_K']
-downKeys  = ['KEY_S', 'KEY_DOWN',  'KEY_J']
+DIRECTIONS = 'up down left right'.split(' ')
 
-class game.Player extends Mob
+DIRECTION_KEYS =
+  up:    keyboard.keyCodesFor('KEY_W', 'KEY_UP',    'KEY_K')
+  down:  keyboard.keyCodesFor('KEY_S', 'KEY_DOWN',  'KEY_J')
+  left:  keyboard.keyCodesFor('KEY_A', 'KEY_LEFT',  'KEY_H')
+  right: keyboard.keyCodesFor('KEY_D', 'KEY_RIGHT', 'KEY_L')
+
+KEY_DIRECTIONS = {}
+for dir in DIRECTIONS
+  for key in DIRECTION_KEYS[dir]
+    KEY_DIRECTIONS[key] = dir
+
+KEYS = $.flatten($.values(DIRECTION_KEYS))
+
+class Player extends Mob
   constructor: ->
     @speed = 7  # px/frame
     @viewportPadding = 30  # pixels
+    @keyTracker = new keyboard.KeyTracker(KEYS)
+    @state = 'idle'
+    @direction = 'right'
     super
 
   # override
@@ -19,13 +32,14 @@ class game.Player extends Mob
   initSpriteSheet: ->
     @spriteSheet = new SpriteSheet(this, 'link2x.gif', 34, 48)
 
-    @spriteSheet.addSequence 'idleRight', 4, [8],                     repeat: true
     @spriteSheet.addSequence 'runLeft',   4, [0,1,2,3,4,5,6,7],       repeat: true
     @spriteSheet.addSequence 'runRight',  4, [8,9,10,11,12,13,14,15], repeat: true
     @spriteSheet.addSequence 'runDown',   4, [16,17,18,19,20,21,22],  repeat: true
     @spriteSheet.addSequence 'runUp',     4, [23,24,25,26,27,28],     repeat: true
-
-    @spriteSheet.useSequence 'idleRight'
+    @spriteSheet.addSequence 'idleLeft',  4, [0],                     repeat: true
+    @spriteSheet.addSequence 'idleRight', 4, [8],                     repeat: true
+    @spriteSheet.addSequence 'idleDown',  4, [19],                    repeat: true
+    @spriteSheet.addSequence 'idleUp',    4, [23],                    repeat: true
 
   # override
   destroy: ->
@@ -33,28 +47,72 @@ class game.Player extends Mob
 
   # override
   addEvents: ->
-    self = this
-    keyboard = @main.keyboard
-    keyboard.addKeyHandler leftKeys,  -> self.moveLeft()
-    keyboard.addKeyHandler rightKeys, -> self.moveRight()
-    keyboard.addKeyHandler upKeys,    -> self.moveUp()
-    keyboard.addKeyHandler downKeys,  -> self.moveDown()
+    # keyboard.trapKeys $.values(mkeys)
+    keyboard.addKeyTracker(@keyTracker)
 
   # override
   removeEvents: ->
-    keyboard = @main.keyboard
-    keyboard.removeKeyHandler leftKeys
-    keyboard.removeKeyHandler rightKeys
-    keyboard.removeKeyHandler upKeys
-    keyboard.removeKeyHandler downKeys
+    # keyboard.releaseKeys $.values(mkeys)
+    keyboard.removeKeyTracker(@keyTracker)
 
   # override
   onAdded: ->
     @addEvents()
 
   update: ->
-    # TODO: Move the move*() code here
-    # (key handlers will just set current action)
+    # directions = @_determineDirections()
+
+    # if directions.crisscross
+    #   action = directions.updown
+    #   action = null
+    #   for dir in directions.crisscross
+    #     @[action]()
+    #   @spriteSheet.useSequence(action)
+    # else if dir = @lastDirections.all[0]
+    #   action = "idle" + $.capitalize(dir)
+    #   @[action]()
+    #   @spriteSheet.useSequence(action)
+
+    # @lastDirections = $.clone(directions)
+
+    someKeyPressed = false
+    if keyCode = @keyTracker.getLastPressedKey()
+      @direction = KEY_DIRECTIONS[keyCode]
+      someKeyPressed = true
+    @state = if someKeyPressed then 'move' else 'idle'
+    action = @state + "_" + @direction
+    @[action]()
+
+  _determineDirections: ->
+    directions = {}
+    directions.crisscross = []
+    directions.all = []
+
+    if keyboard.isKeyPressed(upKeys)
+      directions.up = true
+      directions.updown = -1
+      directions.crisscross.unshift('up')
+      directions.all.unshift('up')
+    else if keyboard.isKeyPressed(downKeys)
+      directions.down = true
+      directions.updown = 1
+      directions.crisscross.unshift('down')
+      directions.all.unshift('down')
+
+    if keyboard.isKeyPressed(leftKeys)
+      directions.left = true
+      directions.leftright = -1
+      directions.crisscross.unshift('left')
+      directions.all.unshift('left')
+    else if keyboard.isKeyPressed(rightKeys)
+      directions.right = true
+      directions.leftright = 1
+      directions.crisscross.unshift('right')
+      directions.all.unshift('right')
+
+    directions.any = (directions.updown or directions.leftright)
+
+    return directions
 
   # The idea here is that we move the player sprite left until it reaches a
   # certain point (we call it the "fence"), after which we continue the
@@ -99,6 +157,9 @@ class game.Player extends Mob
         # Move player left
         @translateBounds(x: -dist)
 
+  idleLeft: ->
+    @spriteSheet.useSequence('idleLeft')
+
   # Similar to moving leftward, we move the player sprite right until it hits
   # the fence, after which we continue the appearance of movement by shifting
   # the viewport rightward along the map. We do this until we've reached the
@@ -142,6 +203,9 @@ class game.Player extends Mob
         # Move player right
         @translateBounds(x: dist)
 
+  idleRight: ->
+    @spriteSheet.useSequence('idleRight')
+
   # Similar to moving leftward, we move the player sprite upward until it hits
   # the fence, after which we continue the appearance of movement by shifting
   # the viewport upward along the map. We do this until we've reached the top
@@ -183,6 +247,9 @@ class game.Player extends Mob
       else
         # Move player top
         @translateBounds(y: -dist)
+
+  idleUp: ->
+    @spriteSheet.useSequence('idleUp')
 
   # Similar to moving leftward, we move the player sprite downward until it
   # hits the fence, after which we continue the appearance of movement by
@@ -226,3 +293,17 @@ class game.Player extends Mob
       else
         # Move player bottom
         @translateBounds(y: dist)
+
+  idleDown: ->
+    @spriteSheet.useSequence('idleDown')
+
+Player::move_up = Player::moveUp
+Player::move_down = Player::moveDown
+Player::move_left = Player::moveLeft
+Player::move_right = Player::moveRight
+Player::idle_up = Player::idleUp
+Player::idle_down = Player::idleDown
+Player::idle_left = Player::idleLeft
+Player::idle_right = Player::idleRight
+
+game.Player = Player
