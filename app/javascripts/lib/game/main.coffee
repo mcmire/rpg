@@ -43,8 +43,9 @@ main.init = ->
     @isInit = true
   return this
 
-main.addEntity = (entity) ->
+main.addEntity = (entity, addToCollisionLayer=true) ->
   @entities.push(entity)
+  @collisionLayer.add(entity.bounds.onMap) if addToCollisionLayer
   entity.onAdded()
 
 main.destroy = ->
@@ -153,8 +154,6 @@ main.tick = ->
     main.msSinceLastDraw = if main.lastTickTime then (t - main.lastTickTime) else 0
     console.log "msSinceLastDraw: #{main.msSinceLastDraw}"
 
-  main.update()
-
   if main.animMethod is 'setTimeout'
     main.draw()
   else
@@ -184,14 +183,9 @@ main.tick = ->
 
   main.numTicks++
 
-main.update = ->
-  # Respond to keystrokes executed during the "dead time", i.e., the time
-  # between the end of the last iteration and the start of this iteration
-  main.player.update()
-
 main.draw = ->
   main.viewport.draw()
-  main.player.draw()
+  entity.tick() for entity in @entities
   main.numDraws++
 
 main.startLogging = ->
@@ -216,8 +210,8 @@ main.dim = (value, unit) ->
   return d
 
 main._addMobs = ->
-  @player = new Player(this)
-  @addEntity(@player)
+  # @player = new Player(this)
+  # @addEntity(@player, false)
 
   @enemy = new Enemy(this)
   @addEntity(@enemy)

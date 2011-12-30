@@ -2,19 +2,7 @@ game = window.game
 
 class SpriteSheet
   constructor: (@mob, path, @width, @height) ->
-    @imagePath = "#{@mob.main.imagesPath}/#{path}"
-    @image = new Image()
-    @image.src = @imagePath
-    @currentFrame = 0
 
-    @sequences = {}
-
-    @addEvents()
-
-  addEvents: ->
-    self = this
-    @image.onload  = -> self.mob.isLoaded = true
-    @image.onerror = -> throw "Image #{self.imagePath} failed to load!"
 
   addSequence: (name, skipFreq, frames, opts={}) ->
     opts.repeat ?= true

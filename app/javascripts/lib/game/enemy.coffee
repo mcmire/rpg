@@ -1,31 +1,81 @@
 {Bounds, Mob, SpriteSheet} = game = window.game
 
-DIRECTIONS = 'left right up down'.split(' ')
+DIRECTIONS = 'right down left up'.split(' ')
 
 class game.Enemy extends Mob
-  initialize: ->
+  @image: 'enemy1.gif'
+  @width: 20
+  @height: 28
+  @speed: 3  # px/frame
+
+  # parens are necessary here, otherwise CS gets confused when it hits the
+  # 'constructor:' bit below
+  # CS 1.1.0 might fix this
+  @addState('moveDown',
+    frames: [0,1],
+    duration: 4,
+    repeat: true,
+    move: true)
+  @addState('downToRight',
+    frames: [0,2],
+    duration: 16,
+    then: 'moveRight')
+  @addState('downToLeft',
+    frames: [0,3],
+    duration: 16,
+    then: 'moveLeft')
+  @addState('moveRight',
+    frames: [4,5],
+    duration: 4,
+    repeat: true,
+    move: true)
+  @addState('rightToUp',
+    frames: [4,6],
+    duration: 16,
+    then: 'moveUp')
+  @addState('rightToDown',
+    frames: [4,7],
+    duration: 16,
+    then: 'moveDown')
+  @addState('moveLeft',
+    frames: [8,9],
+    duration: 4,
+    repeat: true,
+    move: true)
+  @addState('leftToDown',
+    frames: [8,10],
+    duration: 16,
+    then: 'moveDown')
+  @addState('leftToUp',
+    frames: [8,11],
+    duration: 16,
+    then: 'moveUp')
+  @addState('moveUp',
+    frames: [12,13],
+    duration: 4,
+    repeat: true,
+    move: true)
+  @addState('upToLeft',
+    frames: [12,14],
+    duration: 16,
+    then: 'moveLeft')
+  @addState('upToRight',
+    frames: [12,15],
+    duration: 16,
+    then: 'moveRight')
+
+  constructor: ->
     super
-    @changeToWandering()
-    @direction = $.randomItem(DIRECTIONS)
-    @spriteSheet.useSequence(@direction)
+    # @changeToWandering()
+    @setState('moveRight')
+    # @direction = $.randomItem(DIRECTIONS)
+    # @directionIndex = 0
 
-  # Override to add animations
-  initSpriteSheet: ->
-    @spriteSheet = new SpriteSheet(this, 'enemy1.gif', 20, 28)
+  # override
+  initFence: ->
+    @bounds.fenceOnMap = new Bounds(200, 200, 100, 100)
 
-    @spriteSheet.addSequence 'down',           4, [0,1],   repeat: true
-    @spriteSheet.addSequence 'down-to-right', 16, [0,2],   then: 'right'
-    @spriteSheet.addSequence 'down-to-left',  16, [0,3],   then: 'left'
-    @spriteSheet.addSequence 'right',          4, [4,5],   repeat: true
-    @spriteSheet.addSequence 'right-to-up',    4, [4,6],   then: 'up'
-    @spriteSheet.addSequence 'right-to-down',  4, [4,7],   then: 'down'
-    @spriteSheet.addSequence 'left',           4, [8,9],   repeat: true
-    @spriteSheet.addSequence 'left-to-down',   4, [8,10],  then: 'down'
-    @spriteSheet.addSequence 'left-to-up',     4, [8,11],  then: 'up'
-    @spriteSheet.addSequence 'up',             4, [12,13], repeat: true
-    @spriteSheet.addSequence 'up-to-left',     4, [12,14], then: 'left'
-    @spriteSheet.addSequence 'up-to-right',    4, [12,15], then: 'right'
-
+  # override
   initTopLeftBoundsOnMap: ->
     self = this
     fn = ->
@@ -35,33 +85,73 @@ class game.Enemy extends Mob
     # poor man's do-while :(
     fn(); fn() while @collisionLayer.isIntersection(@bounds.onMap)
 
-  initFence: ->
-    @bounds.fenceOnMap = new Bounds(200, 200, 100, 100)
+  # changeToWandering: ->
+  #   @state = 'wandering'
+  #   @numSteps = 0
+  #   @stepsToWalk = $.randomInt(10)
 
-  changeToWandering: ->
-    @state = 'wandering'
-    @numSteps = 0
-    @stepsToWalk = $.randomInt(10)
+  postdraw: ->
+    super
 
-  update: ->
-    # can we keep the current state?
-    if bounds = @_nextValidMove()
-      # yes, update position
-      @bounds.onMap = bounds
-      @_recalculateViewportBounds()
-    else
-      # no, so change direction
-      possibleDirections = Array.subtract(DIRECTIONS, @direction)
-      direction = @_chooseValidDirectionFrom(possibleDirections)
-      @_transitionTo(direction)
+    # # can we keep the current state?
+    # if bounds = @_nextValidMove()
+    #   # yes, update position
+    #   @bounds.onMap = bounds
+    #   @_recalculateViewportBounds()
+    # else
+    #   # no, so change direction
+    #   possibleDirections = Array.subtract(DIRECTIONS, @direction)
+    #   direction = @_chooseValidDirectionFrom(possibleDirections)
+    #   @_transitionTo(direction)
+
+    if @state.doesMove and @numFramesDrawn > 20
+      i = (DIRECTIONS.indexOf(@direction) + 1) % DIRECTIONS.length
+      nextDirection = $.capitalize DIRECTIONS[i]
+      @setState("#{@direction}To#{nextDirection}")
+
+  moveUp: ->
+    @direction = 'up'
+    @translateBounds(y: -@speed)
+
+  moveDown: ->
+    @direction = 'down'
+    @translateBounds(y: +@speed)
+
+  moveLeft: ->
+    @direction = 'left'
+    @translateBounds(x: -@speed)
+
+  moveRight: ->
+    @direction = 'right'
+    @translateBounds(x: +@speed)
+
+  #------------
 
   _chooseValidDirectionFrom: (directions) ->
     validDirections = $.every directions, (dir) -> !!@_nextValidMove(dir)
     $.randomItem(validDirections)
 
+  _move: (direction) ->
+    [dx, dy] = [0, 0]
+    switch direction
+      when 'right'
+        axis = 'x'
+        dx = +@speed
+      when 'left'
+        axis = 'x'
+        dx = -@speed
+      when 'up'
+        axis = 'y'
+        dy = -@speed
+      when 'down'
+        axis = 'y'
+        dy = +@speed
+    @bounds.onMap.withTranslation(x: dx, y: dy)
+    @spriteSheet.useSequence("move_#{direction}")
+
   _nextValidMove: (direction) ->
     [dx, dy] = [0, 0]
-    switch @direction
+    switch direction
       when 'right'
         axis = 'x'
         dx = +@speed

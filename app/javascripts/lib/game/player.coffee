@@ -16,30 +16,57 @@ for dir in DIRECTIONS
 KEYS = $.flatten($.values(DIRECTION_KEYS))
 
 class Player extends Mob
+  @image: 'link2x.gif'
+  @width: 34
+  @height: 48
+  @speed: 7  # px/frame
+
+  @addState('moveLeft',
+    duration: 4,
+    frames: [0,1,2,3,4,5,6,7],
+    repeat: true,
+    move: true)
+  @addState('moveRight',
+    duration: 4,
+    frames: [8,9,10,11,12,13,14,15],
+    repeat: true,
+    move: true)
+  @addState('moveDown',
+    duration: 4,
+    frames: [16,17,18,19,20,21,22],
+    repeat: true,
+    move: true)
+  @addState('moveUp',
+    duration: 4,
+    frames: [23,24,25,26,27,28],
+    repeat: true,
+    move: true)
+  @addState('idleLeft',
+    duration: 4,
+    frames: [0],
+    repeat: true)
+  @addState('idleRight',
+    duration: 4,
+    frames: [8],
+    repeat: true)
+  @addState('idleDown',
+    duration: 4,
+    frames: [19],
+    repeat: true)
+  @addState('idleUp',
+    duration: 4,
+    frames: [23],
+    repeat: true)
+
   constructor: ->
-    @speed = 7  # px/frame
+    super
     @viewportPadding = 30  # pixels
     @keyTracker = new keyboard.KeyTracker(KEYS)
-    @state = 'idle'
-    @direction = 'right'
-    super
+    @setState('idleRight')
 
   # override
   initFence: ->
     @bounds.fenceOnMap = @viewport.frameBoundsOnMap.withScale(@viewportPadding)
-
-  # Override to add animations
-  initSpriteSheet: ->
-    @spriteSheet = new SpriteSheet(this, 'link2x.gif', 34, 48)
-
-    @spriteSheet.addSequence 'runLeft',   4, [0,1,2,3,4,5,6,7],       repeat: true
-    @spriteSheet.addSequence 'runRight',  4, [8,9,10,11,12,13,14,15], repeat: true
-    @spriteSheet.addSequence 'runDown',   4, [16,17,18,19,20,21,22],  repeat: true
-    @spriteSheet.addSequence 'runUp',     4, [23,24,25,26,27,28],     repeat: true
-    @spriteSheet.addSequence 'idleLeft',  4, [0],                     repeat: true
-    @spriteSheet.addSequence 'idleRight', 4, [8],                     repeat: true
-    @spriteSheet.addSequence 'idleDown',  4, [19],                    repeat: true
-    @spriteSheet.addSequence 'idleUp',    4, [23],                    repeat: true
 
   # override
   destroy: ->
@@ -59,60 +86,16 @@ class Player extends Mob
   onAdded: ->
     @addEvents()
 
-  update: ->
-    # directions = @_determineDirections()
-
-    # if directions.crisscross
-    #   action = directions.updown
-    #   action = null
-    #   for dir in directions.crisscross
-    #     @[action]()
-    #   @spriteSheet.useSequence(action)
-    # else if dir = @lastDirections.all[0]
-    #   action = "idle" + $.capitalize(dir)
-    #   @[action]()
-    #   @spriteSheet.useSequence(action)
-
-    # @lastDirections = $.clone(directions)
-
+  # Respond to keystrokes executed during the "dead time", i.e., the time
+  # between the end of the last iteration and the start of this iteration
+  predraw: ->
     someKeyPressed = false
     if keyCode = @keyTracker.getLastPressedKey()
-      @direction = KEY_DIRECTIONS[keyCode]
+      direction = KEY_DIRECTIONS[keyCode]
       someKeyPressed = true
-    @state = if someKeyPressed then 'move' else 'idle'
-    action = @state + "_" + @direction
-    @[action]()
-
-  _determineDirections: ->
-    directions = {}
-    directions.crisscross = []
-    directions.all = []
-
-    if keyboard.isKeyPressed(upKeys)
-      directions.up = true
-      directions.updown = -1
-      directions.crisscross.unshift('up')
-      directions.all.unshift('up')
-    else if keyboard.isKeyPressed(downKeys)
-      directions.down = true
-      directions.updown = 1
-      directions.crisscross.unshift('down')
-      directions.all.unshift('down')
-
-    if keyboard.isKeyPressed(leftKeys)
-      directions.left = true
-      directions.leftright = -1
-      directions.crisscross.unshift('left')
-      directions.all.unshift('left')
-    else if keyboard.isKeyPressed(rightKeys)
-      directions.right = true
-      directions.leftright = 1
-      directions.crisscross.unshift('right')
-      directions.all.unshift('right')
-
-    directions.any = (directions.updown or directions.leftright)
-
-    return directions
+    action = if someKeyPressed then 'move' else 'idle'
+    state = action + $.capitalize(direction)
+    @setState(state)
 
   # The idea here is that we move the player sprite left until it reaches a
   # certain point (we call it the "fence"), after which we continue the
@@ -122,8 +105,6 @@ class Player extends Mob
   # edge of the map.
   #
   moveLeft: ->
-    @spriteSheet.useSequence('runLeft')
-
     # dist = Math.round(@speed * @main.msSinceLastDraw)
     dist = @speed
 
@@ -157,9 +138,6 @@ class Player extends Mob
         # Move player left
         @translateBounds(x: -dist)
 
-  idleLeft: ->
-    @spriteSheet.useSequence('idleLeft')
-
   # Similar to moving leftward, we move the player sprite right until it hits
   # the fence, after which we continue the appearance of movement by shifting
   # the viewport rightward along the map. We do this until we've reached the
@@ -167,8 +145,6 @@ class Player extends Mob
   # player right until it touches the right edge of the map.
   #
   moveRight: ->
-    @spriteSheet.useSequence('runRight')
-
     # dist = Math.round(@speed * @main.msSinceLastDraw)
     dist = @speed
 
@@ -203,9 +179,6 @@ class Player extends Mob
         # Move player right
         @translateBounds(x: dist)
 
-  idleRight: ->
-    @spriteSheet.useSequence('idleRight')
-
   # Similar to moving leftward, we move the player sprite upward until it hits
   # the fence, after which we continue the appearance of movement by shifting
   # the viewport upward along the map. We do this until we've reached the top
@@ -213,8 +186,6 @@ class Player extends Mob
   # up until it touches the top edge of the map.
   #
   moveUp: ->
-    @spriteSheet.useSequence('runUp')
-
     # dist = Math.round(@speed * @main.msSinceLastDraw)
     dist = @speed
 
@@ -248,9 +219,6 @@ class Player extends Mob
         # Move player top
         @translateBounds(y: -dist)
 
-  idleUp: ->
-    @spriteSheet.useSequence('idleUp')
-
   # Similar to moving leftward, we move the player sprite downward until it
   # hits the fence, after which we continue the appearance of movement by
   # shifting the viewport downward along the map. We do this until we've reached
@@ -258,8 +226,6 @@ class Player extends Mob
   # the player down until it touches the bottom edge of the map.
   #
   moveDown: ->
-    @spriteSheet.useSequence('runDown')
-
     # dist = Math.round(@speed * @main.msSinceLastDraw)
     dist = @speed
 
@@ -293,17 +259,5 @@ class Player extends Mob
       else
         # Move player bottom
         @translateBounds(y: dist)
-
-  idleDown: ->
-    @spriteSheet.useSequence('idleDown')
-
-Player::move_up = Player::moveUp
-Player::move_down = Player::moveDown
-Player::move_left = Player::moveLeft
-Player::move_right = Player::moveRight
-Player::idle_up = Player::idleUp
-Player::idle_down = Player::idleDown
-Player::idle_left = Player::idleLeft
-Player::idle_right = Player::idleRight
 
 game.Player = Player
