@@ -21,11 +21,12 @@ KEYS =
   KEY_K: 75
   KEY_L: 76
 
-MODIFIER_KEYS =
+MODIFIER_KEYS = [
   KEYS.KEY_SHIFT
   KEYS.KEY_CTRL
   KEYS.KEY_ALT
   KEYS.KEY_META
+]
 
 class PressedKeys
   constructor: ->

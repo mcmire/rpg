@@ -11,20 +11,20 @@ helpers do
       vendor/ender.js
       vendor/bowser.js
       vendor/request_anim_shims.js
-      lib/ender_ext.js
-      lib/game/util.js
-      lib/game/event_helpers.js
-      lib/game/keyboard.js
-      lib/game/canvas.js
-      lib/game/bounds.js
-      lib/game/fps_reporter.js
-      lib/game/collision_layer.js
-      lib/game/viewport.js
-      lib/game/sprite.js
-      lib/game/mob.js
-      lib/game/player.js
-      lib/game/enemy.js
-      lib/game/main.js
+      app/ender_ext.js
+      app/util.js
+      app/event_helpers.js
+      app/keyboard.js
+      app/canvas.js
+      app/bounds.js
+      app/fps_reporter.js
+      app/collision_layer.js
+      app/viewport.js
+      app/sprite.js
+      app/mob.js
+      app/player.js
+      app/enemy.js
+      app/main.js
     )
     html = ""
     scripts.each do |script|
