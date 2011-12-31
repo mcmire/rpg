@@ -91,7 +91,7 @@ class game.Mob
   predraw: ->
     ctx = @viewport.canvas.ctx
     lbiv = @lastBounds.inViewport
-    ctx.clearRect(lbiv.x1, lbiv.y1, lbiv.x2, lbiv.y2)
+    ctx.clearRect(lbiv.x1, lbiv.y1, @width, @height)
 
     @[@state.moveHandler]?()
 
@@ -114,7 +114,7 @@ class game.Mob
 
     # DEBUG
     # ctx.strokeStyle = '#00ff00'
-    # ctx.strokeRect(x+0.5, y+0.5, width, height)
+    # ctx.strokeRect(biv.x1+0.5, biv.y1+0.5, @width, @height)
 
     ctx.restore()
 

@@ -1,13 +1,6 @@
 # TODO
 
-* A quick keyup, keydown of an arrow key while holding down Command will result
-  in the character moving until the arrow key is keyup / keydown'ed again. It
-  also happens if the arrow key is keydown'ed, Command is keydown'ed, then the
-  arrow key is keyup'ed. Essentially the keyup event for the arrow key is never
-  fired. (FIXED?)
-
-* Add an enemy - most of the code is there, need to get the draw code working.
-  Also make it so collisions occur between the player and the enemy.
+* Do not attempt to draw entities which are off the screen (out of the viewport)
 
 * Fix sprites for the player and the enemy
 
