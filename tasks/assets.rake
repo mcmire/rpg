@@ -9,5 +9,6 @@ namespace :assets do
     FileUtils.ln_s root('vendor/stylesheets'), root('public/stylesheets/vendor'), :verbose => true
     Rake::Task['coffeescript:compile'].invoke
     Rake::Task['sass:compile'].invoke
+    system('git add -f public/javascripts public/stylesheets')
   end
 end
