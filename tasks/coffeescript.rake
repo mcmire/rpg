@@ -4,8 +4,10 @@ namespace :coffeescript do
     FileUtils.rm_rf root('public/javascripts'), :verbose => true
 
     puts "Compiling CoffeeScript files..."
-    guard = Guard.guards.find {|guard| Guard::CoffeeScript === guard }
-    guard.run_all
+    Guard.guards.each do |guard|
+      next unless Guard::CoffeeScript === guard
+      guard.run_all
+    end
 
     FileUtils.mkdir_p root('public/javascripts/app'), :verbose => true
     Dir[ root('app/javascripts/**/*.js') ].each do |source|
