@@ -3,6 +3,8 @@
 DIRECTIONS = 'right down left up'.split(' ')
 
 class game.Enemy extends Mob
+  @extended()
+
   @image: 'enemy1.gif'
   @width: 20
   @height: 28
@@ -111,21 +113,23 @@ class game.Enemy extends Mob
 
   moveUp: ->
     @direction = 'up'
-    @translateBounds(y: -@speed)
+    @bounds.onMap.translate(y: -@speed)
 
   moveDown: ->
     @direction = 'down'
-    @translateBounds(y: +@speed)
+    @bounds.onMap.translate(y: +@speed)
 
   moveLeft: ->
     @direction = 'left'
-    @translateBounds(x: -@speed)
+    @bounds.onMap.translate(x: -@speed)
 
   moveRight: ->
     @direction = 'right'
-    @translateBounds(x: +@speed)
+    @bounds.onMap.translate(x: +@speed)
 
   #------------
+
+  ## TODO
 
   _chooseValidDirectionFrom: (directions) ->
     validDirections = $.every directions, (dir) -> !!@_nextValidMove(dir)

@@ -99,38 +99,32 @@ class Bounds # Construct a new Bounds.
 
     return this
 
-  # Public: Move X- or Y-bounds by an amount by anchoring a corner.
+  # Public: Move X- or Y-bounds by specifying the position of one side.
   #
-  # corner - A String name of a bound corner: 'x1', 'x2', 'y1', or 'y2'.
-  # value  - An integer. The `corner` is set to the `value`, and the
-  #          corresponding corner is moved proportionally.
+  # side  - A String name of the side of the bounds: 'x1', 'x2', 'y1', or 'y2'.
+  # value - An integer. The `side` is set to the `value`, and the corresponding
+  #         sides are moved accordingly.
+  #
   # Example:
   #
   #   bounds.x1 = 20
   #   bounds.x2 = 90
-  #   ret = bounds.moveCorner('x1', 80)
+  #   ret = bounds.translateBySide('x1', 80)
   #   bounds.x1  #=> 80
   #   bounds.x2  #=> 150
   #   ret        #=> 60
   #
   # Returns the integer distance the bounds were moved.
   #
-  moveCorner: (corner, value) ->
-    # axis is the 1st character of corner, side is the 2nd
-    [axis, side] = corner
-    [a1, a2] = ["#{axis}1", "#{axis}2"]
-    otherSide = if side is "2" then 1 else 2
-    otherKey = axis + otherSide
-    width = @[a2] - @[a1]
-    otherValue = if side is "2" then value - width else value + width
-
-    oldValue = @[a1]
-
-    @[corner] = value
-    @[otherKey] = otherValue
-
-    distMoved = @[a1] - oldValue
-    return distMoved
+  translateBySide: (side, value) ->
+    [axis, si] = side
+    si_ = if si is "2" then 1 else 2
+    otherSide = axis + si_
+    oldValue = @[side]
+    diff = value - oldValue
+    @[side] = value
+    @[otherSide] += diff
+    return diff
 
   # Public: Move the top-left corner of the box to another location, shifting
   # the other corners proportionally.

@@ -9,8 +9,7 @@ viewport.init = (@main) ->
     @width = @main.dim(600, 'pixels')
     @height = @main.dim(400, 'pixels')
 
-    # formerly @frame.boundsOnMap
-    @frameBoundsOnMap = new Bounds(@width.pixels, @height.pixels)
+    @bounds = new Bounds(@width.pixels, @height.pixels)
 
     @$element = $('<div id="viewport" />').css(
       width: @width.pixels
@@ -38,47 +37,55 @@ viewport.detach = ->
   @$element.detach()
 
 viewport.draw = ->
-  bom = @frameBoundsOnMap
+  bom = @bounds
   positionStr = [-bom.x1 + 'px', -bom.y1 + 'px'].join(" ")
   @$element.css('background-position', positionStr)
 
-# Moves the bounds of the viewport frame by the given vector.
+# Public: Move the bounds of the viewport.
 #
-# The "move" event is also triggered, which is currently used by the collision
-# layer to shift the collision box overlay along with the map.
+# Signatures:
+#
+# translate(axis, amount)
+#
+#   axis   - A String: 'x' or 'y'.
+#   amount - An integer by which to move the bounds in the axis.
+#
+# translate(obj)
+#
+#   obj - Object:
+#         x - An integer by which to move x1 and x2 (optional).
+#         y - An integer by which to move y1 and y2 (optional).
 #
 # Examples:
 #
 #   translateBounds('x', 20)
 #   translateBounds(x: 2, y: -9)
 #
-viewport.translateBounds = (args...) ->
-  ret = @frameBoundsOnMap.translate(args...)
-  $(this).trigger('move')
-  return ret
+# Returns the self-same Viewport.
+#
+# Also see Bounds#translate.
+#
+viewport.translate = (args...) ->
+  @bounds.translate(args...)
+  return this
 
-# Moves the bounds of the viewport frame by a vector such that the given
-# bound corner ends up being the given value. The bound corner on the other
-# side of the given bound corner is moved proportionally.
+# Public: Move the X- or Y- bounds of the viewport by specifying the position
+# of one side.
 #
-# The "move" event is also triggered, which is currently used by the collision
-# layer to shift the collision box overlay along with the map.
+# side  - A String name of the side of the bounds: 'x1', 'x2', 'y1', or 'y2'.
+# value - An integer. The `side` is set to the `value`, and the corresponding
+#         sides are moved accordingly.
 #
-# Returns the distance the bounds were moved.
+# Returns the integer distance the bounds were moved.
 #
-# Examples:
+# Also see Bounds#translateBySide.
 #
-#   moveBoundsCorner('x1', 80)
-#   moveBoundsCorner('y2', 3)
-#
-viewport.moveBoundsCorner = (key, val) ->
-  ret = @frameBoundsOnMap.moveCorner(key, val)
-  $(this).trigger('move')
-  return ret
+viewport.translateBySide = (side, value) ->
+  @bounds.translateBySide(side, value)
 
 viewport.inspect = ->
   JSON.stringify(
-    "frameBoundsOnMap": @frameBoundsOnMap.inspect()
+    "bounds": @bounds.inspect()
   )
 
 viewport.debug = ->

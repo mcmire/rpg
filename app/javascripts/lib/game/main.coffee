@@ -40,6 +40,16 @@ main.init = ->
 
     @_addMobs()
 
+    # $boundsDebug = $('<div style="margin-top: 10px"/>').appendTo(document.body)
+    # self = this
+    # setInterval ->
+    #   $boundsDebug.html("""
+    #     <b>Player on map:</b> #{self.player.bounds.onMap.inspect()}<br>
+    #     <b>Player in viewport:</b> #{self.player.bounds.inViewport.inspect()}<br>
+    #     <b>Viewport:</b> #{self.viewport.bounds.inspect()}
+    #   """)
+    # , 1000
+
     @isInit = true
   return this
 
@@ -100,15 +110,24 @@ main.detach = ->
   return this
 
 main.ready = (callback) ->
-  timer = setInterval =>
+  self = this
+  i = 0
+  timer = window.setInterval (->
+    i++
+    if i is 20
+      window.clearInterval(timer)
+      timer = null
+      throw new Error "Entities haven't been loaded yet?!"
+      return
     console.log "Checking to see if all entities are loaded..."
     if (
-      @collisionLayer.isLoaded and
-      $.v.every @entities, (entity) -> entity.isLoaded
+      self.collisionLayer.isLoaded and
+      $.v.every self.entities, (entity) -> entity.isLoaded
     )
-      clearInterval(timer)
+      window.clearInterval(timer)
+      timer = null
       callback()
-  , 100
+  ), 100
 
 main.suspend = ->
   unless @stateBeforeSuspend
@@ -210,8 +229,8 @@ main.dim = (value, unit) ->
   return d
 
 main._addMobs = ->
-  # @player = new Player(this)
-  # @addEntity(@player, false)
+  @player = new Player(this)
+  @addEntity(@player, false)
 
   @enemy = new Enemy(this)
   @addEntity(@enemy)

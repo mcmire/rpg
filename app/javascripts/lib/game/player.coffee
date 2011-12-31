@@ -10,12 +10,14 @@ DIRECTION_KEYS =
 
 KEY_DIRECTIONS = {}
 for dir in DIRECTIONS
-  for key in DIRECTION_KEYS[dir]
-    KEY_DIRECTIONS[key] = dir
+  for keyCode in DIRECTION_KEYS[dir]
+    KEY_DIRECTIONS[keyCode] = dir
 
 KEYS = $.flatten($.values(DIRECTION_KEYS))
 
 class Player extends Mob
+  @extended()
+
   @image: 'link2x.gif'
   @width: 34
   @height: 48
@@ -59,205 +61,232 @@ class Player extends Mob
     repeat: true)
 
   constructor: ->
-    super
-    @viewportPadding = 30  # pixels
     @keyTracker = new keyboard.KeyTracker(KEYS)
+    @viewportPadding = 30  # pixels
+    super
     @setState('idleRight')
 
   # override
   initFence: ->
-    @bounds.fenceOnMap = @viewport.frameBoundsOnMap.withScale(@viewportPadding)
+    @bounds.fenceInViewport = @viewport.bounds.withScale(@viewportPadding)
 
   # override
   destroy: ->
+    super
     @removeEvents()
 
   # override
   addEvents: ->
+    super
     # keyboard.trapKeys $.values(mkeys)
     keyboard.addKeyTracker(@keyTracker)
 
   # override
   removeEvents: ->
+    super
     # keyboard.releaseKeys $.values(mkeys)
     keyboard.removeKeyTracker(@keyTracker)
 
   # override
   onAdded: ->
+    super
     @addEvents()
 
   # Respond to keystrokes executed during the "dead time", i.e., the time
   # between the end of the last iteration and the start of this iteration
   predraw: ->
-    someKeyPressed = false
     if keyCode = @keyTracker.getLastPressedKey()
       direction = KEY_DIRECTIONS[keyCode]
-      someKeyPressed = true
-    action = if someKeyPressed then 'move' else 'idle'
-    state = action + $.capitalize(direction)
-    @setState(state)
+      state = 'move' + $.capitalize(direction)
+    else
+      state = @state.name.replace('move', 'idle')
+    if state isnt @state.name
+      @setState(state)
 
-  # The idea here is that we move the player sprite left until it reaches a
-  # certain point (we call it the "fence"), after which we continue the
-  # appearance of movement by shifting the viewport leftward along the map. We
-  # do this until we've reached the left edge of the map and can scroll no
-  # longer, at which point we move the player left until it touches the left
-  # edge of the map.
+    super
+
+  # Internal: Move the position of the player leftward, possibly shifting the
+  # viewport to keep the player within it, and also keeping the player from
+  # moving beyond the edges of the map and intersecting solid parts of the map
+  # and entities moving about.
+  #
+  # The idea here is that we move the player left within the viewport until it
+  # reaches a certain distance away from its left edge -- we say it reaches the
+  # fence. When this occurs, we continue the appearance of movement by keeping
+  # the player on-screen at the fence and scrolling the viewport leftward over
+  # the map. We do this until we've reached the left edge of the map and can
+  # scroll no further, at which point we move the player left until it touches
+  # the left edge of the map.
   #
   moveLeft: ->
-    # dist = Math.round(@speed * @main.msSinceLastDraw)
-    dist = @speed
+    nextBoundsOnMap = @bounds.onMap.withTranslation(x: -@speed)
+    fence = @bounds.fenceInViewport
 
-    nextBoundsOnMap = @bounds.onMap.withTranslation(x: -dist)
-    nextBoundsInViewport = @bounds.inViewport.withTranslation(x: -dist)
-    nextViewportBounds = @viewport.frameBoundsOnMap.withTranslation(x: -dist)
-
+    # Would the player hit the right edge of a collision box?
     if x = @collisionLayer.getBlockingRightEdge(nextBoundsOnMap)
-      @moveBoundsCorner('x1', x+1)
+      # Yes: move it just at the edge but one pixel away
+      @bounds.onMap.translateBySide('x1', x+1)
       return
 
-    if nextViewportBounds.x1 < 0
-      # Viewport is at the left edge of the map
-      @viewport.moveBoundsCorner('x1', 0)
+    # Would the viewport move beyond the left edge of the map?
+    if (@viewport.bounds.x1 - @speed) < 0
+      # Yes: put it at the edge
+      @viewport.translateBySide('x1', 0)
+      # Would the player move beyond the left edge of the map?
       if nextBoundsOnMap.x1 < 0
-        # Player is at the left edge of the map
-        @bounds.onMap.moveCorner('x1', 0)
-        @bounds.inViewport.moveCorner('x1', 0)
+        # Yes: put it at the edge
+        @bounds.onMap.translateBySide('x1', 0)
       else
-        # Move player left
-        @translateBounds(x: -dist)
+        # No: Move the player left
+        @bounds.onMap.translate(x: -@speed)
     else
-      leftEdgeOfFence = @bounds.fenceOnMap.x1
-      if nextBoundsInViewport.x1 < leftEdgeOfFence
-        # Player is at the left edge of the fence;
-        # shift viewport left
-        distMoved = @bounds.inViewport.moveCorner('x1', leftEdgeOfFence)
-        @bounds.onMap.translate(x: -(dist + distMoved))
-        @viewport.translateBounds(x: -(dist + distMoved))
-      else
-        # Move player left
-        @translateBounds(x: -dist)
+      # No: Move the player left
+      @bounds.onMap.translate(x: -@speed)
+      # Would the player move beyond the left edge of the fence?
+      if (@bounds.inViewport.x1 - @speed) < fence.x1
+        # Yes: shift viewport left by @speed.
+        #
+        # This is not so straightforward as one might think because if the
+        # player is less than @speed distance away from the left edge then the
+        # viewport needs to shift in such a way as to show the player
+        # accurately within the viewport.
+        #
+        # For example, assuming player.bounds.fenceInViewport.x1 = 10 and:
+        #
+        #   player.bounds.inViewport.x1 = 14
+        #   player.bounds.onMap.x1 = 114
+        #   viewport.bounds.x1 = 100
+        #
+        # which you can visualize as:
+        #
+        #   map          100       110
+        #   view         0   4     10  14
+        #                |         |
+        #                |   x-----|---o
+        #
+        # we need to move the player and the viewport bounds so that it looks
+        # like this:
+        #
+        #   map    94    100 104   110
+        #   view   0     :   10    :
+        #          |     :   |     :
+        #          |     :   x     :
+        #
+        # or, in code, this needs to be true:
+        #
+        #   player.bounds.inViewport.x1 = 10
+        #   player.bounds.onMap.x1 = 104
+        #   viewport.bounds.x1 = 94
+        #
+        distanceFromFence = @bounds.inViewport.x1 - fence.x1
+        @viewport.translate(x: -(@speed - distanceFromFence))
 
-  # Similar to moving leftward, we move the player sprite right until it hits
-  # the fence, after which we continue the appearance of movement by shifting
-  # the viewport rightward along the map. We do this until we've reached the
-  # right edge of the map and can scroll no longer, at which point we move the
-  # player right until it touches the right edge of the map.
+  # Internal: Move the player rightward.
+  #
+  # This is very similar to #moveLeft so see that for more.
   #
   moveRight: ->
-    # dist = Math.round(@speed * @main.msSinceLastDraw)
-    dist = @speed
+    nextBoundsOnMap = @bounds.onMap.withTranslation(x: @speed)
+    fence = @bounds.fenceInViewport
 
-    nextBoundsOnMap = @bounds.onMap.withTranslation(x: dist)
-    nextBoundsInViewport = @bounds.inViewport.withTranslation(x: dist)
-    nextViewportBounds = @viewport.frameBoundsOnMap.withTranslation(x: dist)
-
+    # Would the player hit the left edge of a collision box?
     if x = @collisionLayer.getBlockingLeftEdge(nextBoundsOnMap)
-      @moveBoundsCorner('x2', x-1)
+      # Yes: move it just at the edge but one pixel away
+      @bounds.onMap.translateBySide('x2', x-1)
       return
 
     mapWidth = @map.width.pixels
-    if nextViewportBounds.x2 > mapWidth
-      # Viewport is at the right edge of the map
-      @viewport.moveBoundsCorner('x2', mapWidth)
-      if nextBoundsOnMap.x2 > mapWidth
-        # Player is at the right edge of the map
-        @bounds.onMap.moveCorner('x2', mapWidth)
-        @bounds.inViewport.moveCorner('x2', @viewport.width.pixels)
-      else
-        # Move player right
-        @translateBounds(x: dist)
-    else
-      rightEdgeOfFence = @bounds.fenceOnMap.x2
-      if nextBoundsInViewport.x2 > rightEdgeOfFence
-        # Player is at the right side of the fence;
-        # shift viewport right
-        distMoved = @bounds.inViewport.moveCorner('x2', rightEdgeOfFence)
-        @bounds.onMap.translate(x: dist - distMoved)
-        @viewport.translateBounds(x: dist - distMoved)
-      else
-        # Move player right
-        @translateBounds(x: dist)
 
-  # Similar to moving leftward, we move the player sprite upward until it hits
-  # the fence, after which we continue the appearance of movement by shifting
-  # the viewport upward along the map. We do this until we've reached the top
-  # edge of the map and can scroll no longer, at which point we move the player
-  # up until it touches the top edge of the map.
+    # Would the viewport move beyond the right edge of the map?
+    if (@viewport.bounds.x2 + @speed) > mapWidth
+      # Yes: put it at the edge
+      @viewport.translateBySide('x2', mapWidth)
+      # Would the player move beyond the right edge of the map?
+      if nextBoundsOnMap.x2 > mapWidth
+        # Yes: put it at the edge
+        @bounds.onMap.translateBySide('x2', mapWidth)
+      else
+        # No: Move the player right
+        @bounds.onMap.translate(x: @speed)
+    else
+      # No: Move the player right
+      @bounds.onMap.translate(x: @speed)
+      # Would the player move beyond the right edge of the fence?
+      if (@bounds.inViewport.x2 + @speed) > fence.x2
+        # Yes: shift viewport right by @speed.
+        # See #moveLeft for more commentary here.
+        distanceFromFence = fence.x2 - @bounds.inViewport.x2
+        @viewport.translate(x: @speed - distanceFromFence)
+
+  # Internal: Move the player upward.
+  #
+  # This is very similar to #moveLeft so see that for more.
   #
   moveUp: ->
-    # dist = Math.round(@speed * @main.msSinceLastDraw)
-    dist = @speed
+    nextBoundsOnMap = @bounds.onMap.withTranslation(y: -@speed)
+    fence = @bounds.fenceInViewport
 
-    nextBoundsOnMap = @bounds.onMap.withTranslation(y: -dist)
-    nextBoundsInViewport = @bounds.inViewport.withTranslation(y: -dist)
-    nextViewportBounds = @viewport.frameBoundsOnMap.withTranslation(y: -dist)
-
+    # Would the player hit the bottom edge of a collision box?
     if y = @collisionLayer.getBlockingBottomEdge(nextBoundsOnMap)
-      @moveBoundsCorner('y1', y+1)
+      @bounds.onMap.translateBySide('y1', y+1)
       return
 
-    if nextViewportBounds.y1 < 0
-      # Viewport is at the top edge of the map
-      @viewport.moveBoundsCorner('y1', 0)
+    # Would the viewport move beyond the top edge of the map?
+    if (@viewport.bounds.y1 - @speed) < 0
+      # Yes: put it at the edge
+      @viewport.translateBySide('y1', 0)
+      # Would the player move beyond the top edge of the map?
       if nextBoundsOnMap.y1 < 0
-        # Player is at the top edge of the map
-        @bounds.onMap.moveCorner('y1', 0)
-        @bounds.inViewport.moveCorner('y1', 0)
+        # Yes: put it at the edge
+        @bounds.onMap.translateBySide('y1', 0)
       else
-        # Move player top
-        @translateBounds(y: -dist)
+        # No: Move the player up
+        @bounds.onMap.translate(y: -@speed)
     else
-      topEdgeOfFence = @bounds.fenceOnMap.y1
-      if nextBoundsInViewport.y1 < topEdgeOfFence
-        # Player is at the top edge of the fence;
-        # shift viewport up
-        distMoved = @bounds.inViewport.moveCorner('y1', topEdgeOfFence)
-        @bounds.onMap.translate(y: -(dist - distMoved))
-        @viewport.translateBounds(y: -(dist - distMoved))
-      else
-        # Move player top
-        @translateBounds(y: -dist)
+      # No: Move the player up
+      @bounds.onMap.translate(y: -@speed)
+      # Would the player move beyond the top edge of the fence?
+      if (@bounds.inViewport.y1 - @speed) < fence.y1
+        # Yes: shift viewport right by @speed.
+        # See #moveLeft for more commentary here.
+        distanceFromFence = @bounds.inViewport.y1 - fence.y1
+        @viewport.translate(y: -(@speed - distanceFromFence))
 
-  # Similar to moving leftward, we move the player sprite downward until it
-  # hits the fence, after which we continue the appearance of movement by
-  # shifting the viewport downward along the map. We do this until we've reached
-  # the bottom edge of the map and can scroll no longer, at which point we move
-  # the player down until it touches the bottom edge of the map.
+  # Internal: Move the player downward.
+  #
+  # This is very similar to #moveLeft so see that for more.
   #
   moveDown: ->
-    # dist = Math.round(@speed * @main.msSinceLastDraw)
-    dist = @speed
+    nextBoundsOnMap = @bounds.onMap.withTranslation(y: @speed)
+    fence = @bounds.fenceInViewport
 
-    nextBoundsOnMap = @bounds.onMap.withTranslation(y: dist)
-    nextBoundsInViewport = @bounds.inViewport.withTranslation(y: dist)
-    nextViewportBounds = @viewport.frameBoundsOnMap.withTranslation(y: dist)
-
+    # Would the player hit the top edge of a collision box?
     if y = @collisionLayer.getBlockingTopEdge(nextBoundsOnMap)
-      @moveBoundsCorner('y2', y-1)
+      # Yes: move it just at the edge but one pixel away
+      @translateBySide('y2', y-1)
       return
 
     mapHeight = @map.height.pixels
-    if nextViewportBounds.y2 > mapHeight
-      # Viewport is at the bottom edge of the map
-      @viewport.moveBoundsCorner('y2', mapHeight)
+
+    # Would the viewport move beyond the right edge of the map?
+    if (@viewport.bounds.y2 + @speed) > mapHeight
+      # Yes: put it at the edge
+      @viewport.translateBySide('y2', mapHeight)
+      # Would the player move beyond the bottom edge of the map?
       if nextBoundsOnMap.y2 > mapHeight
-        # Player is at the bottom edge of the map
-        @bounds.onMap.moveCorner('y2', mapHeight)
-        @bounds.inViewport.moveCorner('y2', @viewport.height.pixels)
+        # Yes: put it at the edge
+        @bounds.onMap.translateBySide('y2', mapHeight)
       else
-        # Move player bottom
-        @translateBounds(y: dist)
+        # No: Move the player down
+        @bounds.onMap.translate(y: @speed)
     else
-      bottomEdgeOfFence = @bounds.fenceOnMap.y2
-      if nextBoundsInViewport.y2 > bottomEdgeOfFence
-        # Player is at the bottom side of the fence;
-        # shift viewport down
-        distMoved = @bounds.inViewport.moveCorner('y2', bottomEdgeOfFence)
-        @bounds.onMap.translate(y: dist - distMoved)
-        @viewport.translateBounds(y: dist - distMoved)
-      else
-        # Move player bottom
-        @translateBounds(y: dist)
+      # No: Move the player right
+      @bounds.onMap.translate(y: @speed)
+      # Would the player move beyond the right edge of the fence?
+      if (@bounds.inViewport.y2 + @speed) > fence.y2
+        # Yes: shift viewport right by @speed.
+        # See #moveLeft for more commentary here.
+        distanceFromFence = fence.y2 - @bounds.inViewport.y2
+        @viewport.translate(y: @speed - distanceFromFence)
 
 game.Player = Player

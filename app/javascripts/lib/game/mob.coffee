@@ -1,24 +1,27 @@
 {Bounds} = game = window.game
 
 class game.Mob
-  @states: {}
-  @addState: (name, args) ->
-    state = {}
-    state.name = name
-    state.frameDuration = args.duration or args.frameDuration or 1
-    state.frames = args.frames
-    state.numFrames = state.frames.length
-    state.doesRepeat = args.repeat or args.doesRepeat
-    state.afterFinish = args.then
-    state.doesMove = args.move or args.doesMove
-    if state.moveHandler
-      state.doesMove = true
-    else if state.doesMove
-      state.moveHandler = name
-    @states[name] = state
+  @extended = ->
+    @states = {}
+    @addState = (name, args) ->
+      state = {}
+      state.name = name
+      state.frameDuration = args.duration or args.frameDuration or 1
+      state.frames = args.frames
+      state.numFrames = state.frames.length
+      state.doesRepeat = args.repeat or args.doesRepeat
+      state.afterFinish = args.then
+      state.doesMove = args.move or args.doesMove
+      if state.moveHandler
+        state.doesMove = true
+      else if state.doesMove
+        state.moveHandler = name
+      @states[name] = state
 
   constructor: (@main) ->
     {@viewport, @map, @collisionLayer} = @main
+
+    @isLoaded = false
 
     @imagePath = "#{@main.imagesPath}/#{@constructor.image}"
     @image = new Image(); @image.src = @imagePath
@@ -29,8 +32,6 @@ class game.Mob
     @_initBounds()
 
     @addEvents()
-
-    @isLoaded = false
 
   _initBounds: ->
     @bounds = {}
@@ -51,7 +52,7 @@ class game.Mob
   _recalculateViewportBounds: ->
     # take the bounds.onMap and map them to viewport bounds
     bom = @bounds.onMap
-    vb = @main.viewport.frameBoundsOnMap
+    vb = @main.viewport.bounds
     x1 = bom.x1 - vb.x1
     y1 = bom.y1 - vb.y1
     @bounds.inViewport.anchor(x1, y1)
@@ -94,7 +95,9 @@ class game.Mob
 
     @[@state.moveHandler]?()
 
-    @lastBounds.inViewport = @bounds.inViewport.clone()
+    # the position on the map may have changed, as well as the viewport
+    # frame bounds, so we need to do this
+    @_recalculateViewportBounds()
 
   draw: ->
     ctx = @viewport.canvas.ctx
@@ -128,36 +131,55 @@ class game.Mob
         else
           throw new Error "No after finish state set for '#{@state.name}'!"
 
+    @lastBounds.inViewport = @bounds.inViewport.clone()
+
     @numFramesDrawn++
 
-  # Shifts the viewport and map bounds by the given vector.
+  # Public: Move the viewport and map bounds of the player.
+  #
+  # Signatures:
+  #
+  # translate(axis, amount)
+  #
+  #   axis   - A String: 'x' or 'y'.
+  #   amount - An integer by which to move the bounds in the axis.
+  #
+  # translate(obj)
+  #
+  #   obj - Object:
+  #         x - An integer by which to move x1 and x2 (optional).
+  #         y - An integer by which to move y1 and y2 (optional).
   #
   # Examples:
   #
-  #   translateBounds(x: 20)
+  #   translateBounds('x', 20)
   #   translateBounds(x: 2, y: -9)
   #
-  translateBounds: (vec) ->
-    @bounds.inViewport.translate(vec)
-    @bounds.onMap.translate(vec)
+  # Returns the self-same Viewport.
+  #
+  # Also see Bounds#translate.
+  #
+  translate: (args...) ->
+    @bounds.inViewport.translate(args...)
+    @bounds.onMap.translate(args...)
 
-  # Shifts the viewport and map bounds by a vector such that the given key
-  # (e.g., "x1", "y2) ends up being the value for the corresponding key
-  # in the viewport bound. The map bounds will be re-calculated appropriately.
+  # Public: Move the X- or Y- bounds of the player by specifying the position
+  # of one side of the map bounds. The viewport bounds will be moved
+  # accordingly.
   #
-  # Examples:
+  # side  - A String name of the side of the bounds: 'x1', 'x2', 'y1', or 'y2'.
+  # value - An integer. The `side` is set to the `value`, and the corresponding
+  #         sides are moved accordingly.
   #
-  #   moveBoundsCorner("x2", 2000)
-  #   moveBoundsCorner("y1", 0)
+  # Returns the integer distance the bounds were moved.
   #
-  # Also see:
+  # Also see Bounds#translateBySide.
   #
-  #   Bounds#moveTo
-  #
-  moveBoundsCorner: (key, val) ->
-    [axis, side] = key
-    distMoved = @bounds.onMap.moveCorner(key, val)
+  translateBySide: (side, value) ->
+    axis = side[0]
+    distMoved = @bounds.onMap.translateBySide(side, value)
     @bounds.inViewport.translate(axis, distMoved)
+    return distMoved
 
   inspect: ->
     JSON.stringify(
