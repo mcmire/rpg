@@ -21,42 +21,42 @@ class Player extends Mob
   @image: 'link2x.gif'
   @width: 34
   @height: 48
-  @speed: 7  # px/frame
+  @speed: 4  # px/frame
 
   @addState('moveLeft',
-    duration: 4,
+    duration: 2,
     frames: [0,1,2,3,4,5,6,7],
     repeat: true,
     move: true)
   @addState('moveRight',
-    duration: 4,
+    duration: 2,
     frames: [8,9,10,11,12,13,14,15],
     repeat: true,
     move: true)
   @addState('moveDown',
-    duration: 4,
+    duration: 2,
     frames: [16,17,18,19,20,21,22],
     repeat: true,
     move: true)
   @addState('moveUp',
-    duration: 4,
+    duration: 2,
     frames: [23,24,25,26,27,28],
     repeat: true,
     move: true)
   @addState('idleLeft',
-    duration: 4,
+    duration: 2,
     frames: [0],
     repeat: true)
   @addState('idleRight',
-    duration: 4,
+    duration: 2,
     frames: [8],
     repeat: true)
   @addState('idleDown',
-    duration: 4,
+    duration: 2,
     frames: [19],
     repeat: true)
   @addState('idleUp',
-    duration: 4,
+    duration: 2,
     frames: [23],
     repeat: true)
 

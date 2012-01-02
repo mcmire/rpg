@@ -14,3 +14,6 @@
   and Y directions). Since the collision box arrays are sorted, the next box
   that the player reaches will be next in the array after the pointer, so we
   don't have to search the entire array every time.
+
+* Use Rack middleware for compiling Coffee and Sass on the fly
+  (performance is not important for this app)

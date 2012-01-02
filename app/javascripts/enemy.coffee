@@ -5,9 +5,9 @@ DIRECTIONS = 'right down left up'.split(' ')
 class game.Enemy extends Mob
   @extended()
 
-  @image: 'enemy1.gif'
-  @width: 20
-  @height: 28
+  @image: 'enemy2x.gif'
+  @width: 40
+  @height: 56
   @speed: 3  # px/frame
 
   # parens are necessary here, otherwise CS gets confused when it hits the

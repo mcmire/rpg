@@ -5,7 +5,7 @@
 
   main = game.util.module("game.main", EventHelpers);
 
-  main.frameRate = 30;
+  main.frameRate = 40;
 
   main.tileSize = 64;
 

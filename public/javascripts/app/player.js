@@ -39,56 +39,56 @@
 
     Player.height = 48;
 
-    Player.speed = 7;
+    Player.speed = 4;
 
     Player.addState('moveLeft', {
-      duration: 4,
+      duration: 2,
       frames: [0, 1, 2, 3, 4, 5, 6, 7],
       repeat: true,
       move: true
     });
 
     Player.addState('moveRight', {
-      duration: 4,
+      duration: 2,
       frames: [8, 9, 10, 11, 12, 13, 14, 15],
       repeat: true,
       move: true
     });
 
     Player.addState('moveDown', {
-      duration: 4,
+      duration: 2,
       frames: [16, 17, 18, 19, 20, 21, 22],
       repeat: true,
       move: true
     });
 
     Player.addState('moveUp', {
-      duration: 4,
+      duration: 2,
       frames: [23, 24, 25, 26, 27, 28],
       repeat: true,
       move: true
     });
 
     Player.addState('idleLeft', {
-      duration: 4,
+      duration: 2,
       frames: [0],
       repeat: true
     });
 
     Player.addState('idleRight', {
-      duration: 4,
+      duration: 2,
       frames: [8],
       repeat: true
     });
 
     Player.addState('idleDown', {
-      duration: 4,
+      duration: 2,
       frames: [19],
       repeat: true
     });
 
     Player.addState('idleUp', {
-      duration: 4,
+      duration: 2,
       frames: [23],
       repeat: true
     });

@@ -13,11 +13,11 @@
 
     Enemy.extended();
 
-    Enemy.image = 'enemy1.gif';
+    Enemy.image = 'enemy2x.gif';
 
-    Enemy.width = 20;
+    Enemy.width = 40;
 
-    Enemy.height = 28;
+    Enemy.height = 56;
 
     Enemy.speed = 3;
 

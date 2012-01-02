@@ -8,7 +8,7 @@
 
 main = game.util.module "game.main", EventHelpers
 
-main.frameRate = 30  # fps
+main.frameRate = 40  # fps
 main.tileSize = 64   # pixels
 main.imagesPath = '/images'
 main.animMethod = 'setTimeout'
