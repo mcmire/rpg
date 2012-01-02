@@ -1,7 +1,87 @@
 (function() {
-  var Enemy, EventHelpers, FpsReporter, Player, collisionLayer, game, keyboard, main, viewport, _ref;
+  var Enemy, EventHelpers, Player, collisionLayer, fpsReporter, game, keyboard, main, ticker, viewport, _ref;
 
-  _ref = game = window.game, keyboard = _ref.keyboard, EventHelpers = _ref.EventHelpers, viewport = _ref.viewport, collisionLayer = _ref.collisionLayer, FpsReporter = _ref.FpsReporter, Player = _ref.Player, Enemy = _ref.Enemy;
+  _ref = game = window.game, keyboard = _ref.keyboard, EventHelpers = _ref.EventHelpers, viewport = _ref.viewport, collisionLayer = _ref.collisionLayer, fpsReporter = _ref.fpsReporter, Player = _ref.Player, Enemy = _ref.Enemy;
+
+  ticker = {};
+
+  ticker.init = function(main) {
+    this.main = main;
+    this.tickInterval = 1000 / this.main.frameRate;
+    this.throttledDrawer = this.main.createIntervalTimer(this.tickInterval, function(df, dt) {
+      return ticker.draw();
+    });
+    return this;
+  };
+
+  ticker.start = function() {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    this.tick();
+    return this;
+  };
+
+  ticker.stop = function() {
+    if (!this.isRunning) return;
+    this.isRunning = false;
+    if (this.timer) {
+      if (this.main.animMethod === 'setTimeout') {
+        window.clearTimeout(this.timer);
+      } else {
+        window.cancelRequestAnimFrame(this.timer);
+      }
+      this.timer = null;
+    }
+    return this;
+  };
+
+  ticker.suspend = function() {
+    this.wasRunning = this.isRunning;
+    return this.stop();
+  };
+
+  ticker.resume = function() {
+    if (this.wasRunning) return this.start();
+  };
+
+  ticker.tick = function() {
+    var msDrawTime, t, t2;
+    if (!ticker.isRunning) return;
+    t = (new Date()).getTime();
+    if (ticker.main.debug) {
+      ticker.msSinceLastDraw = ticker.lastTickTime ? t - ticker.lastTickTime : 0;
+      console.log("msSinceLastDraw: " + ticker.msSinceLastDraw);
+    }
+    if (ticker.main.animMethod === 'setTimeout') {
+      ticker.draw();
+    } else {
+      ticker.throttledDrawer();
+    }
+    if (ticker.main.debug) {
+      t2 = (new Date()).getTime();
+      msDrawTime = t2 - t;
+      ticker.lastTickTime = t;
+      console.log("msDrawTime: " + msDrawTime);
+    }
+    if ((ticker.main.numTicks % 100) === 0) keyboard.clearStuckKeys(t);
+    if (ticker.main.animMethod === 'setTimeout') {
+      ticker.timer = window.setTimeout(ticker.tick, ticker.tickInterval);
+    } else {
+      ticker.timer = window.requestAnimFrame(ticker.tick, viewport.canvas.element);
+    }
+    return ticker.main.numTicks++;
+  };
+
+  ticker.draw = function() {
+    var entity, _i, _len, _ref2;
+    this.main.viewport.draw();
+    _ref2 = this.main.entities;
+    for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+      entity = _ref2[_i];
+      entity.tick();
+    }
+    return this.main.numDraws++;
+  };
 
   main = game.util.module("game.main", EventHelpers);
 
@@ -13,17 +93,17 @@
 
   main.animMethod = 'setTimeout';
 
-  main.entities = [];
-
   main.debug = false;
+
+  main.timers = [];
+
+  main.entities = [];
 
   main.numDraws = 0;
 
   main.lastTickTime = null;
 
   main.numTicks = 0;
-
-  main.tickInterval = 1000 / main.frameRate;
 
   main.init = function() {
     if (!this.isInit) {
@@ -34,12 +114,22 @@
         height: this.dim(1600, 'pixels')
       };
       this.viewport = viewport.init(this);
-      this.fpsReporter = FpsReporter.init(this);
       this.collisionLayer = collisionLayer.init(this);
       this._addMobs();
+      this.ticker = ticker.init(this);
+      this.timers.push(this.ticker);
+      this.fpsReporter = fpsReporter.init(this);
+      this.timers.push(this.fpsReporter);
       this.isInit = true;
     }
     return this;
+  };
+
+  main._addMobs = function() {
+    this.player = new Player(this);
+    this.addEntity(this.player, false);
+    this.enemy = new Enemy(this);
+    return this.addEntity(this.enemy);
   };
 
   main.addEntity = function(entity, addToCollisionLayer) {
@@ -57,8 +147,7 @@
       viewport.destroy();
       this.fpsReporter.destroy();
       this.collisionLayer.destroy();
-      this.stopTicking();
-      this.stopLogging();
+      this.stop();
       this.reset();
       this.isInit = false;
     }
@@ -66,8 +155,7 @@
   };
 
   main.reset = function() {
-    this.stopTicking();
-    this.stopLogging();
+    this.stop();
     this.logQueue = {};
     this.logQueueMessages = [];
     return this;
@@ -133,22 +221,15 @@
     }), 100);
   };
 
-  main.suspend = function() {
-    if (!this.stateBeforeSuspend) {
-      this.stateBeforeSuspend = {
-        wasTicking: this.isTicking,
-        wasLogging: this.isLogging
-      };
-      return this.stopTicking();
+  main.run = function() {
+    var timer, _i, _len, _ref2, _results;
+    _ref2 = this.timers;
+    _results = [];
+    for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+      timer = _ref2[_i];
+      _results.push(timer.start());
     }
-  };
-
-  main.resume = function() {
-    if (this.stateBeforeSuspend) {
-      if (this.stateBeforeSuspend.wasTicking) this.startTicking();
-      if (this.stateBeforeSuspend.wasLogging) this.startLogging();
-      return this.stateBeforeSuspend = null;
-    }
+    return _results;
   };
 
   main.runWhenReady = function() {
@@ -158,80 +239,37 @@
     return this;
   };
 
-  main.run = function() {
-    this.startTicking();
-    return this.startLogging();
-  };
-
-  main.startTicking = function() {
-    this.isTicking = true;
-    this.tick();
-    return this;
-  };
-
-  main.stopTicking = function() {
-    this.isTicking = false;
-    if (this.tickLoopHandle) {
-      if (this.animMethod === 'setTimeout') {
-        window.clearTimeout(this.tickLoopHandle);
-      } else {
-        window.cancelRequestAnimFrame(this.tickLoopHandle);
-      }
-      this.tickLoopHandle = null;
-    }
-    return this;
-  };
-
-  main.tick = function() {
-    var msDrawTime, t, t2;
-    if (!main.isTicking) return;
-    t = (new Date()).getTime();
-    if (main.debug) {
-      main.msSinceLastDraw = main.lastTickTime ? t - main.lastTickTime : 0;
-      console.log("msSinceLastDraw: " + main.msSinceLastDraw);
-    }
-    if (main.animMethod === 'setTimeout') {
-      main.draw();
-    } else {
-      main._fpsThrottlerTimer();
-    }
-    if (main.debug) {
-      t2 = (new Date()).getTime();
-      msDrawTime = t2 - t;
-      main.lastTickTime = t;
-      console.log("msDrawTime: " + msDrawTime);
-    }
-    if ((main.numTicks % 100) === 0) keyboard.clearStuckKeys(t);
-    if (main.animMethod === 'setTimeout') {
-      main.tickLoopHandle = window.setTimeout(main.tick, main.tickInterval);
-    } else {
-      main.tickLoopHandle = window.requestAnimFrame(main.tick, viewport.canvas.element);
-    }
-    return main.numTicks++;
-  };
-
-  main.draw = function() {
-    var entity, _i, _len, _ref2;
-    main.viewport.draw();
-    _ref2 = this.entities;
+  main.stop = function() {
+    var timer, _i, _len, _ref2, _results;
+    _ref2 = this.timers;
+    _results = [];
     for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-      entity = _ref2[_i];
-      entity.tick();
+      timer = _ref2[_i];
+      _results.push(timer.stop());
     }
-    return main.numDraws++;
+    return _results;
   };
 
-  main.startLogging = function() {
-    this.logLoopHandle = window.setInterval(this._fpsReporterTimer, 1000);
-    return this;
+  main.suspend = function() {
+    var timer, _i, _len, _ref2, _results;
+    _ref2 = this.timers;
+    _results = [];
+    for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+      timer = _ref2[_i];
+      _results.push(timer.suspend());
+    }
+    return _results;
   };
 
-  main.stopLogging = function() {
-    if (this.logLoopHandle) {
-      window.clearInterval(this.logLoopHandle);
-      this.logLoopHandle = null;
+  main.resume = function() {
+    var timer, _i, _len, _ref2, _results;
+    _ref2 = this.timers;
+    _results = [];
+    for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+      timer = _ref2[_i];
+      _results.push(timer.resume());
     }
-    return this;
+    return _results;
   };
 
   main.dim = function(value, unit) {
@@ -251,23 +289,7 @@
     return d;
   };
 
-  main._addMobs = function() {
-    this.player = new Player(this);
-    this.addEntity(this.player, false);
-    this.enemy = new Enemy(this);
-    return this.addEntity(this.enemy);
-  };
-
-  main._reportingTime = function(name, fn) {
-    var ms, t, t2;
-    t = (new Date()).getTime();
-    fn();
-    t2 = (new Date()).getTime();
-    ms = t2 - t;
-    return console.log("" + name + ": " + ms + " ms");
-  };
-
-  main._createIntervalTimer = function(arg, fn) {
+  main.createIntervalTimer = function(arg, fn) {
     var always, f0, interval, t0;
     if (arg === true) {
       always = true;
@@ -289,12 +311,13 @@
     };
   };
 
-  main._fpsThrottlerTimer = main._createIntervalTimer(main.tickInterval, function(df, dt) {
-    return main.draw();
-  });
-
-  main._fpsReporterTimer = main._createIntervalTimer(true, function(df, dt) {
-    return main.fpsReporter.draw(df, dt);
-  });
+  main._reportingTime = function(name, fn) {
+    var ms, t, t2;
+    t = (new Date()).getTime();
+    fn();
+    t2 = (new Date()).getTime();
+    ms = t2 - t;
+    return console.log("" + name + ": " + ms + " ms");
+  };
 
 }).call(this);

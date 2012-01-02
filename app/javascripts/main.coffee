@@ -2,9 +2,87 @@
  EventHelpers,
  viewport,
  collisionLayer,
- FpsReporter,
+ fpsReporter,
  Player,
  Enemy} = game = window.game
+
+ticker = {}
+
+ticker.init = (@main) ->
+  @tickInterval = 1000 / @main.frameRate
+  @throttledDrawer = @main.createIntervalTimer @tickInterval, (df, dt) ->
+    ticker.draw()
+  return this
+
+ticker.start = ->
+  return if @isRunning
+  @isRunning = true
+  @tick()
+  return this
+
+ticker.stop = ->
+  return if not @isRunning
+  @isRunning = false
+  if @timer
+    if @main.animMethod is 'setTimeout'
+      window.clearTimeout(@timer)
+    else
+      window.cancelRequestAnimFrame(@timer)
+    @timer = null
+  return this
+
+ticker.suspend = ->
+  @wasRunning = @isRunning
+  @stop()
+
+ticker.resume = ->
+  @start() if @wasRunning
+
+ticker.tick = ->
+  return if not ticker.isRunning
+
+  t = (new Date()).getTime()
+
+  if ticker.main.debug
+    ticker.msSinceLastDraw = if ticker.lastTickTime then (t - ticker.lastTickTime) else 0
+    console.log "msSinceLastDraw: #{ticker.msSinceLastDraw}"
+
+  if ticker.main.animMethod is 'setTimeout'
+    ticker.draw()
+  else
+    ticker.throttledDrawer()
+
+  if ticker.main.debug
+    t2 = (new Date()).getTime()
+    msDrawTime = t2 - t
+    ticker.lastTickTime = t
+    console.log "msDrawTime: #{msDrawTime}"
+
+  # Reset "stuck" keys every so often.
+  # Pressing an arrow key in conjunction with the Command key can result in the
+  # keyup event never getting fired for the arrow key, which will cause the
+  # player to continue moving forever, so prevent this from happening.
+  # TODO: This sometimes causes stutters
+  keyboard.clearStuckKeys(t) if (ticker.main.numTicks % 100) == 0
+
+  if ticker.main.animMethod is 'setTimeout'
+    # Ensure that ticks happen at exact regular intervals by discounting the time
+    # it takes to draw (as this interval is variable)
+    ticker.timer = window.setTimeout(ticker.tick, ticker.tickInterval)
+    # ticker.timer = window.setTimeout(ticker.tick, ticker.tickInterval - msDrawTime)
+  else
+    # Try to call the tick function as fast as possible
+    ticker.timer = window.requestAnimFrame(ticker.tick, viewport.canvas.element)
+
+  ticker.main.numTicks++
+
+ticker.draw = ->
+  @main.viewport.draw()
+  # TODO: We should probably split these steps up again
+  entity.tick() for entity in @main.entities
+  @main.numDraws++
+
+#-------------------------------------------------------------------------------
 
 main = game.util.module "game.main", EventHelpers
 
@@ -13,14 +91,14 @@ main.tileSize = 64   # pixels
 main.imagesPath = '/images'
 main.animMethod = 'setTimeout'
 # main.animMethod = 'requestAnimFrame'
+main.debug = false  # or true
 
+main.timers = []
 main.entities = []
-main.debug = false # true
+
 main.numDraws = 0
 main.lastTickTime = null
 main.numTicks = 0
-
-main.tickInterval = 1000 / main.frameRate
 
 main.init = ->
   unless @isInit
@@ -35,7 +113,6 @@ main.init = ->
     }
 
     @viewport = viewport.init(this)
-    @fpsReporter = FpsReporter.init(this)
     @collisionLayer = collisionLayer.init(this)
 
     @_addMobs()
@@ -50,8 +127,21 @@ main.init = ->
     #   """)
     # , 1000
 
+    @ticker = ticker.init(this)
+    @timers.push(@ticker)
+
+    @fpsReporter = fpsReporter.init(this)
+    @timers.push(@fpsReporter)
+
     @isInit = true
   return this
+
+main._addMobs = ->
+  @player = new Player(this)
+  @addEntity(@player, false)
+
+  @enemy = new Enemy(this)
+  @addEntity(@enemy)
 
 main.addEntity = (entity, addToCollisionLayer=true) ->
   @entities.push(entity)
@@ -66,15 +156,13 @@ main.destroy = ->
     viewport.destroy()
     @fpsReporter.destroy()
     @collisionLayer.destroy()
-    @stopTicking()
-    @stopLogging()
+    @stop()
     @reset()
     @isInit = false
   return this
 
 main.reset = ->
-  @stopTicking()
-  @stopLogging()
+  @stop()
   @logQueue = {}
   @logQueueMessages = []
   return this
@@ -86,7 +174,7 @@ main.addEvents = ->
   @collisionLayer.addEvents()
 
   @bindEvents window,
-    blur: -> self.suspend()
+    blur:  -> self.suspend()
     focus: -> self.resume()
 
   return this
@@ -129,93 +217,21 @@ main.ready = (callback) ->
       callback()
   ), 100
 
-main.suspend = ->
-  unless @stateBeforeSuspend
-    @stateBeforeSuspend = {wasTicking: @isTicking, wasLogging: @isLogging}
-    @stopTicking()
-    #@stopLogging()
-
-main.resume = ->
-  if @stateBeforeSuspend
-    @startTicking() if @stateBeforeSuspend.wasTicking
-    @startLogging() if @stateBeforeSuspend.wasLogging
-    @stateBeforeSuspend = null
+main.run = ->
+  timer.start() for timer in @timers
 
 main.runWhenReady = ->
   main.ready -> main.run()
   return this
 
-main.run = ->
-  @startTicking()
-  @startLogging()
+main.stop = ->
+  timer.stop() for timer in @timers
 
-main.startTicking = ->
-  @isTicking = true
-  @tick()
-  return this
+main.suspend = ->
+  timer.suspend() for timer in @timers
 
-main.stopTicking = ->
-  @isTicking = false
-  if @tickLoopHandle
-    if @animMethod is 'setTimeout'
-      window.clearTimeout(@tickLoopHandle)
-    else
-      window.cancelRequestAnimFrame(@tickLoopHandle)
-    @tickLoopHandle = null
-  return this
-
-main.tick = ->
-  return if not main.isTicking
-
-  t = (new Date()).getTime()
-
-  if main.debug
-    main.msSinceLastDraw = if main.lastTickTime then (t - main.lastTickTime) else 0
-    console.log "msSinceLastDraw: #{main.msSinceLastDraw}"
-
-  if main.animMethod is 'setTimeout'
-    main.draw()
-  else
-    main._fpsThrottlerTimer()
-
-  if main.debug
-    t2 = (new Date()).getTime()
-    msDrawTime = t2 - t
-    main.lastTickTime = t
-    console.log "msDrawTime: #{msDrawTime}"
-
-  # Reset "stuck" keys every so often.
-  # Pressing an arrow key in conjunction with the Command key can result in the
-  # keyup event never getting fired for the arrow key, which will cause the
-  # player to continue moving forever, so prevent this from happening.
-  # TODO: This sometimes causes stutters
-  keyboard.clearStuckKeys(t) if (main.numTicks % 100) == 0
-
-  if main.animMethod is 'setTimeout'
-    # Ensure that ticks happen at exact regular intervals by discounting the time
-    # it takes to draw (as this interval is variable)
-    main.tickLoopHandle = window.setTimeout(main.tick, main.tickInterval)
-    # main.tickLoopHandle = window.setTimeout(main.tick, main.tickInterval - msDrawTime)
-  else
-    # Try to call the tick function as fast as possible
-    main.tickLoopHandle = window.requestAnimFrame(main.tick, viewport.canvas.element)
-
-  main.numTicks++
-
-main.draw = ->
-  main.viewport.draw()
-  entity.tick() for entity in @entities
-  main.numDraws++
-
-main.startLogging = ->
-  @logLoopHandle = window.setInterval(@_fpsReporterTimer, 1000)
-  return this
-
-main.stopLogging = ->
-  if @logLoopHandle
-    window.clearInterval(@logLoopHandle)
-    @logLoopHandle = null
-  return this
+main.resume = ->
+  timer.resume() for timer in @timers
 
 main.dim = (value, unit) ->
   d = {}
@@ -228,22 +244,8 @@ main.dim = (value, unit) ->
       d.tiles = value / @tileSize
   return d
 
-main._addMobs = ->
-  @player = new Player(this)
-  @addEntity(@player, false)
-
-  @enemy = new Enemy(this)
-  @addEntity(@enemy)
-
-main._reportingTime = (name, fn) ->
-  t = (new Date()).getTime()
-  fn()
-  t2 = (new Date()).getTime()
-  ms = t2 - t
-  console.log "#{name}: #{ms} ms"
-
 # TODO: This produces an FPS which is 10 less than the desired FPS... any idea why?
-main._createIntervalTimer = (arg, fn) ->
+main.createIntervalTimer = (arg, fn) ->
   if arg is true
     always = true
   else
@@ -259,8 +261,9 @@ main._createIntervalTimer = (arg, fn) ->
       t0 = (new Date()).getTime()
       f0 = main.numDraws
 
-main._fpsThrottlerTimer = main._createIntervalTimer main.tickInterval, (df, dt) ->
-  main.draw()
-
-main._fpsReporterTimer = main._createIntervalTimer true, (df, dt) ->
-  main.fpsReporter.draw(df, dt)
+main._reportingTime = (name, fn) ->
+  t = (new Date()).getTime()
+  fn()
+  t2 = (new Date()).getTime()
+  ms = t2 - t
+  console.log "#{name}: #{ms} ms"
