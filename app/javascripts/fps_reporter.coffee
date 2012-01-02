@@ -1,56 +1,57 @@
 game = window.game
 
-game.util.module "game.fpsReporter",
-  drawInterval: 1000 # ms
+fpsReporter = game.util.module "game.fpsReporter"
 
-  init: (@main) ->
-    self = this
-    unless @isInit
-      @reset()
-      @$div = $('<div id="fps-reporter" />')
-      @drawer = @main.createIntervalTimer true, (df, dt) ->
-        self.draw(df, dt)
-      @isInit = true
-    return this
+fpsReporter.drawInterval = 1000 # ms
 
-  destroy: ->
-    if @isInit
-      @reset()
-      @isInit = false
-    return this
+fpsReporter.init = (@main) ->
+  self = this
+  unless @isInit
+    @reset()
+    @$div = $('<div id="fps-reporter" />')
+    @drawer = @main.createIntervalTimer true, (df, dt) ->
+      self.draw(df, dt)
+    @isInit = true
+  return this
 
-  reset: ->
-    @numFramesSinceDraw = 0
-    @timeSinceDraw = (new Date()).getTime()
-    return this
+fpsReporter.destroy = ->
+  if @isInit
+    @reset()
+    @isInit = false
+  return this
 
-  attachTo: (container) ->
-    $(container).append(@$div)
+fpsReporter.reset = ->
+  @numFramesSinceDraw = 0
+  @timeSinceDraw = (new Date()).getTime()
+  return this
 
-  detach: ->
-    @$div.detach()
+fpsReporter.attachTo = (container) ->
+  $(container).append(@$div)
 
-  draw: (df, dt) ->
-    fps = ((df / dt) * 1000).toFixed(1)
-    @$div.text("#{fps} FPS")
+fpsReporter.detach = ->
+  @$div.detach()
 
-  start: ->
-    return if @isRunning
-    @timer = window.setInterval(@drawer, 1000)
-    @isRunning = true
-    return this
+fpsReporter.draw = (df, dt) ->
+  fps = ((df / dt) * 1000).toFixed(1)
+  @$div.text("#{fps} FPS")
 
-  stop: ->
-    return if not @isRunning
-    if @timer
-      window.clearInterval(@timer)
-      @timer = null
-    @isRunning = false
-    return this
+fpsReporter.start = ->
+  return if @isRunning
+  @timer = window.setInterval(@drawer, 1000)
+  @isRunning = true
+  return this
 
-  suspend: ->
-    @wasRunning = @isRunning
-    @stop()
+fpsReporter.stop = ->
+  return if not @isRunning
+  if @timer
+    window.clearInterval(@timer)
+    @timer = null
+  @isRunning = false
+  return this
 
-  resume: ->
-    @start() if @wasRunning
+fpsReporter.suspend = ->
+  @wasRunning = @isRunning
+  @stop()
+
+fpsReporter.resume = ->
+  @start() if @wasRunning
