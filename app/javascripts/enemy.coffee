@@ -75,7 +75,7 @@ class game.Enemy extends Mob
 
   # override
   initFence: ->
-    @bounds.fenceOnMap = new Bounds(200, 200, 100, 100)
+    @bounds.fenceOnMap = Bounds.fromDims(200, 200, 100, 100)
 
   # override
   initTopLeftBoundsOnMap: ->

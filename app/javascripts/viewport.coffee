@@ -9,7 +9,7 @@ viewport.init = (@main) ->
     @width = @main.dim(600, 'pixels')
     @height = @main.dim(400, 'pixels')
 
-    @bounds = new Bounds(@width.pixels, @height.pixels)
+    @bounds = Bounds.fromDims(@width.pixels, @height.pixels)
 
     @$element = $('<div id="viewport" />').css(
       width: @width.pixels

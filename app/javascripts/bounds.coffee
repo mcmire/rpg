@@ -3,18 +3,44 @@ game = window.game
 # The Bounds class represents a box, such as the box around a mob, or the box
 # that keeps a mob from moving, or the frame of the viewport, or the map itself.
 #
-class Bounds # Construct a new Bounds.
+class Bounds
+  # Construct a new Bounds by specifying the width and height of the bounds box
+  # and (optionally) the coordinates of its top-left corner.
   #
-  # width  - The integer width of the bounds box.
-  # height - The integer height of the bounds box.
-  # x1     - The integer top-left corner of the box (default: 0).
-  # y1     - The integer bottom-left corner of the box (default: 0).
+  # width  - The integer width of the box.
+  # height - The integer height of the box.
+  # x1     - The integer X-coordinate of the top-left corner (default: 0).
+  # y1     - The integer Y-coordinate of the top-left corner (default: 0).
   #
-  constructor: (@width, @height, x1=0, y1=0) ->
-    @x1 = x1 ? 0
-    @x2 = x2 ? @x1 + @width
-    @y1 = y1 ? 0
-    @y2 = y2 ? @y1 + @height
+  # Returns a new Bounds.
+  #
+  @fromDims: (width, height, x1=0, y1=0) ->
+    b = new Bounds()
+    b.x1 = x1
+    b.y1 = y1
+    b.width = width
+    b.height = height
+    b._calculateBottomRightCorner()
+    return b
+
+  # Construct a new Bounds by specifying the coordinates of the top-left and
+  # bottom-right corners of the bounds box.
+  #
+  # x1     - The integer X-coordinate of the top-left corner.
+  # y1     - The integer Y-coordinate of the top-left corner.
+  # x2     - The integer X-coordinate of the bottom-right corner.
+  # y2     - The integer Y-coordinate of the bottom-right corner.
+  #
+  # Returns a new Bounds.
+  #
+  @fromCoords: (x1, y1, x2, y2) ->
+    b = new Bounds()
+    b.x1 = x1
+    b.y1 = y1
+    b.x2 = x2
+    b.y2 = y2
+    b._calculateWidthAndHeight()
+    return b
 
   # Public: Make a copy of these Bounds moved by an amount.
   #
@@ -141,38 +167,119 @@ class Bounds # Construct a new Bounds.
     @y2 = y1 + @height
     return this
 
-  # Public: Calculate the pixel amount required to correct a bounds box heading
-  # in a direction toward this bounds box such that it buts against it rather
-  # than intersecting it.
+  # Public: Determine whether two bounds intersect with each other.
   #
-  # This is used when moving an NPC so that it does not exit the viewport or
-  # the fence that restricts it to a certain area on the map.
+  # The intersection should be detected correctly whether these bounds are
+  # taller or shorter than the given bounds. In other words, the following cases
+  # are detected as intersections (1 is this, 2 is other):
   #
-  # direction - A String: 'up', 'down', 'left' or 'right'.
-  # bounds    - The calculated next Bounds of the NPC.
+  #        1     2           1     2
+  #             ____        ____
+  #      ______|_   |   => |   _|_____
+  #   => |     : |  |   => |  : |     |
+  #   => |_____:_|  |   => |  :_|_____|
+  #            |____|   => |____|
   #
-  # Returns a positive integer if the given Bounds would collide with these
-  # Bounds, or 0 otherwise.
+  #     2     1            2     1
+  #    ____                    ____
+  #   |   _|_____        _____|_   | <=
+  #   |  | :     | <=   |     | :  | <=
+  #   |  |_:_____| <=   |_____|_:  | <=
+  #   |____|                  |____| <=
   #
-  offsetToKeepInside: (direction, bounds) ->
-    switch direction
-      when 'left'
-        @x1 - bounds.x1
-      when 'right'
-        bounds.x2 - @x2
-      when 'up'
-        bounds.y2 - @y2
-      when 'down'
-        @y1 - bounds.y1
+  #        |  |               |  |
+  #        v  v               v  v
+  #        ____             ________
+  #   1   |    |        1  |  ....  |
+  #      _|....|_          |_|____|_|
+  #   2 | |____| |      2    |    |
+  #     |________|           |____|
+  #
+  #       ________           ____
+  #   2  |  ____  |     2   |    |
+  #      |_|....|_|        _|____|_
+  #   1    |    |       1 | |....| |
+  #        |____|         |________|
+  #         ^  ^             ^  ^
+  #         |  |             |  |
+  #
+  # other - An instance of Bounds.
+  #
+  # Returns true if the Bounds intersect, otherwise false.
+  #
+  intersectsWith: (other) ->
+    intersectsRight = (other.x1 <= @x1 <= other.x2)
+    intersectsLeft  = (other.x1 <= @x2 <= other.x2)
+    intersectsDown  = (other.y1 <= @y1 <= other.y2)
+    intersectsUp    = (other.y1 <= @y2 <= other.y2)
+    return (
+      (intersectsRight or intersectsLeft) and
+      (intersectsDown or intersectsUp)
+    )
+
+  # Public: Obtain the X-coordinate of the left side of these bounds which
+  # blocks the given incoming bounds.
+  #
+  # other - An instance of Bounds.
+  #
+  # Returns an integer if the given Bounds intersect with these bounds,
+  # otherwise returns null.
+  #
+  getLeftEdgeBlocking: (other) ->
+    @x1 if @intersectsWith(other)
+
+  # Public: Obtain the X-coordinate of the right side of these bounds which
+  # blocks the given incoming bounds.
+  #
+  # other - An instance of Bounds.
+  #
+  # Returns an integer if the given Bounds intersect with these bounds,
+  # otherwise returns null.
+  #
+  getRightEdgeBlocking: (other) ->
+    @x2 if @intersectsWith(other)
+
+  # Public: Obtain the Y-coordinate of the top side of these bounds which blocks
+  # the given incoming bounds.
+  #
+  # other - An instance of Bounds.
+  #
+  # Returns an integer if the given Bounds intersect with these bounds,
+  # otherwise returns null.
+  #
+  getTopEdgeBlocking: (other) ->
+    @y1 if @intersectsWith(other)
+
+  # Public: Obtain the Y-coordinate of the bottom side of these bounds which
+  # blocks the given incoming bounds.
+  #
+  # other - An instance of Bounds.
+  #
+  # Returns an integer if the given Bounds intersect with these bounds,
+  # otherwise returns null.
+  #
+  getBottomEdgeBlocking: (other) ->
+    @y2 if @intersectsWith(other)
 
   # Public: Make a copy of the Bounds.
   #
   # Returns a new Bounds.
   #
   clone: ->
-    new Bounds(@width, @height, @x1, @y1)
+    b = new Bounds()
+    for prop in 'x1 x2 y1 y2 width height'.split(' ')
+      b[prop] = this[prop]
+    return b
 
   inspect: ->
     "(#{@x1}..#{@x2}, #{@y1}..#{@y2})"
+
+  _calculateBottomRightCorner: ->
+    @x2 = @x1 + @width
+    @y2 = @y1 + @height
+
+  _calculateWidthAndHeight: ->
+    @width  = @x2 - @x1
+    @height = @y2 - @y1
 
 game.Bounds = Bounds

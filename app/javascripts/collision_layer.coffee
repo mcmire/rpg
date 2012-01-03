@@ -1,5 +1,5 @@
 game = window.game
-{Canvas, EventHelpers} = game
+{Canvas, EventHelpers, Bounds} = game
 
 collisionLayer = game.util.module "game.collisionLayer", [EventHelpers]
 
@@ -15,7 +15,7 @@ collisionLayer.init = (@main) ->
     @_loadImage =>
       #@_createCollisionBoxes()
     @collisionBoxes = [
-      {x1: 96, x2: 352, y1: 96, y2: 112}
+      Bounds.fromCoords(96, 96, 352, 112)
     ]
 
     # @_createDebugOverlay()

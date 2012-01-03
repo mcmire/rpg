@@ -36,8 +36,8 @@ class game.Mob
   _initBounds: ->
     @bounds = {}
     @lastBounds = {}
-    @bounds.onMap = @lastBounds.onMap = new Bounds(@width, @height)
-    @bounds.inViewport = @lastBounds.inViewport = new Bounds(@width, @height)
+    @bounds.onMap = @lastBounds.onMap = Bounds.fromDims(@width, @height)
+    @bounds.inViewport = @lastBounds.inViewport = Bounds.fromDims(@width, @height)
 
     @initFence()
     @initTopLeftBoundsOnMap()
@@ -58,7 +58,7 @@ class game.Mob
     @bounds.inViewport.anchor(x1, y1)
 
   initFence: ->
-    @bounds.fenceOnMap = new Bounds(
+    @bounds.fenceOnMap = Bounds.fromDims(
       @main.map.width.pixels,
       @main.map.height.pixels
     )
