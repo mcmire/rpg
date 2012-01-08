@@ -2,85 +2,124 @@
  EventHelpers,
  viewport,
  collisionLayer,
- fpsReporter,
+ Ticker,
+ IntervalTicker,
  Player,
  Enemy} = game = window.game
 
-ticker = {}
+#-------------------------------------------------------------------------------
 
-ticker.init = (@main) ->
-  @tickInterval = 1000 / @main.frameRate
-  @throttledDrawer = @main.createIntervalTimer @tickInterval, (df, dt) ->
-    ticker.draw()
-  return this
+mainTicker =
+  init: (main) ->
+    ticker = Ticker.create main,
+      _init: ->
+        self = this
+        @tickInterval = 1000 / @main.frameRate
+        @throttledDraw = @main.createIntervalTimer @tickInterval, (df, dt) ->
+          self.draw()
 
-ticker.start = ->
-  return if @isRunning
-  @isRunning = true
-  @tick()
-  return this
+      _start: ->
+        @tick()
 
-ticker.stop = ->
-  return if not @isRunning
-  @isRunning = false
-  if @timer
-    if @main.animMethod is 'setTimeout'
-      window.clearTimeout(@timer)
-    else
-      window.cancelRequestAnimFrame(@timer)
-    @timer = null
-  return this
+      _stop: ->
+        if @timer
+          if @main.animMethod is 'setTimeout'
+            window.clearTimeout(@timer)
+          else
+            window.cancelRequestAnimFrame(@timer)
+          @timer = null
 
-ticker.suspend = ->
-  @wasRunning = @isRunning
-  @stop()
+      tick: ->
+        t = (new Date()).getTime()
 
-ticker.resume = ->
-  @start() if @wasRunning
+        if ticker.main.debug
+          ticker.msSinceLastDraw = if ticker.lastTickTime then (t - ticker.lastTickTime) else 0
+          console.log "msSinceLastDraw: #{ticker.msSinceLastDraw}"
 
-ticker.tick = ->
-  return if not ticker.isRunning
+        if ticker.main.animMethod is 'setTimeout'
+          ticker.draw()
+        else
+          ticker.throttledDraw()
 
-  t = (new Date()).getTime()
+        if ticker.main.debug
+          t2 = (new Date()).getTime()
+          msDrawTime = t2 - t
+          ticker.lastTickTime = t
+          console.log "msDrawTime: #{msDrawTime}"
 
-  if ticker.main.debug
-    ticker.msSinceLastDraw = if ticker.lastTickTime then (t - ticker.lastTickTime) else 0
-    console.log "msSinceLastDraw: #{ticker.msSinceLastDraw}"
+        # Reset "stuck" keys every so often.
+        # Pressing an arrow key in conjunction with the Command key can result in the
+        # keyup event never getting fired for the arrow key, which will cause the
+        # player to continue moving forever, so prevent this from happening.
+        # TODO: This sometimes causes stutters
+        keyboard.clearStuckKeys(t) if (ticker.main.numTicks % 100) == 0
 
-  if ticker.main.animMethod is 'setTimeout'
-    ticker.draw()
-  else
-    ticker.throttledDrawer()
+        if ticker.main.animMethod is 'setTimeout'
+          # Ensure that ticks happen at exact regular intervals by discounting the time
+          # it takes to draw (as this interval is variable)
+          ticker.timer = window.setTimeout(ticker.tick, ticker.tickInterval)
+          # ticker.timer = window.setTimeout(ticker.tick, ticker.tickInterval - msDrawTime)
+        else
+          # Try to call the tick function as fast as possible
+          ticker.timer = window.requestAnimFrame(ticker.tick, viewport.canvas.element)
 
-  if ticker.main.debug
-    t2 = (new Date()).getTime()
-    msDrawTime = t2 - t
-    ticker.lastTickTime = t
-    console.log "msDrawTime: #{msDrawTime}"
+        ticker.main.numTicks++
 
-  # Reset "stuck" keys every so often.
-  # Pressing an arrow key in conjunction with the Command key can result in the
-  # keyup event never getting fired for the arrow key, which will cause the
-  # player to continue moving forever, so prevent this from happening.
-  # TODO: This sometimes causes stutters
-  keyboard.clearStuckKeys(t) if (ticker.main.numTicks % 100) == 0
+      draw: ->
+        @main.viewport.draw()
+        # TODO: We should probably split these steps up again
+        entity.tick() for entity in @main.entities
+        @main.numDraws++
 
-  if ticker.main.animMethod is 'setTimeout'
-    # Ensure that ticks happen at exact regular intervals by discounting the time
-    # it takes to draw (as this interval is variable)
-    ticker.timer = window.setTimeout(ticker.tick, ticker.tickInterval)
-    # ticker.timer = window.setTimeout(ticker.tick, ticker.tickInterval - msDrawTime)
-  else
-    # Try to call the tick function as fast as possible
-    ticker.timer = window.requestAnimFrame(ticker.tick, viewport.canvas.element)
+#-------------------------------------------------------------------------------
 
-  ticker.main.numTicks++
+fpsReporter =
+  init: (main) ->
+    ticker = IntervalTicker.create main,
+      _init: ->
+        IntervalTicker.prototype._init.apply(this, arguments)
+        @tickInterval = 1000
+        @tickFunction = @main.createIntervalTimer true, @draw
+        @$div = $('<div id="fps-reporter" />')
 
-ticker.draw = ->
-  @main.viewport.draw()
-  # TODO: We should probably split these steps up again
-  entity.tick() for entity in @main.entities
-  @main.numDraws++
+      _destroy: ->
+        @detach()
+
+      attachTo: (container) ->
+        $(container).append(@$div)
+
+      detach: ->
+        @$div.detach()
+
+      draw: (df, dt) ->
+        fps = ((df / dt) * 1000).toFixed(1)
+        ticker.$div.text("#{fps} FPS")
+
+#-------------------------------------------------------------------------------
+
+playerDebug =
+  init: (main) ->
+    ticker = IntervalTicker.create main,
+      _init: ->
+        IntervalTicker.prototype._init.apply(this, arguments)
+        @tickInterval = 1000
+        @$div = $('<div style="margin-top: 10px"/>')
+
+      _destroy: ->
+        @detach()
+
+      attachTo: (container) ->
+        $(container).append(@$div)
+
+      detach: ->
+        @$div.detach()
+
+      tick: ->
+        ticker.$div.html("""
+          <b>Player on map:</b> #{ticker.main.player.bounds.onMap.inspect()}<br>
+          <b>Player in viewport:</b> #{ticker.main.player.bounds.inViewport.inspect()}<br>
+          <b>Viewport:</b> #{ticker.main.viewport.bounds.inspect()}
+        """)
 
 #-------------------------------------------------------------------------------
 
@@ -117,21 +156,14 @@ main.init = ->
 
     @_addMobs()
 
-    # $boundsDebug = $('<div style="margin-top: 10px"/>').appendTo(document.body)
-    # self = this
-    # setInterval ->
-    #   $boundsDebug.html("""
-    #     <b>Player on map:</b> #{self.player.bounds.onMap.inspect()}<br>
-    #     <b>Player in viewport:</b> #{self.player.bounds.inViewport.inspect()}<br>
-    #     <b>Viewport:</b> #{self.viewport.bounds.inspect()}
-    #   """)
-    # , 1000
-
-    @ticker = ticker.init(this)
-    @timers.push(@ticker)
+    @mainTicker = mainTicker.init(this)
+    @timers.push(@mainTicker)
 
     @fpsReporter = fpsReporter.init(this)
     @timers.push(@fpsReporter)
+
+    @playerDebug = playerDebug.init(this)
+    @timers.push(@playerDebug)
 
     @isInit = true
   return this
@@ -154,8 +186,8 @@ main.destroy = ->
     @detach()
     keyboard.destroy()
     viewport.destroy()
-    @fpsReporter.destroy()
     @collisionLayer.destroy()
+    timer.destroy() for timer in @timers
     @stop()
     @reset()
     @isInit = false
@@ -187,14 +219,16 @@ main.removeEvents = ->
 
 main.attachTo = (element) ->
   viewport.attachTo(element)
-  @fpsReporter.attachTo(viewport.$element)
   @collisionLayer.attachTo(viewport.$element)
+  @fpsReporter.attachTo(viewport.$element)
+  @playerDebug.attachTo(document.body)
   return this
 
 main.detach = ->
   viewport.detach()
-  @fpsReporter.detach()
   @collisionLayer.detach()
+  @fpsReporter.detach()
+  @playerDebug.detach()
   return this
 
 main.ready = (callback) ->

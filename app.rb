@@ -14,16 +14,15 @@ helpers do
       app/ender_ext.js
       app/util.js
       app/event_helpers.js
-      app/keyboard.js
       app/canvas.js
+      app/keyboard.js
       app/bounds.js
-      app/fps_reporter.js
       app/collision_layer.js
       app/viewport.js
-      app/sprite.js
       app/mob.js
       app/player.js
       app/enemy.js
+      app/ticker.js
       app/main.js
     )
     html = ""
