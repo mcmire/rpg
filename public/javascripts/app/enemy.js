@@ -30,13 +30,13 @@
 
     Enemy.addState('downToRight', {
       frames: [0, 2],
-      duration: 16,
+      duration: 24,
       then: 'moveRight'
     });
 
     Enemy.addState('downToLeft', {
       frames: [0, 3],
-      duration: 16,
+      duration: 24,
       then: 'moveLeft'
     });
 
@@ -49,13 +49,13 @@
 
     Enemy.addState('rightToUp', {
       frames: [4, 6],
-      duration: 16,
+      duration: 24,
       then: 'moveUp'
     });
 
     Enemy.addState('rightToDown', {
       frames: [4, 7],
-      duration: 16,
+      duration: 24,
       then: 'moveDown'
     });
 
@@ -68,13 +68,13 @@
 
     Enemy.addState('leftToDown', {
       frames: [8, 10],
-      duration: 16,
+      duration: 24,
       then: 'moveDown'
     });
 
     Enemy.addState('leftToUp', {
       frames: [8, 11],
-      duration: 16,
+      duration: 24,
       then: 'moveUp'
     });
 
@@ -87,23 +87,25 @@
 
     Enemy.addState('upToLeft', {
       frames: [12, 14],
-      duration: 16,
+      duration: 24,
       then: 'moveLeft'
     });
 
     Enemy.addState('upToRight', {
       frames: [12, 15],
-      duration: 16,
+      duration: 24,
       then: 'moveRight'
     });
 
     function Enemy() {
       Enemy.__super__.constructor.apply(this, arguments);
       this.setState('moveRight');
+      this._directionChangeNeeded = false;
+      this._chooseSequenceLength();
     }
 
     Enemy.prototype.initFence = function() {
-      return this.bounds.fenceOnMap = new Bounds(200, 200, 100, 100);
+      return this.bounds.fenceOnMap = Bounds.fromDims(300, 300, 100, 100);
     };
 
     Enemy.prototype.initTopLeftBoundsOnMap = function() {
@@ -117,119 +119,96 @@
       };
       fn();
       _results = [];
-      while (this.collisionLayer.isIntersection(this.bounds.onMap)) {
+      while (this.collisionLayerBoxes.intersectsWith(this.bounds.onMap)) {
         _results.push(fn());
       }
       return _results;
     };
 
-    Enemy.prototype.postdraw = function() {
-      var i, nextDirection;
-      Enemy.__super__.postdraw.apply(this, arguments);
-      if (this.state.doesMove && this.numFramesDrawn > 20) {
-        i = (DIRECTIONS.indexOf(this.direction) + 1) % DIRECTIONS.length;
-        nextDirection = $.capitalize(DIRECTIONS[i]);
-        return this.setState("" + this.direction + "To" + nextDirection);
+    Enemy.prototype.moveLeft = function() {
+      var nextBoundsOnMap, x;
+      this.direction = 'left';
+      nextBoundsOnMap = this.bounds.onMap.withTranslation({
+        x: -this.speed
+      });
+      if ((x = this.collisionLayerBoxes.getOuterRightEdgeBlocking(nextBoundsOnMap)) || (x = this.bounds.fenceOnMap.getInnerLeftEdgeBlocking(nextBoundsOnMap))) {
+        this.bounds.onMap.translateBySide('x1', x);
+        return this._directionChangeNeeded = true;
+      } else {
+        return this.bounds.onMap.replace(nextBoundsOnMap);
+      }
+    };
+
+    Enemy.prototype.moveRight = function() {
+      var nextBoundsOnMap, x;
+      this.direction = 'right';
+      nextBoundsOnMap = this.bounds.onMap.withTranslation({
+        x: +this.speed
+      });
+      if ((x = this.collisionLayerBoxes.getOuterLeftEdgeBlocking(nextBoundsOnMap)) || (x = this.bounds.fenceOnMap.getInnerRightEdgeBlocking(nextBoundsOnMap))) {
+        this.bounds.onMap.translateBySide('x2', x);
+        return this._directionChangeNeeded = true;
+      } else {
+        return this.bounds.onMap.replace(nextBoundsOnMap);
       }
     };
 
     Enemy.prototype.moveUp = function() {
+      var nextBoundsOnMap, y;
       this.direction = 'up';
-      return this.bounds.onMap.translate({
+      nextBoundsOnMap = this.bounds.onMap.withTranslation({
         y: -this.speed
       });
+      if ((y = this.collisionLayerBoxes.getOuterBottomEdgeBlocking(nextBoundsOnMap)) || (y = this.bounds.fenceOnMap.getInnerTopEdgeBlocking(nextBoundsOnMap))) {
+        this.bounds.onMap.translateBySide('y1', y);
+        return this._directionChangeNeeded = true;
+      } else {
+        return this.bounds.onMap.replace(nextBoundsOnMap);
+      }
     };
 
     Enemy.prototype.moveDown = function() {
+      var nextBoundsOnMap, y;
       this.direction = 'down';
-      return this.bounds.onMap.translate({
+      nextBoundsOnMap = this.bounds.onMap.withTranslation({
         y: +this.speed
       });
-    };
-
-    Enemy.prototype.moveLeft = function() {
-      this.direction = 'left';
-      return this.bounds.onMap.translate({
-        x: -this.speed
-      });
-    };
-
-    Enemy.prototype.moveRight = function() {
-      this.direction = 'right';
-      return this.bounds.onMap.translate({
-        x: +this.speed
-      });
-    };
-
-    Enemy.prototype._chooseValidDirectionFrom = function(directions) {
-      var validDirections;
-      validDirections = $.every(directions, function(dir) {
-        return !!this._nextValidMove(dir);
-      });
-      return $.randomItem(validDirections);
-    };
-
-    Enemy.prototype._move = function(direction) {
-      var axis, dx, dy, _ref2;
-      _ref2 = [0, 0], dx = _ref2[0], dy = _ref2[1];
-      switch (direction) {
-        case 'right':
-          axis = 'x';
-          dx = +this.speed;
-          break;
-        case 'left':
-          axis = 'x';
-          dx = -this.speed;
-          break;
-        case 'up':
-          axis = 'y';
-          dy = -this.speed;
-          break;
-        case 'down':
-          axis = 'y';
-          dy = +this.speed;
+      if ((y = this.collisionLayerBoxes.getOuterTopEdgeBlocking(nextBoundsOnMap)) || (y = this.bounds.fenceOnMap.getInnerBottomEdgeBlocking(nextBoundsOnMap))) {
+        this.bounds.onMap.translateBySide('y2', y);
+        return this._directionChangeNeeded = true;
+      } else {
+        return this.bounds.onMap.replace(nextBoundsOnMap);
       }
-      this.bounds.onMap.withTranslation({
-        x: dx,
-        y: dy
-      });
-      return this.spriteSheet.useSequence("move_" + direction);
     };
 
-    Enemy.prototype._nextValidMove = function(direction) {
-      var axis, dx, dy, nextBoundsOnMap, offset, _ref2;
-      _ref2 = [0, 0], dx = _ref2[0], dy = _ref2[1];
-      switch (direction) {
-        case 'right':
-          axis = 'x';
-          dx = +this.speed;
-          break;
-        case 'left':
-          axis = 'x';
-          dx = -this.speed;
-          break;
-        case 'up':
-          axis = 'y';
-          dy = -this.speed;
-          break;
-        case 'down':
-          axis = 'y';
-          dy = +this.speed;
+    Enemy.prototype.postdraw = function() {
+      if (this._directionChangeNeeded || this.numSeqFrameDraws === this.sequenceLength) {
+        this._directionChangeNeeded = false;
+        return this._chooseAnotherDirection();
+      } else {
+        return Enemy.__super__.postdraw.apply(this, arguments);
       }
-      nextBoundsOnMap = this.bounds.onMap.withTranslation({
-        x: dx,
-        y: dy
-      });
-      offset = this.collisionLayer.offsetToNotCollide(direction, nextBoundsOnMap) || this.bounds.onMap.offsetToKeepInside(direction, nextBoundsOnMap);
-      return nextBoundsOnMap.withTranslation(axis, -offset);
     };
 
-    Enemy.prototype._transitionTo = function(direction) {
-      return this.spriteSheet.useSequence("" + this.direction + "-to-" + direction);
+    Enemy.prototype._chooseAnotherDirection = function() {
+      var direction, validDirections;
+      validDirections = (function() {
+        switch (this.direction) {
+          case 'up':
+          case 'down':
+            return ['left', 'right'];
+          case 'left':
+          case 'right':
+            return ['up', 'down'];
+        }
+      }).call(this);
+      direction = $.capitalize($.randomItem(validDirections));
+      this.setState("" + this.direction + "To" + direction);
+      return this._chooseSequenceLength();
     };
 
-    Enemy.prototype._outsideBoundsOnMap = function(bounds) {
-      return bounds.x1 < this.bounds.onMap.x1 || bounds.x2 > this.bounds.onMap.x2 || bounds.y1 < this.bounds.onMap.y1 || bounds.y2 > this.bounds.onMap.y2;
+    Enemy.prototype._chooseSequenceLength = function() {
+      return this.sequenceLength = $.randomInt(40, 80);
     };
 
     return Enemy;

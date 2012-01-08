@@ -42,7 +42,11 @@ $.ender {
 
   # Makes a deep clone of the given object.
   #
-  clone: (obj) -> $.extend({}, obj)
+  clone: (obj) ->
+    if this.is.arr(obj)
+      obj.slice(0)
+    else
+      $.extend(true, {}, obj)
 
   # Given a string which represents a chain of objects (separated by "."),
   # ensures that all objects in the chain exist (by creating them if they don't),
@@ -65,7 +69,7 @@ $.ender {
     obj
 
   randomItem: (arr) ->
-    this.randomInt(arr.length-1)
+    arr[this.randomInt(arr.length-1)]
 
   randomInt: (args...) ->
     if args.length is 1
@@ -80,6 +84,9 @@ $.ender {
   ensureArray: (arr) ->
     arr = arr[0] if arr.length is 1 and $.is.arr(arr[0])
     return arr
+
+  arrayDelete: (arr, item) ->
+    arr.splice(item, 1)
 
   # Given a string which represents a chain of objects (separated by "."),
   # ensures that all objects in the chain exist (by creating them if they don't),

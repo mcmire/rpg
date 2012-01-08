@@ -4,8 +4,6 @@
 
 * Fix sprites for the player and the enemy
 
-* CollisionLayer: Merge getBlocking\*Edge methods into one
-
 * CollisionLayer: Instead of a @collisionBoxes array, store @collisionBoxesByX
   and @collisionBoxesByY arrays. These are arrays sorted by x1 and y1, and as
   the player moves through the world and crosses X and Y coordinates of boxes,
@@ -17,3 +15,11 @@
 
 * Use Rack middleware for compiling Coffee and Sass on the fly
   (performance is not important for this app)
+
+* Add a Grob class which accepts a Bounds and implements #predraw, #draw and
+  #postdraw - #predraw will clear the last drawn Bounds and #postdraw will store
+  it? - it also has @bounds.onMap which knows how to convert itself to
+  @bounds.onViewport
+
+* fpsReporter and the like should be "plugins" to main... that way if we want to
+  disable it we shouldn't have to remember where all to comment out stuff

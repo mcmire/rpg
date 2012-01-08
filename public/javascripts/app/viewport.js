@@ -13,7 +13,7 @@
     if (!this.isInit) {
       this.width = this.main.dim(600, 'pixels');
       this.height = this.main.dim(400, 'pixels');
-      this.bounds = new Bounds(this.width.pixels, this.height.pixels);
+      this.bounds = Bounds.fromDims(this.width.pixels, this.height.pixels);
       this.$element = $('<div id="viewport" />').css({
         width: this.width.pixels,
         height: this.height.pixels,

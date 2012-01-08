@@ -1,9 +1,145 @@
 (function() {
-  var Canvas, EventHelpers, collisionLayer, game;
+  var Bounds, Canvas, CollisionBox, CollisionBoxes, EventHelpers, collisionLayer, game;
 
   game = window.game;
 
-  Canvas = game.Canvas, EventHelpers = game.EventHelpers;
+  Canvas = game.Canvas, EventHelpers = game.EventHelpers, Bounds = game.Bounds;
+
+  CollisionBoxes = (function() {
+
+    function CollisionBoxes(boxes, box) {
+      this.boxes = boxes;
+      this.box = box;
+    }
+
+    CollisionBoxes.prototype.each = function(fn) {
+      var box, ret, _i, _j, _len, _len2, _ref, _ref2, _results, _results2;
+      if (this.box) {
+        _ref = this.boxes;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          box = _ref[_i];
+          if (box !== this.box) {
+            ret = fn(box);
+            if (ret === false) {
+              break;
+            } else {
+              _results.push(void 0);
+            }
+          } else {
+            _results.push(void 0);
+          }
+        }
+        return _results;
+      } else {
+        _ref2 = this.boxes;
+        _results2 = [];
+        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+          box = _ref2[_j];
+          ret = fn(box);
+          if (ret === false) {
+            break;
+          } else {
+            _results2.push(void 0);
+          }
+        }
+        return _results2;
+      }
+    };
+
+    CollisionBoxes.prototype.get = function(index) {
+      return this.boxes[index];
+    };
+
+    CollisionBoxes.prototype.push = function(box) {
+      return this.boxes.push(box);
+    };
+
+    CollisionBoxes.prototype.without = function(box) {
+      return new CollisionBoxes(this.boxes, box);
+    };
+
+    CollisionBoxes.prototype.intersectsWith = function(bounds) {
+      var ret;
+      ret = false;
+      this.each(function(box) {
+        if (box.intersectsWith(bounds)) {
+          ret = true;
+          return false;
+        }
+      });
+      return ret;
+    };
+
+    CollisionBoxes.prototype.getOuterLeftEdgeBlocking = function(bounds) {
+      var ret;
+      ret = null;
+      this.each(function(box) {
+        if (ret = box.getOuterLeftEdgeBlocking(bounds)) return false;
+      });
+      return ret;
+    };
+
+    CollisionBoxes.prototype.getOuterRightEdgeBlocking = function(bounds) {
+      var ret;
+      ret = null;
+      this.each(function(box) {
+        if (ret = box.getOuterRightEdgeBlocking(bounds)) return false;
+      });
+      return ret;
+    };
+
+    CollisionBoxes.prototype.getOuterTopEdgeBlocking = function(bounds) {
+      var ret;
+      ret = null;
+      this.each(function(box) {
+        if (ret = box.getOuterTopEdgeBlocking(bounds)) return false;
+      });
+      return ret;
+    };
+
+    CollisionBoxes.prototype.getOuterBottomEdgeBlocking = function(bounds) {
+      var ret;
+      ret = null;
+      this.each(function(box) {
+        if (ret = box.getOuterBottomEdgeBlocking(bounds)) return false;
+      });
+      return ret;
+    };
+
+    return CollisionBoxes;
+
+  })();
+
+  CollisionBox = (function() {
+
+    function CollisionBox(bounds) {
+      this.bounds = bounds;
+    }
+
+    CollisionBox.prototype.intersectsWith = function(bounds) {
+      return this.bounds.intersectsWith(bounds);
+    };
+
+    CollisionBox.prototype.getOuterLeftEdgeBlocking = function(bounds) {
+      return this.bounds.getOuterLeftEdgeBlocking(bounds);
+    };
+
+    CollisionBox.prototype.getOuterRightEdgeBlocking = function(bounds) {
+      return this.bounds.getOuterRightEdgeBlocking(bounds);
+    };
+
+    CollisionBox.prototype.getOuterTopEdgeBlocking = function(bounds) {
+      return this.bounds.getOuterTopEdgeBlocking(bounds);
+    };
+
+    CollisionBox.prototype.getOuterBottomEdgeBlocking = function(bounds) {
+      return this.bounds.getOuterBottomEdgeBlocking(bounds);
+    };
+
+    return CollisionBox;
+
+  })();
 
   collisionLayer = game.util.module("game.collisionLayer", [EventHelpers]);
 
@@ -15,16 +151,10 @@
       this.viewport = this.main.viewport;
       this.width = this.viewport.width.pixels;
       this.height = this.viewport.height.pixels;
+      this.collisionBoxes = new CollisionBoxes([]);
       this.imagePath = "" + this.main.imagesPath + "/mask.gif";
       this._loadImage(function() {});
-      this.collisionBoxes = [
-        {
-          x1: 96,
-          x2: 352,
-          y1: 96,
-          y2: 112
-        }
-      ];
+      this.add(Bounds.fromCoords(96, 96, 352, 112));
       this.isInit = true;
     }
     return this;
@@ -41,8 +171,14 @@
 
   collisionLayer.detach = function() {};
 
-  collisionLayer.add = function(bounds) {
-    return this.collisionBoxes.push(bounds);
+  collisionLayer.add = function(boundsOrMob) {
+    var box;
+    if (boundsOrMob.box != null) {
+      box = boundsOrMob.box;
+    } else {
+      box = new CollisionBox(boundsOrMob);
+    }
+    return this.collisionBoxes.push(box);
   };
 
   collisionLayer.draw = function() {
@@ -50,81 +186,6 @@
     bom = this.viewport.frame.boundsOnMap;
     positionStr = [-bom.x1 + 'px', -bom.y1 + 'px'].join(" ");
     return this.$debugOverlay.css('background-position', positionStr);
-  };
-
-  collisionLayer.offsetToNotCollide = function(direction, bounds) {
-    switch (direction) {
-      case 'left':
-        return bounds.x1 - this.getBlockingRightEdge(bounds);
-      case 'right':
-        return this.getBlockingLeftEdge(bounds) - bounds.x2;
-      case 'up':
-        return this.getBlockingBottomEdge(bounds) - bounds.y2;
-      case 'down':
-        return bounds.y1 - this.getBlockingTopEdge(bounds);
-    }
-  };
-
-  collisionLayer.isIntersection = function(b) {
-    var box, four, one, three, two, _i, _len, _ref, _ref2, _ref3, _ref4, _ref5;
-    _ref = this.collisionBoxes;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      box = _ref[_i];
-      one = (box.x1 <= (_ref2 = b.x1) && _ref2 <= box.x2);
-      two = (box.x1 <= (_ref3 = b.x2) && _ref3 <= box.x2);
-      three = (box.y1 <= (_ref4 = b.y1) && _ref4 <= box.y2);
-      four = (box.y1 <= (_ref5 = b.y2) && _ref5 <= box.y2);
-      if ((one || two) && (three || four)) return true;
-    }
-    return false;
-  };
-
-  collisionLayer.getBlockingLeftEdge = function(b) {
-    var box, _i, _len, _ref, _ref2, _ref3, _ref4;
-    _ref = this.collisionBoxes;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      box = _ref[_i];
-      if (((b.x1 <= (_ref2 = box.x1) && _ref2 <= b.x2)) && (((box.y1 <= (_ref3 = b.y1) && _ref3 <= box.y2)) || ((box.y1 <= (_ref4 = b.y2) && _ref4 <= box.y2)) || (b.y1 < box.y1 && b.y2 > box.y2))) {
-        return box.x1;
-      }
-    }
-    return null;
-  };
-
-  collisionLayer.getBlockingRightEdge = function(b) {
-    var box, _i, _len, _ref, _ref2, _ref3, _ref4;
-    _ref = this.collisionBoxes;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      box = _ref[_i];
-      if (((b.x1 <= (_ref2 = box.x2) && _ref2 <= b.x2)) && (((box.y1 <= (_ref3 = b.y1) && _ref3 <= box.y2)) || ((box.y1 <= (_ref4 = b.y2) && _ref4 <= box.y2)) || (b.y1 < box.y1 && b.y2 > box.y2))) {
-        return box.x2;
-      }
-    }
-    return null;
-  };
-
-  collisionLayer.getBlockingTopEdge = function(b) {
-    var box, _i, _len, _ref, _ref2, _ref3, _ref4;
-    _ref = this.collisionBoxes;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      box = _ref[_i];
-      if (((b.y1 <= (_ref2 = box.y1) && _ref2 <= b.y2)) && (((box.x1 <= (_ref3 = b.x1) && _ref3 <= box.x2)) || ((box.x1 <= (_ref4 = b.x2) && _ref4 <= box.x2)) || (b.x1 < box.x1 && b.x2 > box.x2))) {
-        return box.y1;
-      }
-    }
-    return null;
-  };
-
-  collisionLayer.getBlockingBottomEdge = function(b) {
-    var box, _i, _len, _ref, _ref2, _ref3, _ref4;
-    _ref = this.collisionBoxes;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      box = _ref[_i];
-      if (((b.y1 <= (_ref2 = box.y2) && _ref2 <= b.y2)) && (((box.x1 <= (_ref3 = b.x1) && _ref3 <= box.x2)) || ((box.x1 <= (_ref4 = b.x2) && _ref4 <= box.x2)) || (b.x1 < box.x1 && b.x2 > box.x2))) {
-        return box.y2;
-      }
-    }
-    return null;
   };
 
   collisionLayer._createDebugOverlay = function() {
@@ -199,5 +260,11 @@
     if (box) boxes.push(box);
     return this.collisionBoxes = boxes;
   };
+
+  game.CollisionBoxes = CollisionBoxes;
+
+  game.CollisionBox = CollisionBox;
+
+  game.collisionLayer = collisionLayer;
 
 }).call(this);

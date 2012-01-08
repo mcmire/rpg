@@ -38,7 +38,11 @@
       return target;
     },
     clone: function(obj) {
-      return $.extend({}, obj);
+      if (this.is.arr(obj)) {
+        return obj.slice(0);
+      } else {
+        return $.extend(true, {}, obj);
+      }
     },
     "export": function(chainStrs, newObj) {
       var chain, newIdStr, tail;
@@ -54,7 +58,7 @@
       return obj;
     },
     randomItem: function(arr) {
-      return this.randomInt(arr.length - 1);
+      return arr[this.randomInt(arr.length - 1)];
     },
     randomInt: function() {
       var args, max, min, _ref;
@@ -72,6 +76,9 @@
     ensureArray: function(arr) {
       if (arr.length === 1 && $.is.arr(arr[0])) arr = arr[0];
       return arr;
+    },
+    arrayDelete: function(arr, item) {
+      return arr.splice(item, 1);
     },
     _ns: function(chainStrs) {
       var context, idStr, _i, _len;

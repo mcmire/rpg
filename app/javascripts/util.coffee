@@ -100,6 +100,8 @@ _chain = (chainStrs) ->
 _module "game.util",
   module: _module,
 
+  # TODO: Remove these, these are now in ender_ext
+
   # Returns a random number between min (inclusive) and max (exclusive).
   #
   # (Copied from the MDC wiki)

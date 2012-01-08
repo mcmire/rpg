@@ -1,8 +1,8 @@
 (function() {
-  var Bounds, game,
+  var Bounds, CollisionBox, game, _ref,
     __slice = Array.prototype.slice;
 
-  Bounds = (game = window.game).Bounds;
+  _ref = game = window.game, Bounds = _ref.Bounds, CollisionBox = _ref.CollisionBox;
 
   game.Mob = (function() {
 
@@ -28,9 +28,9 @@
     };
 
     function Mob(main) {
-      var _ref;
+      var _ref2;
       this.main = main;
-      _ref = this.main, this.viewport = _ref.viewport, this.map = _ref.map, this.collisionLayer = _ref.collisionLayer;
+      _ref2 = this.main, this.viewport = _ref2.viewport, this.map = _ref2.map;
       this.isLoaded = false;
       this.imagePath = "" + this.main.imagesPath + "/" + this.constructor.image;
       this.image = new Image();
@@ -45,8 +45,10 @@
     Mob.prototype._initBounds = function() {
       this.bounds = {};
       this.lastBounds = {};
-      this.bounds.onMap = this.lastBounds.onMap = new Bounds(this.width, this.height);
-      this.bounds.inViewport = this.lastBounds.inViewport = new Bounds(this.width, this.height);
+      this.bounds.onMap = this.lastBounds.onMap = Bounds.fromDims(this.width, this.height);
+      this.bounds.inViewport = this.lastBounds.inViewport = Bounds.fromDims(this.width, this.height);
+      this.box = new CollisionBox(this.bounds.onMap);
+      this.collisionLayerBoxes = this.main.collisionLayer.collisionBoxes.without(this.box);
       this.initFence();
       this.initTopLeftBoundsOnMap();
       return this.initTopLeftBoundsInViewport();
@@ -61,16 +63,11 @@
     };
 
     Mob.prototype._recalculateViewportBounds = function() {
-      var bom, vb, x1, y1;
-      bom = this.bounds.onMap;
-      vb = this.main.viewport.bounds;
-      x1 = bom.x1 - vb.x1;
-      y1 = bom.y1 - vb.y1;
-      return this.bounds.inViewport.anchor(x1, y1);
+      return this.bounds.inViewport = this.main.mapBoundsToViewportBounds(this.bounds.onMap);
     };
 
     Mob.prototype.initFence = function() {
-      return this.bounds.fenceOnMap = new Bounds(this.main.map.width.pixels, this.main.map.height.pixels);
+      return this.bounds.fenceOnMap = Bounds.fromDims(this.main.map.width.pixels, this.main.map.height.pixels);
     };
 
     Mob.prototype.destroy = function() {};
@@ -94,7 +91,7 @@
       this.state = this.constructor.states[name];
       if (!this.state) throw new Error("Unknown state '" + name + "'!");
       this.currentFrame = 0;
-      return this.numFramesDrawn = 0;
+      return this.numSeqFrameDraws = 0;
     };
 
     Mob.prototype.tick = function() {
@@ -130,7 +127,7 @@
     };
 
     Mob.prototype.postdraw = function() {
-      if ((this.numFramesDrawn % this.state.frameDuration) === 0) {
+      if ((this.numSeqFrameDraws % this.state.frameDuration) === 0) {
         this.currentFrame++;
       }
       if (this.currentFrame === this.state.numFrames) {
@@ -145,14 +142,14 @@
         }
       }
       this.lastBounds.inViewport = this.bounds.inViewport.clone();
-      return this.numFramesDrawn++;
+      return this.numSeqFrameDraws++;
     };
 
     Mob.prototype.translate = function() {
-      var args, _ref, _ref2;
+      var args, _ref2, _ref3;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      (_ref = this.bounds.inViewport).translate.apply(_ref, args);
-      return (_ref2 = this.bounds.onMap).translate.apply(_ref2, args);
+      (_ref2 = this.bounds.inViewport).translate.apply(_ref2, args);
+      return (_ref3 = this.bounds.onMap).translate.apply(_ref3, args);
     };
 
     Mob.prototype.translateBySide = function(side, value) {

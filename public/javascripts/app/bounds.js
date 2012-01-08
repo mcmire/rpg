@@ -6,16 +6,31 @@
 
   Bounds = (function() {
 
-    function Bounds(width, height, x1, y1) {
-      this.width = width;
-      this.height = height;
+    function Bounds() {}
+
+    Bounds.fromDims = function(width, height, x1, y1) {
+      var b;
       if (x1 == null) x1 = 0;
       if (y1 == null) y1 = 0;
-      this.x1 = x1 != null ? x1 : 0;
-      this.x2 = typeof x2 !== "undefined" && x2 !== null ? x2 : this.x1 + this.width;
-      this.y1 = y1 != null ? y1 : 0;
-      this.y2 = typeof y2 !== "undefined" && y2 !== null ? y2 : this.y1 + this.height;
-    }
+      b = new Bounds();
+      b.x1 = x1;
+      b.y1 = y1;
+      b.width = width;
+      b.height = height;
+      b._calculateBottomRightCorner();
+      return b;
+    };
+
+    Bounds.fromCoords = function(x1, y1, x2, y2) {
+      var b;
+      b = new Bounds();
+      b.x1 = x1;
+      b.y1 = y1;
+      b.x2 = x2;
+      b.y2 = y2;
+      b._calculateWidthAndHeight();
+      return b;
+    };
 
     Bounds.prototype.withTranslation = function() {
       var args, bounds, x, y, _ref;
@@ -89,30 +104,99 @@
       return this;
     };
 
-    Bounds.prototype.offsetToKeepInside = function(direction, bounds) {
-      switch (direction) {
-        case 'left':
-          return this.x1 - bounds.x1;
-        case 'right':
-          return bounds.x2 - this.x2;
-        case 'up':
-          return bounds.y2 - this.y2;
-        case 'down':
-          return this.y1 - bounds.y1;
-      }
+    Bounds.prototype.withAnchor = function(x1, y1) {
+      return this.clone().anchor(x1, y1);
+    };
+
+    Bounds.prototype.replace = function(bounds) {
+      this.width = bounds.width;
+      this.height = bounds.height;
+      this.x1 = bounds.x1;
+      this.x2 = bounds.x2;
+      this.y1 = bounds.y1;
+      this.y2 = bounds.y2;
+      return this;
+    };
+
+    Bounds.prototype.intersectWith = function(other) {
+      var x1i, x2i, xo, y1i, y2i, yo, _ref, _ref2, _ref3, _ref4;
+      x1i = (other.x1 <= (_ref = this.x1) && _ref <= other.x2);
+      x2i = (other.x1 <= (_ref2 = this.x2) && _ref2 <= other.x2);
+      xo = this.x1 <= other.x1 && this.x2 >= other.x2;
+      y1i = (other.y1 <= (_ref3 = this.y1) && _ref3 <= other.y2);
+      y2i = (other.y1 <= (_ref4 = this.y2) && _ref4 <= other.y2);
+      yo = this.y1 <= other.y1 && this.y2 >= other.y2;
+      return (x1i || x2i || xo) && (y1i || y2i || yo);
+    };
+
+    Bounds.prototype.getOuterLeftEdgeBlocking = function(other) {
+      if (this.intersectsWith(other)) return this.x1 - 1;
+    };
+
+    Bounds.prototype.getOuterRightEdgeBlocking = function(other) {
+      if (this.intersectsWith(other)) return this.x2 + 1;
+    };
+
+    Bounds.prototype.getOuterTopEdgeBlocking = function(other) {
+      if (this.intersectsWith(other)) return this.y1 - 1;
+    };
+
+    Bounds.prototype.getOuterBottomEdgeBlocking = function(other) {
+      if (this.intersectsWith(other)) return this.y2 + 1;
+    };
+
+    Bounds.prototype.getInnerLeftEdgeBlocking = function(other) {
+      if (other.x1 < this.x1) return this.x1;
+    };
+
+    Bounds.prototype.getInnerRightEdgeBlocking = function(other) {
+      if (other.x2 > this.x2) return this.x2;
+    };
+
+    Bounds.prototype.getInnerTopEdgeBlocking = function(other) {
+      if (other.y1 < this.y1) return this.y1;
+    };
+
+    Bounds.prototype.getInnerBottomEdgeBlocking = function(other) {
+      if (other.y2 > this.y2) return this.y2;
+    };
+
+    Bounds.prototype.draw = function(main) {
+      var ctx;
+      ctx = main.viewport.canvas.ctx;
+      return ctx.strokeRect(this.x1 - 0.5, this.y1 - 0.5, this.width, this.height);
     };
 
     Bounds.prototype.clone = function() {
-      return new Bounds(this.width, this.height, this.x1, this.y1);
+      var b, prop, _i, _len, _ref;
+      b = new Bounds();
+      _ref = 'x1 x2 y1 y2 width height'.split(' ');
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        prop = _ref[_i];
+        b[prop] = this[prop];
+      }
+      return b;
     };
 
     Bounds.prototype.inspect = function() {
       return "(" + this.x1 + ".." + this.x2 + ", " + this.y1 + ".." + this.y2 + ")";
     };
 
+    Bounds.prototype._calculateBottomRightCorner = function() {
+      this.x2 = this.x1 + this.width;
+      return this.y2 = this.y1 + this.height;
+    };
+
+    Bounds.prototype._calculateWidthAndHeight = function() {
+      this.width = this.x2 - this.x1;
+      return this.height = this.y2 - this.y1;
+    };
+
     return Bounds;
 
   })();
+
+  Bounds.prototype.intersectsWith = Bounds.prototype.intersectWith;
 
   game.Bounds = Bounds;
 

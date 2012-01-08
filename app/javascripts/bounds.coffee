@@ -14,6 +14,8 @@ class Bounds
   #
   # Returns a new Bounds.
   #
+  # TODO: This should be (x1, y1, width, height) for compat with
+  # *Rect() Canvas functions
   @fromDims: (width, height, x1=0, y1=0) ->
     b = new Bounds()
     b.x1 = x1
@@ -167,11 +169,69 @@ class Bounds
     @y2 = y1 + @height
     return this
 
+  # Public: Like #anchor, except return a copy.
+  #
+  # x1 - An integer coordinate.
+  # y1 - An integer coordinate.
+  #
+  # Returns a new Bounds.
+  #
+  withAnchor: (x1, y1) ->
+    @clone().anchor(x1, y1)
+
+  replace: (bounds) ->
+    @width = bounds.width
+    @height = bounds.height
+    @x1 = bounds.x1
+    @x2 = bounds.x2
+    @y1 = bounds.y1
+    @y2 = bounds.y2
+    return this
+
   # Public: Determine whether two bounds intersect with each other.
   #
   # The intersection should be detected correctly whether these bounds are
-  # taller or shorter than the given bounds. In other words, the following cases
-  # are detected as intersections (1 is this, 2 is other):
+  # taller or shorter than the given bounds.
+  #
+  # other - An instance of Bounds.
+  #
+  # Returns true if the Bounds intersect, otherwise false.
+  #
+  # May also be called as #intersectsWith.
+  #
+  intersectWith: (other) ->
+    # b[ a{ b] a}
+    x1i = (other.x1 <= @x1 <= other.x2)
+    # a{ b[ a} b]
+    x2i = (other.x1 <= @x2 <= other.x2)
+    # a{ b[ b] a}
+    xo  = (@x1 <= other.x1 and @x2 >= other.x2)
+    #  b.==.
+    # a.~~.
+    #  b`==`
+    # a`~~`
+    y1i = (other.y1 <= @y1 <= other.y2)
+    # a.~~.
+    #  b.==.
+    # a`~~`
+    #  b`==`
+    y2i = (other.y1 <= @y2 <= other.y2)
+    # a.~~.
+    #  b.==.
+    #  b`==`
+    # a`~~`
+    yo  = (@y1 <= other.y1 and @y2 >= other.y2)
+    return (
+      (x1i or x2i or xo) and
+      (y1i or y2i or yo)
+    )
+
+  # Public: Obtain the X-coordinate of the left side of these bounds which
+  # intersects with the given incoming bounds (which are moving right).
+  #
+  # The intersection should be detected correctly whether these bounds are
+  # taller or shorter than the given bounds. In other words, the following case
+  # is detected as an intersection (1 is this, 2 is other):
   #
   #        1     2           1     2
   #             ____        ____
@@ -180,12 +240,42 @@ class Bounds
   #   => |_____:_|  |   => |  :_|_____|
   #            |____|   => |____|
   #
+  # other - An instance of Bounds.
+  #
+  # Returns an integer if the given Bounds intersect with these bounds,
+  # otherwise returns null.
+  #
+  getOuterLeftEdgeBlocking: (other) ->
+    @x1-1 if @intersectsWith(other)
+
+  # Public: Obtain the X-coordinate of the right side of these bounds which
+  # intersects with the given incoming bounds (which are moving left).
+  #
+  # The intersection should be detected correctly whether these bounds are
+  # taller or shorter than the given bounds. In other words, the following case
+  # is detected as an intersection (1 is this, 2 is other):
+  #
   #     2     1            2     1
   #    ____                    ____
   #   |   _|_____        _____|_   | <=
   #   |  | :     | <=   |     | :  | <=
   #   |  |_:_____| <=   |_____|_:  | <=
   #   |____|                  |____| <=
+  #
+  # other - An instance of Bounds.
+  #
+  # Returns an integer if the given Bounds intersect with these bounds,
+  # otherwise returns null.
+  #
+  getOuterRightEdgeBlocking: (other) ->
+    @x2+1 if @intersectsWith(other)
+
+  # Public: Obtain the Y-coordinate of the top side of these bounds which
+  # intersects with the given incoming bounds (which are moving down).
+  #
+  # The intersection should be detected correctly whether these bounds are
+  # taller or shorter than the given bounds. In other words, the following case
+  # is detected as an intersection (1 is this, 2 is other):
   #
   #        |  |               |  |
   #        v  v               v  v
@@ -194,6 +284,21 @@ class Bounds
   #      _|....|_          |_|____|_|
   #   2 | |____| |      2    |    |
   #     |________|           |____|
+  #
+  # other - An instance of Bounds.
+  #
+  # Returns an integer if the given Bounds intersect with these bounds,
+  # otherwise returns null.
+  #
+  getOuterTopEdgeBlocking: (other) ->
+    @y1-1 if @intersectsWith(other)
+
+  # Public: Obtain the Y-coordinate of the bottom side of these bounds which
+  # blocks the given incoming bounds (which are moving up).
+  #
+  # The intersection should be detected correctly whether these bounds are
+  # taller or shorter than the given bounds. In other words, the following case
+  # is detected as an intersection (1 is this, 2 is other):
   #
   #       ________           ____
   #   2  |  ____  |     2   |    |
@@ -205,61 +310,27 @@ class Bounds
   #
   # other - An instance of Bounds.
   #
-  # Returns true if the Bounds intersect, otherwise false.
-  #
-  intersectsWith: (other) ->
-    intersectsRight = (other.x1 <= @x1 <= other.x2)
-    intersectsLeft  = (other.x1 <= @x2 <= other.x2)
-    intersectsDown  = (other.y1 <= @y1 <= other.y2)
-    intersectsUp    = (other.y1 <= @y2 <= other.y2)
-    return (
-      (intersectsRight or intersectsLeft) and
-      (intersectsDown or intersectsUp)
-    )
-
-  # Public: Obtain the X-coordinate of the left side of these bounds which
-  # blocks the given incoming bounds.
-  #
-  # other - An instance of Bounds.
-  #
   # Returns an integer if the given Bounds intersect with these bounds,
   # otherwise returns null.
   #
-  getLeftEdgeBlocking: (other) ->
-    @x1 if @intersectsWith(other)
+  getOuterBottomEdgeBlocking: (other) ->
+    @y2+1 if @intersectsWith(other)
 
-  # Public: Obtain the X-coordinate of the right side of these bounds which
-  # blocks the given incoming bounds.
-  #
-  # other - An instance of Bounds.
-  #
-  # Returns an integer if the given Bounds intersect with these bounds,
-  # otherwise returns null.
-  #
-  getRightEdgeBlocking: (other) ->
-    @x2 if @intersectsWith(other)
+  getInnerLeftEdgeBlocking: (other) ->
+    @x1 if other.x1 < @x1
 
-  # Public: Obtain the Y-coordinate of the top side of these bounds which blocks
-  # the given incoming bounds.
-  #
-  # other - An instance of Bounds.
-  #
-  # Returns an integer if the given Bounds intersect with these bounds,
-  # otherwise returns null.
-  #
-  getTopEdgeBlocking: (other) ->
-    @y1 if @intersectsWith(other)
+  getInnerRightEdgeBlocking: (other) ->
+    @x2 if other.x2 > @x2
 
-  # Public: Obtain the Y-coordinate of the bottom side of these bounds which
-  # blocks the given incoming bounds.
-  #
-  # other - An instance of Bounds.
-  #
-  # Returns an integer if the given Bounds intersect with these bounds,
-  # otherwise returns null.
-  #
-  getBottomEdgeBlocking: (other) ->
-    @y2 if @intersectsWith(other)
+  getInnerTopEdgeBlocking: (other) ->
+    @y1 if other.y1 < @y1
+
+  getInnerBottomEdgeBlocking: (other) ->
+    @y2 if other.y2 > @y2
+
+  draw: (main) ->
+    ctx = main.viewport.canvas.ctx
+    ctx.strokeRect(@x1-0.5, @y1-0.5, @width, @height)
 
   # Public: Make a copy of the Bounds.
   #
@@ -281,5 +352,7 @@ class Bounds
   _calculateWidthAndHeight: ->
     @width  = @x2 - @x1
     @height = @y2 - @y1
+
+Bounds::intersectsWith = Bounds::intersectWith
 
 game.Bounds = Bounds

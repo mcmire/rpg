@@ -142,8 +142,8 @@
         x: -this.speed
       });
       fence = this.bounds.fenceInViewport;
-      if (x = this.collisionLayer.getBlockingRightEdge(nextBoundsOnMap)) {
-        this.bounds.onMap.translateBySide('x1', x + 1);
+      if (x = this.collisionLayerBoxes.getOuterRightEdgeBlocking(nextBoundsOnMap)) {
+        this.bounds.onMap.translateBySide('x1', x);
         return;
       }
       if ((this.viewport.bounds.x1 - this.speed) < 0) {
@@ -174,8 +174,8 @@
         x: this.speed
       });
       fence = this.bounds.fenceInViewport;
-      if (x = this.collisionLayer.getBlockingLeftEdge(nextBoundsOnMap)) {
-        this.bounds.onMap.translateBySide('x2', x - 1);
+      if (x = this.collisionLayerBoxes.getOuterLeftEdgeBlocking(nextBoundsOnMap)) {
+        this.bounds.onMap.translateBySide('x2', x);
         return;
       }
       mapWidth = this.map.width.pixels;
@@ -207,8 +207,8 @@
         y: -this.speed
       });
       fence = this.bounds.fenceInViewport;
-      if (y = this.collisionLayer.getBlockingBottomEdge(nextBoundsOnMap)) {
-        this.bounds.onMap.translateBySide('y1', y + 1);
+      if (y = this.collisionLayerBoxes.getOuterBottomEdgeBlocking(nextBoundsOnMap)) {
+        this.bounds.onMap.translateBySide('y1', y);
         return;
       }
       if ((this.viewport.bounds.y1 - this.speed) < 0) {
@@ -239,8 +239,8 @@
         y: this.speed
       });
       fence = this.bounds.fenceInViewport;
-      if (y = this.collisionLayer.getBlockingTopEdge(nextBoundsOnMap)) {
-        this.translateBySide('y2', y - 1);
+      if (y = this.collisionLayerBoxes.getOuterTopEdgeBlocking(nextBoundsOnMap)) {
+        this.translateBySide('y2', y);
         return;
       }
       mapHeight = this.map.height.pixels;

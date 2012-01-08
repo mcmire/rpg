@@ -115,10 +115,19 @@ playerDebug =
         @$div.detach()
 
       tick: ->
+        ###
         ticker.$div.html("""
           <b>Player on map:</b> #{ticker.main.player.bounds.onMap.inspect()}<br>
           <b>Player in viewport:</b> #{ticker.main.player.bounds.inViewport.inspect()}<br>
           <b>Viewport:</b> #{ticker.main.viewport.bounds.inspect()}
+        """)
+        ###
+        player = ticker.main.player
+        enemy = ticker.main.enemy
+        ticker.$div.html("""
+          <b>Player on map:</b> #{player.bounds.onMap.inspect()}<br>
+          <b>Enemy on map:</b> #{enemy.bounds.onMap.inspect()}<br>
+          <b>Player collides:</b> #{if player.collisionLayerBoxes.get(2).intersectsWith(player.bounds.onMap) then 'yes' else 'no'}
         """)
 
 #-------------------------------------------------------------------------------
@@ -170,14 +179,14 @@ main.init = ->
 
 main._addMobs = ->
   @player = new Player(this)
-  @addEntity(@player, false)
+  @addEntity(@player)
 
   @enemy = new Enemy(this)
   @addEntity(@enemy)
 
 main.addEntity = (entity, addToCollisionLayer=true) ->
   @entities.push(entity)
-  @collisionLayer.add(entity.bounds.onMap) if addToCollisionLayer
+  @collisionLayer.add(entity) if addToCollisionLayer
   entity.onAdded()
 
 main.destroy = ->
@@ -294,6 +303,14 @@ main.createIntervalTimer = (arg, fn) ->
       fn(df, dt)
       t0 = (new Date()).getTime()
       f0 = main.numDraws
+
+# TODO: Move this to the Grob class
+main.mapBoundsToViewportBounds = (mapBounds) ->
+  # take the bounds.onMap and map them to viewport bounds
+  vb = @viewport.bounds
+  x1 = mapBounds.x1 - vb.x1
+  y1 = mapBounds.y1 - vb.y1
+  mapBounds.withAnchor(x1, y1)
 
 main._reportingTime = (name, fn) ->
   t = (new Date()).getTime()

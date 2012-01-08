@@ -1,7 +1,9 @@
-{Bounds} = game = window.game
+{Bounds, CollisionBox} = game = window.game
 
 class game.Mob
   @extended = ->
+    # Create these when the Mob class is extended instead in the body of the Mob
+    # class because otherwise @states will be shared across all subclasses
     @states = {}
     @addState = (name, args) ->
       state = {}
@@ -19,7 +21,7 @@ class game.Mob
       @states[name] = state
 
   constructor: (@main) ->
-    {@viewport, @map, @collisionLayer} = @main
+    {@viewport, @map} = @main
 
     @isLoaded = false
 
@@ -39,6 +41,9 @@ class game.Mob
     @bounds.onMap = @lastBounds.onMap = Bounds.fromDims(@width, @height)
     @bounds.inViewport = @lastBounds.inViewport = Bounds.fromDims(@width, @height)
 
+    @box = new CollisionBox(@bounds.onMap)
+    @collisionLayerBoxes = @main.collisionLayer.collisionBoxes.without(@box)
+
     @initFence()
     @initTopLeftBoundsOnMap()
     @initTopLeftBoundsInViewport()
@@ -50,12 +55,7 @@ class game.Mob
     @_recalculateViewportBounds()
 
   _recalculateViewportBounds: ->
-    # take the bounds.onMap and map them to viewport bounds
-    bom = @bounds.onMap
-    vb = @main.viewport.bounds
-    x1 = bom.x1 - vb.x1
-    y1 = bom.y1 - vb.y1
-    @bounds.inViewport.anchor(x1, y1)
+    @bounds.inViewport = @main.mapBoundsToViewportBounds(@bounds.onMap)
 
   initFence: ->
     @bounds.fenceOnMap = Bounds.fromDims(
@@ -78,10 +78,11 @@ class game.Mob
     # does nothing by default
 
   setState: (name) ->
+    # console.log "Setting state to #{name}"
     @state = @constructor.states[name]
     throw new Error "Unknown state '#{name}'!" if not @state
     @currentFrame = 0
-    @numFramesDrawn = 0
+    @numSeqFrameDraws = 0
 
   tick: ->
     @predraw()
@@ -119,7 +120,7 @@ class game.Mob
     ctx.restore()
 
   postdraw: ->
-    if (@numFramesDrawn % @state.frameDuration) is 0
+    if (@numSeqFrameDraws % @state.frameDuration) is 0
       @currentFrame++
 
     if @currentFrame is @state.numFrames
@@ -133,7 +134,7 @@ class game.Mob
 
     @lastBounds.inViewport = @bounds.inViewport.clone()
 
-    @numFramesDrawn++
+    @numSeqFrameDraws++
 
   # Public: Move the viewport and map bounds of the player.
   #

@@ -123,9 +123,9 @@ class Player extends Mob
     fence = @bounds.fenceInViewport
 
     # Would the player hit the right edge of a collision box?
-    if x = @collisionLayer.getBlockingRightEdge(nextBoundsOnMap)
-      # Yes: move it just at the edge but one pixel away
-      @bounds.onMap.translateBySide('x1', x+1)
+    if x = @collisionLayerBoxes.getOuterRightEdgeBlocking(nextBoundsOnMap)
+      # Yes: move it just at the edge so it no longer collides
+      @bounds.onMap.translateBySide('x1', x)
       return
 
     # Would the viewport move beyond the left edge of the map?
@@ -190,9 +190,9 @@ class Player extends Mob
     fence = @bounds.fenceInViewport
 
     # Would the player hit the left edge of a collision box?
-    if x = @collisionLayer.getBlockingLeftEdge(nextBoundsOnMap)
-      # Yes: move it just at the edge but one pixel away
-      @bounds.onMap.translateBySide('x2', x-1)
+    if x = @collisionLayerBoxes.getOuterLeftEdgeBlocking(nextBoundsOnMap)
+      # Yes: move it just at the edge so it no longer collides
+      @bounds.onMap.translateBySide('x2', x)
       return
 
     mapWidth = @map.width.pixels
@@ -227,8 +227,9 @@ class Player extends Mob
     fence = @bounds.fenceInViewport
 
     # Would the player hit the bottom edge of a collision box?
-    if y = @collisionLayer.getBlockingBottomEdge(nextBoundsOnMap)
-      @bounds.onMap.translateBySide('y1', y+1)
+    if y = @collisionLayerBoxes.getOuterBottomEdgeBlocking(nextBoundsOnMap)
+      # Yes: move it just at the edge so it no longer collides
+      @bounds.onMap.translateBySide('y1', y)
       return
 
     # Would the viewport move beyond the top edge of the map?
@@ -261,9 +262,9 @@ class Player extends Mob
     fence = @bounds.fenceInViewport
 
     # Would the player hit the top edge of a collision box?
-    if y = @collisionLayer.getBlockingTopEdge(nextBoundsOnMap)
-      # Yes: move it just at the edge but one pixel away
-      @translateBySide('y2', y-1)
+    if y = @collisionLayerBoxes.getOuterTopEdgeBlocking(nextBoundsOnMap)
+      # Yes: move it just at the edge so it no longer collides
+      @translateBySide('y2', y)
       return
 
     mapHeight = @map.height.pixels

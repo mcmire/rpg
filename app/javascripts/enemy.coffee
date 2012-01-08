@@ -20,11 +20,11 @@ class game.Enemy extends Mob
     move: true)
   @addState('downToRight',
     frames: [0,2],
-    duration: 16,
+    duration: 24,
     then: 'moveRight')
   @addState('downToLeft',
     frames: [0,3],
-    duration: 16,
+    duration: 24,
     then: 'moveLeft')
   @addState('moveRight',
     frames: [4,5],
@@ -33,11 +33,11 @@ class game.Enemy extends Mob
     move: true)
   @addState('rightToUp',
     frames: [4,6],
-    duration: 16,
+    duration: 24,
     then: 'moveUp')
   @addState('rightToDown',
     frames: [4,7],
-    duration: 16,
+    duration: 24,
     then: 'moveDown')
   @addState('moveLeft',
     frames: [8,9],
@@ -46,11 +46,11 @@ class game.Enemy extends Mob
     move: true)
   @addState('leftToDown',
     frames: [8,10],
-    duration: 16,
+    duration: 24,
     then: 'moveDown')
   @addState('leftToUp',
     frames: [8,11],
-    duration: 16,
+    duration: 24,
     then: 'moveUp')
   @addState('moveUp',
     frames: [12,13],
@@ -59,23 +59,22 @@ class game.Enemy extends Mob
     move: true)
   @addState('upToLeft',
     frames: [12,14],
-    duration: 16,
+    duration: 24,
     then: 'moveLeft')
   @addState('upToRight',
     frames: [12,15],
-    duration: 16,
+    duration: 24,
     then: 'moveRight')
 
   constructor: ->
     super
-    # @changeToWandering()
     @setState('moveRight')
-    # @direction = $.randomItem(DIRECTIONS)
-    # @directionIndex = 0
+    @_directionChangeNeeded = false
+    @_chooseSequenceLength()
 
   # override
   initFence: ->
-    @bounds.fenceOnMap = Bounds.fromDims(200, 200, 100, 100)
+    @bounds.fenceOnMap = Bounds.fromDims(300, 300, 100, 100)
 
   # override
   initTopLeftBoundsOnMap: ->
@@ -85,102 +84,120 @@ class game.Enemy extends Mob
       y1 = $.randomInt(self.bounds.fenceOnMap.y1, self.bounds.fenceOnMap.y2)
       self.bounds.onMap.anchor(x1, y1)
     # poor man's do-while :(
-    fn(); fn() while @collisionLayer.isIntersection(@bounds.onMap)
+    fn(); fn() while @collisionLayerBoxes.intersectsWith(@bounds.onMap)
 
-  # changeToWandering: ->
-  #   @state = 'wandering'
-  #   @numSteps = 0
-  #   @stepsToWalk = $.randomInt(10)
-
-  postdraw: ->
-    super
-
-    # # can we keep the current state?
-    # if bounds = @_nextValidMove()
-    #   # yes, update position
-    #   @bounds.onMap = bounds
-    #   @_recalculateViewportBounds()
-    # else
-    #   # no, so change direction
-    #   possibleDirections = Array.subtract(DIRECTIONS, @direction)
-    #   direction = @_chooseValidDirectionFrom(possibleDirections)
-    #   @_transitionTo(direction)
-
-    if @state.doesMove and @numFramesDrawn > 20
-      i = (DIRECTIONS.indexOf(@direction) + 1) % DIRECTIONS.length
-      nextDirection = $.capitalize DIRECTIONS[i]
-      @setState("#{@direction}To#{nextDirection}")
-
-  moveUp: ->
-    @direction = 'up'
-    @bounds.onMap.translate(y: -@speed)
-
-  moveDown: ->
-    @direction = 'down'
-    @bounds.onMap.translate(y: +@speed)
-
+  # Internal: Move the position of the entity leftward, keeping the entity from
+  # moving beyond the edges of the map and intersecting solid parts of the map
+  # and other entities moving about.
+  #
   moveLeft: ->
     @direction = 'left'
-    @bounds.onMap.translate(x: -@speed)
 
+    nextBoundsOnMap = @bounds.onMap.withTranslation(x: -@speed)
+
+    # Would the player hit the right edge of a collision box or the left edge of
+    # the fence?
+    if (
+      (x = @collisionLayerBoxes.getOuterRightEdgeBlocking(nextBoundsOnMap)) or
+      (x = @bounds.fenceOnMap.getInnerLeftEdgeBlocking(nextBoundsOnMap))
+    )
+      # Yes: move it just at the edge so it no longer collides
+      @bounds.onMap.translateBySide('x1', x)
+      # Also choose another direction since we can't go any further
+      @_directionChangeNeeded = true
+    else
+      # No: Move it normally
+      @bounds.onMap.replace(nextBoundsOnMap)
+
+  # Internal: Move the position of the entity rightward, keeping the entity from
+  # moving beyond the edges of the map and intersecting solid parts of the map
+  # and other entities moving about.
+  #
   moveRight: ->
     @direction = 'right'
-    @bounds.onMap.translate(x: +@speed)
 
-  #------------
+    nextBoundsOnMap = @bounds.onMap.withTranslation(x: +@speed)
 
-  ## TODO
-
-  _chooseValidDirectionFrom: (directions) ->
-    validDirections = $.every directions, (dir) -> !!@_nextValidMove(dir)
-    $.randomItem(validDirections)
-
-  _move: (direction) ->
-    [dx, dy] = [0, 0]
-    switch direction
-      when 'right'
-        axis = 'x'
-        dx = +@speed
-      when 'left'
-        axis = 'x'
-        dx = -@speed
-      when 'up'
-        axis = 'y'
-        dy = -@speed
-      when 'down'
-        axis = 'y'
-        dy = +@speed
-    @bounds.onMap.withTranslation(x: dx, y: dy)
-    @spriteSheet.useSequence("move_#{direction}")
-
-  _nextValidMove: (direction) ->
-    [dx, dy] = [0, 0]
-    switch direction
-      when 'right'
-        axis = 'x'
-        dx = +@speed
-      when 'left'
-        axis = 'x'
-        dx = -@speed
-      when 'up'
-        axis = 'y'
-        dy = -@speed
-      when 'down'
-        axis = 'y'
-        dy = +@speed
-
-    nextBoundsOnMap = @bounds.onMap.withTranslation(x: dx, y: dy)
-    offset = (
-      # hey, it rhymes
-      @collisionLayer.offsetToNotCollide(direction, nextBoundsOnMap) or
-      @bounds.onMap.offsetToKeepInside(direction, nextBoundsOnMap)
+    # Would the player hit the left edge of a collision box or the right edge
+    # of the fence?
+    if (
+      (x = @collisionLayerBoxes.getOuterLeftEdgeBlocking(nextBoundsOnMap)) or
+      (x = @bounds.fenceOnMap.getInnerRightEdgeBlocking(nextBoundsOnMap))
     )
-    return nextBoundsOnMap.withTranslation(axis, -offset)
+      # Yes: move it just at the edge so it no longer collides
+      @bounds.onMap.translateBySide('x2', x)
+      # Also choose another direction since we can't go any further
+      @_directionChangeNeeded = true
+    else
+      # No: Move it normally
+      @bounds.onMap.replace(nextBoundsOnMap)
 
-  _transitionTo: (direction) ->
-    @spriteSheet.useSequence("#{@direction}-to-#{direction}")
+  # Internal: Move the position of the entity upward, keeping the entity from
+  # moving beyond the edges of the map and intersecting solid parts of the map
+  # and other entities moving about.
+  #
+  moveUp: ->
+    @direction = 'up'
 
-  _outsideBoundsOnMap: (bounds) ->
-    bounds.x1 < @bounds.onMap.x1 or bounds.x2 > @bounds.onMap.x2 or \
-    bounds.y1 < @bounds.onMap.y1 or bounds.y2 > @bounds.onMap.y2
+    nextBoundsOnMap = @bounds.onMap.withTranslation(y: -@speed)
 
+    # Would the player hit the bottom edge of a collision box or the top edge of
+    # the fence?
+    if (
+      (y = @collisionLayerBoxes.getOuterBottomEdgeBlocking(nextBoundsOnMap)) or
+      (y = @bounds.fenceOnMap.getInnerTopEdgeBlocking(nextBoundsOnMap))
+    )
+      # Yes: move it just at the edge so it no longer collides
+      @bounds.onMap.translateBySide('y1', y)
+      # Also choose another direction since we can't go any further
+      @_directionChangeNeeded = true
+    else
+      # No: Move it normally
+      @bounds.onMap.replace(nextBoundsOnMap)
+
+  # Internal: Move the position of the entity downward, keeping the entity from
+  # moving beyond the edges of the map and intersecting solid parts of the map
+  # and other entities moving about.
+  #
+  moveDown: ->
+    @direction = 'down'
+
+    nextBoundsOnMap = @bounds.onMap.withTranslation(y: +@speed)
+
+    # Would the player hit the top edge of a collision box or the bottom edge of
+    # the fence?
+    if (
+      (y = @collisionLayerBoxes.getOuterTopEdgeBlocking(nextBoundsOnMap)) or
+      (y = @bounds.fenceOnMap.getInnerBottomEdgeBlocking(nextBoundsOnMap))
+    )
+      # Yes: move it just at the edge so it no longer collides
+      @bounds.onMap.translateBySide('y2', y)
+      # Also choose another direction since we can't go any further
+      @_directionChangeNeeded = true
+    else
+      # No: Move it normally
+      @bounds.onMap.replace(nextBoundsOnMap)
+
+  # draw: ->
+  #   super
+  #   fenceInViewport = @main.mapBoundsToViewportBounds(@bounds.fenceOnMap)
+  #   fenceInViewport.draw(@main)
+
+  # override
+  postdraw: ->
+    if @_directionChangeNeeded or @numSeqFrameDraws is @sequenceLength
+      @_directionChangeNeeded = false
+      @_chooseAnotherDirection()
+    else
+      super
+
+  _chooseAnotherDirection: ->
+    validDirections = switch @direction
+      when 'up', 'down'    then ['left', 'right']
+      when 'left', 'right' then ['up', 'down']
+    direction = $.capitalize $.randomItem(validDirections)
+    @setState("#{@direction}To#{direction}")
+    @_chooseSequenceLength()
+
+  _chooseSequenceLength: ->
+    @sequenceLength = $.randomInt(40, 80)

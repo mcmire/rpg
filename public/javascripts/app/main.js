@@ -1,86 +1,134 @@
 (function() {
-  var Enemy, EventHelpers, Player, collisionLayer, fpsReporter, game, keyboard, main, ticker, viewport, _ref;
+  var Enemy, EventHelpers, IntervalTicker, Player, Ticker, collisionLayer, fpsReporter, game, keyboard, main, mainTicker, playerDebug, viewport, _ref;
 
-  _ref = game = window.game, keyboard = _ref.keyboard, EventHelpers = _ref.EventHelpers, viewport = _ref.viewport, collisionLayer = _ref.collisionLayer, fpsReporter = _ref.fpsReporter, Player = _ref.Player, Enemy = _ref.Enemy;
+  _ref = game = window.game, keyboard = _ref.keyboard, EventHelpers = _ref.EventHelpers, viewport = _ref.viewport, collisionLayer = _ref.collisionLayer, Ticker = _ref.Ticker, IntervalTicker = _ref.IntervalTicker, Player = _ref.Player, Enemy = _ref.Enemy;
 
-  ticker = {};
-
-  ticker.init = function(main) {
-    this.main = main;
-    this.tickInterval = 1000 / this.main.frameRate;
-    this.throttledDrawer = this.main.createIntervalTimer(this.tickInterval, function(df, dt) {
-      return ticker.draw();
-    });
-    return this;
+  mainTicker = {
+    init: function(main) {
+      var ticker;
+      return ticker = Ticker.create(main, {
+        _init: function() {
+          var self;
+          self = this;
+          this.tickInterval = 1000 / this.main.frameRate;
+          return this.throttledDraw = this.main.createIntervalTimer(this.tickInterval, function(df, dt) {
+            return self.draw();
+          });
+        },
+        _start: function() {
+          return this.tick();
+        },
+        _stop: function() {
+          if (this.timer) {
+            if (this.main.animMethod === 'setTimeout') {
+              window.clearTimeout(this.timer);
+            } else {
+              window.cancelRequestAnimFrame(this.timer);
+            }
+            return this.timer = null;
+          }
+        },
+        tick: function() {
+          var msDrawTime, t, t2;
+          t = (new Date()).getTime();
+          if (ticker.main.debug) {
+            ticker.msSinceLastDraw = ticker.lastTickTime ? t - ticker.lastTickTime : 0;
+            console.log("msSinceLastDraw: " + ticker.msSinceLastDraw);
+          }
+          if (ticker.main.animMethod === 'setTimeout') {
+            ticker.draw();
+          } else {
+            ticker.throttledDraw();
+          }
+          if (ticker.main.debug) {
+            t2 = (new Date()).getTime();
+            msDrawTime = t2 - t;
+            ticker.lastTickTime = t;
+            console.log("msDrawTime: " + msDrawTime);
+          }
+          if ((ticker.main.numTicks % 100) === 0) keyboard.clearStuckKeys(t);
+          if (ticker.main.animMethod === 'setTimeout') {
+            ticker.timer = window.setTimeout(ticker.tick, ticker.tickInterval);
+          } else {
+            ticker.timer = window.requestAnimFrame(ticker.tick, viewport.canvas.element);
+          }
+          return ticker.main.numTicks++;
+        },
+        draw: function() {
+          var entity, _i, _len, _ref2;
+          this.main.viewport.draw();
+          _ref2 = this.main.entities;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            entity = _ref2[_i];
+            entity.tick();
+          }
+          return this.main.numDraws++;
+        }
+      });
+    }
   };
 
-  ticker.start = function() {
-    if (this.isRunning) return;
-    this.isRunning = true;
-    this.tick();
-    return this;
+  fpsReporter = {
+    init: function(main) {
+      var ticker;
+      return ticker = IntervalTicker.create(main, {
+        _init: function() {
+          IntervalTicker.prototype._init.apply(this, arguments);
+          this.tickInterval = 1000;
+          this.tickFunction = this.main.createIntervalTimer(true, this.draw);
+          return this.$div = $('<div id="fps-reporter" />');
+        },
+        _destroy: function() {
+          return this.detach();
+        },
+        attachTo: function(container) {
+          return $(container).append(this.$div);
+        },
+        detach: function() {
+          return this.$div.detach();
+        },
+        draw: function(df, dt) {
+          var fps;
+          fps = ((df / dt) * 1000).toFixed(1);
+          return ticker.$div.text("" + fps + " FPS");
+        }
+      });
+    }
   };
 
-  ticker.stop = function() {
-    if (!this.isRunning) return;
-    this.isRunning = false;
-    if (this.timer) {
-      if (this.main.animMethod === 'setTimeout') {
-        window.clearTimeout(this.timer);
-      } else {
-        window.cancelRequestAnimFrame(this.timer);
-      }
-      this.timer = null;
+  playerDebug = {
+    init: function(main) {
+      var ticker;
+      return ticker = IntervalTicker.create(main, {
+        _init: function() {
+          IntervalTicker.prototype._init.apply(this, arguments);
+          this.tickInterval = 1000;
+          return this.$div = $('<div style="margin-top: 10px"/>');
+        },
+        _destroy: function() {
+          return this.detach();
+        },
+        attachTo: function(container) {
+          return $(container).append(this.$div);
+        },
+        detach: function() {
+          return this.$div.detach();
+        },
+        tick: function() {
+          /*
+                  ticker.$div.html("""
+                    <b>Player on map:</b> #{ticker.main.player.bounds.onMap.inspect()}<br>
+                    <b>Player in viewport:</b> #{ticker.main.player.bounds.inViewport.inspect()}<br>
+                    <b>Viewport:</b> #{ticker.main.viewport.bounds.inspect()}
+                  """)
+          */
+          var enemy, player;
+          player = ticker.main.player;
+          enemy = ticker.main.enemy;
+          return ticker.$div.html("<b>Player on map:</b> " + (player.bounds.onMap.inspect()) + "<br>\n<b>Enemy on map:</b> " + (enemy.bounds.onMap.inspect()) + "<br>\n<b>Player collides:</b> " + (player.collisionLayerBoxes.get(2).intersectsWith(player.bounds.onMap) ? 'yes' : 'no'));
+        }
+      });
     }
-    return this;
-  };
-
-  ticker.suspend = function() {
-    this.wasRunning = this.isRunning;
-    return this.stop();
-  };
-
-  ticker.resume = function() {
-    if (this.wasRunning) return this.start();
-  };
-
-  ticker.tick = function() {
-    var msDrawTime, t, t2;
-    if (!ticker.isRunning) return;
-    t = (new Date()).getTime();
-    if (ticker.main.debug) {
-      ticker.msSinceLastDraw = ticker.lastTickTime ? t - ticker.lastTickTime : 0;
-      console.log("msSinceLastDraw: " + ticker.msSinceLastDraw);
-    }
-    if (ticker.main.animMethod === 'setTimeout') {
-      ticker.draw();
-    } else {
-      ticker.throttledDrawer();
-    }
-    if (ticker.main.debug) {
-      t2 = (new Date()).getTime();
-      msDrawTime = t2 - t;
-      ticker.lastTickTime = t;
-      console.log("msDrawTime: " + msDrawTime);
-    }
-    if ((ticker.main.numTicks % 100) === 0) keyboard.clearStuckKeys(t);
-    if (ticker.main.animMethod === 'setTimeout') {
-      ticker.timer = window.setTimeout(ticker.tick, ticker.tickInterval);
-    } else {
-      ticker.timer = window.requestAnimFrame(ticker.tick, viewport.canvas.element);
-    }
-    return ticker.main.numTicks++;
-  };
-
-  ticker.draw = function() {
-    var entity, _i, _len, _ref2;
-    this.main.viewport.draw();
-    _ref2 = this.main.entities;
-    for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-      entity = _ref2[_i];
-      entity.tick();
-    }
-    return this.main.numDraws++;
   };
 
   main = game.util.module("game.main", EventHelpers);
@@ -116,10 +164,12 @@
       this.viewport = viewport.init(this);
       this.collisionLayer = collisionLayer.init(this);
       this._addMobs();
-      this.ticker = ticker.init(this);
-      this.timers.push(this.ticker);
+      this.mainTicker = mainTicker.init(this);
+      this.timers.push(this.mainTicker);
       this.fpsReporter = fpsReporter.init(this);
       this.timers.push(this.fpsReporter);
+      this.playerDebug = playerDebug.init(this);
+      this.timers.push(this.playerDebug);
       this.isInit = true;
     }
     return this;
@@ -127,7 +177,7 @@
 
   main._addMobs = function() {
     this.player = new Player(this);
-    this.addEntity(this.player, false);
+    this.addEntity(this.player);
     this.enemy = new Enemy(this);
     return this.addEntity(this.enemy);
   };
@@ -135,18 +185,23 @@
   main.addEntity = function(entity, addToCollisionLayer) {
     if (addToCollisionLayer == null) addToCollisionLayer = true;
     this.entities.push(entity);
-    if (addToCollisionLayer) this.collisionLayer.add(entity.bounds.onMap);
+    if (addToCollisionLayer) this.collisionLayer.add(entity);
     return entity.onAdded();
   };
 
   main.destroy = function() {
+    var timer, _i, _len, _ref2;
     if (this.isInit) {
       this.removeEvents();
       this.detach();
       keyboard.destroy();
       viewport.destroy();
-      this.fpsReporter.destroy();
       this.collisionLayer.destroy();
+      _ref2 = this.timers;
+      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+        timer = _ref2[_i];
+        timer.destroy();
+      }
       this.stop();
       this.reset();
       this.isInit = false;
@@ -186,15 +241,17 @@
 
   main.attachTo = function(element) {
     viewport.attachTo(element);
-    this.fpsReporter.attachTo(viewport.$element);
     this.collisionLayer.attachTo(viewport.$element);
+    this.fpsReporter.attachTo(viewport.$element);
+    this.playerDebug.attachTo(document.body);
     return this;
   };
 
   main.detach = function() {
     viewport.detach();
-    this.fpsReporter.detach();
     this.collisionLayer.detach();
+    this.fpsReporter.detach();
+    this.playerDebug.detach();
     return this;
   };
 
@@ -309,6 +366,14 @@
         return f0 = main.numDraws;
       }
     };
+  };
+
+  main.mapBoundsToViewportBounds = function(mapBounds) {
+    var vb, x1, y1;
+    vb = this.viewport.bounds;
+    x1 = mapBounds.x1 - vb.x1;
+    y1 = mapBounds.y1 - vb.y1;
+    return mapBounds.withAnchor(x1, y1);
   };
 
   main._reportingTime = function(name, fn) {
