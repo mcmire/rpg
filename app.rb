@@ -12,17 +12,22 @@ helpers do
       vendor/bowser.js
       vendor/request_anim_shims.js
       app/ender_ext.js
-      app/util.js
-      app/event_helpers.js
+      app/metaobj.js
+      app/roles.js
+      app/plug.js
       app/canvas.js
       app/keyboard.js
       app/bounds.js
+      app/grob.js
       app/collision_layer.js
+      app/ticker.js
+      app/fps_reporter.js
+      app/player_debugger.js
       app/viewport.js
       app/mob.js
       app/player.js
       app/enemy.js
-      app/ticker.js
+      app/core.js
       app/main.js
     )
     html = ""

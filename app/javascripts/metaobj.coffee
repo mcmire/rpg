@@ -4,26 +4,26 @@ g = window.game ||= {}
 
 _fnContainsSuper = (fn) -> /\b_super\b/.test(fn)
 
-_wrap = (k, fn, val, cons) ->
+_wrap = (k, fn, val) ->
   return ->
-    if cons and not this instanceof cons
-      # Support both `new Foo(...)` and `Foo.init()` syntaxes, so objects can be
-      # created metaprogrammatically
-      # http://ejohn.org/blog/simple-class-instantiation/
-      return new cons(arguments)
-    else
-      tmp = @_super
-      @_super = val
-      ret = fn.apply(this, arguments)
-      @_super = tmp
-      return ret
+    tmp = @_super
+    @_super = val
+    ret = fn.apply(this, arguments)
+    @_super = tmp
+    return ret
 
-_extend = (base, ext, _super=base, cons) ->
+# _extend([<true|false>], base, ext, [_super], [cons])
+_extend = (args...) ->
+  includeRoles = true
+  if typeof args[0] is 'boolean'
+    includeRoles = args.shift()
+  [base, ext, _super, cons] = args
+  _super ?= base
+  cons ?= base
+
   for own k of ext
-    continue if k is '__name__'
-    if typeof ext[k] is 'function' and k is 'init'
-      base[k] = _wrap(k, ext[k], _super[k], cons)
-    else if typeof ext[k] is 'function' and _fnContainsSuper(ext[k])
+    continue if /^__/.test(k)
+    if typeof ext[k] is 'function' and _fnContainsSuper(ext[k])
       if typeof _super[k] is 'function'
         base[k] = _wrap(k, ext[k], _super[k])
       else
@@ -37,32 +37,25 @@ _extend = (base, ext, _super=base, cons) ->
         # would not do for modules, for which (unlike classes) _super may
         # actually exist depending on where the module is mixed in (since a
         # module can be mixed in anywhere).
-        # TODO: This will not work if super is called multiple times in a
-        # subclass
-        ###
-        src = ext[k].toString()
-        if match = /function[ ]?\((\w*)\) {((?:.|\n)+)}/m.exec(src)
-          args = match[1]
-          body = match[2]
-          prebody = """
-if (this._super === arguments.callee) {
-  this._super = function() {
-    // throw new Error('no superclass found')
-  };
-}
-"""
-          body = prebody + body
-          base[k] = new Function(args, body)
-        ###
+        #
+        # TODO: This may not work if super is called multiple times in a
+        # subclass, investigate
+        #
         base[k] = _wrap(k, ext[k], ->)
-        ###
-        else
-          base[k] = ext[k]
-        ###
     else if $.v.is.arr(ext[k]) or $.v.is.obj(ext[k])
       base[k] = $.clone(ext[k])
     else
       base[k] = ext[k]
+
+  if base.__name__ is 'game.main'
+    throw 'ok great'
+
+  # If `base` is being extended with one of our modules, then add the name of
+  # the module to `base's` list of included modules
+  if base.__roles__? and ext.__name__?
+    base.__roles__[ext.__name__] = 1
+
+  return base
 
 #---
 
@@ -167,6 +160,9 @@ Class::destroy = ->
 #   Mammal.animals.length  #=> 1
 #   Person.animals.length  #=> 1
 #
+#---
+# TODO: Rename to Class.create
+#
 Class.extend = (args...) ->
   name = args.shift() if typeof args[0] is 'string'
   classdef = args.pop()
@@ -174,9 +170,10 @@ Class.extend = (args...) ->
 
   if typeof classdef is 'function'
     classdef = {init: classdef}
-  if classdef.statics?
-    statics = classdef.statics
-    members = classdef.members
+  if classdef.statics? or classdef.members? or classdef.roles?
+    statics = classdef.statics ? {}
+    members = classdef.members ? {}
+    $.extend members, classdef.roles if classdef.roles?
   else
     statics = {}
     members = classdef
@@ -197,9 +194,9 @@ Class.extend = (args...) ->
   # dummy object in the prototype chain which inherits from the parent
   # prototype.
   noop = ->
-  noop.name = 'noop'
+  noop.__name__ = 'noop'  # simply for debugging purposes
+  noop::constructor = parentClass  # ditto
   noop.prototype = parentProto
-  noop.prototype.constructor = parentClass
   parentInstance = new noop()
 
   # Generate a child class
@@ -207,7 +204,7 @@ Class.extend = (args...) ->
     # The init method actually does the real work
     # the "args.callee" will happen if called as Foo() instead of new Foo()
     # http://ejohn.org/blog/simple-class-instantiation/
-    @init.apply(this, if args.callee then args else arguments)
+    @init.apply(this, if args and args.callee then args else arguments)
     return this
 
   # Copy all of the static properties of the parent class to the child class
@@ -215,57 +212,79 @@ Class.extend = (args...) ->
   # overridden if they get inherited from a superclass
   childClass[k] = v for own k, v of parentClass
 
+  childClass.init = ->
+    # Support both `new Foo(...)` and `Foo.init()` syntaxes, so objects can be
+    # created metaprogrammatically
+    # http://ejohn.org/blog/simple-class-instantiation/
+    return new childClass(arguments)
+
   # Missing member properties of the child instance will inherit from the member
   # properties within the parent class (which is proxied by a 'noop' instance)
   childClass.prototype = parentInstance
   # Ensure that instances of the child class report the correct constructor
   # (otherwise it will be set to the 'noop' constructor)
-  childClass.prototype.constructor = childClass
+  childClass::constructor = childClass
   # Store the name for debugging purposes
   childClass.__name__ = name
   # Store a reference to the parent class just for debugging purposes
   childClass.superclass = parentClass
+  # Initialize roles hash, which will be written to when this class is extended
+  childClass.__roles__ = {}
   # And then make the child class subclassable
   childClass.extend = arguments.callee
 
   # Add some convenience methods for adding static and member properties
 
-  childClass.static = (name, fn) ->
-    obj = {}; obj[name] = fn
-    @statics(obj)
-    return this
-  childClass.statics = (obj) ->
+  childClass.static =
+  childClass.statics = (obj, fn) ->
+    if typeof obj is 'string'
+      name = obj
+      obj = {}; obj[name] = fn
     # Copy `obj` to `this` (or, `childClass`) with `parentClass` as _super
     # reference
-    _extend(this, obj, parentClass)
+    _extend(this, obj, parentClass, childClass)
     return this
 
-  childClass.member = (name, fn) ->
-    obj = {}; obj[name] = fn
-    @members(obj)
-    return this
-  childClass.members = (obj) ->
+  childClass.role =
+  childClass.roles =
+  childClass.does =  # perl 6
+  childClass.member =
+  childClass.members = (objs...) ->
+    if typeof objs[0] is 'string'
+      [name, fn] = objs
+      obj = {}; obj[name] = fn
+      objs = [obj]
     # Copy `obj` to `parentInstance` (or, childClass.prototype) with
     # `parentProto` as _super reference
-    _extend(parentInstance, obj, parentProto)
+    _extend(parentInstance, obj, parentProto, childClass) for obj in objs
     return this
 
-  childClass.prototype.method = (name, fn) ->
-    obj = {}; obj[name] = fn
-    @obj(obj)
-    return this
-  childClass.prototype.methods = (obj) ->
+  childClass::role =
+  childClass::roles =
+  childClass::does =  # perl 6
+  childClass::method =
+  childClass::methods = (objs...) ->
+    if typeof objs[0] is 'string'
+      [name, fn] = objs
+      obj = {}; obj[name] = fn
+      objs = [obj]
     # Copy `obj` to this (or, childClass.prototype) with `parentProto` as
     # _super reference
-    _extend(this, obj, parentProto, childClass)
+    _extend(this, obj, parentProto, childClass) for obj in objs
     return this
+
+  childClass.can = (roles...) ->
+    (return false if not @__roles__[role]) for role in roles
+    return true
+  childClass::can = (roles...) ->
+    (return false if not @constructor.__roles__[role]) for role in roles
+    return true
 
   # Add the specified static properties
   childClass.statics(statics) if statics
   # Add the specified member properties
+  childClass.members(mixin) for mixin in mixins
   childClass.members(members)
-  # Add any extra member properties
-  childClass.members(obj) for obj in mixins
 
   return childClass
 
@@ -304,21 +323,40 @@ Class.extend = (args...) ->
 #
 module = (name, mixins...) ->
   mod = {}
+
   mod.__name__ = name
+  mod.__roles__ = {}
+
+  mod.method =
+  mod.methods =
+  mod.role =
+  mod.roles =
+  mod.does =  # perl 6
   mod.extend = (mixins...) ->
-    _extend this, mixin for mixin in mixins
-  # if you are adding a method that already exists, then _super will be set to
-  # that method - this is a bit weird because you can "subclass" yourself by
-  # extending your module with a method and then extend it again with a method
-  # of the same name, but this feature is useful so I don't have a problem with it
-  mod.methods = mod.extend
-  mod.method = (name, fn) ->
-    methods = {}; methods[name] = fn
-    @methods(methods)
+    includeRoles = true
+    if typeof mixins[0] is 'boolean'
+      includeRoles = mixins.shift()
+    if typeof mixins[0] is 'string'
+      [name, fn] = mixins
+      mixin = {}; mixin[name] = fn
+      mixins = [mixin]
+    # if you are adding a method that already exists, then here _super will be
+    # set to that method - this is a bit weird because you can "subclass"
+    # yourself by extending your module with a method and then extend it again
+    # with a method of the same name, but this feature is useful so I don't have
+    # a problem with it
+    _extend includeRoles, this, mixin for mixin in mixins
+    return this
+
+  mod.can = (roles...) ->
+    return false if not @__roles__[role] for role in roles
+    return true
 
   mixin = {}
-  mod.extend.apply(mixin, mixins)
-  {init, reset, destroy} = mixin
+  mod.extend.apply(mixin, [false].concat(mixins))
+  init = mixin.init ? ->
+  reset = mixin.reset ? ->
+  destroy = mixin.destroy ? ->
   delete mixin.init
   delete mixin.reset
   delete mixin.destroy
@@ -326,17 +364,17 @@ module = (name, mixins...) ->
   mod.init = ->
     unless @isInit
       @reset()
-      init?.apply(this, arguments)
+      init.apply(this, arguments)
       @isInit = true
     return this
 
   mod.reset = ->
-    reset?.apply(this, arguments)
+    reset.apply(this, arguments)
     return this
 
   mod.destroy = ->
     if @isInit
-      destroy?.apply(this, arguments)
+      destroy.apply(this, arguments)
       @reset()
       @isInit = false
     return this
@@ -349,3 +387,4 @@ module = (name, mixins...) ->
 
 g.module = module
 g.Class  = Class
+g.meta = {extend: _extend}

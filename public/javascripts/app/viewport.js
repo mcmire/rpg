@@ -1,76 +1,56 @@
 (function() {
-  var Bounds, Canvas, EventHelpers, game, viewport, _ref,
+  var g, viewport,
     __slice = Array.prototype.slice;
 
-  _ref = game = window.game, EventHelpers = _ref.EventHelpers, Canvas = _ref.Canvas, Bounds = _ref.Bounds;
+  g = window.game || (window.game = {});
 
-  viewport = game.util.module("game.viewport", [EventHelpers]);
+  viewport = g.module('game.viewport', g.plug('fpsReporter'));
 
-  viewport.playerPadding = 30;
+  throw 'ok dandy';
 
-  viewport.init = function(main) {
-    this.main = main;
-    if (!this.isInit) {
-      this.width = this.main.dim(600, 'pixels');
-      this.height = this.main.dim(400, 'pixels');
-      this.bounds = Bounds.fromDims(this.width.pixels, this.height.pixels);
+  viewport.extend({
+    width: 600,
+    height: 400,
+    playerPadding: 30,
+    init: function(main) {
+      this.main = main;
+      this.bounds = g.Bounds.rect(0, 0, this.width, this.height);
       this.$element = $('<div id="viewport" />').css({
-        width: this.width.pixels,
-        height: this.height.pixels,
-        'background-image': "url(" + this.main.imagesPath + "/map2x.png)",
+        width: this.width,
+        height: this.height,
+        'background-image': "url(" + main.imagesPath + "/map2x.png)",
         'background-repeat': 'no-repeat'
       });
-      this.canvas = Canvas.create(this.width.pixels, this.height.pixels);
+      this.canvas = g.canvas.create(this.width, this.height);
       this.canvas.element.id = 'canvas';
-      this.$element.append(this.canvas.$element);
-      this.isInit = true;
+      return this.$element.append(this.canvas.$element);
+    },
+    draw: function() {
+      var bom, positionStr;
+      bom = this.bounds;
+      positionStr = [-bom.x1 + 'px', -bom.y1 + 'px'].join(" ");
+      return this.$element.css('background-position', positionStr);
+    },
+    translate: function() {
+      var args, _ref;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      (_ref = this.bounds).translate.apply(_ref, args);
+      return this;
+    },
+    translateBySide: function(side, value) {
+      return this.bounds.translateBySide(side, value);
+    },
+    inspect: function() {
+      return JSON.stringify({
+        "bounds": this.bounds.inspect()
+      });
+    },
+    debug: function() {
+      console.log("viewport.frame.bounds = (" + this.frame.bounds.x1 + ".." + this.frame.bounds.x2 + ", " + this.frame.bounds.y1 + ".." + this.frame.bounds.y2 + ")");
+      return console.log("viewport.padding.bounds = (" + this.padding.bounds.x1 + ".." + this.padding.bounds.x2 + ", " + this.padding.bounds.y1 + ".." + this.padding.bounds.y2 + ")");
     }
-    return this;
-  };
+  });
 
-  viewport.destroy = function() {
-    if (this.isInit) {
-      this.reset();
-      this.isInit = false;
-    }
-    return this;
-  };
-
-  viewport.attachTo = function(element) {
-    return $(element).append(this.$element);
-  };
-
-  viewport.detach = function() {
-    return this.$element.detach();
-  };
-
-  viewport.draw = function() {
-    var bom, positionStr;
-    bom = this.bounds;
-    positionStr = [-bom.x1 + 'px', -bom.y1 + 'px'].join(" ");
-    return this.$element.css('background-position', positionStr);
-  };
-
-  viewport.translate = function() {
-    var args, _ref2;
-    args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    (_ref2 = this.bounds).translate.apply(_ref2, args);
-    return this;
-  };
-
-  viewport.translateBySide = function(side, value) {
-    return this.bounds.translateBySide(side, value);
-  };
-
-  viewport.inspect = function() {
-    return JSON.stringify({
-      "bounds": this.bounds.inspect()
-    });
-  };
-
-  viewport.debug = function() {
-    console.log("viewport.frame.bounds = (" + this.frame.bounds.x1 + ".." + this.frame.bounds.x2 + ", " + this.frame.bounds.y1 + ".." + this.frame.bounds.y2 + ")");
-    return console.log("viewport.padding.bounds = (" + this.padding.bounds.x1 + ".." + this.padding.bounds.x2 + ", " + this.padding.bounds.y1 + ".." + this.padding.bounds.y2 + ")");
-  };
+  g.viewport = viewport;
 
 }).call(this);

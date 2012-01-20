@@ -1,14 +1,13 @@
 (function() {
-  var Bounds, CollisionBox, game, _ref,
+  var Mob, g,
     __slice = Array.prototype.slice;
 
-  _ref = game = window.game, Bounds = _ref.Bounds, CollisionBox = _ref.CollisionBox;
+  g = window.game || (window.game = {});
 
-  game.Mob = (function() {
-
-    Mob.extended = function() {
-      this.states = {};
-      return this.addState = function(name, args) {
+  Mob = g.Grob.extend('game.Mob', {
+    statics: {
+      states: {},
+      addState: function(name, args) {
         var state;
         state = {};
         state.name = name;
@@ -24,156 +23,102 @@
           state.moveHandler = name;
         }
         return this.states[name] = state;
-      };
-    };
-
-    function Mob(main) {
-      var _ref2;
-      this.main = main;
-      _ref2 = this.main, this.viewport = _ref2.viewport, this.map = _ref2.map;
-      this.isLoaded = false;
-      this.imagePath = "" + this.main.imagesPath + "/" + this.constructor.image;
-      this.image = new Image();
-      this.image.src = this.imagePath;
-      this.width = this.constructor.width;
-      this.height = this.constructor.height;
-      this.speed = this.constructor.speed;
-      this._initBounds();
-      this.addEvents();
-    }
-
-    Mob.prototype._initBounds = function() {
-      this.bounds = {};
-      this.lastBounds = {};
-      this.bounds.onMap = this.lastBounds.onMap = Bounds.fromDims(this.width, this.height);
-      this.bounds.inViewport = this.lastBounds.inViewport = Bounds.fromDims(this.width, this.height);
-      this.box = new CollisionBox(this.bounds.onMap);
-      this.collisionLayerBoxes = this.main.collisionLayer.collisionBoxes.without(this.box);
-      this.initFence();
-      this.initTopLeftBoundsOnMap();
-      return this.initTopLeftBoundsInViewport();
-    };
-
-    Mob.prototype.initTopLeftBoundsOnMap = function() {
-      return this.bounds.onMap.anchor(0, 0);
-    };
-
-    Mob.prototype.initTopLeftBoundsInViewport = function() {
-      return this._recalculateViewportBounds();
-    };
-
-    Mob.prototype._recalculateViewportBounds = function() {
-      return this.bounds.inViewport = this.main.mapBoundsToViewportBounds(this.bounds.onMap);
-    };
-
-    Mob.prototype.initFence = function() {
-      return this.bounds.fenceOnMap = Bounds.fromDims(this.main.map.width.pixels, this.main.map.height.pixels);
-    };
-
-    Mob.prototype.destroy = function() {};
-
-    Mob.prototype.addEvents = function() {
-      var self;
-      self = this;
-      this.image.onload = function() {
-        return self.isLoaded = true;
-      };
-      return this.image.onerror = function() {
-        throw "Image " + self.imagePath + " failed to load!";
-      };
-    };
-
-    Mob.prototype.removeEvents = function() {};
-
-    Mob.prototype.onAdded = function() {};
-
-    Mob.prototype.setState = function(name) {
-      this.state = this.constructor.states[name];
-      if (!this.state) throw new Error("Unknown state '" + name + "'!");
-      this.currentFrame = 0;
-      return this.numSeqFrameDraws = 0;
-    };
-
-    Mob.prototype.tick = function() {
-      this.predraw();
-      this.draw();
-      return this.postdraw();
-    };
-
-    Mob.prototype.predraw = function() {
-      var ctx, lbiv, _name;
-      ctx = this.viewport.canvas.ctx;
-      lbiv = this.lastBounds.inViewport;
-      ctx.clearRect(lbiv.x1, lbiv.y1, this.width, this.height);
-      if (typeof this[_name = this.state.moveHandler] === "function") {
-        this[_name]();
       }
-      return this._recalculateViewportBounds();
-    };
-
-    Mob.prototype.draw = function() {
-      var biv, ctx, frame, yOffset;
-      ctx = this.viewport.canvas.ctx;
-      biv = this.bounds.inViewport;
-      ctx.save();
-      frame = this.state.frames[this.currentFrame];
-      if (frame == null) {
-        debugger;
-        throw 'frame is undefined';
-      }
-      yOffset = frame * this.height;
-      ctx.drawImage(this.image, 0, yOffset, this.width, this.height, biv.x1, biv.y1, this.width, this.height);
-      return ctx.restore();
-    };
-
-    Mob.prototype.postdraw = function() {
-      if ((this.numSeqFrameDraws % this.state.frameDuration) === 0) {
-        this.currentFrame++;
-      }
-      if (this.currentFrame === this.state.numFrames) {
-        if (this.state.doesRepeat) {
-          this.currentFrame = 0;
-        } else {
-          if (this.state.afterFinish) {
-            this.setState(this.state.afterFinish);
+    },
+    members: {
+      init: function(main) {
+        this._super(main);
+        return this.imagePath = "" + main.imagesPath + "/" + this.constructor.image;
+      },
+      _initDims: function() {
+        this.width = this.constructor.width;
+        return this.height = this.constructor.height;
+      },
+      _initBoundsOnMap: function() {
+        this._initFence();
+        return this._super();
+      },
+      _initFence: function() {
+        return this.fence = g.Bounds.rect(0, 0, this.main.map.width, this.main.map.height);
+      },
+      _initCollisionLayer: function() {
+        this._super();
+        return this.allCollidables = this.collisionLayer.collidables.without(this);
+      },
+      load: function() {
+        var self;
+        self = this;
+        this.image = new Image();
+        this.image.src = this.imagePath;
+        this.image.onload = function() {
+          return self.isLoaded = true;
+        };
+        return this.image.onerror = function() {
+          throw "Image " + self.imagePath + " failed to load!";
+        };
+      },
+      setState: function(name) {
+        this.state = this.constructor.states[name];
+        if (!this.state) throw new Error("Unknown state '" + name + "'!");
+        this.currentFrame = 0;
+        return this.numSeqFrameDraws = 0;
+      },
+      predraw: function() {
+        var _name;
+        this._super();
+        if (typeof this[_name = this.state.moveHandler] === "function") {
+          this[_name]();
+        }
+        return this._recalculateViewportBounds();
+      },
+      draw: function() {
+        var biv, ctx, frame, yOffset;
+        ctx = this.viewport.canvas.ctx;
+        biv = this.bounds.inViewport;
+        ctx.save();
+        frame = this.state.frames[this.currentFrame];
+        if (frame == null) {
+          debugger;
+          throw 'frame is undefined';
+        }
+        yOffset = frame * this.height;
+        ctx.drawImage(this.image, 0, yOffset, this.width, this.height, biv.x1, biv.y1, this.width, this.height);
+        return ctx.restore();
+      },
+      postdraw: function() {
+        if ((this.numSeqFrameDraws % this.state.frameDuration) === 0) {
+          this.currentFrame++;
+        }
+        if (this.currentFrame === this.state.numFrames) {
+          if (this.state.doesRepeat) {
+            this.currentFrame = 0;
           } else {
-            throw new Error("No after finish state set for '" + this.state.name + "'!");
+            if (this.state.afterFinish) {
+              this.setState(this.state.afterFinish);
+            } else {
+              throw new Error("No after finish state set for '" + this.state.name + "'!");
+            }
           }
         }
+        this.numSeqFrameDraws++;
+        return this._super();
+      },
+      translate: function() {
+        var args, _ref, _ref2;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        (_ref = this.bounds.inViewport).translate.apply(_ref, args);
+        return (_ref2 = this.bounds.onMap).translate.apply(_ref2, args);
+      },
+      translateBySide: function(side, value) {
+        var axis, distMoved;
+        axis = side[0];
+        distMoved = this.bounds.onMap.translateBySide(side, value);
+        this.bounds.inViewport.translate(axis, distMoved);
+        return distMoved;
       }
-      this.lastBounds.inViewport = this.bounds.inViewport.clone();
-      return this.numSeqFrameDraws++;
-    };
+    }
+  });
 
-    Mob.prototype.translate = function() {
-      var args, _ref2, _ref3;
-      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      (_ref2 = this.bounds.inViewport).translate.apply(_ref2, args);
-      return (_ref3 = this.bounds.onMap).translate.apply(_ref3, args);
-    };
-
-    Mob.prototype.translateBySide = function(side, value) {
-      var axis, distMoved;
-      axis = side[0];
-      distMoved = this.bounds.onMap.translateBySide(side, value);
-      this.bounds.inViewport.translate(axis, distMoved);
-      return distMoved;
-    };
-
-    Mob.prototype.inspect = function() {
-      return JSON.stringify({
-        "bounds.inViewport": this.bounds.inViewport.inspect(),
-        "bounds.onMap": this.bounds.onMap.inspect()
-      });
-    };
-
-    Mob.prototype.debug = function() {
-      console.log("player.bounds.inViewport = " + (this.bounds.inViewport.inspect()));
-      return console.log("player.bounds.OnMap = " + (this.bounds.onMap.inspect()));
-    };
-
-    return Mob;
-
-  })();
+  g.Mob = Mob;
 
 }).call(this);

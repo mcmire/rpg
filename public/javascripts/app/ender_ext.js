@@ -1,35 +1,29 @@
 (function() {
-  var __arSlice,
-    __hasProp = Object.prototype.hasOwnProperty,
-    __slice = Array.prototype.slice;
-
-  __arSlice = Array.prototype.slice;
+  var enderMembers,
+    __slice = Array.prototype.slice,
+    __hasProp = Object.prototype.hasOwnProperty;
 
   $.ender({
     extend: function() {
       var args, deep, obj, objects, prop, target, _i, _len;
-      args = __arSlice.call(arguments);
-      deep = false;
-      if (typeof args[0] === "boolean") deep = args.shift();
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      if (typeof args[0] === 'boolean') {
+        deep = args.shift();
+      } else {
+        deep = true;
+      }
       target = args.shift();
       objects = args;
       for (_i = 0, _len = objects.length; _i < _len; _i++) {
         obj = objects[_i];
         for (prop in obj) {
           if (!__hasProp.call(obj, prop)) continue;
-          if (typeof target[prop] === "function") {
-            (function(_super, _new) {
-              return target[prop] = function() {
-                var rv, tmp;
-                tmp = this._super;
-                this._super = _super;
-                rv = _new.apply(this, arguments);
-                this._super = tmp;
-                return rv;
-              };
-            })(target[prop], obj[prop]);
-          } else if (deep && $.v.is.obj(obj[prop])) {
-            target[prop] = this.extend(deep, {}, obj[prop]);
+          if (deep) {
+            if ($.v.is.obj(obj[prop])) {
+              target[prop] = this.extend(true, {}, obj[prop]);
+            } else if ($.v.is.arr(obj[prop])) {
+              target[prop] = this.extend(true, [], obj[prop]);
+            }
           } else {
             target[prop] = obj[prop];
           }
@@ -38,24 +32,18 @@
       return target;
     },
     clone: function(obj) {
-      if (this.is.arr(obj)) {
-        return obj.slice(0);
+      if ($.v.is.arr(obj)) {
+        return $.extend(true, [], obj);
       } else {
         return $.extend(true, {}, obj);
       }
     },
-    "export": function(chainStrs, newObj) {
-      var chain, newIdStr, tail;
-      if (typeof chainStrs === "string") chainStrs = chainStrs.split(".");
-      newIdStr = chainStrs.pop();
-      tail = this._ns(chainStrs);
-      chain = this._chain(chainStrs);
-      if (typeof newObj === "function") newObj = newObj.apply(newObj, chain);
-      return tail[newIdStr] = newObj;
-    },
-    tap: function(obj, fn) {
-      fn(obj);
-      return obj;
+    dup: function(obj) {
+      if ($.v.is.arr(obj)) {
+        return $.extend(false, [], obj);
+      } else {
+        return $.extend(false, {}, obj);
+      }
     },
     randomItem: function(arr) {
       return arr[this.randomInt(arr.length - 1)];
@@ -79,33 +67,10 @@
     },
     arrayDelete: function(arr, item) {
       return arr.splice(item, 1);
-    },
-    _ns: function(chainStrs) {
-      var context, idStr, _i, _len;
-      context = window;
-      if (typeof chainStrs === "string") chainStrs = chainStrs.split(".");
-      for (_i = 0, _len = chainStrs.length; _i < _len; _i++) {
-        idStr = chainStrs[_i];
-        if (context[idStr] == null) context[idStr] = {};
-        context = context[idStr];
-      }
-      return context;
-    },
-    _chain: function(chainStrs) {
-      var chain, idStr, obj, _i, _len;
-      obj = window;
-      if (typeof chainStrs === "string") chainStrs = chainStrs.split(".");
-      chain = [];
-      for (_i = 0, _len = chainStrs.length; _i < _len; _i++) {
-        idStr = chainStrs[_i];
-        obj = obj[idStr];
-        chain.push(obj);
-      }
-      return chain;
     }
   });
 
-  $.ender({
+  enderMembers = {
     center: function() {
       var left, top, vp;
       vp = $.viewport();
@@ -139,6 +104,8 @@
       computedStyle = (_ref = elem.currentStyle) != null ? _ref : document.defaultView.getComputedStyle(elem, null);
       return prop && computedStyle[prop] || computedStyle;
     }
-  }, true);
+  };
+
+  $.ender(enderMembers, true);
 
 }).call(this);

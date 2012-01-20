@@ -12,12 +12,7 @@
 
   <%= scripts %>
   <script>
-    $.domReady(function() {
-      window.game.main.init()
-        .attachTo('#main')
-        .addEvents()
-        .runWhenReady()
-    })
+    $.domReady(function() { game.main.init() });
   </script>
 </body>
 </html>

@@ -1,72 +1,67 @@
-__arSlice = Array.prototype.slice
 
 # Add class methods to the global ender object
-$.ender {
-
-  # $.extend(deep, target, objects...)
-  # $.extend(target, objects...)
+#
+$.ender
+  # Public: Make modifications to an object by copying properties from other
+  # objects, either shallowly or deeply.
   #
-  # Takes the given object and adds the given properties to it.
+  # This is different from the `extend` method that Valentine provides because
+  # it supports copying arrays.
   #
-  # Properties that already exist in the object are overridden. Functions are
-  # handled specially, however. To wit, if two properties share the same name
-  # and are functions (let's call them function A and B), instead of function A
-  # being overridden with function B, you get a new function C which wraps
-  # function B. Function C is exactly the same as B, except that within C
-  # you have a reference to B through a `_super` property.
+  # deep    - If true, then properties are copied deeply, otherwise shallowly.
+  #           Copying deeply means that if the value of the property being
+  #           copied over is a plain Object or an Array, then we clone it
+  #           completely rather than merely bringing over a reference to it.
+  #           (Default: true)
+  # target  - A plain Object or Array which will receive the modifications.
+  # objects - An array of plain Objects or Arrays which will be copied to the
+  #           `target`.
   #
-  extend: ->
-    args = __arSlice.call(arguments)
-    deep = false
-    deep = args.shift() if typeof args[0] == "boolean"
+  # Returns a modified version of `target`.
+  #
+  extend: (args...) ->
+    if typeof args[0] is 'boolean'
+      deep = args.shift()
+    else
+      deep = true
     target = args.shift()
     objects = args
 
     for obj in objects
       for own prop of obj
-        if typeof target[prop] == "function"
-          ((_super, _new) ->
-            target[prop] = ->
-              tmp = @_super
-              @_super = _super
-              rv = _new.apply(this, arguments)
-              @_super = tmp
-              rv
-          )(target[prop], obj[prop])
-        else if deep and $.v.is.obj(obj[prop])
-          target[prop] = @extend(deep, {}, obj[prop])
+        if deep
+          if $.v.is.obj(obj[prop])
+            target[prop] = @extend true, {}, obj[prop]
+          else if $.v.is.arr(obj[prop])
+            target[prop] = @extend true, [], obj[prop]
         else
           target[prop] = obj[prop]
 
     return target
 
-  # Makes a deep clone of the given object.
+  # Public: Make a deep copy of the given object.
+  #
+  # obj - An plain Object or an Array.
+  #
+  # Returns an Object of the same type as the given Object.
   #
   clone: (obj) ->
-    if this.is.arr(obj)
-      obj.slice(0)
+    if $.v.is.arr(obj)
+      $.extend true, [], obj
     else
-      $.extend(true, {}, obj)
+      $.extend true, {}, obj
 
-  # Given a string which represents a chain of objects (separated by "."),
-  # ensures that all objects in the chain exist (by creating them if they don't),
-  # then adds the given object (which may also be a function that returns an
-  # object) to the end of the chain.
+  # Public: Make a shallow copy of the given object.
   #
-  export: (chainStrs, newObj) ->
-    chainStrs = chainStrs.split(".") if typeof chainStrs is "string"
-    newIdStr = chainStrs.pop()
-    tail = @_ns(chainStrs)
-    chain = @_chain(chainStrs)
-    newObj = newObj.apply(newObj, chain) if typeof newObj is "function"
-    tail[newIdStr] = newObj
-
-  # The Kestrel combinator. Lets you group a block of code that's intended
-  # to not only operate on a value but return it at the end, too.
+  # obj - An plain Object or an Array.
   #
-  tap: (obj, fn) ->
-    fn(obj)
-    obj
+  # Returns an Object of the same type as the given Object.
+  #
+  dup: (obj) ->
+    if $.v.is.arr(obj)
+      $.extend false, [], obj
+    else
+      $.extend false, {}, obj
 
   randomItem: (arr) ->
     arr[this.randomInt(arr.length-1)]
@@ -88,39 +83,11 @@ $.ender {
   arrayDelete: (arr, item) ->
     arr.splice(item, 1)
 
-  # Given a string which represents a chain of objects (separated by "."),
-  # ensures that all objects in the chain exist (by creating them if they don't),
-  # and then returns the final object. For instance, given "Foo.Bar.Baz",
-  # `Foo` would be created if it doesn't exist, then `Foo.Bar`, then
-  # `Foo.Bar.Baz`; and then Foo.Bar.Baz would be returned.
-  #
-  _ns: (chainStrs) ->
-    context = window
-    chainStrs = chainStrs.split(".") if typeof chainStrs == "string"
-    for idStr in chainStrs
-      context[idStr] ?= {}
-      context = context[idStr]
-    context
-
-  # Given a string which represents a chain of objects (separated by "."),
-  # returns the objects in the chain (assuming they exist).
-  # For instance, given "Foo.Bar.Baz", returns [Foo, Foo.Bar, Foo.Bar.Baz].
-  #
-  _chain: (chainStrs) ->
-    obj = window
-    chainStrs = chainStrs.split(".") if typeof chainStrs == "string"
-    chain = []
-    for idStr in chainStrs
-      obj = obj[idStr]
-      chain.push(obj)
-    chain
-}
-
 #-------------------------------------------------------------------------------
 
 # Add methods to each ender element
-$.ender {
-
+#
+enderMembers =
   center: ->
     vp = $.viewport()
     top = (vp.height / 2) - (@height() / 2)
@@ -145,4 +112,4 @@ $.ender {
     computedStyle = elem.currentStyle ? document.defaultView.getComputedStyle(elem, null)
     prop and computedStyle[prop] or computedStyle
 
-}, true
+$.ender(enderMembers, true)

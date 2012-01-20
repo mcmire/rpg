@@ -1,9 +1,10 @@
 .DS_Store
-*.tmproj
+.sass-cache
+build
+public/javascripts
+public/stylesheets
+tmp
+
+# vim
 *.vim*
 tags
-.sass-cache
-tmp
-public/stylesheets
-public/javascripts
-app/javascripts/lib/game/*.js

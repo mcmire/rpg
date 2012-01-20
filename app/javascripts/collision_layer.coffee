@@ -1,115 +1,143 @@
-game = window.game
-{Canvas, EventHelpers, Bounds} = game
+g = window.game ||= {}
 
-class CollisionBoxes
-  constructor: (@boxes, @box) ->
+CollidableCollection = g.Class.extend 'game.CollidableCollection',
+  init: ->
+    @collidables = []
+
+  getMapBlocks: ->
+    c for c in @collidables when c instanceof MapBlock
 
   each: (fn) ->
-    if @box
-      for box in @boxes
-        if box isnt @box
-          ret = fn(box)
+    if @exception
+      for c in @collidables
+        if collidable isnt @exception
+          ret = fn(collidable)
           break if ret is false
     else
-      for box in @boxes
-        ret = fn(box)
+      for collidable in @collidables
+        ret = fn(collidable)
         break if ret is false
 
   get: (index) ->
-    @boxes[index]
+    @collidables[index]
 
-  push: (box) ->
-    @boxes.push(box)
+  push: (collidable) ->
+    @collidables.push(collidable)
 
-  without: (box) ->
-    new CollisionBoxes(@boxes, box)
+  without: (collidable) ->
+    new @constructor(@collidables, collidable)
 
-  # Public: Return whether the given bounds intersects with a box in the collision
-  # layer.
+  # Public: Return whether the given bounds intersects with a collidable object.
   #
-  # The collision should be detected correctly whether the given box is taller or
-  # shorter than the collision box in question.
+  # The collision should be detected correctly whether the given bounds are
+  # taller or shorter than the collidable in question.
   #
   # bounds - An instance of Bounds.
   #
   # Returns true or false.
   #
+  # TODO: Accept either a Bounds or a Box
+  #
   intersectsWith: (bounds) ->
     ret = false
-    @each (box) ->
-      if box.intersectsWith(bounds)
+    @each (collidable) ->
+      if collidable.box.intersectsWith(bounds)
         ret = true
         return false
     return ret
 
-  # Public: Calculate a value that should be subtracted from the x1 coordinate of
-  # a bounds box to prevent it from colliding with a box in the collision layer
-  # when moving rightward.
+  # Public: Calculate a value that should be subtracted from the x1 coordinate
+  # of a bounds box to prevent it from colliding with a collidable object when
+  # moving rightward.
   #
   # bounds - An instance of Bounds.
   #
-  # Returns the integer X-coordinate of the left side of the collision box that
-  # the given box collides with if one exists, or null otherwise.
+  # Returns the integer X-coordinate of the left side of the collidable that
+  # the given bounds collides with if one exists, or null otherwise.
+  #
+  # TODO: Accept either a Bounds or a Box
   #
   getOuterLeftEdgeBlocking: (bounds) ->
     ret = null
-    @each (box) ->
-      if ret = box.getOuterLeftEdgeBlocking(bounds)
+    @each (collidable) ->
+      if ret = collidable.box.getOuterLeftEdgeBlocking(bounds)
         return false
     return ret
 
-  # Public: Calculate a value that should be subtracted from the x2 coordinate of
-  # a bounds box to prevent it from colliding with a box in the collision layer
-  # when moving leftward.
+  # Public: Calculate a value that should be subtracted from the x2 coordinate
+  # of a bounds box to prevent it from colliding with a collidable object when
+  # moving leftward.
   #
   # bounds - An instance of Bounds.
   #
-  # Returns the integer X-coordinate of the right side of the collision box that
-  # the given box collides with if one exists, or null otherwise.
+  # Returns the integer X-coordinate of the right side of the collidable that
+  # the given bounds collides with if one exists, or null otherwise.
+  #
+  # TODO: Accept either a Bounds or a Box
   #
   getOuterRightEdgeBlocking: (bounds) ->
     ret = null
-    @each (box) ->
-      if ret = box.getOuterRightEdgeBlocking(bounds)
+    @each (collidable) ->
+      if ret = collidable.box.getOuterRightEdgeBlocking(bounds)
         return false
     return ret
 
-  # Public: Calculate a value that should be subtracted from the y2 coordinate of
-  # a bounds box to prevent it from colliding with a box in the collision layer
-  # when moving downward.
+  # Public: Calculate a value that should be subtracted from the y2 coordinate
+  # of a bounds box to prevent it from colliding with a collidable object when
+  # moving downward.
   #
   # bounds - An instance of Bounds.
   #
-  # Returns the integer Y-coordinate of the top side of the collision box that the
-  # given box collides with if one exists, or null otherwise.
+  # Returns the integer Y-coordinate of the top side of the collidable that
+  # the given bounds collides with if one exists, or null otherwise.
+  #
+  # TODO: Accept either a Bounds or a Box
   #
   getOuterTopEdgeBlocking: (bounds) ->
     ret = null
-    @each (box) ->
-      if ret = box.getOuterTopEdgeBlocking(bounds)
+    @each (collidable) ->
+      if ret = collidable.box.getOuterTopEdgeBlocking(bounds)
         return false
     return ret
 
-  # Public: Calculate a value that should be subtracted from the y1 coordinate of
-  # a bounds box to prevent it from colliding with a box in the collision layer
-  # when moving upward.
+  # Public: Calculate a value that should be subtracted from the y1 coordinate
+  # of a bounds box to prevent it from colliding with a collidable object when
+  # moving upward.
   #
   # bounds - An instance of Bounds.
   #
-  # Returns the integer Y-coordinate of the bottom side of the collision box that
-  # the given box collides with if one exists, or null otherwise.
+  # Returns the integer Y-coordinate of the bottom side of the collidable that
+  # the given bounds collides with if one exists, or null otherwise.
+  #
+  # TODO: Accept either a Bounds or a Box
   #
   getOuterBottomEdgeBlocking: (bounds) ->
     ret = null
-    @each (box) ->
-      if ret = box.getOuterBottomEdgeBlocking(bounds)
+    @each (collidable) ->
+      if ret = collidable.box.getOuterBottomEdgeBlocking(bounds)
         return false
     return ret
 
 #---
 
-class CollisionBox
-  constructor: (@bounds) ->
+# This is a Grob so that if we want to we can draw the collision layer
+MapBlock = g.Grob.extend 'game.MapBlock',
+  init: (main, x1, y1, width, height) ->
+    @_initDims = ->
+      @width = width
+      @height = height
+    @initBoundsOnMap = ->
+      @bounds.onMap = g.Bounds.rect(x1, y1, width, height)
+    @_super(main)
+
+  tick: ->
+    # don't draw anything
+
+#---
+
+# XXX: Do we still need this anymore?
+CollidableBox = g.Class.extend 'game.CollidableBox',
+  init: (@bounds) ->
 
   intersectsWith: (bounds) ->
     @bounds.intersectsWith(bounds)
@@ -128,137 +156,32 @@ class CollisionBox
 
 #---
 
-collisionLayer = game.util.module "game.collisionLayer", [EventHelpers]
-
-collisionLayer.init = (@main) ->
-  unless @isInit
-    @isLoaded = false
+collisionLayer = g.module 'game.collisionLayer', g.loadable, g.tickable,
+  init: (@main) ->
     @viewport = @main.viewport
-    #[@width, @height] = [10, 10]  # just temporary for now
-    @width = @viewport.width.pixels
-    @height = @viewport.height.pixels
-    @collisionBoxes = new CollisionBoxes([])
+    @width = @viewport.width
+    @height = @viewport.height
 
-    @imagePath = "#{@main.imagesPath}/mask.gif"
-    @_loadImage =>
-      #@_createCollisionBoxes()
+    @collidables = new CollidableCollection()
 
-    # Add boxes manually until we work out the collision mask
-    @add Bounds.fromCoords(96, 96, 352, 112)
+    # Add map blocks manually until we work out scanning the map image
+    @add new MapBlock(@main, 96, 96, 352, 112)
+    # Add the other grobs
+    @add(collidable) for collidable in @collidables
 
-    # @_createDebugOverlay()
+  add: (collidable) ->
+    @collidables.push(collidable)
 
-    @isInit = true
-  return this
-
-collisionLayer.addEvents = ->
-  self = this
-  # @bindEvents @viewport, move: -> self.draw()
-
-collisionLayer.removeEvents = ->
-  # @unbindEvents @viewport, 'move'
-
-collisionLayer.attachTo = (element) ->
-  # $(element).append(@$debugOverlay)
-
-collisionLayer.detach = ->
-  # @debugOverlay.$element.detach()
-
-collisionLayer.add = (boundsOrMob) ->
-  if boundsOrMob.box?
-    box = boundsOrMob.box
-  else
-    box = new CollisionBox(boundsOrMob)
-  @collisionBoxes.push(box)
-
-collisionLayer.draw = ->
-  bom = @viewport.frame.boundsOnMap
-  positionStr = [-bom.x1 + 'px', -bom.y1 + 'px'].join(" ")
-  @$debugOverlay.css('background-position', positionStr)
-  #self.collisionLayer.$debugMask.css('background-position', positionStr)
-  #self.canvas.ctx.drawImage(self.collisionLayer.debugCanvas.element, 0, 0)
-
-collisionLayer._createDebugOverlay = ->
-  map = @viewport.main.map
-  [width, height] = [map.width.pixels, map.height.pixels]
-  @$debugOverlay = $('<div id="collision-layer-debug-overlay" />')
-    .css(width: width, height: height)
-  @debugOverlayCanvas = Canvas.create(width, height)
-  c = @debugOverlayCanvas.ctx
-  c.strokeStyle = "#ff0000"
-  for box in @collisionBoxes
-    c.strokeRect(box.x1+0.5, box.y1+0.5, box.x2-box.x1, box.y2-box.y1)
-  @$debugOverlay.css('background-image', "url(#{@debugOverlayCanvas.element.toDataURL()})")
-
-collisionLayer._loadImage = (success) ->
-  @image = document.createElement('img')
-  @image.src = @imagePath
-  @image.onload = =>
+  load: ->
     @isLoaded = true
-    success()
-  @image.onerror = => throw "Image #{imagePath} failed to load!"
 
-# The collision mask is a monochromatic image where non-transparent
-# pixels represent areas where the player may not pass through. Here,
-# we go through through the image line by line, pixel by pixel, and
-# subdivide the image into boxes. Each box will then become a range of
-# coordinates in both axes. So we end up with a left edge, right edge,
-# top edge and bottom edge, or x1, x2, y1, y2. We can then use these
-# ranges to determine whether or not an entity crosses one of the
-# boxes in the collision layer.
-#---
-# TODO...........
-#
-collisionLayer._createCollisionBoxes = ->
-  canvas = Canvas.create(@width, @height)
-  canvas.ctx.drawImage(@image, 0, 0)
-  imageData = canvas.ctx.getImageData(0, 0, @width, @height)
-
-  boxes = []
-  openBoxes = []
-  openLine = null
-  boxIdx = null
-  lastY = null
-
-  # There are six states here:
-  #
-  # * this pixel is transparent and no last pixel
-  # * this pixel is transparent and last pixel was transparent
-  # * this pixel is transparent and last pixel was not transparent
-  # * this pixel is not transparent and no last pixel
-  # * this pixel is not transparent and last pixel was transparent
-  # * this pixel is not transparent and last pixel was not transparent
-  #
-  imageData.each (pixel) ->
-    if pixel.y != lastY
-      # new row, start current box index over
-      boxIdx = 0
-
-    if pixel.isTransparent()
-      if openLine
-        openBoxes.push(openLine)
-        openLine = null
-    else
-      if openLine
-        # last pixel was not transparent, extend range
-        openLine[1] = pixel.x
-      else
-        # last pixel was transparent, start new range
-        if openBoxes.length
-          curBox = openBoxes[boxIdx]
-        else
-          curBox = {x1: pixel.x, y1: pixel.y}
-          openBoxes.push(curBox)
-        curBox.x2 = pixel.x
-        curBox.y2 = pixel.y
-    lastY = pixel.y
-
-  boxes.push(box) if box
-
-  @collisionBoxes = boxes
+  tick: ->
+    for collidable in @collidables.getMapBlocks()
+      collidable.tick()
 
 #---
 
-game.CollisionBoxes = CollisionBoxes
-game.CollisionBox = CollisionBox
-game.collisionLayer = collisionLayer
+g.CollidableCollection = CollidableCollection
+g.MapBlock = MapBlock
+g.CollidableBox = CollidableBox
+g.collisionLayer = collisionLayer

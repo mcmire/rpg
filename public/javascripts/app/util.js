@@ -1,27 +1,7 @@
 (function() {
-  var game, _chain, _module, _ns,
-    __slice = Array.prototype.slice;
+  var game, _chain, _ns;
 
   game = window.game;
-
-  _module = function() {
-    var chain, chainStrs, newIdStr, newObj, obj, objs, tail, _i, _len;
-    chainStrs = arguments[0], objs = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-    newObj = {};
-    objs = $.v.flatten(objs);
-    for (_i = 0, _len = objs.length; _i < _len; _i++) {
-      obj = objs[_i];
-      $.extend(newObj, obj);
-    }
-    if (typeof chainStrs === "string") chainStrs = chainStrs.split(".");
-    newObj.__name = chainStrs.join(".");
-    newIdStr = chainStrs.pop();
-    tail = _ns(chainStrs);
-    chain = _chain(chainStrs);
-    if (typeof newObj === "function") newObj = newObj.apply(newObj, chain);
-    tail[newIdStr] = newObj;
-    return newObj;
-  };
 
   _ns = function(chainStrs) {
     var context, i, idStr, name;

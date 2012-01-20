@@ -1,16 +1,16 @@
 (function() {
-  var game,
+  var eventHelpers, g,
     __slice = Array.prototype.slice;
 
-  game = window.game;
+  g = window.game || (window.game = {});
 
-  game.util.module("game.EventHelpers", {
+  eventHelpers = g.module('game.eventHelpers', {
     bindEvents: function(obj, events) {
       var fn, name, namespacedEvents;
       namespacedEvents = {};
       for (name in events) {
         fn = events[name];
-        namespacedEvents[name + "." + this.__name.replace(".", "_")] = fn;
+        namespacedEvents[name + "." + this.__name__.replace(".", "_")] = fn;
       }
       return $(obj).bind(namespacedEvents);
     },
@@ -22,7 +22,7 @@
         _results = [];
         for (_i = 0, _len = args.length; _i < _len; _i++) {
           name = args[_i];
-          _results.push(name + "." + this.__name.replace(".", "_"));
+          _results.push(name + "." + this.__name__.replace(".", "_"));
         }
         return _results;
       }).call(this);
@@ -36,12 +36,14 @@
         _results = [];
         for (_i = 0, _len = args.length; _i < _len; _i++) {
           name = args[_i];
-          _results.push(name + "." + this.__name.replace(".", "_"));
+          _results.push(name + "." + this.__name__.replace(".", "_"));
         }
         return _results;
       }).call(this);
       return (_ref = $(obj)).trigger.apply(_ref, namespacedEventNames);
     }
   });
+
+  g.eventHelpers = eventHelpers;
 
 }).call(this);
