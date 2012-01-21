@@ -1,17 +1,17 @@
-(function() {
-  var g, intervalTicker, ticker,
-    __slice = Array.prototype.slice;
+var __slice = Array.prototype.slice;
 
-  g = window.game || (window.game = {});
-
+define(function(require) {
+  var intervalTicker, meta, module, runnable, tickable, ticker, _ref, _ref2;
+  meta = (_ref = require('app/meta'), module = _ref.module, _ref);
+  _ref2 = require('app/roles'), runnable = _ref2.runnable, tickable = _ref2.tickable;
   ticker = {
     construct: function() {
-      var args, name, overrides, _ref;
+      var args, name, overrides, _ref3;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      _ref = args.reverse(), overrides = _ref[0], name = _ref[1];
+      _ref3 = args.reverse(), overrides = _ref3[0], name = _ref3[1];
       overrides || (overrides = {});
       name || (name = 'game.ticker');
-      return g.module(name, g.runnable, g.tickable, {
+      return module(name, runnable, tickable, {
         init: function(main) {
           this.main = main;
         },
@@ -19,17 +19,17 @@
           if (this.isInit) return this.stop();
         },
         start: function() {
-          var _ref2;
+          var _ref4;
           if (this.isRunning) return;
           this.isRunning = true;
-          if ((_ref2 = overrides.start) != null) _ref2.call(this);
+          if ((_ref4 = overrides.start) != null) _ref4.call(this);
           return this;
         },
         stop: function() {
-          var _ref2;
+          var _ref4;
           if (!this.isRunning) return;
           this.isRunning = false;
-          if ((_ref2 = overrides.stop) != null) _ref2.call(this);
+          if ((_ref4 = overrides.stop) != null) _ref4.call(this);
           return this;
         },
         suspend: function() {
@@ -42,12 +42,11 @@
       });
     }
   };
-
   intervalTicker = {
     construct: function() {
-      var args, methods, name, overrides, _ref;
+      var args, methods, name, overrides, _ref3;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      _ref = args.reverse(), overrides = _ref[0], name = _ref[1];
+      _ref3 = args.reverse(), overrides = _ref3[0], name = _ref3[1];
       overrides || (overrides = {});
       name || (name = 'game.intervalTicker');
       methods = {
@@ -65,13 +64,14 @@
           }
         }
       };
-      g.meta.extend(methods, overrides);
+      meta.extend(methods, overrides);
       return ticker.construct(name, methods);
     }
   };
-
-  g.ticker = ticker;
-
-  g.intervalTicker = intervalTicker;
-
-}).call(this);
+  return {
+    ticker: ticker
+  };
+  return {
+    intervalTicker: intervalTicker
+  };
+});

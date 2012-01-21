@@ -1,4 +1,2 @@
-g = window.game ||= {}
-
-$.domReady ->
-  main.init()
+require ['vendor/ender', 'app/main'], ($, main) ->
+  $.domReady -> main.init()

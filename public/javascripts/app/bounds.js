@@ -1,10 +1,11 @@
-(function() {
-  var Bounds, g,
-    __slice = Array.prototype.slice;
+var __slice = Array.prototype.slice;
 
-  g = window.game || (window.game = {});
-
-  Bounds = g.Class.extend('game.Bounds', {
+define(function(require) {
+  var $, Bounds, Class;
+  $ = require('vendor/ender');
+  Class = require('app/meta').Class;
+  Bounds = require('app/bounds');
+  Bounds = Class.extend('game.Bounds', {
     statics: {
       rect: function(x1, y1, width, height) {
         var b;
@@ -169,9 +170,6 @@
       }
     }
   });
-
   Bounds.prototype.intersectsWith = Bounds.prototype.intersectWith;
-
-  g.Bounds = Bounds;
-
-}).call(this);
+  return Bounds;
+});

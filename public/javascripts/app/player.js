@@ -1,20 +1,18 @@
-(function() {
-  var DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, Player, dir, g, keyCode, _i, _j, _len, _len2, _ref,
-    __slice = Array.prototype.slice;
+var __slice = Array.prototype.slice;
 
-  g = window.game || (window.game = {});
-
+define(function(require) {
+  var $, DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, Mob, Player, dir, keyCode, keyboard, _i, _j, _len, _len2, _ref;
+  $ = require('vendor/ender');
+  keyboard = require('app/keyboard');
+  Mob = require('app/mob');
   DIRECTIONS = 'up down left right'.split(' ');
-
   DIRECTION_KEYS = {
-    up: g.keyboard.keyCodesFor('KEY_W', 'KEY_UP', 'KEY_K'),
-    down: g.keyboard.keyCodesFor('KEY_S', 'KEY_DOWN', 'KEY_J'),
-    left: g.keyboard.keyCodesFor('KEY_A', 'KEY_LEFT', 'KEY_H'),
-    right: g.keyboard.keyCodesFor('KEY_D', 'KEY_RIGHT', 'KEY_L')
+    up: keyboard.keyCodesFor('KEY_W', 'KEY_UP', 'KEY_K'),
+    down: keyboard.keyCodesFor('KEY_S', 'KEY_DOWN', 'KEY_J'),
+    left: keyboard.keyCodesFor('KEY_A', 'KEY_LEFT', 'KEY_H'),
+    right: keyboard.keyCodesFor('KEY_D', 'KEY_RIGHT', 'KEY_L')
   };
-
   KEY_DIRECTIONS = {};
-
   for (_i = 0, _len = DIRECTIONS.length; _i < _len; _i++) {
     dir = DIRECTIONS[_i];
     _ref = DIRECTION_KEYS[dir];
@@ -23,10 +21,8 @@
       KEY_DIRECTIONS[keyCode] = dir;
     }
   }
-
   KEYS = $.flatten($.values(DIRECTION_KEYS));
-
-  Player = g.Mob.extend('game.Player', {
+  Player = Mob.extend('game.Player', {
     statics: {
       image: 'link2x.gif',
       width: 34,
@@ -37,7 +33,7 @@
       init: function() {
         var args;
         args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-        this.keyTracker = new g.keyboard.KeyTracker(KEYS);
+        this.keyTracker = new keyboard.KeyTracker(KEYS);
         this.viewportPadding = 30;
         this._super.apply(this, args);
         return this.setState('idleRight');
@@ -46,10 +42,10 @@
         return this.bounds.fenceInViewport = this.viewport.bounds.withScale(this.viewportPadding);
       },
       addEvents: function() {
-        return g.keyboard.addKeyTracker(this.keyTracker);
+        return keyboard.addKeyTracker(this.keyTracker);
       },
       removeEvents: function() {
-        return g.keyboard.removeKeyTracker(this.keyTracker);
+        return keyboard.removeKeyTracker(this.keyTracker);
       },
       predraw: function() {
         var direction, state;
@@ -190,59 +186,49 @@
       }
     }
   });
-
   Player.addState('moveLeft', {
     duration: 2,
     frames: [0, 1, 2, 3, 4, 5, 6, 7],
     repeat: true,
     move: true
   });
-
   Player.addState('moveRight', {
     duration: 2,
     frames: [8, 9, 10, 11, 12, 13, 14, 15],
     repeat: true,
     move: true
   });
-
   Player.addState('moveDown', {
     duration: 2,
     frames: [16, 17, 18, 19, 20, 21, 22],
     repeat: true,
     move: true
   });
-
   Player.addState('moveUp', {
     duration: 2,
     frames: [23, 24, 25, 26, 27, 28],
     repeat: true,
     move: true
   });
-
   Player.addState('idleLeft', {
     duration: 2,
     frames: [0],
     repeat: true
   });
-
   Player.addState('idleRight', {
     duration: 2,
     frames: [8],
     repeat: true
   });
-
   Player.addState('idleDown', {
     duration: 2,
     frames: [19],
     repeat: true
   });
-
   Player.addState('idleUp', {
     duration: 2,
     frames: [23],
     repeat: true
   });
-
-  g.Player = Player;
-
-}).call(this);
+  return Player;
+});

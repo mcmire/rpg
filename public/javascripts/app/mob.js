@@ -1,10 +1,10 @@
-(function() {
-  var Mob, g,
-    __slice = Array.prototype.slice;
+var __slice = Array.prototype.slice;
 
-  g = window.game || (window.game = {});
-
-  Mob = g.Grob.extend('game.Mob', {
+define(function(require) {
+  var Bounds, Grob, Mob;
+  Grob = require('app/grob');
+  Bounds = require('app/bounds');
+  Mob = Grob.extend('game.Mob', {
     statics: {
       states: {},
       addState: function(name, args) {
@@ -39,7 +39,7 @@
         return this._super();
       },
       _initFence: function() {
-        return this.fence = g.Bounds.rect(0, 0, this.main.map.width, this.main.map.height);
+        return this.fence = Bounds.rect(0, 0, this.main.map.width, this.main.map.height);
       },
       _initCollisionLayer: function() {
         this._super();
@@ -118,7 +118,5 @@
       }
     }
   });
-
-  g.Mob = Mob;
-
-}).call(this);
+  return Mob;
+});

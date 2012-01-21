@@ -1,9 +1,16 @@
-(function() {
-  var g, main;
 
-  g = window.game || (window.game = {});
-
-  main = g.module('game.main', g.eventable, g.loadable, g.tickable, g.runnable, g.plug('keyboard', 'viewport', 'core', 'collisionLayer', 'Player', 'Enemy'), {
+define(function(require) {
+  var Class, Enemy, Player, collisionLayer, core, eventable, keyboard, loadable, main, module, plug, runnable, tickable, viewport, _ref, _ref2;
+  _ref = require('app/meta'), Class = _ref.Class, module = _ref.module;
+  _ref2 = require('app/roles'), eventable = _ref2.eventable, loadable = _ref2.loadable, tickable = _ref2.tickable, runnable = _ref2.runnable;
+  plug = require('app/plug');
+  keyboard = require('app/keyboard');
+  viewport = require('app/viewport');
+  core = require('app/core');
+  collisionLayer = require('app/collision_layer').collisionLayer;
+  Player = require('app/Player');
+  Enemy = require('app/Enemy');
+  main = module('game.main', eventable, loadable, tickable, runnable, plug(keyboard, viewport, core, collisionLayer, Player, Enemy), {
     frameRate: 40,
     imagesPath: '/images',
     animMethod: 'setTimeout',
@@ -86,7 +93,5 @@
       };
     }
   });
-
-  g.main = main;
-
-}).call(this);
+  return main;
+});

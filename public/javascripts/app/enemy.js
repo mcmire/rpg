@@ -1,11 +1,11 @@
-(function() {
-  var DIRECTIONS, Enemy, g;
 
-  g = window.game || (window.game = {});
-
+define(function(require) {
+  var $, Bounds, DIRECTIONS, Enemy, Mob;
+  $ = require('vendor/ender');
+  Mob = require('app/mob');
+  Bounds = require('app/bounds');
   DIRECTIONS = 'right down left up'.split(' ');
-
-  Enemy = g.Mob.extend('game.Enemy', {
+  Enemy = Mob.extend('game.Enemy', {
     statics: {
       image: 'enemy2x.gif',
       width: 40,
@@ -20,7 +20,7 @@
         return this._chooseSequenceLength();
       },
       _initFence: function() {
-        return this.fence = g.Bounds.rect(100, 100, 300, 300);
+        return this.fence = Bounds.rect(100, 100, 300, 300);
       },
       _initBoundsOnMap: function() {
         var fn, self, _results;
@@ -120,83 +120,69 @@
       }
     }
   });
-
   Enemy.addState('moveDown', {
     frames: [0, 1],
     duration: 4,
     repeat: true,
     move: true
   });
-
   Enemy.addState('downToRight', {
     frames: [0, 2],
     duration: 24,
     then: 'moveRight'
   });
-
   Enemy.addState('downToLeft', {
     frames: [0, 3],
     duration: 24,
     then: 'moveLeft'
   });
-
   Enemy.addState('moveRight', {
     frames: [4, 5],
     duration: 4,
     repeat: true,
     move: true
   });
-
   Enemy.addState('rightToUp', {
     frames: [4, 6],
     duration: 24,
     then: 'moveUp'
   });
-
   Enemy.addState('rightToDown', {
     frames: [4, 7],
     duration: 24,
     then: 'moveDown'
   });
-
   Enemy.addState('moveLeft', {
     frames: [8, 9],
     duration: 4,
     repeat: true,
     move: true
   });
-
   Enemy.addState('leftToDown', {
     frames: [8, 10],
     duration: 24,
     then: 'moveDown'
   });
-
   Enemy.addState('leftToUp', {
     frames: [8, 11],
     duration: 24,
     then: 'moveUp'
   });
-
   Enemy.addState('moveUp', {
     frames: [12, 13],
     duration: 4,
     repeat: true,
     move: true
   });
-
   Enemy.addState('upToLeft', {
     frames: [12, 14],
     duration: 24,
     then: 'moveLeft'
   });
-
   Enemy.addState('upToRight', {
     frames: [12, 15],
     duration: 24,
     then: 'moveRight'
   });
-
-  g.Enemy = Enemy;
-
-}).call(this);
+  return Enemy;
+});

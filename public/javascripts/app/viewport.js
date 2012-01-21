@@ -1,27 +1,26 @@
-(function() {
-  var g, viewport,
-    __slice = Array.prototype.slice;
+var __slice = Array.prototype.slice;
 
-  g = window.game || (window.game = {});
-
-  viewport = g.module('game.viewport', g.plug('fpsReporter'));
-
-  throw 'ok dandy';
-
-  viewport.extend({
+define(function(require) {
+  var Bounds, canvas, fpsReporter, module, plug, viewport;
+  module = require('app/meta').module;
+  plug = require('app/plug');
+  fpsReporter = require('app/fps_reporter');
+  Bounds = require('app/bounds');
+  canvas = require('app/canvas');
+  viewport = module('game.viewport', plug('fpsReporter'), {
     width: 600,
     height: 400,
     playerPadding: 30,
     init: function(main) {
       this.main = main;
-      this.bounds = g.Bounds.rect(0, 0, this.width, this.height);
+      this.bounds = Bounds.rect(0, 0, this.width, this.height);
       this.$element = $('<div id="viewport" />').css({
         width: this.width,
         height: this.height,
         'background-image': "url(" + main.imagesPath + "/map2x.png)",
         'background-repeat': 'no-repeat'
       });
-      this.canvas = g.canvas.create(this.width, this.height);
+      this.canvas = canvas.create(this.width, this.height);
       this.canvas.element.id = 'canvas';
       return this.$element.append(this.canvas.$element);
     },
@@ -50,7 +49,5 @@
       return console.log("viewport.padding.bounds = (" + this.padding.bounds.x1 + ".." + this.padding.bounds.x2 + ", " + this.padding.bounds.y1 + ".." + this.padding.bounds.y2 + ")");
     }
   });
-
-  g.viewport = viewport;
-
-}).call(this);
+  return viewport;
+});

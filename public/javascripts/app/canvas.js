@@ -1,8 +1,7 @@
-(function() {
-  var Pixel, canvas, contextExt, g, imageDataExt;
 
-  g = window.game || (window.game = {});
-
+define(function(require) {
+  var $, Pixel, canvas, contextExt, imageDataExt;
+  $ = require('vendor/ender');
   Pixel = (function() {
 
     function Pixel(x, y, red, green, blue, alpha) {
@@ -25,7 +24,6 @@
     return Pixel;
 
   })();
-
   contextExt = {
     extend: function(ctx) {
       return $.extend(ctx, {
@@ -44,7 +42,6 @@
       });
     }
   };
-
   imageDataExt = {
     extend: function(imageData) {
       return $.extend(imageData, {
@@ -69,7 +66,7 @@
           return this.data[i + 3] = a;
         },
         each: function(fn) {
-          var a, b, data, i, len, pi, pixel, r, x, y, _ref, _ref2, _results;
+          var a, b, data, g, i, len, pi, pixel, r, x, y, _ref, _ref2, _results;
           data = this.data;
           _ref = [0, data.length], i = _ref[0], len = _ref[1];
           _results = [];
@@ -87,7 +84,6 @@
       });
     }
   };
-
   canvas = {
     create: function(width, height, callback) {
       var c;
@@ -102,7 +98,5 @@
       return c;
     }
   };
-
-  g.canvas = canvas;
-
-}).call(this);
+  return canvas;
+});

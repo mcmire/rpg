@@ -1,29 +1,31 @@
-(function() {
-  var CollidableBox, CollidableCollection, MapBlock, collisionLayer, g;
 
-  g = window.game || (window.game = {});
-
-  CollidableCollection = g.Class.extend('game.CollidableCollection', {
+define(function(require) {
+  var Bounds, Class, CollidableBox, CollidableCollection, Grob, MapBlock, collisionLayer, loadable, module, tickable, _ref, _ref2;
+  _ref = require('app/meta'), Class = _ref.Class, module = _ref.module;
+  Grob = require('app/grob');
+  Bounds = require('app/bounds');
+  _ref2 = require('app/roles'), loadable = _ref2.loadable, tickable = _ref2.tickable;
+  CollidableCollection = Class.extend('game.CollidableCollection', {
     init: function() {
       return this.collidables = [];
     },
     getMapBlocks: function() {
-      var c, _i, _len, _ref, _results;
-      _ref = this.collidables;
+      var c, _i, _len, _ref3, _results;
+      _ref3 = this.collidables;
       _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        c = _ref[_i];
+      for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+        c = _ref3[_i];
         if (c instanceof MapBlock) _results.push(c);
       }
       return _results;
     },
     each: function(fn) {
-      var c, collidable, ret, _i, _j, _len, _len2, _ref, _ref2, _results, _results2;
+      var c, collidable, ret, _i, _j, _len, _len2, _ref3, _ref4, _results, _results2;
       if (this.exception) {
-        _ref = this.collidables;
+        _ref3 = this.collidables;
         _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          c = _ref[_i];
+        for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+          c = _ref3[_i];
           if (collidable !== this.exception) {
             ret = fn(collidable);
             if (ret === false) {
@@ -37,10 +39,10 @@
         }
         return _results;
       } else {
-        _ref2 = this.collidables;
+        _ref4 = this.collidables;
         _results2 = [];
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          collidable = _ref2[_j];
+        for (_j = 0, _len2 = _ref4.length; _j < _len2; _j++) {
+          collidable = _ref4[_j];
           ret = fn(collidable);
           if (ret === false) {
             break;
@@ -104,22 +106,20 @@
       return ret;
     }
   });
-
-  MapBlock = g.Grob.extend('game.MapBlock', {
+  MapBlock = Grob.extend('game.MapBlock', {
     init: function(main, x1, y1, width, height) {
       this._initDims = function() {
         this.width = width;
         return this.height = height;
       };
       this.initBoundsOnMap = function() {
-        return this.bounds.onMap = g.Bounds.rect(x1, y1, width, height);
+        return this.bounds.onMap = Bounds.rect(x1, y1, width, height);
       };
       return this._super(main);
     },
     tick: function() {}
   });
-
-  CollidableBox = g.Class.extend('game.CollidableBox', {
+  CollidableBox = Class.extend('game.CollidableBox', {
     init: function(bounds) {
       this.bounds = bounds;
     },
@@ -139,20 +139,19 @@
       return this.bounds.getOuterBottomEdgeBlocking(bounds);
     }
   });
-
-  collisionLayer = g.module('game.collisionLayer', g.loadable, g.tickable, {
+  collisionLayer = module('game.collisionLayer', loadable, tickable, {
     init: function(main) {
-      var collidable, _i, _len, _ref, _results;
+      var collidable, _i, _len, _ref3, _results;
       this.main = main;
       this.viewport = this.main.viewport;
       this.width = this.viewport.width;
       this.height = this.viewport.height;
       this.collidables = new CollidableCollection();
       this.add(new MapBlock(this.main, 96, 96, 352, 112));
-      _ref = this.collidables;
+      _ref3 = this.collidables;
       _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        collidable = _ref[_i];
+      for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+        collidable = _ref3[_i];
         _results.push(this.add(collidable));
       }
       return _results;
@@ -164,23 +163,22 @@
       return this.isLoaded = true;
     },
     tick: function() {
-      var collidable, _i, _len, _ref, _results;
-      _ref = this.collidables.getMapBlocks();
+      var collidable, _i, _len, _ref3, _results;
+      _ref3 = this.collidables.getMapBlocks();
       _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        collidable = _ref[_i];
+      for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+        collidable = _ref3[_i];
         _results.push(collidable.tick());
       }
       return _results;
     }
   });
-
-  g.CollidableCollection = CollidableCollection;
-
-  g.MapBlock = MapBlock;
-
-  g.CollidableBox = CollidableBox;
-
-  g.collisionLayer = collisionLayer;
-
-}).call(this);
+  require({
+    CollidableCollection: CollidableCollection
+  });
+  return {
+    MapBlock: MapBlock,
+    CollidableBox: CollidableBox,
+    collisionLayer: collisionLayer
+  };
+});

@@ -1,9 +1,10 @@
-(function() {
-  var KEYS, KeyTracker, MODIFIER_KEYS, PressedKeys, g, keyboard,
-    __slice = Array.prototype.slice;
+var __slice = Array.prototype.slice;
 
-  g = window.game || (window.game = {});
-
+define(function(require) {
+  var $, KEYS, KeyTracker, MODIFIER_KEYS, PressedKeys, keyboard, meta, roles;
+  $ = require('vendor/ender');
+  meta = require('app/meta');
+  roles = require('app/roles');
   KEYS = {
     KEY_TAB: 9,
     KEY_ESC: 27,
@@ -24,10 +25,8 @@
     KEY_K: 75,
     KEY_L: 76
   };
-
   MODIFIER_KEYS = [KEYS.KEY_SHIFT, KEYS.KEY_CTRL, KEYS.KEY_ALT, KEYS.KEY_META];
-
-  PressedKeys = g.Class.extend({
+  PressedKeys = meta.Class.extend({
     reset: function() {
       this.tsByKey = {};
       return this.keys = [];
@@ -62,8 +61,7 @@
       return _results;
     }
   });
-
-  KeyTracker = g.Class.extend({
+  KeyTracker = meta.Class.extend({
     init: function(keyCodes) {
       this.trackedKeys = $.reduce(keyCodes, (function(o, c) {
         o[c] = 1;
@@ -110,8 +108,7 @@
       return this.pressedKeys.keys[0];
     }
   });
-
-  keyboard = g.module('game.keyboard', g.eventable, {
+  keyboard = meta.module('game.keyboard', roles.eventable, {
     KeyTracker: KeyTracker,
     keys: KEYS,
     modifierKeys: MODIFIER_KEYS,
@@ -253,7 +250,5 @@
       }
     }
   });
-
-  g.keyboard = keyboard;
-
-}).call(this);
+  return keyboard;
+});
