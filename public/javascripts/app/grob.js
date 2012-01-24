@@ -1,10 +1,9 @@
 
 define(function(require) {
-  var Bounds, Class, CollidableBox, Grob, drawable, loadable, module, tickable, _boundsFrom, _ref, _ref2;
+  var Bounds, Class, Grob, drawable, loadable, module, tickable, _boundsFrom, _ref, _ref2;
   _ref = require('app/meta'), Class = _ref.Class, module = _ref.module;
   _ref2 = require('app/roles'), loadable = _ref2.loadable, tickable = _ref2.tickable, drawable = _ref2.drawable;
   Bounds = require('app/bounds');
-  CollidableBox = require('app/collidable_box');
   _boundsFrom = function(boundsOrGrob) {
     if (boundsOrGrob instanceof Grob) {
       return boundsOrGrob.bounds.onMap;

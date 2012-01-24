@@ -2,7 +2,6 @@ define (require) ->
   {Class, module} = require('app/meta')
   {loadable, tickable, drawable} = require('app/roles')
   Bounds = require('app/bounds')
-  CollidableBox = require('app/collidable_box')
 
   _boundsFrom = (boundsOrGrob) ->
     if boundsOrGrob instanceof Grob
