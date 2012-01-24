@@ -7,7 +7,7 @@ define (require) ->
       @tickInterval = 1000
       @$element = $('<div style="margin-top: 10px"/>')
 
-    tick: ->
+    draw: (df, dt) ->
       ###
       ticker.$div.html("""
         <b>Player on map:</b> #{ticker.main.player.bounds.onMap.inspect()}<br>

@@ -6,12 +6,11 @@ define(function(require) {
   _ref2 = require('app/roles'), runnable = _ref2.runnable, tickable = _ref2.tickable;
   ticker = {
     construct: function() {
-      var args, name, overrides, _ref3;
-      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      _ref3 = args.reverse(), overrides = _ref3[0], name = _ref3[1];
-      overrides || (overrides = {});
+      var mixins, mod, name;
+      mixins = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      if (typeof mixins[0] === 'string') name = mixins.shift();
       name || (name = 'game.ticker');
-      return module(name, runnable, tickable, {
+      mod = module(name, runnable, tickable, {
         init: function(main) {
           this.main = main;
         },
@@ -19,19 +18,19 @@ define(function(require) {
           if (this.isInit) return this.stop();
         },
         start: function() {
-          var _ref4;
           if (this.isRunning) return;
           this.isRunning = true;
-          if ((_ref4 = overrides.start) != null) _ref4.call(this);
+          this._start();
           return this;
         },
+        _start: function() {},
         stop: function() {
-          var _ref4;
           if (!this.isRunning) return;
           this.isRunning = false;
-          if ((_ref4 = overrides.stop) != null) _ref4.call(this);
+          this._stop();
           return this;
         },
+        _stop: function() {},
         suspend: function() {
           this.wasRunning = this.isRunning;
           return this.stop();
@@ -40,38 +39,48 @@ define(function(require) {
           if (this.wasRunning) return this.start();
         }
       });
+      mod.addTranslations({
+        start: '_start',
+        stop: '_stop'
+      });
+      mod.extend.apply(mod, mixins);
+      return mod;
     }
   };
   intervalTicker = {
     construct: function() {
-      var args, methods, name, overrides, _ref3;
-      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      _ref3 = args.reverse(), overrides = _ref3[0], name = _ref3[1];
-      overrides || (overrides = {});
+      var mixins, mod, name;
+      mixins = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      if (typeof mixins[0] === 'string') name = mixins.shift();
       name || (name = 'game.intervalTicker');
-      methods = {
+      mod = ticker.construct(name, {
         init: function(main) {
+          var self;
+          self = this;
           this._super(main);
-          return this.tickFunction = this.tick;
+          return this.drawer = this.createIntervalTimer(false, function(df, dt) {
+            return self.draw(df, dt);
+          });
         },
         start: function() {
-          return this.timer = window.setInterval(this.tickFunction, this.tickInterval);
+          return this.timer = window.setInterval(this.drawer, this.tickInterval);
         },
         stop: function() {
           if (this.timer) {
             window.clearInterval(this.timer);
             return this.timer = null;
           }
+        },
+        draw: function() {
+          throw new Error('draw must be overridden');
         }
-      };
-      meta.extend(methods, overrides);
-      return ticker.construct(name, methods);
+      });
+      mod.extend.apply(mod, mixins);
+      return mod;
     }
   };
   return {
-    ticker: ticker
-  };
-  return {
+    ticker: ticker,
     intervalTicker: intervalTicker
   };
 });

@@ -1,7 +1,5 @@
 define (require) ->
-  $ = require('vendor/ender')
-
-  #---
+  util = require('app/util')
 
   _fnContainsSuper = (fn) -> /\b_super\b/.test(fn)
 
@@ -13,20 +11,58 @@ define (require) ->
       @_super = tmp
       return ret
 
-  # _extend([<true|false>], base, ext, [_super], [cons])
-  _extend = (args...) ->
-    includeRoles = true
-    if typeof args[0] is 'boolean'
-      includeRoles = args.shift()
-    [base, ext, _super, cons] = args
-    _super ?= base
-    cons ?= base
+  # Internal: Augment an object with another object.
+  #
+  # If a property is being copied over that already exists in the target object,
+  # then usually that property is overwritten. However, a special case is made
+  # for when a function in the source object would overwrite a function in the
+  # target object. Here, if the source function contains a call to
+  # this._super(), then upon being copied, it is wrapped such that when the
+  # function is called, calling _super() will call the target function.
+  #
+  # When copying over properties, especially functions, sometimes we have to
+  # change their names, so that we can call these functions manually in specific
+  # places. If the target object has a __translations__ key, then this is used
+  # to rename properties.
+  #
+  # target       - The object to augment.
+  # source       - The object with which to augment the `target`.
+  # options      - An optional plain object:
+  #                _super       - An Object.
+  #                               When wrapping a function in `source` that
+  #                               contains a _super reference, we have to set
+  #                               _super to some reasonable parent function.
+  #                               Where this function comes from differs
+  #                               depending on just what is being extended. When
+  #                               overriding a method in a module, the _super
+  #                               function is just the value of the
+  #                               corresponding property in the `target` object.
+  #                               The object to pull said property from,
+  #                               however, can be changed with this option; so,
+  #                               for instance, when overriding a member of an
+  #                               instance of a class, however, the _super
+  #                               function is the method within the class's
+  #                               prototype.
+  #                includeRoles - If true, the `source` object will be added to
+  #                               the list of roles that the `target` object
+  #                               has. (Default: true)
+  #
+  _extend = (target, source, opts={}) ->
+    _super = opts._super ? target
+    includeRoles = opts.includeRoles ? true
+    translations = target.__translations__ || {}
+    targetClass = opts.targetClass ? target
 
-    for own k of ext
-      continue if /^__/.test(k)
-      if typeof ext[k] is 'function' and _fnContainsSuper(ext[k])
-        if typeof _super[k] is 'function'
-          base[k] = _wrap(k, ext[k], _super[k])
+    # Prevent mixins from being mixed in twice
+    if source.__name__? and target.__roles__? and target.__roles__[source.__name__]
+      return
+
+    for own sk of source
+      tk = translations[sk] || sk
+      # continue if /^__/.test(k)
+      if typeof source[sk] is 'function' and _fnContainsSuper(source[sk])
+        if typeof _super[tk] is 'function'
+          target[tk] = _wrap(sk, source[sk], _super[tk])
         else
           # The current method has no equivalent higher up in the inheritance
           # chain, so rewrite the method so that if _super is called nothing
@@ -42,21 +78,26 @@ define (require) ->
           # TODO: This may not work if super is called multiple times in a
           # subclass, investigate
           #
-          base[k] = _wrap(k, ext[k], ->)
-      else if $.v.is.arr(ext[k]) or $.v.is.obj(ext[k])
-        base[k] = $.clone(ext[k])
+          target[tk] = _wrap(sk, source[sk], ->)
+      else if $.v.is.arr(source[k]) or util.isPlainObject(source[k])
+        target[k] = util.clone(source[k])
       else
-        base[k] = ext[k]
+        target[tk] = source[sk]
 
-    if base.__name__ is 'game.main'
-      throw 'ok great'
+    # If `targetClass` is being extended with one of our modules, then add the
+    # name of the module, as well as `source's` modules, to `targetClass's` list
+    # of included modules
+    if includeRoles and targetClass.__roles__?
+      roles = []
+      roles.push(source.__name__) if source.__name__?
+      roles.push(k) for k of source.__roles__ if source.__roles__?
+      targetClass.__roles__[role] = 1 for role in roles
 
-    # If `base` is being extended with one of our modules, then add the name of
-    # the module to `base's` list of included modules
-    if base.__roles__? and ext.__name__?
-      base.__roles__[ext.__name__] = 1
+    # Call extended hook, if present
+    if typeof source.__extended__ is 'function'
+      source.__extended__.call(source, target)
 
-    return base
+    return target
 
   #---
 
@@ -81,11 +122,15 @@ define (require) ->
   # [6]: http://github.com/ded/klass
 
   Class = ->
-  Class.__name__ = 'Class'
+  Object.defineProperty Class, '__name__',
+    value: 'Class'
+    writable: false
+    enumerable: false
+    configurable: false
   Class::init = ->
-    @reset
+    @reset()
   Class::reset = ->
-    throw new Error 'must be overridden'
+    # throw new Error 'reset must be overridden'
   Class::destroy = ->
     @reset()
 
@@ -174,7 +219,7 @@ define (require) ->
     if classdef.statics? or classdef.members? or classdef.roles?
       statics = classdef.statics ? {}
       members = classdef.members ? {}
-      $.extend members, classdef.roles if classdef.roles?
+      util.extend members, classdef.roles if classdef.roles?
     else
       statics = {}
       members = classdef
@@ -195,7 +240,12 @@ define (require) ->
     # dummy object in the prototype chain which inherits from the parent
     # prototype.
     noop = ->
-    noop.__name__ = 'noop'  # simply for debugging purposes
+    # define this simply for debugging purposes
+    Object.defineProperty noop, '__name__',
+      value: 'noop'
+      writable: false
+      enumerable: false
+      configurable: false
     noop::constructor = parentClass  # ditto
     noop.prototype = parentProto
     parentInstance = new noop()
@@ -225,12 +275,30 @@ define (require) ->
     # Ensure that instances of the child class report the correct constructor
     # (otherwise it will be set to the 'noop' constructor)
     childClass::constructor = childClass
-    # Store the name for debugging purposes
-    childClass.__name__ = name
-    # Store a reference to the parent class just for debugging purposes
-    childClass.superclass = parentClass
-    # Initialize roles hash, which will be written to when this class is extended
-    childClass.__roles__ = {}
+
+    # Define special properties such that they will not show up in for..in loops
+    Object.defineProperty childClass, '__name__',
+      value: name
+      writable: false
+      enumerable: false
+      configurable: false
+    Object.defineProperty childClass, '__superclass__',
+      value: parentClass
+      writable: false
+      enumerable: false
+      configurable: false
+    Object.defineProperty childClass, '__roles__',
+      value: {}
+      writable: false
+      enumerable: false
+      configurable: false
+
+    # If subclassing an existing class, add the superclass as well as its roles
+    # to this class's roles
+    if parentClass isnt Class
+      roles = [parentClass.__name__].concat($.v.keys(parentClass.__roles__))
+      childClass.__roles__[role] = 1 for role in roles
+
     # And then make the child class subclassable
     childClass.extend = arguments.callee
 
@@ -243,7 +311,7 @@ define (require) ->
         obj = {}; obj[name] = fn
       # Copy `obj` to `this` (or, `childClass`) with `parentClass` as _super
       # reference
-      _extend(this, obj, parentClass, childClass)
+      _extend(this, obj, _super: parentClass, includeRoles: false)
       return this
 
     childClass.role =
@@ -257,7 +325,8 @@ define (require) ->
         objs = [obj]
       # Copy `obj` to `parentInstance` (or, childClass.prototype) with
       # `parentProto` as _super reference
-      _extend(parentInstance, obj, parentProto, childClass) for obj in objs
+      for obj in objs
+        _extend(parentInstance, obj, _super: parentProto, targetClass: childClass)
       return this
 
     childClass::role =
@@ -271,7 +340,8 @@ define (require) ->
         objs = [obj]
       # Copy `obj` to this (or, childClass.prototype) with `parentProto` as
       # _super reference
-      _extend(this, obj, parentProto, childClass) for obj in objs
+      for obj in objs
+        _extend(this, obj, _super: parentProto, includeRoles: false)
       return this
 
     childClass.can = (roles...) ->
@@ -287,9 +357,70 @@ define (require) ->
     childClass.members(mixin) for mixin in mixins
     childClass.members(members)
 
+    # If subclassing, call the inherited hook in the subclass
+    if childClass isnt Class and typeof parentClass.__inherited__ is 'function'
+      parentClass.__inherited__(childClass)
+
     return childClass
 
   #---
+
+  baseModule = do ->
+    mod = {}
+
+    mod.__translations__ =
+      init: '_init'
+      destroy: '_destroy'
+
+    mod.isInit = false
+
+    mod.method =
+    mod.methods =
+    mod.role =
+    mod.roles =
+    mod.does =  # perl 6
+    mod.extend = (mixins...) ->
+      if typeof mixins[0] is 'string'
+        [name, fn] = mixins
+        mixin = {}; mixin[name] = fn
+        mixins = [mixin]
+      # if you are adding a method that already exists, then here _super will be
+      # set to that method - this is a bit weird because you can "subclass"
+      # yourself by extending your module with a method and then extend it again
+      # with a method of the same name, but this feature is useful so I don't have
+      # a problem with it
+      _extend this, mixin for mixin in mixins
+      return this
+
+    mod.can = (roles...) ->
+      (return false if not @__roles__[role]) for role in roles
+      return true
+
+    mod.addTranslations = (obj) ->
+      # replace the variable so it doesn't affect the prototype's __translations__
+      @__translations__ = $.v.extend {}, @__translations__, obj
+
+    mod.init = (args...) ->
+      unless @isInit
+        @reset()
+        @_init(args...)
+        @isInit = true
+      return this
+
+    mod._init = ->
+
+    mod.reset = ->
+
+    mod.destroy = (args...) ->
+      if @isInit
+        @_destroy(args...)
+        @reset()
+        @isInit = false
+      return this
+
+    mod._destroy = ->
+
+    return mod
 
   # A module fabricator.
   #
@@ -322,71 +453,31 @@ define (require) ->
   #
   # Returns a plain Object.
   #
-  module = (name, mixins...) ->
-    mod = {}
-
+  module = (mixins...) ->
+    name = mixins.shift() if typeof mixins[0] is 'string'
+    mod = util.createFromProto(baseModule)
     mod.__name__ = name
-    mod.__roles__ = {}
 
-    mod.method =
-    mod.methods =
-    mod.role =
-    mod.roles =
-    mod.does =  # perl 6
-    mod.extend = (mixins...) ->
-      includeRoles = true
-      if typeof mixins[0] is 'boolean'
-        includeRoles = mixins.shift()
-      if typeof mixins[0] is 'string'
-        [name, fn] = mixins
-        mixin = {}; mixin[name] = fn
-        mixins = [mixin]
-      # if you are adding a method that already exists, then here _super will be
-      # set to that method - this is a bit weird because you can "subclass"
-      # yourself by extending your module with a method and then extend it again
-      # with a method of the same name, but this feature is useful so I don't have
-      # a problem with it
-      _extend includeRoles, this, mixin for mixin in mixins
-      return this
+    # Prevent __name__ and __roles__ from showing up in for..in loops
+    Object.defineProperty mod, '__name__',
+      value: name
+      writable: false
+      enumerable: false
+      configurable: false
+    Object.defineProperty mod, '__roles__',
+      value: {}
+      writable: false
+      enumerable: false
+      configurable: false
 
-    mod.can = (roles...) ->
-      return false if not @__roles__[role] for role in roles
-      return true
-
-    mixin = {}
-    mod.extend.apply(mixin, [false].concat(mixins))
-    init = mixin.init ? ->
-    reset = mixin.reset ? ->
-    destroy = mixin.destroy ? ->
-    delete mixin.init
-    delete mixin.reset
-    delete mixin.destroy
-
-    mod.init = ->
-      unless @isInit
-        @reset()
-        init.apply(this, arguments)
-        @isInit = true
-      return this
-
-    mod.reset = ->
-      reset.apply(this, arguments)
-      return this
-
-    mod.destroy = ->
-      if @isInit
-        destroy.apply(this, arguments)
-        @reset()
-        @isInit = false
-      return this
-
-    mod.extend(mixin)
+    mod.extend(mixins...)
 
     return mod
 
   #---
 
-  return \
+  return {
     module: module
     Class: Class
     extend: _extend
+  }

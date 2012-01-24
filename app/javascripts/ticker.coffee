@@ -3,11 +3,10 @@ define (require) ->
   {runnable, tickable} = require('app/roles')
 
   ticker =
-    construct: (args...) ->
-      [overrides, name] = args.reverse()
-      overrides ||= {}
+    construct: (mixins...) ->
+      name = mixins.shift() if typeof mixins[0] is 'string'
       name ||= 'game.ticker'
-      module name, runnable, tickable,
+      mod = module name, runnable, tickable,
         init: (@main) ->
 
         destroy: ->
@@ -16,14 +15,18 @@ define (require) ->
         start: ->
           return if @isRunning
           @isRunning = true
-          overrides.start?.call(this)
+          @_start()
           return this
+
+        _start: ->
 
         stop: ->
           return if not @isRunning
           @isRunning = false
-          overrides.stop?.call(this)
+          @_stop()
           return this
+
+        _stop: ->
 
         suspend: ->
           @wasRunning = @isRunning
@@ -32,26 +35,41 @@ define (require) ->
         resume: ->
           @start() if @wasRunning
 
+      mod.addTranslations
+        start: '_start'
+        stop: '_stop'
+
+      mod.extend(mixins...)
+
+      return mod
+
   intervalTicker =
-    construct: (args...) ->
-      [overrides, name] = args.reverse()
-      overrides ||= {}
+    construct: (mixins...) ->
+      name = mixins.shift() if typeof mixins[0] is 'string'
       name ||= 'game.intervalTicker'
-      methods =
+      mod = ticker.construct name,
         init: (main) ->
+          self = this
           @_super(main)
-          @tickFunction = @tick
+          @drawer = @createIntervalTimer false, (df, dt) ->
+            self.draw(df, dt)
 
         start: ->
-          @timer = window.setInterval(@tickFunction, @tickInterval)
+          @timer = window.setInterval(@drawer, @tickInterval)
 
         stop: ->
           if @timer
             window.clearInterval(@timer)
             @timer = null
-      meta.extend methods, overrides
-      ticker.construct name, methods
 
-  return \
+        draw: ->
+          throw new Error 'draw must be overridden'
+
+      mod.extend(mixins...)
+
+      return mod
+
+  return {
     ticker: ticker
     intervalTicker: intervalTicker
+  }

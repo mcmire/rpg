@@ -1,12 +1,15 @@
 var __slice = Array.prototype.slice;
 
 define(function(require) {
-  var Bounds, Grob, Mob;
+  var Bounds, CollidableCollection, Grob, Mob;
   Grob = require('app/grob');
   Bounds = require('app/bounds');
+  CollidableCollection = require('app/collidable_collection');
   Mob = Grob.extend('game.Mob', {
     statics: {
-      states: {},
+      __inherited__: function(subclass) {
+        return subclass.states = {};
+      },
       addState: function(name, args) {
         var state;
         state = {};
@@ -26,9 +29,11 @@ define(function(require) {
       }
     },
     members: {
-      init: function(main) {
-        this._super(main);
-        return this.imagePath = "" + main.imagesPath + "/" + this.constructor.image;
+      init: function(core) {
+        this.map = core.map, this.collisionLayer = core.collisionLayer;
+        this._super(core);
+        this.speed = this.constructor.speed;
+        return this.imagePath = "" + this.core.imagesPath + "/" + this.constructor.image;
       },
       _initDims: function() {
         this.width = this.constructor.width;
@@ -39,11 +44,15 @@ define(function(require) {
         return this._super();
       },
       _initFence: function() {
-        return this.fence = Bounds.rect(0, 0, this.main.map.width, this.main.map.height);
+        return this.fence = Bounds.rect(0, 0, this.map.width, this.map.height);
       },
       _initCollisionLayer: function() {
         this._super();
-        return this.allCollidables = this.collisionLayer.collidables.without(this);
+        if (this.collisionLayer) {
+          return this.allCollidables = this.collisionLayer.collidables.without(this);
+        } else {
+          return this.allCollidables = new CollidableCollection();
+        }
       },
       load: function() {
         var self;
@@ -73,17 +82,15 @@ define(function(require) {
       },
       draw: function() {
         var biv, ctx, frame, yOffset;
-        ctx = this.viewport.canvas.ctx;
         biv = this.bounds.inViewport;
-        ctx.save();
+        ctx = this.viewport.canvas.ctx;
         frame = this.state.frames[this.currentFrame];
         if (frame == null) {
           debugger;
           throw 'frame is undefined';
         }
         yOffset = frame * this.height;
-        ctx.drawImage(this.image, 0, yOffset, this.width, this.height, biv.x1, biv.y1, this.width, this.height);
-        return ctx.restore();
+        return ctx.drawImage(this.image, 0, yOffset, this.width, this.height, biv.x1, biv.y1, this.width, this.height);
       },
       postdraw: function() {
         if ((this.numSeqFrameDraws % this.state.frameDuration) === 0) {

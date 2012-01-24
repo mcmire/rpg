@@ -1,16 +1,14 @@
 
 define(function(require) {
-  var fpsReporter, intervalTicker;
+  var attachable, fpsReporter, intervalTicker;
   intervalTicker = require('app/ticker').intervalTicker;
-  fpsReporter = intervalTicker.construct('game.fpsReporter', {
+  attachable = require('app/roles').attachable;
+  fpsReporter = intervalTicker.construct('game.fpsReporter', attachable, {
     init: function(main) {
-      var draw;
-      this._super(main);
-      draw = this.draw;
+      this.main = main;
+      this.core = this.main.core;
+      this._super(this.main);
       this.tickInterval = 1000;
-      this.tickFunction = this.main.createIntervalTimer(true, function(df, dt) {
-        return draw(df, dt);
-      });
       return this.$element = $('<div id="fps-reporter" />');
     },
     draw: function(df, dt) {

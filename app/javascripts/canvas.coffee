@@ -1,5 +1,5 @@
 define (require) ->
-  $ = require('vendor/ender')
+  util = require('app/util')
 
   class Pixel
     constructor: (@x, @y, @red, @green, @blue, @alpha) ->
@@ -8,14 +8,16 @@ define (require) ->
 
   contextExt =
     extend: (ctx) ->
+      getImageData = ctx.getImageData
+      createImageData = ctx.createImageData
       $.extend ctx,
         getImageData: (x, y, width, height) ->
-          imageData = ctx.getImageData.apply(this, arguments)
+          imageData = getImageData.apply(this, arguments)
           imageDataExt.extend(imageData)
           imageData
 
         createImageData: (width, height) ->
-          imageData = ctx.createImageData.apply(this, arguments)
+          imageData = createImageData.apply(this, arguments)
           imageDataExt.extend(imageData)
           imageData
 
@@ -54,15 +56,22 @@ define (require) ->
             i += 4
 
   canvas =
-    create: (width, height, callback) ->
+    create: (parent, id, width, height) ->
       c = {}
+      c.width = width
+      c.height = height
       c.$element = $("<canvas/>")
-      c.element = c.$element[0]
-      c.ctx = c.element.getContext("2d")
-      contextExt.extend(c.ctx)
-      c.width = c.element.width = width
-      c.height = c.element.height = height
-      callback(c) if callback
+        .attr('id', id)
+        .attr('width', width)
+        .attr('height', height)
+      c.attach = ->
+        c.$element.appendTo(parent)
+        # for some reason we have to assign this *after* the element is added to
+        # the DOM otherwise c.$element[0] !== c.$element[0]
+        c.element = c.$element[0]
+        c.ctx = contextExt.extend(c.element.getContext("2d"))
+        return c
+      # callback(c) if callback
       return c
 
   return canvas

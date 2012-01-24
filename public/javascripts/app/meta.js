@@ -1,9 +1,9 @@
-var __slice = Array.prototype.slice,
-  __hasProp = Object.prototype.hasOwnProperty;
+var __hasProp = Object.prototype.hasOwnProperty,
+  __slice = Array.prototype.slice;
 
 define(function(require) {
-  var $, Class, module, _extend, _fnContainsSuper, _wrap;
-  $ = require('vendor/ender');
+  var Class, baseModule, module, util, _extend, _fnContainsSuper, _wrap;
+  util = require('app/util');
   _fnContainsSuper = function(fn) {
     return /\b_super\b/.test(fn);
   };
@@ -17,48 +17,65 @@ define(function(require) {
       return ret;
     };
   };
-  _extend = function() {
-    var args, base, cons, ext, includeRoles, k, _super;
-    args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    includeRoles = true;
-    if (typeof args[0] === 'boolean') includeRoles = args.shift();
-    base = args[0], ext = args[1], _super = args[2], cons = args[3];
-    if (_super == null) _super = base;
-    if (cons == null) cons = base;
-    for (k in ext) {
-      if (!__hasProp.call(ext, k)) continue;
-      if (/^__/.test(k)) continue;
-      if (typeof ext[k] === 'function' && _fnContainsSuper(ext[k])) {
-        if (typeof _super[k] === 'function') {
-          base[k] = _wrap(k, ext[k], _super[k]);
+  _extend = function(target, source, opts) {
+    var includeRoles, k, role, roles, sk, targetClass, tk, translations, _i, _len, _ref, _ref2, _ref3, _super;
+    if (opts == null) opts = {};
+    _super = (_ref = opts._super) != null ? _ref : target;
+    includeRoles = (_ref2 = opts.includeRoles) != null ? _ref2 : true;
+    translations = target.__translations__ || {};
+    targetClass = (_ref3 = opts.targetClass) != null ? _ref3 : target;
+    if ((source.__name__ != null) && (target.__roles__ != null) && target.__roles__[source.__name__]) {
+      return;
+    }
+    for (sk in source) {
+      if (!__hasProp.call(source, sk)) continue;
+      tk = translations[sk] || sk;
+      if (typeof source[sk] === 'function' && _fnContainsSuper(source[sk])) {
+        if (typeof _super[tk] === 'function') {
+          target[tk] = _wrap(sk, source[sk], _super[tk]);
         } else {
-          base[k] = _wrap(k, ext[k], function() {});
+          target[tk] = _wrap(sk, source[sk], function() {});
         }
-      } else if ($.v.is.arr(ext[k]) || $.v.is.obj(ext[k])) {
-        base[k] = $.clone(ext[k]);
+      } else if ($.v.is.arr(source[k]) || util.isPlainObject(source[k])) {
+        target[k] = util.clone(source[k]);
       } else {
-        base[k] = ext[k];
+        target[tk] = source[sk];
       }
     }
-    if (base.__name__ === 'game.main') throw 'ok great';
-    if ((base.__roles__ != null) && (ext.__name__ != null)) {
-      base.__roles__[ext.__name__] = 1;
+    if (includeRoles && (targetClass.__roles__ != null)) {
+      roles = [];
+      if (source.__name__ != null) roles.push(source.__name__);
+      if (source.__roles__ != null) {
+        for (k in source.__roles__) {
+          roles.push(k);
+        }
+      }
+      for (_i = 0, _len = roles.length; _i < _len; _i++) {
+        role = roles[_i];
+        targetClass.__roles__[role] = 1;
+      }
     }
-    return base;
+    if (typeof source.__extended__ === 'function') {
+      source.__extended__.call(source, target);
+    }
+    return target;
   };
   Class = function() {};
-  Class.__name__ = 'Class';
+  Object.defineProperty(Class, '__name__', {
+    value: 'Class',
+    writable: false,
+    enumerable: false,
+    configurable: false
+  });
   Class.prototype.init = function() {
-    return this.reset;
+    return this.reset();
   };
-  Class.prototype.reset = function() {
-    throw new Error('must be overridden');
-  };
+  Class.prototype.reset = function() {};
   Class.prototype.destroy = function() {
     return this.reset();
   };
   Class.extend = function() {
-    var args, childClass, classdef, k, members, mixin, mixins, name, noop, parentClass, parentInstance, parentProto, statics, v, _i, _len, _ref, _ref2;
+    var args, childClass, classdef, k, members, mixin, mixins, name, noop, parentClass, parentInstance, parentProto, role, roles, statics, v, _i, _j, _len, _len2, _ref, _ref2;
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
     if (typeof args[0] === 'string') name = args.shift();
     classdef = args.pop();
@@ -71,7 +88,7 @@ define(function(require) {
     if ((classdef.statics != null) || (classdef.members != null) || (classdef.roles != null)) {
       statics = (_ref = classdef.statics) != null ? _ref : {};
       members = (_ref2 = classdef.members) != null ? _ref2 : {};
-      if (classdef.roles != null) $.extend(members, classdef.roles);
+      if (classdef.roles != null) util.extend(members, classdef.roles);
     } else {
       statics = {};
       members = classdef;
@@ -79,7 +96,12 @@ define(function(require) {
     parentClass = this;
     parentProto = parentClass.prototype;
     noop = function() {};
-    noop.__name__ = 'noop';
+    Object.defineProperty(noop, '__name__', {
+      value: 'noop',
+      writable: false,
+      enumerable: false,
+      configurable: false
+    });
     noop.prototype.constructor = parentClass;
     noop.prototype = parentProto;
     parentInstance = new noop();
@@ -97,9 +119,31 @@ define(function(require) {
     };
     childClass.prototype = parentInstance;
     childClass.prototype.constructor = childClass;
-    childClass.__name__ = name;
-    childClass.superclass = parentClass;
-    childClass.__roles__ = {};
+    Object.defineProperty(childClass, '__name__', {
+      value: name,
+      writable: false,
+      enumerable: false,
+      configurable: false
+    });
+    Object.defineProperty(childClass, '__superclass__', {
+      value: parentClass,
+      writable: false,
+      enumerable: false,
+      configurable: false
+    });
+    Object.defineProperty(childClass, '__roles__', {
+      value: {},
+      writable: false,
+      enumerable: false,
+      configurable: false
+    });
+    if (parentClass !== Class) {
+      roles = [parentClass.__name__].concat($.v.keys(parentClass.__roles__));
+      for (_i = 0, _len = roles.length; _i < _len; _i++) {
+        role = roles[_i];
+        childClass.__roles__[role] = 1;
+      }
+    }
     childClass.extend = arguments.callee;
     childClass.static = childClass.statics = function(obj, fn) {
       if (typeof obj === 'string') {
@@ -107,11 +151,14 @@ define(function(require) {
         obj = {};
         obj[name] = fn;
       }
-      _extend(this, obj, parentClass, childClass);
+      _extend(this, obj, {
+        _super: parentClass,
+        includeRoles: false
+      });
       return this;
     };
     childClass.role = childClass.roles = childClass.does = childClass.member = childClass.members = function() {
-      var fn, obj, objs, _i, _len;
+      var fn, obj, objs, _j, _len2;
       objs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       if (typeof objs[0] === 'string') {
         name = objs[0], fn = objs[1];
@@ -119,14 +166,17 @@ define(function(require) {
         obj[name] = fn;
         objs = [obj];
       }
-      for (_i = 0, _len = objs.length; _i < _len; _i++) {
-        obj = objs[_i];
-        _extend(parentInstance, obj, parentProto, childClass);
+      for (_j = 0, _len2 = objs.length; _j < _len2; _j++) {
+        obj = objs[_j];
+        _extend(parentInstance, obj, {
+          _super: parentProto,
+          targetClass: childClass
+        });
       }
       return this;
     };
     childClass.prototype.role = childClass.prototype.roles = childClass.prototype.does = childClass.prototype.method = childClass.prototype.methods = function() {
-      var fn, obj, objs, _i, _len;
+      var fn, obj, objs, _j, _len2;
       objs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       if (typeof objs[0] === 'string') {
         name = objs[0], fn = objs[1];
@@ -134,49 +184,55 @@ define(function(require) {
         obj[name] = fn;
         objs = [obj];
       }
-      for (_i = 0, _len = objs.length; _i < _len; _i++) {
-        obj = objs[_i];
-        _extend(this, obj, parentProto, childClass);
+      for (_j = 0, _len2 = objs.length; _j < _len2; _j++) {
+        obj = objs[_j];
+        _extend(this, obj, {
+          _super: parentProto,
+          includeRoles: false
+        });
       }
       return this;
     };
     childClass.can = function() {
-      var role, roles, _i, _len;
+      var role, roles, _j, _len2;
       roles = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      for (_i = 0, _len = roles.length; _i < _len; _i++) {
-        role = roles[_i];
+      for (_j = 0, _len2 = roles.length; _j < _len2; _j++) {
+        role = roles[_j];
         if (!this.__roles__[role]) return false;
       }
       return true;
     };
     childClass.prototype.can = function() {
-      var role, roles, _i, _len;
+      var role, roles, _j, _len2;
       roles = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      for (_i = 0, _len = roles.length; _i < _len; _i++) {
-        role = roles[_i];
+      for (_j = 0, _len2 = roles.length; _j < _len2; _j++) {
+        role = roles[_j];
         if (!this.constructor.__roles__[role]) return false;
       }
       return true;
     };
     if (statics) childClass.statics(statics);
-    for (_i = 0, _len = mixins.length; _i < _len; _i++) {
-      mixin = mixins[_i];
+    for (_j = 0, _len2 = mixins.length; _j < _len2; _j++) {
+      mixin = mixins[_j];
       childClass.members(mixin);
     }
     childClass.members(members);
+    if (childClass !== Class && typeof parentClass.__inherited__ === 'function') {
+      parentClass.__inherited__(childClass);
+    }
     return childClass;
   };
-  module = function() {
-    var destroy, init, mixin, mixins, mod, name, reset, _ref, _ref2, _ref3;
-    name = arguments[0], mixins = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+  baseModule = (function() {
+    var mod;
     mod = {};
-    mod.__name__ = name;
-    mod.__roles__ = {};
+    mod.__translations__ = {
+      init: '_init',
+      destroy: '_destroy'
+    };
+    mod.isInit = false;
     mod.method = mod.methods = mod.role = mod.roles = mod.does = mod.extend = function() {
-      var fn, includeRoles, mixin, mixins, _i, _len;
+      var fn, mixin, mixins, name, _i, _len;
       mixins = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      includeRoles = true;
-      if (typeof mixins[0] === 'boolean') includeRoles = mixins.shift();
       if (typeof mixins[0] === 'string') {
         name = mixins[0], fn = mixins[1];
         mixin = {};
@@ -185,61 +241,70 @@ define(function(require) {
       }
       for (_i = 0, _len = mixins.length; _i < _len; _i++) {
         mixin = mixins[_i];
-        _extend(includeRoles, this, mixin);
+        _extend(this, mixin);
       }
       return this;
     };
     mod.can = function() {
-      var role, roles;
+      var role, roles, _i, _len;
       roles = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      if ((function() {
-        var _i, _len, _results;
-        _results = [];
-        for (_i = 0, _len = roles.length; _i < _len; _i++) {
-          role = roles[_i];
-          _results.push(!this.__roles__[role]);
-        }
-        return _results;
-      }).call(this)) {
-        return false;
+      for (_i = 0, _len = roles.length; _i < _len; _i++) {
+        role = roles[_i];
+        if (!this.__roles__[role]) return false;
       }
       return true;
     };
-    mixin = {};
-    mod.extend.apply(mixin, [false].concat(mixins));
-    init = (_ref = mixin.init) != null ? _ref : function() {};
-    reset = (_ref2 = mixin.reset) != null ? _ref2 : function() {};
-    destroy = (_ref3 = mixin.destroy) != null ? _ref3 : function() {};
-    delete mixin.init;
-    delete mixin.reset;
-    delete mixin.destroy;
+    mod.addTranslations = function(obj) {
+      return this.__translations__ = $.v.extend({}, this.__translations__, obj);
+    };
     mod.init = function() {
+      var args;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       if (!this.isInit) {
         this.reset();
-        init.apply(this, arguments);
+        this._init.apply(this, args);
         this.isInit = true;
       }
       return this;
     };
-    mod.reset = function() {
-      reset.apply(this, arguments);
-      return this;
-    };
+    mod._init = function() {};
+    mod.reset = function() {};
     mod.destroy = function() {
+      var args;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       if (this.isInit) {
-        destroy.apply(this, arguments);
+        this._destroy.apply(this, args);
         this.reset();
         this.isInit = false;
       }
       return this;
     };
-    mod.extend(mixin);
+    mod._destroy = function() {};
+    return mod;
+  })();
+  module = function() {
+    var mixins, mod, name;
+    mixins = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    if (typeof mixins[0] === 'string') name = mixins.shift();
+    mod = util.createFromProto(baseModule);
+    mod.__name__ = name;
+    Object.defineProperty(mod, '__name__', {
+      value: name,
+      writable: false,
+      enumerable: false,
+      configurable: false
+    });
+    Object.defineProperty(mod, '__roles__', {
+      value: {},
+      writable: false,
+      enumerable: false,
+      configurable: false
+    });
+    mod.extend.apply(mod, mixins);
     return mod;
   };
   return {
-    module: module
-  };
-  return {
+    module: module,
     Class: Class,
     extend: _extend
   };

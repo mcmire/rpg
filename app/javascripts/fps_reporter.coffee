@@ -1,13 +1,12 @@
 define (require) ->
   {intervalTicker} = require('app/ticker')
+  {attachable} = require('app/roles')
 
-  fpsReporter = intervalTicker.construct 'game.fpsReporter',
-    init: (main) ->
-      @_super(main)
-      draw = @draw
+  fpsReporter = intervalTicker.construct 'game.fpsReporter', attachable,
+    init: (@main) ->
+      @core = @main.core
+      @_super(@main)
       @tickInterval = 1000
-      @tickFunction = @main.createIntervalTimer true, (df, dt) ->
-        draw(df, dt)
       @$element = $('<div id="fps-reporter" />')
 
     draw: (df, dt) ->

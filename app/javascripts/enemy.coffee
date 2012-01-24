@@ -1,5 +1,5 @@
 define (require) ->
-  $ = require('vendor/ender')
+  util = require('app/util')
   Mob = require('app/mob')
   Bounds = require('app/bounds')
 
@@ -13,8 +13,11 @@ define (require) ->
       speed: 3  # px/frame
 
     members:
-      init: (main) ->
-        @_super(main)
+      __plugged__: (core) ->
+        core.collisionLayer.add(this)
+
+      init: (core) ->
+        @_super(core)
         @setState('moveRight')
         @_directionChangeNeeded = false
         @_chooseSequenceLength()
@@ -28,11 +31,13 @@ define (require) ->
         @_super()
         self = this
         fn = ->
-          x1 = $.randomInt(self.fence.x1, self.fence.x2)
-          y1 = $.randomInt(self.fence.y1, self.fence.y2)
+          x1 = util.randomInt(self.fence.x1, self.fence.x2)
+          y1 = util.randomInt(self.fence.y1, self.fence.y2)
           self.bounds.onMap.anchor(x1, y1)
+        fn()
         # poor man's do-while :(
-        fn(); fn() while @collisionLayer.collidables.intersectsWith(@bounds.onMap)
+        if @collisionLayer
+          fn() while @collisionLayer.collidables.intersectsWith(@bounds.onMap)
 
       # Internal: Move the position of the entity leftward, keeping the entity from
       # moving beyond the edges of the map and intersecting solid parts of the map
@@ -143,12 +148,12 @@ define (require) ->
         validDirections = switch @direction
           when 'up', 'down'    then ['left', 'right']
           when 'left', 'right' then ['up', 'down']
-        direction = $.capitalize $.randomItem(validDirections)
+        direction = util.capitalize util.randomItem(validDirections)
         @setState("#{@direction}To#{direction}")
         @_chooseSequenceLength()
 
       _chooseSequenceLength: ->
-        @sequenceLength = $.randomInt(40, 80)
+        @sequenceLength = util.randomInt(40, 80)
 
   Enemy.addState 'moveDown',    frames: [0,1],   duration: 4,  repeat: true, move: true
   Enemy.addState 'downToRight', frames: [0,2],   duration: 24, then: 'moveRight'

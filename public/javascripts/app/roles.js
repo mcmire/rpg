@@ -1,21 +1,15 @@
 var __slice = Array.prototype.slice;
 
 define(function(require) {
-  var ROLES, attachable, drawable, eventable, loadable, module, runnable, tickable, _getSafeNameFrom;
+  var ROLES, attachable, drawable, eventHelpers, eventable, loadable, module, runnable, tickable, _getSafeNameFrom;
   module = require('app/meta').module;
-  ROLES = ['eventable', 'attachable', 'tickable', 'drawable', 'loadable', 'runnable'];
+  ROLES = ['game.eventable', 'game.attachable', 'game.tickable', 'game.drawable', 'game.loadable', 'game.runnable'];
   _getSafeNameFrom = function(obj) {
-    var name;
-    name = obj.__name__ || (obj.constructor && obj.constructor.__name__);
+    var name, _ref;
+    name = (_ref = obj.constructor.__name__) != null ? _ref : obj.__name__;
     return (name || "").replace(".", "_");
   };
-  eventable = module('game.eventable', {
-    addEvents: function() {
-      throw new Error('must be overridden');
-    },
-    removeEvents: function() {
-      throw new Error('must be overridden');
-    },
+  eventHelpers = {
     bindEvents: function(obj, events) {
       var fn, name, namespacedEvents, ns;
       ns = _getSafeNameFrom(obj);
@@ -56,10 +50,35 @@ define(function(require) {
       })();
       return (_ref = $(obj)).trigger.apply(_ref, namespacedEventNames);
     }
+  };
+  eventable = module('game.eventable', {
+    __extended__: function(base) {
+      return base.methods(eventHelpers);
+    },
+    addEvents: function() {
+      throw new Error('addEvents must be overridden');
+    },
+    removeEvents: function() {
+      throw new Error('removeEvents must be overridden');
+    },
+    destroy: function() {
+      this.removeEvents();
+      return this._super();
+    }
   });
   attachable = module('game.attachable', {
-    attachTo: function(container) {
-      return this.$element.appendTo(container);
+    init: function() {
+      var args;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      this._super.apply(this, args);
+      return this.parent = args[0];
+    },
+    destroy: function() {
+      if (this.$element) this.detach();
+      return this._super();
+    },
+    attach: function() {
+      return this.$element.appendTo(this.parent.$element);
     },
     detach: function(container) {
       return this.$element.detach();
@@ -67,48 +86,57 @@ define(function(require) {
   });
   tickable = module('game.tickable', {
     tick: function() {
-      throw new Error('must be overridden');
+      throw new Error('tick must be overridden');
     }
   });
   drawable = module('game.drawable', tickable, {
     predraw: function() {
-      throw new Error('must be overridden');
+      throw new Error('predraw must be overridden');
     },
     draw: function() {
-      throw new Error('must be overridden');
+      throw new Error('draw must be overridden');
     },
     postdraw: function() {
-      throw new Error('must be overridden');
+      throw new Error('postdraw must be overridden');
     }
   });
   loadable = module('game.loadable', {
+    init: function() {
+      var args;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      this._super.apply(this, args);
+      return this.isLoaded = false;
+    },
     load: function() {
-      throw new Error('must be overridden');
+      throw new Error('load must be overridden');
     },
     isLoaded: function() {
-      throw new Error('must be overridden');
+      throw new Error('isLoaded must be overridden');
     }
   });
   runnable = module('game.runnable', {
+    destroy: function() {
+      this.stop();
+      return this._super();
+    },
     start: function() {
-      throw new Error('must be overridden');
+      throw new Error('start must be overridden');
     },
     stop: function() {
-      throw new Error('must be overridden');
+      throw new Error('stop must be overridden');
     },
     suspend: function() {
-      throw new Error('must be overridden');
+      throw new Error('suspend must be overridden');
     },
     resume: function() {
-      throw new Error('must be overridden');
+      throw new Error('resume must be overridden');
     }
   });
   return {
-    ROLES: ROLES
-  };
-  return {
+    ROLES: ROLES,
     eventable: eventable,
     attachable: attachable,
+    tickable: tickable,
     drawable: drawable,
     loadable: loadable,
     runnable: runnable

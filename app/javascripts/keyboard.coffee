@@ -1,7 +1,7 @@
 define (require) ->
-  $ = require('vendor/ender')
+  util = require('app/util')
   meta = require('app/meta')
-  roles = require('app/roles')
+  {eventable} = require('app/roles')
 
   KEYS =
     KEY_TAB: 9
@@ -34,6 +34,7 @@ define (require) ->
     reset: ->
       @tsByKey = {}
       @keys = []
+      return this
 
     get: (key) ->
       @tsByKey[key]
@@ -59,9 +60,11 @@ define (require) ->
     init: (keyCodes) ->
       @trackedKeys = $.reduce keyCodes, ((o, c) -> o[c] = 1; o), {}
       @pressedKeys = new PressedKeys()
+      return this
 
     reset: ->
       @pressedKeys.reset()
+      return this
 
     keydown: (keyCode, ts) ->
       if @trackedKeys.hasOwnProperty(keyCode)
@@ -90,7 +93,9 @@ define (require) ->
     getLastPressedKey: ->
       @pressedKeys.keys[0]
 
-  keyboard = meta.module 'game.keyboard', roles.eventable,
+  keyboard = meta.module 'game.keyboard',
+    eventable,
+
     KeyTracker: KeyTracker
     keys: KEYS
     modifierKeys: MODIFIER_KEYS
@@ -153,14 +158,14 @@ define (require) ->
       return this
 
     trapKeys: (keys...) ->
-      keys = $.ensureArray(keys)
+      keys = util.ensureArray(keys)
       for key in keys
         key = KEYS[key] if typeof key is 'string'
         @trappedKeys[key] = 1
       return this
 
     releaseKeys: (keys...) ->
-      keys = $.ensureArray(keys)
+      keys = util.ensureArray(keys)
       for key in keys
         key = KEYS[key] if typeof key is 'string'
         delete @trappedKeys[key]
@@ -192,7 +197,7 @@ define (require) ->
       event.shiftKey or event.ctrlKey or event.altKey or event.metaKey
 
     keyCodesFor: (keys...) ->
-      keys = $.ensureArray(keys)
+      keys = util.ensureArray(keys)
       $.map keys, (key) -> keyboard.keyCodeFor(key)
 
     keyCodeFor: (key) ->

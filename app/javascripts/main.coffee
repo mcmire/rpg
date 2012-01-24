@@ -1,63 +1,54 @@
 define (require) ->
   {Class, module} = require('app/meta')
-  {eventable, loadable, tickable, runnable} = require('app/roles')
+  {eventable, attachable} = require('app/roles')
   plug = require('app/plug')
   keyboard = require('app/keyboard')
-  viewport = require('app/viewport')
   core = require('app/core')
-  {collisionLayer} = require('app/collision_layer')
+  fpsReporter = require('app/fps_reporter')
   #playerDebugger = require('app/playerDebugger')
-  Player = require('app/Player')
-  Enemy = require('app/Enemy')
 
   main = module 'game.main',
     eventable,
-    loadable,
-    tickable,
-    runnable,
+    attachable,
     plug(
       keyboard,
-      viewport,
       core,
-      collisionLayer,
+      #fpsReporter,
       #playerDebugger,
-      Player,
-      Enemy
     ),
 
-    frameRate: 40  # fps
-    imagesPath: '/images'
-    animMethod: 'setTimeout'  # or 'requestAnimFrame'
     debug: false  # or true
-
-    map:
-      width:  2560  # pixels
-      height: 1600  # pixels
 
     init: ->
       @_super()
+      @$element = $('#main')
+      @attach()
       @addEvents()
-      @attachTo(document.body)
       @run()
 
+    attach: ->
+      #@plugins.attachable.run('attach')
+      @_super()
+      @$element.appendTo(document.body)
+
     addEvents: ->
+      self = this
+      #@plugins.eventable.run('addEvents')
       @_super()
       @bindEvents window,
         blur:  -> self.suspend()
         focus: -> self.resume()
 
     removeEvents: ->
+      #@plugins.eventable.run('removeEvents')
       @_super()
       @unbindEvents window, 'blur', 'focus'
 
-    reset: ->
-      @_super()
-      @stop() if @isInit
-
     load: (callback) ->
+      @plugins.loadable.run('load')
+
       self = this
       i = 0
-      @_super()
       ticker = window.setInterval (->
         i++
         if i is 20
@@ -66,43 +57,26 @@ define (require) ->
           throw new Error "Grobs haven't been loaded yet?!"
           return
         console.log "Checking to see if all grobs are loaded..."
-        if @isLoaded()
+        if self.plugins.loadable.every('isLoaded')
           window.clearInterval(ticker)
           ticker = null
           callback()
       ), 100
 
-    # start: ->
-    #   r.start() for r in @runnables
-
     run: ->
       main.load -> main.start()
       return this
 
+    # start: ->
+    #   @plugins.runnable.run('start')
+
     # stop: ->
-    #   r.stop() for r in @runnables
+    #   @plugins.runnable.run('stop')
 
     # suspend: ->
-    #   r.suspend() for r in @runnables
+    #   @plugins.runnable.run('suspend')
 
     # resume: ->
-    #   r.resume() for r in @runnables
-
-    # TODO: This produces an FPS which is 10 less than the desired FPS... any idea why?
-    createIntervalTimer: (arg, fn) ->
-      if arg is true
-        always = true
-      else
-        interval = arg
-      t0 = (new Date()).getTime()
-      f0 = @core.numDraws
-      return ->
-        t = (new Date()).getTime()
-        dt = t - t0
-        df = @core.numDraws - f0
-        if always or dt >= interval
-          fn(df, dt)
-          t0 = (new Date()).getTime()
-          f0 = @core.numDraws
+    #   @plugins.runnable.run('resume')
 
   return main

@@ -1,28 +1,34 @@
 var __slice = Array.prototype.slice;
 
 define(function(require) {
-  var Bounds, canvas, fpsReporter, module, plug, viewport;
+  var Bounds, attachable, canvas, module, tickable, viewport, _ref;
   module = require('app/meta').module;
-  plug = require('app/plug');
-  fpsReporter = require('app/fps_reporter');
+  _ref = require('app/roles'), attachable = _ref.attachable, tickable = _ref.tickable;
   Bounds = require('app/bounds');
   canvas = require('app/canvas');
-  viewport = module('game.viewport', plug('fpsReporter'), {
+  viewport = module('game.viewport', attachable, tickable, {
     width: 600,
     height: 400,
     playerPadding: 30,
-    init: function(main) {
-      this.main = main;
+    init: function(core) {
+      this.core = core;
+      this.main = this.core.main;
+      this._super(this.core);
       this.bounds = Bounds.rect(0, 0, this.width, this.height);
       this.$element = $('<div id="viewport" />').css({
         width: this.width,
         height: this.height,
-        'background-image': "url(" + main.imagesPath + "/map2x.png)",
+        'background-image': "url(" + this.core.imagesPath + "/map2x.png)",
         'background-repeat': 'no-repeat'
       });
-      this.canvas = canvas.create(this.width, this.height);
-      this.canvas.element.id = 'canvas';
-      return this.$element.append(this.canvas.$element);
+      return this.canvas = canvas.create(this.$element, 'canvas', this.width, this.height);
+    },
+    attach: function() {
+      this.$element.appendTo(this.main.$element);
+      return this.canvas.attach();
+    },
+    tick: function() {
+      return this.draw();
     },
     draw: function() {
       var bom, positionStr;
@@ -31,9 +37,9 @@ define(function(require) {
       return this.$element.css('background-position', positionStr);
     },
     translate: function() {
-      var args, _ref;
+      var args, _ref2;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      (_ref = this.bounds).translate.apply(_ref, args);
+      (_ref2 = this.bounds).translate.apply(_ref2, args);
       return this;
     },
     translateBySide: function(side, value) {

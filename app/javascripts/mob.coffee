@@ -1,10 +1,15 @@
 define (require) ->
   Grob = require('app/grob')
   Bounds = require('app/bounds')
+  CollidableCollection = require('app/collidable_collection')
 
   Mob = Grob.extend 'game.Mob',
     statics:
-      states: {}
+      __inherited__: (subclass) ->
+        # Define this when Mob is inherited because otherwise the states object
+        # is shared between subclasses
+        subclass.states = {}
+
       addState: (name, args) ->
         state = {}
         state.name = name
@@ -21,9 +26,11 @@ define (require) ->
         @states[name] = state
 
     members:
-      init: (main) ->
-        @_super(main)
-        @imagePath = "#{main.imagesPath}/#{@constructor.image}"
+      init: (core) ->
+        {@map, @collisionLayer} = core
+        @_super(core)
+        @speed = @constructor.speed
+        @imagePath = "#{@core.imagesPath}/#{@constructor.image}"
 
       _initDims: ->
         @width = @constructor.width
@@ -34,11 +41,15 @@ define (require) ->
         @_super()
 
       _initFence: ->
-        @fence = Bounds.rect(0, 0, @main.map.width, @main.map.height)
+        @fence = Bounds.rect(0, 0, @map.width, @map.height)
 
       _initCollisionLayer: ->
         @_super()
-        @allCollidables = @collisionLayer.collidables.without(this)
+        if @collisionLayer
+          @allCollidables = @collisionLayer.collidables.without(this)
+        else
+          # null/empty object pattern - still works but does nothing
+          @allCollidables = new CollidableCollection()
 
       load: ->
         self = this
@@ -48,11 +59,12 @@ define (require) ->
         @image.onerror = -> throw "Image #{self.imagePath} failed to load!"
 
       setState: (name) ->
-        # console.log "Setting state to #{name}"
         @state = @constructor.states[name]
         throw new Error "Unknown state '#{name}'!" if not @state
         @currentFrame = 0
         @numSeqFrameDraws = 0
+        # console.log "Setting state to #{name}"
+        # console.log frames: @state.frames
 
       predraw: ->
         @_super()
@@ -64,10 +76,10 @@ define (require) ->
         @_recalculateViewportBounds()
 
       draw: ->
-        ctx = @viewport.canvas.ctx
         biv = @bounds.inViewport
+        ctx = @viewport.canvas.ctx
 
-        ctx.save()
+        # ctx.save()
 
         frame = @state.frames[@currentFrame]
         unless frame?
@@ -80,7 +92,7 @@ define (require) ->
         # ctx.strokeStyle = '#00ff00'
         # ctx.strokeRect(biv.x1+0.5, biv.y1+0.5, @width, @height)
 
-        ctx.restore()
+        # ctx.restore()
 
       postdraw: ->
         if (@numSeqFrameDraws % @state.frameDuration) is 0

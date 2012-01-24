@@ -2,15 +2,21 @@ define (require) ->
   {Class, module} = require('app/meta')
   {loadable, tickable, drawable} = require('app/roles')
   Bounds = require('app/bounds')
-  {CollidableBox} = require('app/collision_layer')
+  CollidableBox = require('app/collidable_box')
 
-  Grob = Class.extend 'game.Grob', loadable, tickable, drawable,
-    init: (@main) ->
-      {@viewport, @map, @collisionLayer} = @main
+  _boundsFrom = (boundsOrGrob) ->
+    if boundsOrGrob instanceof Grob
+      boundsOrGrob.bounds.onMap
+    else
+      boundsOrGrob
 
-      @isLoaded = false
-      @ctx = @viewport.canvas.ctx
+  Grob = Class.extend 'game.Grob',
+    loadable,
+    tickable,
+    drawable,
 
+    init: (@core) ->
+      {@viewport, @collisionLayer} = @core
       @_initDims()
       @reset()
 
@@ -45,8 +51,7 @@ define (require) ->
       @bounds.inViewport.anchor(x1, y1)
 
     _initCollisionLayer: ->
-      # TODO: Do we still need this anymore?
-      @box = new CollidableBox(@bounds.onMap)
+      # ... ?
 
     load: ->
       @isLoaded = true
@@ -58,18 +63,40 @@ define (require) ->
 
     predraw: ->
       lbiv = @lastBounds.inViewport
-      @ctx.clearRect(lbiv.x1, lbiv.y1, @width, @height)
+      ctx = @viewport.canvas.ctx
+      ctx.clearRect(lbiv.x1, lbiv.y1, @width, @height)
 
     draw: ->
       # this will presumably be overridden
       biv = @bounds.inViewport
-      @ctx.save()
-      @ctx.strokeStyle = '#ff0000'
-      @ctx.strokeRect(biv.x1, biv.y1, @width, @height)
-      @ctx.restore()
+      ctx = @viewport.canvas.ctx
+      ctx.save()
+      ctx.strokeStyle = '#ff0000'
+      ctx.strokeRect(biv.x1, biv.y1, @width, @height)
+      ctx.restore()
 
     postdraw: ->
       @lastBounds.inViewport = @bounds.inViewport.clone()
+
+    intersectsWith: (boundsOrGrob) ->
+      bounds = _boundsFrom(boundsOrGrob)
+      @bounds.onMap.intersectsWith(bounds)
+
+    getOuterLeftEdgeBlocking: (boundsOrGrob) ->
+      bounds = _boundsFrom(boundsOrGrob)
+      @bounds.onMap.getOuterLeftEdgeBlocking(bounds)
+
+    getOuterRightEdgeBlocking: (boundsOrGrob) ->
+      bounds = _boundsFrom(boundsOrGrob)
+      @bounds.onMap.getOuterRightEdgeBlocking(bounds)
+
+    getOuterTopEdgeBlocking: (boundsOrGrob) ->
+      bounds = _boundsFrom(boundsOrGrob)
+      @bounds.onMap.getOuterTopEdgeBlocking(bounds)
+
+    getOuterBottomEdgeBlocking: (boundsOrGrob) ->
+      bounds = _boundsFrom(boundsOrGrob)
+      @bounds.onMap.getOuterBottomEdgeBlocking(bounds)
 
     inspect: ->
       JSON.stringify

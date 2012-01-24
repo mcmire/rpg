@@ -1,29 +1,36 @@
 define (require) ->
   {module} = require('app/meta')
-  plug = require('app/plug')
-  fpsReporter = require('app/fps_reporter')
+  {attachable, tickable} = require('app/roles')
   Bounds = require('app/bounds')
   canvas = require('app/canvas')
 
   viewport = module 'game.viewport',
-    # GETTING AN INFINITE LOOP WHEN THIS IS INCLUDED
-    plug('fpsReporter'),
+    attachable,
+    tickable,
 
     width: 600   # pixels
     height: 400  # pixels
     playerPadding: 30  # pixels
 
-    init: (@main) ->
+    init: (@core) ->
+      @main = @core.main
+      @_super(@core)
       @bounds = Bounds.rect(0, 0, @width, @height)
 
       @$element = $('<div id="viewport" />').css
         width: @width
         height: @height
-        'background-image': "url(#{main.imagesPath}/map2x.png)"
+        'background-image': "url(#{@core.imagesPath}/map2x.png)"
         'background-repeat': 'no-repeat'
-      @canvas = canvas.create(@width, @height)
-      @canvas.element.id = 'canvas'
-      @$element.append(@canvas.$element)
+
+      @canvas = canvas.create(@$element, 'canvas', @width, @height)
+
+    attach: ->
+      @$element.appendTo(@main.$element)
+      @canvas.attach()
+
+    tick: ->
+      @draw()
 
     draw: ->
       bom = @bounds

@@ -1,2 +1,2 @@
-require ['vendor/ender', 'app/main'], ($, main) ->
+require ['app/main'], (main) ->
   $.domReady -> main.init()

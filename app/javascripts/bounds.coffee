@@ -1,7 +1,5 @@
 define (require) ->
-  $ = require('vendor/ender')
   {Class} = require('app/meta')
-  Bounds = require('app/bounds')
 
   # The Bounds class represents a box, such as the box around a mob, or the box
   # that keeps a mob from moving, or the frame of the viewport, or the map itself.
@@ -11,8 +9,6 @@ define (require) ->
       # Construct a new Bounds by specifying the width and height of the bounds box
       # and (optionally) the coordinates of its top-left corner.
       #
-      # viewport - The viewport singleton, initialized.
-      # map      - The map singleton, initialized.
       # x1       - The integer X-coordinate of the top-left corner.
       # y1       - The integer Y-coordinate of the top-left corner.
       # width    - The integer width of the box.
@@ -32,8 +28,6 @@ define (require) ->
       # Construct a new Bounds by specifying the coordinates of the top-left and
       # bottom-right corners of the bounds box.
       #
-      # viewport - The viewport singleton, initialized.
-      # map      - The map singleton, initialized.
       # x1       - The integer X-coordinate of the top-left corner.
       # y1       - The integer Y-coordinate of the top-left corner.
       # x2       - The integer X-coordinate of the bottom-right corner.

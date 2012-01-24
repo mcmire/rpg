@@ -1,7 +1,7 @@
 
 define(function(require) {
-  var $, Pixel, canvas, contextExt, imageDataExt;
-  $ = require('vendor/ender');
+  var Pixel, canvas, contextExt, imageDataExt, util;
+  util = require('app/util');
   Pixel = (function() {
 
     function Pixel(x, y, red, green, blue, alpha) {
@@ -26,16 +26,19 @@ define(function(require) {
   })();
   contextExt = {
     extend: function(ctx) {
+      var createImageData, getImageData;
+      getImageData = ctx.getImageData;
+      createImageData = ctx.createImageData;
       return $.extend(ctx, {
         getImageData: function(x, y, width, height) {
           var imageData;
-          imageData = ctx.getImageData.apply(this, arguments);
+          imageData = getImageData.apply(this, arguments);
           imageDataExt.extend(imageData);
           return imageData;
         },
         createImageData: function(width, height) {
           var imageData;
-          imageData = ctx.createImageData.apply(this, arguments);
+          imageData = createImageData.apply(this, arguments);
           imageDataExt.extend(imageData);
           return imageData;
         }
@@ -85,16 +88,18 @@ define(function(require) {
     }
   };
   canvas = {
-    create: function(width, height, callback) {
+    create: function(parent, id, width, height) {
       var c;
       c = {};
-      c.$element = $("<canvas/>");
-      c.element = c.$element[0];
-      c.ctx = c.element.getContext("2d");
-      contextExt.extend(c.ctx);
-      c.width = c.element.width = width;
-      c.height = c.element.height = height;
-      if (callback) callback(c);
+      c.width = width;
+      c.height = height;
+      c.$element = $("<canvas/>").attr('id', id).attr('width', width).attr('height', height);
+      c.attach = function() {
+        c.$element.appendTo(parent);
+        c.element = c.$element[0];
+        c.ctx = contextExt.extend(c.element.getContext("2d"));
+        return c;
+      };
       return c;
     }
   };

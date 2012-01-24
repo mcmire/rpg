@@ -8,7 +8,7 @@ define(function(require) {
       this.tickInterval = 1000;
       return this.$element = $('<div style="margin-top: 10px"/>');
     },
-    tick: function() {
+    draw: function(df, dt) {
       /*
             ticker.$div.html("""
               <b>Player on map:</b> #{ticker.main.player.bounds.onMap.inspect()}<br>

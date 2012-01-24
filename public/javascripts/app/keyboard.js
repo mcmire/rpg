@@ -1,10 +1,10 @@
 var __slice = Array.prototype.slice;
 
 define(function(require) {
-  var $, KEYS, KeyTracker, MODIFIER_KEYS, PressedKeys, keyboard, meta, roles;
-  $ = require('vendor/ender');
+  var KEYS, KeyTracker, MODIFIER_KEYS, PressedKeys, eventable, keyboard, meta, util;
+  util = require('app/util');
   meta = require('app/meta');
-  roles = require('app/roles');
+  eventable = require('app/roles').eventable;
   KEYS = {
     KEY_TAB: 9,
     KEY_ESC: 27,
@@ -29,7 +29,8 @@ define(function(require) {
   PressedKeys = meta.Class.extend({
     reset: function() {
       this.tsByKey = {};
-      return this.keys = [];
+      this.keys = [];
+      return this;
     },
     get: function(key) {
       return this.tsByKey[key];
@@ -67,10 +68,12 @@ define(function(require) {
         o[c] = 1;
         return o;
       }), {});
-      return this.pressedKeys = new PressedKeys();
+      this.pressedKeys = new PressedKeys();
+      return this;
     },
     reset: function() {
-      return this.pressedKeys.reset();
+      this.pressedKeys.reset();
+      return this;
     },
     keydown: function(keyCode, ts) {
       if (this.trackedKeys.hasOwnProperty(keyCode)) {
@@ -108,7 +111,7 @@ define(function(require) {
       return this.pressedKeys.keys[0];
     }
   });
-  keyboard = meta.module('game.keyboard', roles.eventable, {
+  keyboard = meta.module('game.keyboard', eventable, {
     KeyTracker: KeyTracker,
     keys: KEYS,
     modifierKeys: MODIFIER_KEYS,
@@ -183,7 +186,7 @@ define(function(require) {
     trapKeys: function() {
       var key, keys, _i, _len;
       keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      keys = $.ensureArray(keys);
+      keys = util.ensureArray(keys);
       for (_i = 0, _len = keys.length; _i < _len; _i++) {
         key = keys[_i];
         if (typeof key === 'string') key = KEYS[key];
@@ -194,7 +197,7 @@ define(function(require) {
     releaseKeys: function() {
       var key, keys, _i, _len;
       keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      keys = $.ensureArray(keys);
+      keys = util.ensureArray(keys);
       for (_i = 0, _len = keys.length; _i < _len; _i++) {
         key = keys[_i];
         if (typeof key === 'string') key = KEYS[key];
@@ -234,7 +237,7 @@ define(function(require) {
     keyCodesFor: function() {
       var keys;
       keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      keys = $.ensureArray(keys);
+      keys = util.ensureArray(keys);
       return $.map(keys, function(key) {
         return keyboard.keyCodeFor(key);
       });

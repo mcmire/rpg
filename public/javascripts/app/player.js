@@ -1,10 +1,10 @@
-var __slice = Array.prototype.slice;
 
 define(function(require) {
-  var $, DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, Mob, Player, dir, keyCode, keyboard, _i, _j, _len, _len2, _ref;
-  $ = require('vendor/ender');
-  keyboard = require('app/keyboard');
+  var DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, Mob, Player, dir, eventable, keyCode, keyboard, util, _i, _j, _len, _len2, _ref;
+  util = require('app/util');
   Mob = require('app/mob');
+  eventable = require('app/roles').eventable;
+  keyboard = require('app/keyboard');
   DIRECTIONS = 'up down left right'.split(' ');
   DIRECTION_KEYS = {
     up: keyboard.keyCodesFor('KEY_W', 'KEY_UP', 'KEY_K'),
@@ -22,7 +22,7 @@ define(function(require) {
     }
   }
   KEYS = $.flatten($.values(DIRECTION_KEYS));
-  Player = Mob.extend('game.Player', {
+  Player = Mob.extend('game.Player', eventable, {
     statics: {
       image: 'link2x.gif',
       width: 34,
@@ -30,16 +30,18 @@ define(function(require) {
       speed: 4
     },
     members: {
-      init: function() {
-        var args;
-        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-        this.keyTracker = new keyboard.KeyTracker(KEYS);
+      __plugged__: function(core) {
+        return core.collisionLayer.add(this);
+      },
+      init: function(core) {
         this.viewportPadding = 30;
-        this._super.apply(this, args);
+        this._super(core);
+        this.keyTracker = new keyboard.KeyTracker(KEYS);
+        this.addEvents();
         return this.setState('idleRight');
       },
-      initFence: function() {
-        return this.bounds.fenceInViewport = this.viewport.bounds.withScale(this.viewportPadding);
+      _initFence: function() {
+        return this.fence = this.viewport.bounds.withScale(this.viewportPadding);
       },
       addEvents: function() {
         return keyboard.addKeyTracker(this.keyTracker);
@@ -51,7 +53,7 @@ define(function(require) {
         var direction, state;
         if (keyCode = this.keyTracker.getLastPressedKey()) {
           direction = KEY_DIRECTIONS[keyCode];
-          state = 'move' + $.capitalize(direction);
+          state = 'move' + util.capitalize(direction);
         } else {
           state = this.state.name.replace('move', 'idle');
         }
@@ -59,11 +61,10 @@ define(function(require) {
         return this._super();
       },
       moveLeft: function() {
-        var distanceFromFence, fence, nextBoundsOnMap, x;
+        var distanceFromFence, nextBoundsOnMap, x;
         nextBoundsOnMap = this.bounds.onMap.withTranslation({
           x: -this.speed
         });
-        fence = this.bounds.fenceInViewport;
         if (x = this.allCollidables.getOuterRightEdgeBlocking(nextBoundsOnMap)) {
           this.bounds.onMap.translateBySide('x1', x);
           return;
@@ -81,8 +82,8 @@ define(function(require) {
           this.bounds.onMap.translate({
             x: -this.speed
           });
-          if ((this.bounds.inViewport.x1 - this.speed) < fence.x1) {
-            distanceFromFence = this.bounds.inViewport.x1 - fence.x1;
+          if ((this.bounds.inViewport.x1 - this.speed) < this.fence.x1) {
+            distanceFromFence = this.bounds.inViewport.x1 - this.fence.x1;
             return this.viewport.translate({
               x: -(this.speed - distanceFromFence)
             });
@@ -90,11 +91,10 @@ define(function(require) {
         }
       },
       moveRight: function() {
-        var distanceFromFence, fence, mapWidth, nextBoundsOnMap, x;
+        var distanceFromFence, mapWidth, nextBoundsOnMap, x;
         nextBoundsOnMap = this.bounds.onMap.withTranslation({
           x: this.speed
         });
-        fence = this.bounds.fenceInViewport;
         if (x = this.allCollidables.getOuterLeftEdgeBlocking(nextBoundsOnMap)) {
           this.bounds.onMap.translateBySide('x2', x);
           return;
@@ -113,8 +113,8 @@ define(function(require) {
           this.bounds.onMap.translate({
             x: this.speed
           });
-          if ((this.bounds.inViewport.x2 + this.speed) > fence.x2) {
-            distanceFromFence = fence.x2 - this.bounds.inViewport.x2;
+          if ((this.bounds.inViewport.x2 + this.speed) > this.fence.x2) {
+            distanceFromFence = this.fence.x2 - this.bounds.inViewport.x2;
             return this.viewport.translate({
               x: this.speed - distanceFromFence
             });
@@ -122,11 +122,10 @@ define(function(require) {
         }
       },
       moveUp: function() {
-        var distanceFromFence, fence, nextBoundsOnMap, y;
+        var distanceFromFence, nextBoundsOnMap, y;
         nextBoundsOnMap = this.bounds.onMap.withTranslation({
           y: -this.speed
         });
-        fence = this.bounds.fenceInViewport;
         if (y = this.allCollidables.getOuterBottomEdgeBlocking(nextBoundsOnMap)) {
           this.bounds.onMap.translateBySide('y1', y);
           return;
@@ -144,8 +143,8 @@ define(function(require) {
           this.bounds.onMap.translate({
             y: -this.speed
           });
-          if ((this.bounds.inViewport.y1 - this.speed) < fence.y1) {
-            distanceFromFence = this.bounds.inViewport.y1 - fence.y1;
+          if ((this.bounds.inViewport.y1 - this.speed) < this.fence.y1) {
+            distanceFromFence = this.bounds.inViewport.y1 - this.fence.y1;
             return this.viewport.translate({
               y: -(this.speed - distanceFromFence)
             });
@@ -153,11 +152,10 @@ define(function(require) {
         }
       },
       moveDown: function() {
-        var distanceFromFence, fence, mapHeight, nextBoundsOnMap, y;
+        var distanceFromFence, mapHeight, nextBoundsOnMap, y;
         nextBoundsOnMap = this.bounds.onMap.withTranslation({
           y: this.speed
         });
-        fence = this.bounds.fenceInViewport;
         if (y = this.allCollidables.getOuterTopEdgeBlocking(nextBoundsOnMap)) {
           this.translateBySide('y2', y);
           return;
@@ -176,8 +174,8 @@ define(function(require) {
           this.bounds.onMap.translate({
             y: this.speed
           });
-          if ((this.bounds.inViewport.y2 + this.speed) > fence.y2) {
-            distanceFromFence = fence.y2 - this.bounds.inViewport.y2;
+          if ((this.bounds.inViewport.y2 + this.speed) > this.fence.y2) {
+            distanceFromFence = this.fence.y2 - this.bounds.inViewport.y2;
             return this.viewport.translate({
               y: this.speed - distanceFromFence
             });

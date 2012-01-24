@@ -1,17 +1,22 @@
 
 define(function(require) {
-  var Bounds, Class, CollidableBox, Grob, drawable, loadable, module, tickable, _ref, _ref2;
+  var Bounds, Class, CollidableBox, Grob, drawable, loadable, module, tickable, _boundsFrom, _ref, _ref2;
   _ref = require('app/meta'), Class = _ref.Class, module = _ref.module;
   _ref2 = require('app/roles'), loadable = _ref2.loadable, tickable = _ref2.tickable, drawable = _ref2.drawable;
   Bounds = require('app/bounds');
-  CollidableBox = require('app/collision_layer').CollidableBox;
+  CollidableBox = require('app/collidable_box');
+  _boundsFrom = function(boundsOrGrob) {
+    if (boundsOrGrob instanceof Grob) {
+      return boundsOrGrob.bounds.onMap;
+    } else {
+      return boundsOrGrob;
+    }
+  };
   Grob = Class.extend('game.Grob', loadable, tickable, drawable, {
-    init: function(main) {
+    init: function(core) {
       var _ref3;
-      this.main = main;
-      _ref3 = this.main, this.viewport = _ref3.viewport, this.map = _ref3.map, this.collisionLayer = _ref3.collisionLayer;
-      this.isLoaded = false;
-      this.ctx = this.viewport.canvas.ctx;
+      this.core = core;
+      _ref3 = this.core, this.viewport = _ref3.viewport, this.collisionLayer = _ref3.collisionLayer;
       this._initDims();
       return this.reset();
     },
@@ -46,9 +51,7 @@ define(function(require) {
       y1 = this.bounds.onMap.y1 - this.viewport.bounds.y1;
       return this.bounds.inViewport.anchor(x1, y1);
     },
-    _initCollisionLayer: function() {
-      return this.box = new CollidableBox(this.bounds.onMap);
-    },
+    _initCollisionLayer: function() {},
     load: function() {
       return this.isLoaded = true;
     },
@@ -58,20 +61,47 @@ define(function(require) {
       return this.postdraw();
     },
     predraw: function() {
-      var lbiv;
+      var ctx, lbiv;
       lbiv = this.lastBounds.inViewport;
-      return this.ctx.clearRect(lbiv.x1, lbiv.y1, this.width, this.height);
+      ctx = this.viewport.canvas.ctx;
+      return ctx.clearRect(lbiv.x1, lbiv.y1, this.width, this.height);
     },
     draw: function() {
-      var biv;
+      var biv, ctx;
       biv = this.bounds.inViewport;
-      this.ctx.save();
-      this.ctx.strokeStyle = '#ff0000';
-      this.ctx.strokeRect(biv.x1, biv.y1, this.width, this.height);
-      return this.ctx.restore();
+      ctx = this.viewport.canvas.ctx;
+      ctx.save();
+      ctx.strokeStyle = '#ff0000';
+      ctx.strokeRect(biv.x1, biv.y1, this.width, this.height);
+      return ctx.restore();
     },
     postdraw: function() {
       return this.lastBounds.inViewport = this.bounds.inViewport.clone();
+    },
+    intersectsWith: function(boundsOrGrob) {
+      var bounds;
+      bounds = _boundsFrom(boundsOrGrob);
+      return this.bounds.onMap.intersectsWith(bounds);
+    },
+    getOuterLeftEdgeBlocking: function(boundsOrGrob) {
+      var bounds;
+      bounds = _boundsFrom(boundsOrGrob);
+      return this.bounds.onMap.getOuterLeftEdgeBlocking(bounds);
+    },
+    getOuterRightEdgeBlocking: function(boundsOrGrob) {
+      var bounds;
+      bounds = _boundsFrom(boundsOrGrob);
+      return this.bounds.onMap.getOuterRightEdgeBlocking(bounds);
+    },
+    getOuterTopEdgeBlocking: function(boundsOrGrob) {
+      var bounds;
+      bounds = _boundsFrom(boundsOrGrob);
+      return this.bounds.onMap.getOuterTopEdgeBlocking(bounds);
+    },
+    getOuterBottomEdgeBlocking: function(boundsOrGrob) {
+      var bounds;
+      bounds = _boundsFrom(boundsOrGrob);
+      return this.bounds.onMap.getOuterBottomEdgeBlocking(bounds);
     },
     inspect: function() {
       return JSON.stringify({

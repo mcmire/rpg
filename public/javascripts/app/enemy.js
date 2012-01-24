@@ -1,7 +1,7 @@
 
 define(function(require) {
-  var $, Bounds, DIRECTIONS, Enemy, Mob;
-  $ = require('vendor/ender');
+  var Bounds, DIRECTIONS, Enemy, Mob, util;
+  util = require('app/util');
   Mob = require('app/mob');
   Bounds = require('app/bounds');
   DIRECTIONS = 'right down left up'.split(' ');
@@ -13,8 +13,11 @@ define(function(require) {
       speed: 3
     },
     members: {
-      init: function(main) {
-        this._super(main);
+      __plugged__: function(core) {
+        return core.collisionLayer.add(this);
+      },
+      init: function(core) {
+        this._super(core);
         this.setState('moveRight');
         this._directionChangeNeeded = false;
         return this._chooseSequenceLength();
@@ -28,16 +31,18 @@ define(function(require) {
         self = this;
         fn = function() {
           var x1, y1;
-          x1 = $.randomInt(self.fence.x1, self.fence.x2);
-          y1 = $.randomInt(self.fence.y1, self.fence.y2);
+          x1 = util.randomInt(self.fence.x1, self.fence.x2);
+          y1 = util.randomInt(self.fence.y1, self.fence.y2);
           return self.bounds.onMap.anchor(x1, y1);
         };
         fn();
-        _results = [];
-        while (this.collisionLayer.collidables.intersectsWith(this.bounds.onMap)) {
-          _results.push(fn());
+        if (this.collisionLayer) {
+          _results = [];
+          while (this.collisionLayer.collidables.intersectsWith(this.bounds.onMap)) {
+            _results.push(fn());
+          }
+          return _results;
         }
-        return _results;
       },
       moveLeft: function() {
         var nextBoundsOnMap, x;
@@ -111,12 +116,12 @@ define(function(require) {
               return ['up', 'down'];
           }
         }).call(this);
-        direction = $.capitalize($.randomItem(validDirections));
+        direction = util.capitalize(util.randomItem(validDirections));
         this.setState("" + this.direction + "To" + direction);
         return this._chooseSequenceLength();
       },
       _chooseSequenceLength: function() {
-        return this.sequenceLength = $.randomInt(40, 80);
+        return this.sequenceLength = util.randomInt(40, 80);
       }
     }
   });

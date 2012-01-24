@@ -1,10 +1,8 @@
 var __slice = Array.prototype.slice;
 
 define(function(require) {
-  var $, Bounds, Class;
-  $ = require('vendor/ender');
+  var Bounds, Class;
   Class = require('app/meta').Class;
-  Bounds = require('app/bounds');
   Bounds = Class.extend('game.Bounds', {
     statics: {
       rect: function(x1, y1, width, height) {

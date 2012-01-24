@@ -1,7 +1,8 @@
 define (require) ->
-  $ = require('vendor/ender')
-  keyboard = require('app/keyboard')
+  util = require('app/util')
   Mob = require('app/mob')
+  {eventable} = require('app/roles')
+  keyboard = require('app/keyboard')
 
   DIRECTIONS = 'up down left right'.split(' ')
 
@@ -18,7 +19,10 @@ define (require) ->
 
   KEYS = $.flatten($.values(DIRECTION_KEYS))
 
+  # TODO: Make this a singleton
   Player = Mob.extend 'game.Player',
+    eventable,
+
     statics:
       image: 'link2x.gif'
       width: 34
@@ -26,15 +30,19 @@ define (require) ->
       speed: 4  # px/frame
 
     members:
-      init: (args...) ->
-        @keyTracker = new keyboard.KeyTracker(KEYS)
+      __plugged__: (core) ->
+        core.collisionLayer.add(this)
+
+      init: (core) ->
         @viewportPadding = 30  # pixels
-        @_super(args...)
+        @_super(core)
+        @keyTracker = new keyboard.KeyTracker(KEYS)
+        @addEvents()     # shouldn't core, like, do this automatically?
         @setState('idleRight')
 
       # override
-      initFence: ->
-        @bounds.fenceInViewport = @viewport.bounds.withScale(@viewportPadding)
+      _initFence: ->
+        @fence = @viewport.bounds.withScale(@viewportPadding)
 
       # override
       addEvents: ->
@@ -49,7 +57,7 @@ define (require) ->
       predraw: ->
         if keyCode = @keyTracker.getLastPressedKey()
           direction = KEY_DIRECTIONS[keyCode]
-          state = 'move' + $.capitalize(direction)
+          state = 'move' + util.capitalize(direction)
         else
           state = @state.name.replace('move', 'idle')
         if state isnt @state.name
@@ -72,7 +80,6 @@ define (require) ->
       #
       moveLeft: ->
         nextBoundsOnMap = @bounds.onMap.withTranslation(x: -@speed)
-        fence = @bounds.fenceInViewport
 
         # Would the player hit the right edge of a collision box?
         if x = @allCollidables.getOuterRightEdgeBlocking(nextBoundsOnMap)
@@ -95,7 +102,7 @@ define (require) ->
           # No: Move the player left
           @bounds.onMap.translate(x: -@speed)
           # Would the player move beyond the left edge of the fence?
-          if (@bounds.inViewport.x1 - @speed) < fence.x1
+          if (@bounds.inViewport.x1 - @speed) < @fence.x1
             # Yes: shift viewport left by @speed.
             #
             # This is not so straightforward as one might think because if the
@@ -103,7 +110,7 @@ define (require) ->
             # viewport needs to shift in such a way as to show the player
             # accurately within the viewport.
             #
-            # For example, assuming player.bounds.fenceInViewport.x1 = 10 and:
+            # For example, assuming player.bounds.fence.x1 = 10 and:
             #
             #   player.bounds.inViewport.x1 = 14
             #   player.bounds.onMap.x1 = 114
@@ -130,7 +137,7 @@ define (require) ->
             #   player.bounds.onMap.x1 = 104
             #   viewport.bounds.x1 = 94
             #
-            distanceFromFence = @bounds.inViewport.x1 - fence.x1
+            distanceFromFence = @bounds.inViewport.x1 - @fence.x1
             @viewport.translate(x: -(@speed - distanceFromFence))
 
       # Internal: Move the player rightward.
@@ -139,7 +146,6 @@ define (require) ->
       #
       moveRight: ->
         nextBoundsOnMap = @bounds.onMap.withTranslation(x: @speed)
-        fence = @bounds.fenceInViewport
 
         # Would the player hit the left edge of a collision box?
         if x = @allCollidables.getOuterLeftEdgeBlocking(nextBoundsOnMap)
@@ -164,10 +170,10 @@ define (require) ->
           # No: Move the player right
           @bounds.onMap.translate(x: @speed)
           # Would the player move beyond the right edge of the fence?
-          if (@bounds.inViewport.x2 + @speed) > fence.x2
+          if (@bounds.inViewport.x2 + @speed) > @fence.x2
             # Yes: shift viewport right by @speed.
             # See #moveLeft for more commentary here.
-            distanceFromFence = fence.x2 - @bounds.inViewport.x2
+            distanceFromFence = @fence.x2 - @bounds.inViewport.x2
             @viewport.translate(x: @speed - distanceFromFence)
 
       # Internal: Move the player upward.
@@ -176,7 +182,6 @@ define (require) ->
       #
       moveUp: ->
         nextBoundsOnMap = @bounds.onMap.withTranslation(y: -@speed)
-        fence = @bounds.fenceInViewport
 
         # Would the player hit the bottom edge of a collision box?
         if y = @allCollidables.getOuterBottomEdgeBlocking(nextBoundsOnMap)
@@ -199,10 +204,10 @@ define (require) ->
           # No: Move the player up
           @bounds.onMap.translate(y: -@speed)
           # Would the player move beyond the top edge of the fence?
-          if (@bounds.inViewport.y1 - @speed) < fence.y1
+          if (@bounds.inViewport.y1 - @speed) < @fence.y1
             # Yes: shift viewport right by @speed.
             # See #moveLeft for more commentary here.
-            distanceFromFence = @bounds.inViewport.y1 - fence.y1
+            distanceFromFence = @bounds.inViewport.y1 - @fence.y1
             @viewport.translate(y: -(@speed - distanceFromFence))
 
       # Internal: Move the player downward.
@@ -211,7 +216,6 @@ define (require) ->
       #
       moveDown: ->
         nextBoundsOnMap = @bounds.onMap.withTranslation(y: @speed)
-        fence = @bounds.fenceInViewport
 
         # Would the player hit the top edge of a collision box?
         if y = @allCollidables.getOuterTopEdgeBlocking(nextBoundsOnMap)
@@ -236,10 +240,10 @@ define (require) ->
           # No: Move the player right
           @bounds.onMap.translate(y: @speed)
           # Would the player move beyond the right edge of the fence?
-          if (@bounds.inViewport.y2 + @speed) > fence.y2
+          if (@bounds.inViewport.y2 + @speed) > @fence.y2
             # Yes: shift viewport right by @speed.
             # See #moveLeft for more commentary here.
-            distanceFromFence = fence.y2 - @bounds.inViewport.y2
+            distanceFromFence = @fence.y2 - @bounds.inViewport.y2
             @viewport.translate(y: @speed - distanceFromFence)
 
   Player.addState 'moveLeft',  duration: 2, frames: [0,1,2,3,4,5,6,7],       repeat: true, move: true
