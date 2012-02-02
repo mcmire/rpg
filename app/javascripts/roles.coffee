@@ -1,5 +1,5 @@
 define (require) ->
-  {module} = require('app/meta')
+  meta = require('app/meta2')
 
   ROLES = [
     'game.eventable'
@@ -13,6 +13,8 @@ define (require) ->
   _getSafeNameFrom = (obj) ->
     name = obj.constructor.__name__ ? obj.__name__
     (name || "").replace(".", "_")
+
+  #---
 
   # Separate this from eventable because we don't want plug methods
   # to be created for these methods (e.g. @plugins.eventable.bindHelpers)
@@ -36,9 +38,9 @@ define (require) ->
       namespacedEventNames = (name + "." + ns for name in args)
       $(obj).trigger(namespacedEventNames...)
 
-  eventable = module 'game.eventable',
+  eventable = meta.def 'game.eventable',
     __extended__: (base) ->
-      base.methods(eventHelpers)
+      base.extend(eventHelpers)
 
     addEvents: ->
       throw new Error 'addEvents must be overridden'
@@ -50,10 +52,16 @@ define (require) ->
       @removeEvents()
       @_super()
 
-  attachable = module 'game.attachable',
+  attachable = meta.def 'game.attachable',
     init: (args...) ->
       @_super(args...)
-      @parent = args[0]
+      @setElement()
+
+    setElement: ->
+      throw new Error 'setElement must be overridden'
+
+    assignTo: (parent) ->
+      @parent = parent
 
     destroy: ->
       @detach() if @$element
@@ -64,14 +72,16 @@ define (require) ->
       # totally ok to override this to use another object
       @$element.appendTo(@parent.$element)
 
-    detach: (container) ->
+    detach: ->
       @$element.detach()
 
-  tickable = module 'game.tickable',
+  tickable = meta.def 'game.tickable',
     tick: ->
       throw new Error 'tick must be overridden'
 
-  drawable = module 'game.drawable', tickable,
+  drawable = meta.def 'game.drawable',
+    tickable,
+
     predraw: ->
       throw new Error 'predraw must be overridden'
 
@@ -81,7 +91,7 @@ define (require) ->
     postdraw: ->
       throw new Error 'postdraw must be overridden'
 
-  loadable = module 'game.loadable',
+  loadable = meta.def 'game.loadable',
     init: (args...) ->
       @_super(args...)
       @isLoaded = false
@@ -92,7 +102,7 @@ define (require) ->
     isLoaded: ->
       throw new Error 'isLoaded must be overridden'
 
-  runnable = module 'game.runnable',
+  runnable = meta.def 'game.runnable',
     destroy: ->
       @stop()
       @_super()

@@ -2,50 +2,43 @@ define (require) ->
   {ticker} = require('app/ticker')
   plug = require('app/plug')
   viewport = require('app/viewport')
-  collisionLayer = require('app/collision_layer')
-  Player = require('app/player')
-  Enemy = require('app/enemy')
+  # collisionLayer = require('app/collision_layer')
+  player = require('app/player')
 
-  core = ticker.construct 'game.core',
-    plug(
-      viewport,
-      collisionLayer,
-      Player,
-      Enemy
-    )
+  core = ticker.cloneAs('game.core')
+
+  #core.addPlugin(viewport)
+  # TODO: Not sure where this will go
+  #core.addPlugin(collisionLayer)
+
+  core.extend \
+    attachable,
+    tickable,
 
     frameRate: 40  # fps
-    imagesPath: '/images'
     animMethod: 'setTimeout'  # or 'requestAnimFrame'
 
-    map:
-      width:  2560  # pixels
-      height: 1600  # pixels
+    assignTo: (main) ->
+      @_super(main)
+      @main = main
+      @keyboard = @main.keyboard
 
-    init: (@main) ->
+    init: ->
       self = this
-      {@keyboard} = @main
-      @_super(@main)
+      @viewport = viewport.assignTo(this).init()
       @tickInterval = 1000 / @frameRate
       @throttledDraw = @createIntervalTimer @tickInterval, (df, dt) ->
         self.draw(df, dt)
-
-    reset: ->
-      @_super()
       @numDraws = 0
       @lastTickTime = null
       @numTicks = 0
+      @player = player.assignTo(this).init()
 
-    # destroy: ->
-    #   @_super()
-
-    # attach: ->
-    #   @plugins.attachable.run('attach')
-
-    # detach: ->
-    #   @plugins.attachable.run('detach')
+    attach: ->
+      @viewport.attach()
 
     start: ->
+      @loadMap('lightworld')
       # calling tick() once starts the loop immediately since it calls itself
       @tick()
 
@@ -97,7 +90,8 @@ define (require) ->
       core.numTicks++
 
     draw: ->
-      @plugins.tickable.run('tick')
+      @viewport.tick()
+      @currentMap.tick()
       @numDraws++
 
     # TODO: This produces an FPS which is 10 less than the desired FPS... any idea why?
@@ -116,5 +110,12 @@ define (require) ->
           fn(df, dt)
           t0 = (new Date()).getTime()
           f0 = @numDraws
+
+    loadMap: (name) ->
+      @currentMap.destroy() if @currentMap
+      @currentMap = require("app/maps/#{name}")
+      @currentMap.assignTo(this).addPlayer(@player).load()
+      # TODO: Transition instead of hard setting
+      @viewport.setMap(@currentMap)
 
   return core

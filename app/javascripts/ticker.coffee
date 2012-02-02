@@ -1,73 +1,63 @@
 define (require) ->
-  meta = {module} = require('app/meta')
+  meta = require('app/meta2')
   {runnable, tickable} = require('app/roles')
 
-  ticker =
-    construct: (mixins...) ->
-      name = mixins.shift() if typeof mixins[0] is 'string'
-      name ||= 'game.ticker'
-      mod = module name, runnable, tickable,
-        init: (@main) ->
+  ticker = meta.def 'game.ticker',
+    runnable,
+    tickable,
 
-        destroy: ->
-          @stop() if @isInit
+    isRunning: false
 
-        start: ->
-          return if @isRunning
-          @isRunning = true
-          @_start()
-          return this
+    # override
+    extend: (mixin, opts={}) ->
+      opts = $.v.extend {}, opts, {start: '_start', stop: '_stop'}
+      @_super mixin, opts
 
-        _start: ->
+    destroy: ->
+      @stop()
 
-        stop: ->
-          return if not @isRunning
-          @isRunning = false
-          @_stop()
-          return this
+    assignTo: (@parent) ->
 
-        _stop: ->
+    start: ->
+      return if @isRunning
+      @isRunning = true
+      @_start()
+      return this
 
-        suspend: ->
-          @wasRunning = @isRunning
-          @stop()
+    _start: ->
 
-        resume: ->
-          @start() if @wasRunning
+    stop: ->
+      return if not @isRunning
+      @isRunning = false
+      @_stop()
+      return this
 
-      mod.addTranslations
-        start: '_start'
-        stop: '_stop'
+    _stop: ->
 
-      mod.extend(mixins...)
+    suspend: ->
+      @wasRunning = @isRunning
+      @stop()
 
-      return mod
+    resume: ->
+      @start() if @wasRunning
 
-  intervalTicker =
-    construct: (mixins...) ->
-      name = mixins.shift() if typeof mixins[0] is 'string'
-      name ||= 'game.intervalTicker'
-      mod = ticker.construct name,
-        init: (main) ->
-          self = this
-          @_super(main)
-          @drawer = @createIntervalTimer false, (df, dt) ->
-            self.draw(df, dt)
+  #---
 
-        start: ->
-          @timer = window.setInterval(@drawer, @tickInterval)
+  intervalTicker = ticker.cloneAs('game.intervalTicker').extend
+    init: ->
+      @drawer = @createIntervalTimer false, (df, dt) ->
+        self.draw(df, dt)
 
-        stop: ->
-          if @timer
-            window.clearInterval(@timer)
-            @timer = null
+    start: ->
+      @timer = window.setInterval(@drawer, @tickInterval)
 
-        draw: ->
-          throw new Error 'draw must be overridden'
+    stop: ->
+      if @timer
+        window.clearInterval(@timer)
+        @timer = null
 
-      mod.extend(mixins...)
-
-      return mod
+    draw: ->
+      throw new Error 'draw must be overridden'
 
   return {
     ticker: ticker

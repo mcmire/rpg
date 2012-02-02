@@ -4,48 +4,55 @@ define (require) ->
   plug = require('app/plug')
   keyboard = require('app/keyboard')
   core = require('app/core')
-  fpsReporter = require('app/fps_reporter')
+  # fpsReporter = require('app/fps_reporter')
   #playerDebugger = require('app/playerDebugger')
 
-  main = module 'game.main',
+  main = meta.def 'game.main',
     eventable,
     attachable,
-    plug(
-      keyboard,
-      core,
-      #fpsReporter,
-      #playerDebugger,
-    ),
+    tickable,
+    runnable
 
+  #main.addPlugin(keyboard)
+  #main.addPlugin(core)
+  ##main.addPlugin(fpsReporter)
+  ##main.addPlugin(playerDebugger)
+
+  main.extend
+    imagesPath: '/images'
     debug: false  # or true
 
     init: ->
       @_super()
-      @$element = $('#main')
+      @keyboard = keyboard.init()
+      @core = core.assignTo(this).init()
       @attach()
       @addEvents()
       @run()
 
+    setElement: ->
+      @$element = $('#main')
+
     attach: ->
-      #@plugins.attachable.run('attach')
-      @_super()
+      @core.attach()
       @$element.appendTo(document.body)
 
     addEvents: ->
       self = this
-      #@plugins.eventable.run('addEvents')
-      @_super()
+      @keyboard.addEvents()
       @bindEvents window,
         blur:  -> self.suspend()
         focus: -> self.resume()
 
     removeEvents: ->
-      #@plugins.eventable.run('removeEvents')
-      @_super()
+      @keyboard.removeEvents()
       @unbindEvents window, 'blur', 'focus'
 
     load: (callback) ->
-      @plugins.loadable.run('load')
+      assetCollections = []
+      assetCollections.push require('app/images')
+      #assetCollections.push require('app/sounds')
+      c.load() for c in assetCollections
 
       self = this
       i = 0
@@ -54,10 +61,11 @@ define (require) ->
         if i is 20
           window.clearInterval(ticker)
           ticker = null
-          throw new Error "Grobs haven't been loaded yet?!"
+          throw new Error "Assets haven't been loaded yet?!"
           return
-        console.log "Checking to see if all grobs are loaded..."
-        if self.plugins.loadable.every('isLoaded')
+        console.log "Checking to see if all assets are loaded..."
+        isLoaded = (c.isLoaded() for c in assetCollections)
+        if isLoaded
           window.clearInterval(ticker)
           ticker = null
           callback()
@@ -67,16 +75,16 @@ define (require) ->
       main.load -> main.start()
       return this
 
-    # start: ->
-    #   @plugins.runnable.run('start')
+    start: ->
+      @core.start()
 
-    # stop: ->
-    #   @plugins.runnable.run('stop')
+    stop: ->
+      @core.stop()
 
-    # suspend: ->
-    #   @plugins.runnable.run('suspend')
+    tick: ->
+      @core.tick()
 
-    # resume: ->
-    #   @plugins.runnable.run('resume')
+    resolveImagePath: (path) ->
+      "#{@imagesPath}/#{path}"
 
   return main

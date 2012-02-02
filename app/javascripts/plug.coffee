@@ -1,5 +1,6 @@
 define (require) ->
   {Class, module} = require('app/meta')
+  meta = require('app/meta2')
   roles = require('app/roles')
 
   isValidRole = $.v.reduce roles.ROLES, ((h, r) -> h[r] = 1; h), {}
@@ -42,14 +43,17 @@ define (require) ->
           unless ret = fn(obj)
             break
 
+  plug = meta.def 'game.plug'
+
   # A Plug has the ability to add plugins to itself. It (in theory) supports all
   # of the role interfaces, but does not enforce any.
   #
-  plug = (ctors...) ->
+  plugInto = (owner, ctors...) ->
+    ctor.assignTo(owner) for ctor in ctors
+
     uniqRoleNames = $.v.reduce ctors, (roleNames, ctor) ->
-      # __roles__ may actually contain names of non-role modules (yes it's a bit
-      # of a misnomer) so filter down the list
-      ctorRoleNames = $.v.filter($.v.keys(ctor.__roles__), (k) -> isValidRole[k])
+      # __mixins__ may contain names of non-role modules so filter down the list
+      ctorRoleNames = $.v.filter($.v.keys(ctor.__mixins__), (k) -> isValidRole[k])
       roleNames[roleName] = 1 for roleName in ctorRoleNames
       roleNames
     , {}
@@ -57,7 +61,7 @@ define (require) ->
       roleShortName = roleName.split('.')[1]
       {short: roleShortName, long: roleName}
 
-    mod = module('game.plug')
+    mod = meta.def('game.plug')
 
     mixins = []
     $.v.each roleNames, (roleName) ->
@@ -92,8 +96,7 @@ define (require) ->
           # collisionLayer having access to the viewport through main)
           plug[obj.ctorName] = obj.inst
           # call the 'plugged' hook if one exists
-          if typeof obj.inst.__plugged__ is 'function'
-            obj.inst.__plugged__(plug)
+          obj.inst.__plugged__?(plug)
         return this
 
       destroy: ->

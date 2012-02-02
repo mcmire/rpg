@@ -1,3 +1,4 @@
+var __slice = Array.prototype.slice;
 
 define(function(require) {
   var Pixel, canvas, contextExt, imageDataExt, util;
@@ -88,12 +89,16 @@ define(function(require) {
     }
   };
   canvas = {
-    create: function(parent, id, width, height) {
-      var c;
+    create: function() {
+      var $element, args, c, height, id, parent, width, _ref;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      _ref = args.reverse(), height = _ref[0], width = _ref[1], id = _ref[2], parent = _ref[3];
       c = {};
       c.width = width;
       c.height = height;
-      c.$element = $("<canvas/>").attr('id', id).attr('width', width).attr('height', height);
+      $element = $("<canvas/>").attr('width', width).attr('height', height);
+      if (id) $element.attr('id', id);
+      c.$element = $element;
       c.attach = function() {
         c.$element.appendTo(parent);
         c.element = c.$element[0];

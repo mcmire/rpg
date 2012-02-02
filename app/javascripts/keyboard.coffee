@@ -1,6 +1,6 @@
 define (require) ->
   util = require('app/util')
-  meta = require('app/meta')
+  meta = require('app/meta2')
   {eventable} = require('app/roles')
 
   KEYS =
@@ -30,11 +30,12 @@ define (require) ->
     KEYS.KEY_META
   ]
 
-  PressedKeys = meta.Class.extend
-    reset: ->
-      @tsByKey = {}
-      @keys = []
-      return this
+  PressedKeys = meta.def
+    create: ->
+      @cloneWith
+        # set these here as we don't want them to be shared among prototypes
+        tsByKey: {}
+        keys: []
 
     get: (key) ->
       @tsByKey[key]
@@ -56,11 +57,11 @@ define (require) ->
     each: (fn) ->
       fn(key, @tsByKey[key]) for key in @keys
 
-  KeyTracker = meta.Class.extend
-    init: (keyCodes) ->
-      @trackedKeys = $.reduce keyCodes, ((o, c) -> o[c] = 1; o), {}
-      @pressedKeys = new PressedKeys()
-      return this
+  KeyTracker = meta.def
+    create: (keyCodes) ->
+      @cloneWith
+        trackedKeys: $.v.reduce(keyCodes, ((o, c) -> o[c] = 1; o), {})
+        pressedKeys: PressedKeys.create()
 
     reset: ->
       @pressedKeys.reset()
@@ -93,16 +94,15 @@ define (require) ->
     getLastPressedKey: ->
       @pressedKeys.keys[0]
 
-  keyboard = meta.module 'game.keyboard',
+  keyboard = meta.def 'game.keyboard',
     eventable,
 
     KeyTracker: KeyTracker
     keys: KEYS
     modifierKeys: MODIFIER_KEYS
+    keyTrackers: []
 
     init: ->
-      @keyTrackers = []
-      # @debugTimer = new Date()
       return this
 
     reset: ->

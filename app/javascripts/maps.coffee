@@ -1,6 +1,7 @@
 define (require) ->
   Sprite = require('app/sprite')
   {tickable} = require('app/roles')
+  Mappable = require('app/mappable')
 
   spriteCollection = (->
     sc =
@@ -27,6 +28,22 @@ define (require) ->
 
   #---
 
+  MapTile = meta.def 'game.MapTile',
+  MapTile.extend \
+    Mappable,
+
+    create: (@image, [x1, y1]) ->
+      @setPositionOnMap(x1, y1]
+
+    assignTo: (@map) ->
+
+    draw: (canvas) ->
+      ctx = canvas.ctx
+      bom = @bounds.onMap
+      ctx.drawImage(@image.element, bom.x1, bom.y1)
+
+  #---
+
   Map = meta.def 'game.Map',
     tickable,
 
@@ -34,7 +51,6 @@ define (require) ->
       @bg = Background.create(width, height)
       @fg = Foreground.create(width, height)
       fn?(@bg, @fg)
-      @url = "/images/maps/#{@name}.png"
       @bg.assignTo(this)
       @fg.assignTo(this)
       # @up = @down = @left = @right = null
@@ -98,9 +114,8 @@ define (require) ->
     tickable,
 
     init: (@width, @height) ->
-      @sprites = []
-      @canvas = canvas.create(@width, @height)
-      element.init(this) for element in @elements
+      @fills = []
+      @elements = []
 
     assignTo: (@map) ->
 
@@ -108,12 +123,24 @@ define (require) ->
       element.destroy() for element in @elements
       @elements = []
 
-    addSprite: (name, x, y, frameDelay=null) ->
-      sprite = spriteCollection.get(name)
-      sprite.cloneWith(frameDelay: frameDelay)
-      # TODO: Does this work?
-      sprite.setMapPosition(x, y)
-      @elements.push(sprite)
+    fill: (color, pos, dims) ->
+      @fills.push([color, pos, dims])
+
+    addElement: (elem, positions...) ->
+      opts = {}
+      if $.v.is.obj(positions[positions.length-1])
+        opts = positions.pop()
+      $.v.each positions, (pos) ->
+        if elem.isPrototypeOf(Image)
+          MapImage.create(elem, pos)
+        elem = elem.cloneWith(opts)
+        # TODO: Does this work??
+        elem.setMapPosition(pos[0], pos[1])
+        @elements.push(elem)
+
+    load: ->
+      @_buildMap() unless @canvas
+      element.init(this) for element in @elements
 
     tick: ->
       element.tick() for element in @elements
@@ -121,7 +148,16 @@ define (require) ->
     getDataUrl: ->
       @canvas.element.toDataUrl()
 
-  Background.add = Background.addSprite
+    _buildMap: ->
+      @canvas = canvas.create(@width, @height)
+      ctx = @canvas.ctx
+      for [color, [x1, y1], [width, height]] in @fills
+        ctx.fillStyle = color
+        ctx.fillRect(x1, y1, width, height)
+      for elem in @elements
+
+
+  Background.add = Background.addElement
 
   #---
 

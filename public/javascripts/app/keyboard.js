@@ -3,7 +3,7 @@ var __slice = Array.prototype.slice;
 define(function(require) {
   var KEYS, KeyTracker, MODIFIER_KEYS, PressedKeys, eventable, keyboard, meta, util;
   util = require('app/util');
-  meta = require('app/meta');
+  meta = require('app/meta2');
   eventable = require('app/roles').eventable;
   KEYS = {
     KEY_TAB: 9,
@@ -26,11 +26,12 @@ define(function(require) {
     KEY_L: 76
   };
   MODIFIER_KEYS = [KEYS.KEY_SHIFT, KEYS.KEY_CTRL, KEYS.KEY_ALT, KEYS.KEY_META];
-  PressedKeys = meta.Class.extend({
-    reset: function() {
-      this.tsByKey = {};
-      this.keys = [];
-      return this;
+  PressedKeys = meta.def({
+    create: function() {
+      return this.cloneWith({
+        tsByKey: {},
+        keys: []
+      });
     },
     get: function(key) {
       return this.tsByKey[key];
@@ -62,14 +63,15 @@ define(function(require) {
       return _results;
     }
   });
-  KeyTracker = meta.Class.extend({
-    init: function(keyCodes) {
-      this.trackedKeys = $.reduce(keyCodes, (function(o, c) {
-        o[c] = 1;
-        return o;
-      }), {});
-      this.pressedKeys = new PressedKeys();
-      return this;
+  KeyTracker = meta.def({
+    create: function(keyCodes) {
+      return this.cloneWith({
+        trackedKeys: $.v.reduce(keyCodes, (function(o, c) {
+          o[c] = 1;
+          return o;
+        }), {}),
+        pressedKeys: PressedKeys.create()
+      });
     },
     reset: function() {
       this.pressedKeys.reset();
@@ -111,12 +113,12 @@ define(function(require) {
       return this.pressedKeys.keys[0];
     }
   });
-  keyboard = meta.module('game.keyboard', eventable, {
+  keyboard = meta.def('game.keyboard', eventable, {
     KeyTracker: KeyTracker,
     keys: KEYS,
     modifierKeys: MODIFIER_KEYS,
+    keyTrackers: [],
     init: function() {
-      this.keyTrackers = [];
       return this;
     },
     reset: function() {

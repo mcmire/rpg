@@ -1,10 +1,11 @@
 
 define(function(require) {
-  var DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, Mob, Player, dir, eventable, keyCode, keyboard, util, _i, _j, _len, _len2, _ref;
+  var Bounds, DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, Mob, dir, eventable, keyCode, keyboard, player, util, _i, _j, _len, _len2, _ref;
   util = require('app/util');
   Mob = require('app/mob');
   eventable = require('app/roles').eventable;
   keyboard = require('app/keyboard');
+  Bounds = require('app/bounds');
   DIRECTIONS = 'up down left right'.split(' ');
   DIRECTION_KEYS = {
     up: keyboard.keyCodesFor('KEY_W', 'KEY_UP', 'KEY_K'),
@@ -22,211 +23,187 @@ define(function(require) {
     }
   }
   KEYS = $.flatten($.values(DIRECTION_KEYS));
-  Player = Mob.extend('game.Player', eventable, {
-    statics: {
-      image: 'link2x.gif',
-      width: 34,
-      height: 48,
-      speed: 4
+  player = Mob.create('link2x.gif', 34, 48, 4);
+  player.addState('moveLeft', [0, 1, 2, 3, 4, 5, 6, 7], {
+    duration: 2,
+    repeat: true,
+    move: true
+  });
+  player.addState('moveRight', [8, 9, 10, 11, 12, 13, 14, 15], {
+    duration: 2,
+    repeat: true,
+    move: true
+  });
+  player.addState('moveDown', [16, 17, 18, 19, 20, 21, 22], {
+    duration: 2,
+    repeat: true,
+    move: true
+  });
+  player.addState('moveUp', [23, 24, 25, 26, 27, 28], {
+    duration: 2,
+    repeat: true,
+    move: true
+  });
+  player.addState('idleLeft', [0], {
+    duration: 2,
+    repeat: true
+  });
+  player.addState('idleRight', [8], {
+    duration: 2,
+    repeat: true
+  });
+  player.addState('idleDown', [19], {
+    duration: 2,
+    repeat: true
+  });
+  player.addState('idleUp', [23], {
+    duration: 2,
+    repeat: true
+  });
+  player.setState('idleDown');
+  player.extend(eventable, {
+    viewportPadding: 30,
+    keyTracker: keyboard.KeyTracker.create(KEYS),
+    __plugged__: function(core) {
+      return core.collisionLayer.add(this);
     },
-    members: {
-      __plugged__: function(core) {
-        return core.collisionLayer.add(this);
-      },
-      init: function(core) {
-        this.viewportPadding = 30;
-        this._super(core);
-        this.keyTracker = new keyboard.KeyTracker(KEYS);
-        this.addEvents();
-        return this.setState('idleRight');
-      },
-      _initFence: function() {
-        return this.fence = this.viewport.bounds.withScale(this.viewportPadding);
-      },
-      addEvents: function() {
-        return keyboard.addKeyTracker(this.keyTracker);
-      },
-      removeEvents: function() {
-        return keyboard.removeKeyTracker(this.keyTracker);
-      },
-      predraw: function() {
-        var direction, state;
-        if (keyCode = this.keyTracker.getLastPressedKey()) {
-          direction = KEY_DIRECTIONS[keyCode];
-          state = 'move' + util.capitalize(direction);
+    init: function() {
+      return this.addEvents();
+    },
+    _initBoundsOnMap: function() {
+      this._super();
+      return this.bounds.onMap = Bounds.at(372, 540, 406, 588);
+    },
+    _initFence: function() {
+      return this.fence = this.viewport.bounds.withScale(this.viewportPadding);
+    },
+    addEvents: function() {
+      return keyboard.addKeyTracker(this.keyTracker);
+    },
+    removeEvents: function() {
+      return keyboard.removeKeyTracker(this.keyTracker);
+    },
+    predraw: function() {
+      var direction, state;
+      if (keyCode = this.keyTracker.getLastPressedKey()) {
+        direction = KEY_DIRECTIONS[keyCode];
+        state = 'move' + util.capitalize(direction);
+      } else {
+        state = this.state.name.replace('move', 'idle');
+      }
+      if (state !== this.state.name) this.setState(state);
+      return this._super();
+    },
+    moveLeft: function() {
+      var map, nextBoundsOnMap, x, _base;
+      nextBoundsOnMap = this.bounds.onMap.withTranslation({
+        x: -this.speed
+      });
+      if (x = this.allCollidables.getOuterRightEdgeBlocking(nextBoundsOnMap)) {
+        this.bounds.onMap.translateBySide('x1', x);
+        return;
+      }
+      if ((this.viewport.bounds.x1 - this.speed) < 0) {
+        if (map = typeof (_base = this.core.currentMap).getAreaLeft === "function" ? _base.getAreaLeft() : void 0) {
+          return this.core.currentMap.loadArea(map);
         } else {
-          state = this.state.name.replace('move', 'idle');
-        }
-        if (state !== this.state.name) this.setState(state);
-        return this._super();
-      },
-      moveLeft: function() {
-        var distanceFromFence, nextBoundsOnMap, x;
-        nextBoundsOnMap = this.bounds.onMap.withTranslation({
-          x: -this.speed
-        });
-        if (x = this.allCollidables.getOuterRightEdgeBlocking(nextBoundsOnMap)) {
-          this.bounds.onMap.translateBySide('x1', x);
-          return;
-        }
-        if ((this.viewport.bounds.x1 - this.speed) < 0) {
           this.viewport.translateBySide('x1', 0);
           if (nextBoundsOnMap.x1 < 0) {
             return this.bounds.onMap.translateBySide('x1', 0);
           } else {
-            return this.bounds.onMap.translate({
-              x: -this.speed
-            });
+            return this.bounds.onMap.replace(nextBoundsOnMap);
           }
+        }
+      } else {
+        this.bounds.onMap.replace(nextBoundsOnMap);
+        if ((this.bounds.inViewport.x1 - this.speed) < this.fence.x1) {
+          return this.viewport.translateBySide('x1', this.bounds.onMap.x1 - this.viewportPadding);
+        }
+      }
+    },
+    moveRight: function() {
+      var map, mapWidth, x, _base;
+      this.bounds.onMap.withTranslation({
+        x: +this.speed
+      });
+      if (x = this.allCollidables.getOuterLeftEdgeBlocking(nextBoundsOnMap)) {
+        this.bounds.onMap.translateBySide('x2', x);
+        return;
+      }
+      mapWidth = this.core.currentMap.width;
+      if ((this.viewport.bounds.x2 + this.speed) > mapWidth) {
+        if (map = typeof (_base = this.core.currentMap).getAreaRight === "function" ? _base.getAreaRight() : void 0) {
+          return this.core.currentMap.loadArea(map);
         } else {
-          this.bounds.onMap.translate({
-            x: -this.speed
-          });
-          if ((this.bounds.inViewport.x1 - this.speed) < this.fence.x1) {
-            distanceFromFence = this.bounds.inViewport.x1 - this.fence.x1;
-            return this.viewport.translate({
-              x: -(this.speed - distanceFromFence)
-            });
-          }
-        }
-      },
-      moveRight: function() {
-        var distanceFromFence, mapWidth, nextBoundsOnMap, x;
-        nextBoundsOnMap = this.bounds.onMap.withTranslation({
-          x: this.speed
-        });
-        if (x = this.allCollidables.getOuterLeftEdgeBlocking(nextBoundsOnMap)) {
-          this.bounds.onMap.translateBySide('x2', x);
-          return;
-        }
-        mapWidth = this.map.width;
-        if ((this.viewport.bounds.x2 + this.speed) > mapWidth) {
           this.viewport.translateBySide('x2', mapWidth);
           if (nextBoundsOnMap.x2 > mapWidth) {
             return this.bounds.onMap.translateBySide('x2', mapWidth);
           } else {
-            return this.bounds.onMap.translate({
-              x: this.speed
-            });
+            return this.bounds.onMap.replace(nextBoundsOnMap);
           }
+        }
+      } else {
+        this.bounds.onMap.replace(nextBoundsOnMap);
+        if ((this.bounds.inViewport.x2 + this.speed) > this.fence.x2) {
+          return this.viewport.translateBySide('x2', this.bounds.onMap.x2 + this.viewportPadding);
+        }
+      }
+    },
+    moveUp: function() {
+      var map, nextBoundsOnMap, y, _base;
+      nextBoundsOnMap = this.bounds.onMap.withTranslation({
+        y: -this.speed
+      });
+      if (y = this.allCollidables.getOuterBottomEdgeBlocking(nextBoundsOnMap)) {
+        this.bounds.onMap.translateBySide('y1', y);
+        return;
+      }
+      if ((this.viewport.bounds.y1 - this.speed) < 0) {
+        if (map = typeof (_base = this.core.currentMap).getAreaUp === "function" ? _base.getAreaUp() : void 0) {
+          return this.core.currentMap.loadArea(map);
         } else {
-          this.bounds.onMap.translate({
-            x: this.speed
-          });
-          if ((this.bounds.inViewport.x2 + this.speed) > this.fence.x2) {
-            distanceFromFence = this.fence.x2 - this.bounds.inViewport.x2;
-            return this.viewport.translate({
-              x: this.speed - distanceFromFence
-            });
-          }
-        }
-      },
-      moveUp: function() {
-        var distanceFromFence, nextBoundsOnMap, y;
-        nextBoundsOnMap = this.bounds.onMap.withTranslation({
-          y: -this.speed
-        });
-        if (y = this.allCollidables.getOuterBottomEdgeBlocking(nextBoundsOnMap)) {
-          this.bounds.onMap.translateBySide('y1', y);
-          return;
-        }
-        if ((this.viewport.bounds.y1 - this.speed) < 0) {
           this.viewport.translateBySide('y1', 0);
           if (nextBoundsOnMap.y1 < 0) {
             return this.bounds.onMap.translateBySide('y1', 0);
           } else {
-            return this.bounds.onMap.translate({
-              y: -this.speed
-            });
+            return this.bounds.onMap.replace(nextBoundsOnMap);
           }
+        }
+      } else {
+        this.bounds.onMap.replace(nextBoundsOnMap);
+        if ((this.bounds.inViewport.y1 - this.speed) < this.fence.y1) {
+          return this.viewport.translateBySide('y2', this.bounds.onMap.y1 - this.viewportPadding);
+        }
+      }
+    },
+    moveDown: function() {
+      var map, mapHeight, nextBoundsOnMap, y, _base;
+      nextBoundsOnMap = this.bounds.onMap.withTranslation({
+        y: this.speed
+      });
+      if (y = this.allCollidables.getOuterTopEdgeBlocking(nextBoundsOnMap)) {
+        this.translateBySide('y2', y);
+        return;
+      }
+      mapHeight = this.core.currentMap.height;
+      if ((this.viewport.bounds.y2 + this.speed) > mapHeight) {
+        if (map = typeof (_base = this.core.currentMap).getAreaDown === "function" ? _base.getAreaDown() : void 0) {
+          return this.core.currentMap.loadArea(map);
         } else {
-          this.bounds.onMap.translate({
-            y: -this.speed
-          });
-          if ((this.bounds.inViewport.y1 - this.speed) < this.fence.y1) {
-            distanceFromFence = this.bounds.inViewport.y1 - this.fence.y1;
-            return this.viewport.translate({
-              y: -(this.speed - distanceFromFence)
-            });
-          }
-        }
-      },
-      moveDown: function() {
-        var distanceFromFence, mapHeight, nextBoundsOnMap, y;
-        nextBoundsOnMap = this.bounds.onMap.withTranslation({
-          y: this.speed
-        });
-        if (y = this.allCollidables.getOuterTopEdgeBlocking(nextBoundsOnMap)) {
-          this.translateBySide('y2', y);
-          return;
-        }
-        mapHeight = this.map.height;
-        if ((this.viewport.bounds.y2 + this.speed) > mapHeight) {
           this.viewport.translateBySide('y2', mapHeight);
           if (nextBoundsOnMap.y2 > mapHeight) {
             return this.bounds.onMap.translateBySide('y2', mapHeight);
           } else {
-            return this.bounds.onMap.translate({
-              y: this.speed
-            });
+            return this.bounds.onMap.replace(nextBoundsOnMap);
           }
-        } else {
-          this.bounds.onMap.translate({
-            y: this.speed
-          });
-          if ((this.bounds.inViewport.y2 + this.speed) > this.fence.y2) {
-            distanceFromFence = this.fence.y2 - this.bounds.inViewport.y2;
-            return this.viewport.translate({
-              y: this.speed - distanceFromFence
-            });
-          }
+        }
+      } else {
+        this.bounds.onMap.replace(nextBoundsOnMap);
+        if ((this.bounds.inViewport.y2 + this.speed) > this.fence.y2) {
+          return this.viewport.translateBySide('y2', this.bounds.onMap.y2 + this.viewportPadding);
         }
       }
     }
   });
-  Player.addState('moveLeft', {
-    duration: 2,
-    frames: [0, 1, 2, 3, 4, 5, 6, 7],
-    repeat: true,
-    move: true
-  });
-  Player.addState('moveRight', {
-    duration: 2,
-    frames: [8, 9, 10, 11, 12, 13, 14, 15],
-    repeat: true,
-    move: true
-  });
-  Player.addState('moveDown', {
-    duration: 2,
-    frames: [16, 17, 18, 19, 20, 21, 22],
-    repeat: true,
-    move: true
-  });
-  Player.addState('moveUp', {
-    duration: 2,
-    frames: [23, 24, 25, 26, 27, 28],
-    repeat: true,
-    move: true
-  });
-  Player.addState('idleLeft', {
-    duration: 2,
-    frames: [0],
-    repeat: true
-  });
-  Player.addState('idleRight', {
-    duration: 2,
-    frames: [8],
-    repeat: true
-  });
-  Player.addState('idleDown', {
-    duration: 2,
-    frames: [19],
-    repeat: true
-  });
-  Player.addState('idleUp', {
-    duration: 2,
-    frames: [23],
-    repeat: true
-  });
-  return Player;
+  return player;
 });

@@ -1,29 +1,34 @@
 
 define(function(require) {
-  var Class, attachable, core, eventable, fpsReporter, keyboard, main, module, plug, _ref, _ref2;
+  var Class, attachable, core, eventable, keyboard, main, module, plug, _ref, _ref2;
   _ref = require('app/meta'), Class = _ref.Class, module = _ref.module;
   _ref2 = require('app/roles'), eventable = _ref2.eventable, attachable = _ref2.attachable;
   plug = require('app/plug');
   keyboard = require('app/keyboard');
   core = require('app/core');
-  fpsReporter = require('app/fps_reporter');
-  main = module('game.main', eventable, attachable, plug(keyboard, core), {
+  main = meta.def('game.main', eventable, attachable, tickable, runnable);
+  main.extend({
+    imagesPath: '/images',
     debug: false,
     init: function() {
       this._super();
-      this.$element = $('#main');
+      this.keyboard = keyboard.init();
+      this.core = core.assignTo(this).init();
       this.attach();
       this.addEvents();
       return this.run();
     },
+    setElement: function() {
+      return this.$element = $('#main');
+    },
     attach: function() {
-      this._super();
+      this.core.attach();
       return this.$element.appendTo(document.body);
     },
     addEvents: function() {
       var self;
       self = this;
-      this._super();
+      this.keyboard.addEvents();
       return this.bindEvents(window, {
         blur: function() {
           return self.suspend();
@@ -34,24 +39,39 @@ define(function(require) {
       });
     },
     removeEvents: function() {
-      this._super();
+      this.keyboard.removeEvents();
       return this.unbindEvents(window, 'blur', 'focus');
     },
     load: function(callback) {
-      var i, self, ticker;
-      this.plugins.loadable.run('load');
+      var assetCollections, c, i, self, ticker, _i, _len;
+      assetCollections = [];
+      assetCollections.push(require('app/images'));
+      for (_i = 0, _len = assetCollections.length; _i < _len; _i++) {
+        c = assetCollections[_i];
+        c.load();
+      }
       self = this;
       i = 0;
       return ticker = window.setInterval((function() {
+        var c, isLoaded;
         i++;
         if (i === 20) {
           window.clearInterval(ticker);
           ticker = null;
-          throw new Error("Grobs haven't been loaded yet?!");
+          throw new Error("Assets haven't been loaded yet?!");
           return;
         }
-        console.log("Checking to see if all grobs are loaded...");
-        if (self.plugins.loadable.every('isLoaded')) {
+        console.log("Checking to see if all assets are loaded...");
+        isLoaded = (function() {
+          var _j, _len2, _results;
+          _results = [];
+          for (_j = 0, _len2 = assetCollections.length; _j < _len2; _j++) {
+            c = assetCollections[_j];
+            _results.push(c.isLoaded());
+          }
+          return _results;
+        })();
+        if (isLoaded) {
           window.clearInterval(ticker);
           ticker = null;
           return callback();
@@ -63,6 +83,18 @@ define(function(require) {
         return main.start();
       });
       return this;
+    },
+    start: function() {
+      return this.core.start();
+    },
+    stop: function() {
+      return this.core.stop();
+    },
+    tick: function() {
+      return this.core.tick();
+    },
+    resolveImagePath: function(path) {
+      return "" + this.imagesPath + "/" + path;
     }
   });
   return main;

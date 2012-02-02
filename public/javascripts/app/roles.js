@@ -1,8 +1,8 @@
 var __slice = Array.prototype.slice;
 
 define(function(require) {
-  var ROLES, attachable, drawable, eventHelpers, eventable, loadable, module, runnable, tickable, _getSafeNameFrom;
-  module = require('app/meta').module;
+  var ROLES, attachable, drawable, eventHelpers, eventable, loadable, meta, runnable, tickable, _getSafeNameFrom;
+  meta = require('app/meta2');
   ROLES = ['game.eventable', 'game.attachable', 'game.tickable', 'game.drawable', 'game.loadable', 'game.runnable'];
   _getSafeNameFrom = function(obj) {
     var name, _ref;
@@ -51,9 +51,9 @@ define(function(require) {
       return (_ref = $(obj)).trigger.apply(_ref, namespacedEventNames);
     }
   };
-  eventable = module('game.eventable', {
+  eventable = meta.def('game.eventable', {
     __extended__: function(base) {
-      return base.methods(eventHelpers);
+      return base.extend(eventHelpers);
     },
     addEvents: function() {
       throw new Error('addEvents must be overridden');
@@ -66,12 +66,18 @@ define(function(require) {
       return this._super();
     }
   });
-  attachable = module('game.attachable', {
+  attachable = meta.def('game.attachable', {
     init: function() {
       var args;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       this._super.apply(this, args);
-      return this.parent = args[0];
+      return this.setElement();
+    },
+    setElement: function() {
+      throw new Error('setElement must be overridden');
+    },
+    assignTo: function(parent) {
+      return this.parent = parent;
     },
     destroy: function() {
       if (this.$element) this.detach();
@@ -80,16 +86,16 @@ define(function(require) {
     attach: function() {
       return this.$element.appendTo(this.parent.$element);
     },
-    detach: function(container) {
+    detach: function() {
       return this.$element.detach();
     }
   });
-  tickable = module('game.tickable', {
+  tickable = meta.def('game.tickable', {
     tick: function() {
       throw new Error('tick must be overridden');
     }
   });
-  drawable = module('game.drawable', tickable, {
+  drawable = meta.def('game.drawable', tickable, {
     predraw: function() {
       throw new Error('predraw must be overridden');
     },
@@ -100,7 +106,7 @@ define(function(require) {
       throw new Error('postdraw must be overridden');
     }
   });
-  loadable = module('game.loadable', {
+  loadable = meta.def('game.loadable', {
     init: function() {
       var args;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
@@ -114,7 +120,7 @@ define(function(require) {
       throw new Error('isLoaded must be overridden');
     }
   });
-  runnable = module('game.runnable', {
+  runnable = meta.def('game.runnable', {
     destroy: function() {
       this.stop();
       return this._super();

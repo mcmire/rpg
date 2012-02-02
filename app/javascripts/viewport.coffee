@@ -1,29 +1,28 @@
 define (require) ->
-  {module} = require('app/meta')
+  meta = require('app/meta2')
   {attachable, tickable} = require('app/roles')
   Bounds = require('app/bounds')
   canvas = require('app/canvas')
 
-  viewport = module 'game.viewport',
+  viewport = meta.def 'game.viewport',
     attachable,
     tickable,
 
-    width: 600   # pixels
-    height: 400  # pixels
-    playerPadding: 30  # pixels
+    # Set the dimensions of the playable area - note that this is the official
+    # resolution that Link to the Past ran on (x2 of course).
+    # See: <http://strategywiki.org/wiki/The_Legend_of_Zelda:_A_Link_to_the_Past/Version_Differences>
+    width:  512  # pixels
+    height: 448  # pixels
 
-    init: (@core) ->
-      @main = @core.main
-      @_super(@core)
-      @bounds = Bounds.rect(0, 0, @width, @height)
+    assignTo: (core) ->
+      @_super(core)
+      @core = core
 
+    setElement: ->
       @$element = $('<div id="viewport" />').css
         width: @width
         height: @height
-        'background-image': "url(#{@core.imagesPath}/map2x.png)"
         'background-repeat': 'no-repeat'
-
-      @canvas = canvas.create(@$element, 'canvas', @width, @height)
 
     attach: ->
       @$element.appendTo(@main.$element)
@@ -36,6 +35,12 @@ define (require) ->
       bom = @bounds
       positionStr = [-bom.x1 + 'px', -bom.y1 + 'px'].join(" ")
       @$element.css('background-position', positionStr)
+
+    setMap: (map) ->
+      @currentMap = map
+      @$element.css('background-image', map.background.getDataUrl())
+      @$element.html(map.foreground.canvas)
+      @_setBounds()
 
     # Public: Move the bounds of the viewport.
     #
@@ -84,7 +89,11 @@ define (require) ->
         "bounds": @bounds.inspect()
 
     debug: ->
-      console.log "viewport.frame.bounds = (#{@frame.bounds.x1}..#{@frame.bounds.x2}, #{@frame.bounds.y1}..#{@frame.bounds.y2})"
-      console.log "viewport.padding.bounds = (#{@padding.bounds.x1}..#{@padding.bounds.x2}, #{@padding.bounds.y1}..#{@padding.bounds.y2})"
+      console.log "viewport.bounds = #{@bounds.inspect()}"
+
+    _setBounds:
+      # These are the bounds of the viewport on the map itself
+      # TODO: Start bounds centered on player
+      @bounds = Bounds.rect(0, 0, @width, @height)
 
   return viewport

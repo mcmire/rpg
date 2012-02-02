@@ -1,38 +1,37 @@
 
 define(function(require) {
-  var Enemy, Player, collisionLayer, core, plug, ticker, viewport;
+  var core, player, plug, ticker, viewport;
   ticker = require('app/ticker').ticker;
   plug = require('app/plug');
   viewport = require('app/viewport');
-  collisionLayer = require('app/collision_layer');
-  Player = require('app/player');
-  Enemy = require('app/enemy');
-  core = ticker.construct('game.core', plug(viewport, collisionLayer, Player, Enemy), {
+  player = require('app/player');
+  core = ticker.cloneAs('game.core');
+  core.extend(attachable, tickable, {
     frameRate: 40,
-    imagesPath: '/images',
     animMethod: 'setTimeout',
-    map: {
-      width: 2560,
-      height: 1600
-    },
-    init: function(main) {
-      var self;
+    assignTo: function(main) {
+      this._super(main);
       this.main = main;
+      return this.keyboard = this.main.keyboard;
+    },
+    init: function() {
+      var self;
       self = this;
-      this.keyboard = this.main.keyboard;
-      this._super(this.main);
+      this.viewport = viewport.assignTo(this).init();
       this.tickInterval = 1000 / this.frameRate;
-      return this.throttledDraw = this.createIntervalTimer(this.tickInterval, function(df, dt) {
+      this.throttledDraw = this.createIntervalTimer(this.tickInterval, function(df, dt) {
         return self.draw(df, dt);
       });
-    },
-    reset: function() {
-      this._super();
       this.numDraws = 0;
       this.lastTickTime = null;
-      return this.numTicks = 0;
+      this.numTicks = 0;
+      return this.player = player.assignTo(this).init();
+    },
+    attach: function() {
+      return this.viewport.attach();
     },
     start: function() {
+      this.loadMap('lightworld');
       return this.tick();
     },
     stop: function() {
@@ -72,7 +71,8 @@ define(function(require) {
       return core.numTicks++;
     },
     draw: function() {
-      this.plugins.tickable.run('tick');
+      this.viewport.tick();
+      this.currentMap.tick();
       return this.numDraws++;
     },
     createIntervalTimer: function(arg, fn) {
@@ -95,6 +95,12 @@ define(function(require) {
           return f0 = this.numDraws;
         }
       };
+    },
+    loadMap: function(name) {
+      if (this.currentMap) this.currentMap.destroy();
+      this.currentMap = require("app/maps/" + name);
+      this.currentMap.assignTo(this).addPlayer(this.player).load();
+      return this.viewport.setMap(this.currentMap);
     }
   });
   return core;

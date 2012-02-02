@@ -156,7 +156,7 @@ define(function(require) {
         return b;
       },
       inspect: function() {
-        return "(" + this.x1 + ".." + this.x2 + ", " + this.y1 + ".." + this.y2 + ")";
+        return "(" + this.x1 + ", " + this.y1 + "), (" + this.x2 + ", " + this.y2 + ")";
       },
       _calculateBottomRightCorner: function() {
         this.x2 = this.x1 + this.width;

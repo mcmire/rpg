@@ -1,8 +1,9 @@
 var __slice = Array.prototype.slice;
 
 define(function(require) {
-  var Class, PluginCollection, isValidRole, module, plug, roles, _ref;
+  var Class, PluginCollection, isValidRole, meta, module, plug, plugInto, roles, _ref;
   _ref = require('app/meta'), Class = _ref.Class, module = _ref.module;
+  meta = require('app/meta2');
   roles = require('app/roles');
   isValidRole = $.v.reduce(roles.ROLES, (function(h, r) {
     h[r] = 1;
@@ -81,16 +82,21 @@ define(function(require) {
       }
     }
   });
-  plug = function() {
-    var ctors, mixins, mod, roleNames, uniqRoleNames;
-    ctors = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+  plug = meta.def('game.plug');
+  plugInto = function() {
+    var ctor, ctors, mixins, mod, owner, roleNames, uniqRoleNames, _i, _len;
+    owner = arguments[0], ctors = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+    for (_i = 0, _len = ctors.length; _i < _len; _i++) {
+      ctor = ctors[_i];
+      ctor.assignTo(owner);
+    }
     uniqRoleNames = $.v.reduce(ctors, function(roleNames, ctor) {
-      var ctorRoleNames, roleName, _i, _len;
-      ctorRoleNames = $.v.filter($.v.keys(ctor.__roles__), function(k) {
+      var ctorRoleNames, roleName, _j, _len2;
+      ctorRoleNames = $.v.filter($.v.keys(ctor.__mixins__), function(k) {
         return isValidRole[k];
       });
-      for (_i = 0, _len = ctorRoleNames.length; _i < _len; _i++) {
-        roleName = ctorRoleNames[_i];
+      for (_j = 0, _len2 = ctorRoleNames.length; _j < _len2; _j++) {
+        roleName = ctorRoleNames[_j];
         roleNames[roleName] = 1;
       }
       return roleNames;
@@ -103,7 +109,7 @@ define(function(require) {
         long: roleName
       };
     });
-    mod = module('game.plug');
+    mod = meta.def('game.plug');
     mixins = [];
     $.v.each(roleNames, function(roleName) {
       var mixin;
@@ -129,10 +135,9 @@ define(function(require) {
       init: function() {
         plug = this;
         this.plugins = PluginCollection.collect(this, ctors, roleNames, function(obj) {
+          var _base;
           plug[obj.ctorName] = obj.inst;
-          if (typeof obj.inst.__plugged__ === 'function') {
-            return obj.inst.__plugged__(plug);
-          }
+          return typeof (_base = obj.inst).__plugged__ === "function" ? _base.__plugged__(plug) : void 0;
         });
         return this;
       },

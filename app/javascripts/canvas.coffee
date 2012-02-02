@@ -56,14 +56,16 @@ define (require) ->
             i += 4
 
   canvas =
-    create: (parent, id, width, height) ->
+    create: (args...) ->
+      [height, width, id, parent] = args.reverse()
       c = {}
       c.width = width
       c.height = height
-      c.$element = $("<canvas/>")
-        .attr('id', id)
+      $element = $("<canvas/>")
         .attr('width', width)
         .attr('height', height)
+      $element.attr('id', id) if id
+      c.$element = $element
       c.attach = ->
         c.$element.appendTo(parent)
         # for some reason we have to assign this *after* the element is added to
