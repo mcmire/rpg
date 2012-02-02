@@ -27,43 +27,16 @@ define (require) ->
 
   #---
 
-  ###
-  MapSpriteCollection = meta.def
-    sprites: []
-
-    create: (sprites) ->
-      @_super(sprites: sprites)
-
-    add: (name, x, y, frameDelay) ->
-      sprite = spriteCollection.get(name)
-      sprite = sprite.cloneWith(frameDelay: frameDelay) if frameDelay
-      sprite.setPositionOnMap(x, y)
-      @sprites.push(sprite)
-
-    each: (fn) ->
-      fn(sprite) for sprite in @sprites
-  ###
-
-  #---
-
   Map = meta.def 'game.Map',
     tickable,
 
-    create: (name, width, height, fn) ->
-      bg = Background.create(width, height)
-      fg = Foreground.create(width, height)
-      fn(bg, fg)
-      @cloneWith
-        name: name
-        width: width
-        height: height
-        background: bg
-        foreground: fg
-
-    init: ->
+    init: (@name, @width, @height, fn) ->
+      @bg = Background.create(width, height)
+      @fg = Foreground.create(width, height)
+      fn?(@bg, @fg)
       @url = "/images/maps/#{@name}.png"
-      @bg.init(this)
-      @fg.init(this)
+      @bg.assignTo(this)
+      @fg.assignTo(this)
       # @up = @down = @left = @right = null
 
     destroy: ->
@@ -77,21 +50,12 @@ define (require) ->
       @player = player
       # TODO: Place the player somewhere on the map
 
+    load: ->
+      # XXX: Presumably this will do something?
+
     tick: ->
       @bg.tick()
       @fg.tick()
-
-    # connectsUpTo: (other) ->
-    #   @up = other
-
-    # connectsDownTo: (other) ->
-    #   @down = other
-
-    # connectsLeftTo: (other) ->
-    #   @left = other
-
-    # connectsRightTo: (other) ->
-    #   @right = other
 
   #---
 
@@ -106,8 +70,7 @@ define (require) ->
           if r.length is groupWidth
             r = []
             rows.push(r)
-          map = Map.create(name, width, height)
-          fn2(map)
+          map = Map.create(name, width, height, fn2)
           r.push(map)
           ci = r.length-1
           ri = rows.length-1
@@ -125,67 +88,21 @@ define (require) ->
             dr[ci].connectsUpTo(map)
           map[map.name] = map
 
-      fn(group)
+      fn?(group)
 
       return maps
 
   #---
 
-  ###
-  maps =
-    all: []
-
-    add: (args...) ->
-      unless args[0].isPrototypeOf(Map)
-        [name, width, height, sprites] = args
-        map = createMap(width, height, sprites)
-      @all[map.name] = map
-      return map
-
-    addGroup: (groupWidth, groupHeight, fn) ->
-      rows = []
-      row = []
-      group =
-        add: (name, width, height, sprites) ->
-          if cur.length is groupWidth
-            rows.push(row)
-            row = []
-          row.push Map.create(name, width, height, sprites)
-      fn(group)
-      for r in [1..groupHeight-2]
-        for c in [1..groupWidth-2]
-          map = rows[r][c]
-          map.connectsUpTo(rows[r-1][c])
-          map.connectsDownTo(rows[r+1][c])
-          map.connectsLeftTo(rows[r][c-1])
-          map.connectsRightTo(rows[r][c+1])
-          maps.add(map)
-
-    connectHorizontally: (map1, map2) ->
-      map1.connectsLeftTo(map2)
-      map2.connectsRightTo(map1)
-
-    connectVertically: (map1, map2) ->
-      map1.connectsDownTo(map2)
-      map2.connectsUpTo(map1)
-  ###
-
-  #---
-
-  Background = meta.def \
+  Background = meta.def 'game.Background',
     tickable,
 
-    create: (width, height) ->
-      @cloneWith
-        width: width
-        height: height
-        # create this here so it won't be shared with all clones
-        sprites: []
-        # same reason
-        canvas: canvas.create(width, height)
-
-    init: (@map) ->
+    init: (@width, @height) ->
+      @sprites = []
+      @canvas = canvas.create(@width, @height)
       element.init(this) for element in @elements
+
+    assignTo: (@map) ->
 
     destroy: ->
       element.destroy() for element in @elements
@@ -194,6 +111,7 @@ define (require) ->
     addSprite: (name, x, y, frameDelay=null) ->
       sprite = spriteCollection.get(name)
       sprite.cloneWith(frameDelay: frameDelay)
+      # TODO: Does this work?
       sprite.setMapPosition(x, y)
       @elements.push(sprite)
 
@@ -208,22 +126,17 @@ define (require) ->
   #---
 
   # TODO: What about the collision layer?????
-  Foreground = meta.def \
+  Foreground = meta.def 'game.Foreground',
     tickable,
 
-    create: (width, height) ->
-      @cloneWith
-        width: width
-        height: height
-        # create this here so it won't be shared with all clones
-        grobs: []
-        # same reason
-        canvas: canvas.create(width, height)
-
-    init: (map) ->
+    init: (@width, @height) ->
+      @elements = []
+      @canvas = canvas.create(width, height)
       # Remember that these can be map blocks, items or mobs such as the player,
       # NPC's or enemies
       element.init(this) for element in @elements
+
+    assignTo: (@map) ->
 
     destroy: ->
       element.destroy() for element in @elements
