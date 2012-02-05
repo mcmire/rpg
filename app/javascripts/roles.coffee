@@ -6,8 +6,10 @@ define (require) ->
     'game.attachable'
     'game.tickable'
     'game.drawable'
+    'game.simpleDrawable'
     'game.loadable'
     'game.runnable'
+    'game.assignable'
   ]
 
   _getSafeNameFrom = (obj) ->
@@ -52,49 +54,69 @@ define (require) ->
       @removeEvents()
       @_super()
 
+  # TODO: This could probably be cleaned up... setElement() could set anything
+  # which we don't necessarily want
   attachable = meta.def 'game.attachable',
     init: (args...) ->
       @_super(args...)
+      @setParentElement(args[0])
       @setElement()
+      return this
+
+    setParentElement: (parent) ->
+      if parent.doesInclude?('game.attachable')
+        @parentElement = parent.$element
+      else
+        # assume that parent is a selector or Bonzo element
+        @parentElement = parent
+      return this
 
     setElement: ->
-      throw new Error 'setElement must be overridden'
-
-    assignTo: (parent) ->
-      @parent = parent
+      # throw new Error 'setElement must be overridden'
 
     destroy: ->
-      @detach() if @$element
+      @detach()
       @_super()
 
     attach: ->
       # by default we assume you want to attach to the parent element but it is
       # totally ok to override this to use another object
-      @$element.appendTo(@parent.$element)
+      @$element?.appendTo(@parentElement)
+      return this
 
     detach: ->
-      @$element.detach()
+      @$element?.detach()
+      return this
 
   tickable = meta.def 'game.tickable',
     tick: ->
       throw new Error 'tick must be overridden'
 
-  drawable = meta.def 'game.drawable',
-    tickable,
-
-    predraw: ->
-      throw new Error 'predraw must be overridden'
-
+  simpleDrawable = meta.def 'game.simpleDrawable',
     draw: ->
       throw new Error 'draw must be overridden'
 
+  drawable = meta.def 'game.drawable',
+    tickable,
+    simpleDrawable,
+
+    tick: ->
+      @predraw()
+      @draw()
+      @postdraw()
+      return this
+
+    predraw: ->
+      # throw new Error 'predraw must be overridden'
+
     postdraw: ->
-      throw new Error 'postdraw must be overridden'
+      # throw new Error 'postdraw must be overridden'
 
   loadable = meta.def 'game.loadable',
     init: (args...) ->
       @_super(args...)
       @isLoaded = false
+      return this
 
     load: ->
       throw new Error 'load must be overridden'
@@ -119,6 +141,12 @@ define (require) ->
     resume: ->
       throw new Error 'resume must be overridden'
 
+  assignable = meta.def 'game.assignable',
+    assignTo: (canvas) ->
+      @canvas = canvas
+      @ctx = canvas.ctx
+      return this
+
   #---
 
   return {
@@ -127,6 +155,8 @@ define (require) ->
     attachable: attachable
     tickable: tickable
     drawable: drawable
+    simpleDrawable: simpleDrawable
     loadable: loadable
     runnable: runnable
+    assignable: assignable
   }

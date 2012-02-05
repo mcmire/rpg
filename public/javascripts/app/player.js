@@ -23,26 +23,22 @@ define(function(require) {
     }
   }
   KEYS = $.flatten($.values(DIRECTION_KEYS));
-  player = Mob.create('link2x.gif', 34, 48, 4);
+  player = Mob.cloneAs('game.player');
   player.addState('moveLeft', [0, 1, 2, 3, 4, 5, 6, 7], {
     duration: 2,
-    repeat: true,
-    move: true
+    repeat: true
   });
   player.addState('moveRight', [8, 9, 10, 11, 12, 13, 14, 15], {
     duration: 2,
-    repeat: true,
-    move: true
+    repeat: true
   });
   player.addState('moveDown', [16, 17, 18, 19, 20, 21, 22], {
     duration: 2,
-    repeat: true,
-    move: true
+    repeat: true
   });
   player.addState('moveUp', [23, 24, 25, 26, 27, 28], {
     duration: 2,
-    repeat: true,
-    move: true
+    repeat: true
   });
   player.addState('idleLeft', [0], {
     duration: 2,
@@ -60,7 +56,6 @@ define(function(require) {
     duration: 2,
     repeat: true
   });
-  player.setState('idleDown');
   player.extend(eventable, {
     viewportPadding: 30,
     keyTracker: keyboard.KeyTracker.create(KEYS),
@@ -68,6 +63,8 @@ define(function(require) {
       return core.collisionLayer.add(this);
     },
     init: function() {
+      this._super('link2x.gif', 34, 48, 4);
+      this.setState('idleDown');
       return this.addEvents();
     },
     _initBoundsOnMap: function() {

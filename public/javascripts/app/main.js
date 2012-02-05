@@ -1,9 +1,8 @@
 
 define(function(require) {
-  var Class, attachable, core, eventable, keyboard, main, module, plug, _ref, _ref2;
-  _ref = require('app/meta'), Class = _ref.Class, module = _ref.module;
-  _ref2 = require('app/roles'), eventable = _ref2.eventable, attachable = _ref2.attachable;
-  plug = require('app/plug');
+  var attachable, core, eventable, keyboard, main, meta, runnable, tickable, _ref;
+  meta = require('app/meta2');
+  _ref = require('app/roles'), eventable = _ref.eventable, attachable = _ref.attachable, tickable = _ref.tickable, runnable = _ref.runnable;
   keyboard = require('app/keyboard');
   core = require('app/core');
   main = meta.def('game.main', eventable, attachable, tickable, runnable);
@@ -11,25 +10,27 @@ define(function(require) {
     imagesPath: '/images',
     debug: false,
     init: function() {
-      this._super();
+      this._super(document.body);
       this.keyboard = keyboard.init();
-      this.core = core.assignTo(this).init();
+      this.core = core.init(this);
       this.attach();
       this.addEvents();
-      return this.run();
+      this.run();
+      return this;
     },
     setElement: function() {
       return this.$element = $('#main');
     },
     attach: function() {
+      this._super();
       this.core.attach();
-      return this.$element.appendTo(document.body);
+      return this;
     },
     addEvents: function() {
       var self;
       self = this;
       this.keyboard.addEvents();
-      return this.bindEvents(window, {
+      this.bindEvents(window, {
         blur: function() {
           return self.suspend();
         },
@@ -37,46 +38,49 @@ define(function(require) {
           return self.resume();
         }
       });
+      return this;
     },
     removeEvents: function() {
       this.keyboard.removeEvents();
-      return this.unbindEvents(window, 'blur', 'focus');
+      this.unbindEvents(window, 'blur', 'focus');
+      return this;
     },
     load: function(callback) {
-      var assetCollections, c, i, self, ticker, _i, _len;
-      assetCollections = [];
-      assetCollections.push(require('app/images'));
-      for (_i = 0, _len = assetCollections.length; _i < _len; _i++) {
-        c = assetCollections[_i];
-        c.load();
-      }
+      var assetCollections, c, fn, i, imageCollection, self, timer, _i, _len;
       self = this;
+      assetCollections = [];
+      imageCollection = require('app/images')(this);
+      assetCollections.push(imageCollection);
       i = 0;
-      return ticker = window.setInterval((function() {
-        var c, isLoaded;
+      timer = null;
+      fn = function() {
+        var isLoaded;
         i++;
         if (i === 20) {
-          window.clearInterval(ticker);
-          ticker = null;
+          window.clearTimeout(timer);
+          timer = null;
           throw new Error("Assets haven't been loaded yet?!");
           return;
         }
         console.log("Checking to see if all assets are loaded...");
-        isLoaded = (function() {
-          var _j, _len2, _results;
-          _results = [];
-          for (_j = 0, _len2 = assetCollections.length; _j < _len2; _j++) {
-            c = assetCollections[_j];
-            _results.push(c.isLoaded());
-          }
-          return _results;
-        })();
+        isLoaded = $.v.every(assetCollections, function(c) {
+          return c.isLoaded();
+        });
         if (isLoaded) {
-          window.clearInterval(ticker);
-          ticker = null;
+          console.log("All assets have been loaded, hey!");
+          window.clearTimeout(timer);
+          timer = null;
           return callback();
+        } else {
+          return timer = window.setTimeout(fn, 100);
         }
-      }), 100);
+      };
+      fn();
+      for (_i = 0, _len = assetCollections.length; _i < _len; _i++) {
+        c = assetCollections[_i];
+        c.load();
+      }
+      return this;
     },
     run: function() {
       main.load(function() {
@@ -85,10 +89,22 @@ define(function(require) {
       return this;
     },
     start: function() {
-      return this.core.start();
+      this.core.start();
+      return this;
     },
     stop: function() {
-      return this.core.stop();
+      this.core.stop();
+      return this;
+    },
+    suspend: function() {
+      console.log("Suspending...");
+      this.core.suspend();
+      return this;
+    },
+    resume: function() {
+      console.log("Resuming...");
+      this.core.resume();
+      return this;
     },
     tick: function() {
       return this.core.tick();

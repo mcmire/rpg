@@ -1,7 +1,9 @@
+########
+# I'm trying to figure out if this class is valuable
+########
+
 define (require) ->
   {MapGroup, Foreground, Background} = require('app/maps')
-
-  areas = MapGroup.create(8, 8)
 
   #--- REQUIRE MAP AREAS HERE --------------------------------------------------
   require('./lw_52')(areas)

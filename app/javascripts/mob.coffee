@@ -1,20 +1,38 @@
 define (require) ->
   meta = require('app/meta2')
-  Sprite = require('app/sprite')
+  Grob = require('app/grob')
+  {sprites} = require('app/images')
+  {drawable} = require('app/roles')
   Collidable = require('app/collidable')
   Bounds = require('app/bounds')
 
-  # A Mob is a movable object. It lives on the map, in the foreground layer, and
-  # has a sprite associated with it that changes state depending on the state of
-  # the mob.
+  # A Mob is a Movable OBject. It does what a Grob can do -- that is, it lives
+  # on the map in the foreground layer, is collidable, and has a sprite. The key
+  # difference is (judging from the name) that mobs can move whereas grobs
+  # can't. This makes drawing slightly more tricky because we have to make sure
+  # to clear the mob's last location on the map before we draw it -- otherwise,
+  # when the mob moves it will just paint itself all over the viewport. Also,
+  # since mobs can move, they have a concept of a "fence" -- a box on the map
+  # that contains them.
   #
-  Mob = meta.def 'game.Mob',
-    Sprite,
+  Mob = Grob.clone().extend \
+    drawable,    # implies tickable
     Collidable,  # implies Mappable
 
-    init: (image, width, height, speed) ->
-      @_super(image, width, height)
+    init: (imagePath, width, height, speed) ->
+      @_super(imagePath, width, height)
       @speed = speed
+
+    predraw: ->
+      @_super()
+
+      # in calling the handler for the state, the position on the map may have
+      # changed
+      @_recalculateViewportBounds()
+
+    draw: ->
+      @sprite.clear()
+      @_super()
 
     _initBoundsOnMap: ->
       @_initFence()
@@ -22,14 +40,5 @@ define (require) ->
 
     _initFence: ->
       @fence = Bounds.rect(0, 0, @map.width, @map.height)
-
-    predraw: ->
-      @_super()
-
-      @[@state.moveHandler]?()
-
-      # the position on the map may have changed, as well as the viewport
-      # frame bounds, so we need to do this
-      @_recalculateViewportBounds()
 
   return Mob

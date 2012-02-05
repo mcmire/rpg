@@ -27,11 +27,9 @@ define(function(require) {
   };
   MODIFIER_KEYS = [KEYS.KEY_SHIFT, KEYS.KEY_CTRL, KEYS.KEY_ALT, KEYS.KEY_META];
   PressedKeys = meta.def({
-    create: function() {
-      return this.cloneWith({
-        tsByKey: {},
-        keys: []
-      });
+    init: function() {
+      this.tsByKey = {};
+      return this.keys = [];
     },
     get: function(key) {
       return this.tsByKey[key];
@@ -64,14 +62,12 @@ define(function(require) {
     }
   });
   KeyTracker = meta.def({
-    create: function(keyCodes) {
-      return this.cloneWith({
-        trackedKeys: $.v.reduce(keyCodes, (function(o, c) {
-          o[c] = 1;
-          return o;
-        }), {}),
-        pressedKeys: PressedKeys.create()
-      });
+    init: function(keyCodes) {
+      this.trackedKeys = $.v.reduce(keyCodes, (function(o, c) {
+        o[c] = 1;
+        return o;
+      }), {});
+      return this.pressedKeys = PressedKeys.create();
     },
     reset: function() {
       this.pressedKeys.reset();
@@ -118,9 +114,6 @@ define(function(require) {
     keys: KEYS,
     modifierKeys: MODIFIER_KEYS,
     keyTrackers: [],
-    init: function() {
-      return this;
-    },
     reset: function() {
       var keyTracker, _i, _len, _ref;
       if (this.keyTrackers) {

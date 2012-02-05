@@ -5,7 +5,7 @@ define(function(require) {
   _ref = require('app/roles'), runnable = _ref.runnable, tickable = _ref.tickable;
   ticker = meta.def('game.ticker', runnable, tickable, {
     isRunning: false,
-    extend: function(mixin, opts) {
+    _includeMixin: function(mixin, opts) {
       if (opts == null) opts = {};
       opts = $.v.extend({}, opts, {
         start: '_start',
@@ -15,9 +15,6 @@ define(function(require) {
     },
     destroy: function() {
       return this.stop();
-    },
-    assignTo: function(parent) {
-      this.parent = parent;
     },
     start: function() {
       if (this.isRunning) return;

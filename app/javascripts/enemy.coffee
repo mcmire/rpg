@@ -8,10 +8,10 @@ define (require) ->
 
   Enemy = Mob.cloneAs('game.Enemy')
 
-  Enemy.addState 'moveDown',    [0,1],   duration: 4,  repeat: true, move: true
-  Enemy.addState 'moveRight',   [4,5],   duration: 4,  repeat: true, move: true
-  Enemy.addState 'moveLeft',    [8,9],   duration: 4,  repeat: true, move: true
-  Enemy.addState 'moveUp',      [12,13], duration: 4,  repeat: true, move: true
+  Enemy.addState 'moveDown',    [0,1],   duration: 4,  do: 'moveDown',  repeat: true
+  Enemy.addState 'moveRight',   [4,5],   duration: 4,  do: 'moveRight', repeat: true
+  Enemy.addState 'moveLeft',    [8,9],   duration: 4,  do: 'moveLeft',  repeat: true
+  Enemy.addState 'moveUp',      [12,13], duration: 4,  do: 'moveUp',    repeat: true
   Enemy.addState 'upToLeft',    [12,14], duration: 24, then: 'moveLeft'
   Enemy.addState 'downToLeft',  [0,3],   duration: 24, then: 'moveLeft'
   Enemy.addState 'upToRight',   [12,15], duration: 24, then: 'moveRight'

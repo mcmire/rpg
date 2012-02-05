@@ -1,6 +1,7 @@
 define (require) ->
   {ticker} = require('app/ticker')
-  plug = require('app/plug')
+  # plug = require('app/plug')
+  {attachable, tickable} = require('app/roles')
   viewport = require('app/viewport')
   # collisionLayer = require('app/collision_layer')
   player = require('app/player')
@@ -18,27 +19,28 @@ define (require) ->
     frameRate: 40  # fps
     animMethod: 'setTimeout'  # or 'requestAnimFrame'
 
-    assignTo: (main) ->
-      @_super(main)
-      @main = main
-      @keyboard = @main.keyboard
-
-    init: ->
+    init: (@main) ->
+      @_super(@main)
       self = this
-      @viewport = viewport.assignTo(this).init()
+      @keyboard = @main.keyboard
+      @viewport = viewport.init(this)
       @tickInterval = 1000 / @frameRate
       @throttledDraw = @createIntervalTimer @tickInterval, (df, dt) ->
         self.draw(df, dt)
       @numDraws = 0
       @lastTickTime = null
       @numTicks = 0
-      @player = player.assignTo(this).init()
+      @player = player
+      return this
+
+    setElement: ->
+      @$element = @parentElement
 
     attach: ->
       @viewport.attach()
 
     start: ->
-      @loadMap('lightworld')
+      @loadMap('lw_52')
       # calling tick() once starts the loop immediately since it calls itself
       @tick()
 
@@ -112,10 +114,15 @@ define (require) ->
           f0 = @numDraws
 
     loadMap: (name) ->
-      @currentMap.destroy() if @currentMap
-      @currentMap = require("app/maps/#{name}")
-      @currentMap.assignTo(this).addPlayer(@player).load()
-      # TODO: Transition instead of hard setting
-      @viewport.setMap(@currentMap)
+      self = this
+      @currentMap.unload() if @currentMap
+      require ["app/maps/#{name}"], (fn) ->
+        self.currentMap = map = fn(self.main)
+        map.load(self, self.player)
+        self.viewport.setMap(map)
+      # @currentMap = require("app/maps/#{name}")(@main)
+      # @currentMap.load(this, @player)
+      # # TODO: Transition instead of hard setting
+      # @viewport.setMap(@currentMap)
 
   return core

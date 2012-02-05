@@ -1,23 +1,21 @@
 
 define(function(require) {
-  var core, player, plug, ticker, viewport;
+  var attachable, core, player, tickable, ticker, viewport, _ref;
   ticker = require('app/ticker').ticker;
-  plug = require('app/plug');
+  _ref = require('app/roles'), attachable = _ref.attachable, tickable = _ref.tickable;
   viewport = require('app/viewport');
   player = require('app/player');
   core = ticker.cloneAs('game.core');
   core.extend(attachable, tickable, {
     frameRate: 40,
     animMethod: 'setTimeout',
-    assignTo: function(main) {
-      this._super(main);
-      this.main = main;
-      return this.keyboard = this.main.keyboard;
-    },
-    init: function() {
+    init: function(main) {
       var self;
+      this.main = main;
+      this._super(this.main);
       self = this;
-      this.viewport = viewport.assignTo(this).init();
+      this.keyboard = this.main.keyboard;
+      this.viewport = viewport.init(this);
       this.tickInterval = 1000 / this.frameRate;
       this.throttledDraw = this.createIntervalTimer(this.tickInterval, function(df, dt) {
         return self.draw(df, dt);
@@ -25,13 +23,17 @@ define(function(require) {
       this.numDraws = 0;
       this.lastTickTime = null;
       this.numTicks = 0;
-      return this.player = player.assignTo(this).init();
+      this.player = player;
+      return this;
+    },
+    setElement: function() {
+      return this.$element = this.parentElement;
     },
     attach: function() {
       return this.viewport.attach();
     },
     start: function() {
-      this.loadMap('lightworld');
+      this.loadMap('lw_52');
       return this.tick();
     },
     stop: function() {
@@ -97,10 +99,15 @@ define(function(require) {
       };
     },
     loadMap: function(name) {
-      if (this.currentMap) this.currentMap.destroy();
-      this.currentMap = require("app/maps/" + name);
-      this.currentMap.assignTo(this).addPlayer(this.player).load();
-      return this.viewport.setMap(this.currentMap);
+      var self;
+      self = this;
+      if (this.currentMap) this.currentMap.unload();
+      return require(["app/maps/" + name], function(fn) {
+        var map;
+        self.currentMap = map = fn(self.main);
+        map.load(self, self.player);
+        return self.viewport.setMap(map);
+      });
     }
   });
   return core;

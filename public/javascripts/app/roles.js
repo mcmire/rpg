@@ -1,9 +1,9 @@
 var __slice = Array.prototype.slice;
 
 define(function(require) {
-  var ROLES, attachable, drawable, eventHelpers, eventable, loadable, meta, runnable, tickable, _getSafeNameFrom;
+  var ROLES, assignable, attachable, drawable, eventHelpers, eventable, loadable, meta, runnable, simpleDrawable, tickable, _getSafeNameFrom;
   meta = require('app/meta2');
-  ROLES = ['game.eventable', 'game.attachable', 'game.tickable', 'game.drawable', 'game.loadable', 'game.runnable'];
+  ROLES = ['game.eventable', 'game.attachable', 'game.tickable', 'game.drawable', 'game.simpleDrawable', 'game.loadable', 'game.runnable', 'game.assignable'];
   _getSafeNameFrom = function(obj) {
     var name, _ref;
     name = (_ref = obj.constructor.__name__) != null ? _ref : obj.__name__;
@@ -71,23 +71,32 @@ define(function(require) {
       var args;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       this._super.apply(this, args);
-      return this.setElement();
+      this.setParentElement(args[0]);
+      this.setElement();
+      return this;
     },
-    setElement: function() {
-      throw new Error('setElement must be overridden');
+    setParentElement: function(parent) {
+      if (typeof parent.doesInclude === "function" ? parent.doesInclude('game.attachable') : void 0) {
+        this.parentElement = parent.$element;
+      } else {
+        this.parentElement = parent;
+      }
+      return this;
     },
-    assignTo: function(parent) {
-      return this.parent = parent;
-    },
+    setElement: function() {},
     destroy: function() {
-      if (this.$element) this.detach();
+      this.detach();
       return this._super();
     },
     attach: function() {
-      return this.$element.appendTo(this.parent.$element);
+      var _ref;
+      if ((_ref = this.$element) != null) _ref.appendTo(this.parentElement);
+      return this;
     },
     detach: function() {
-      return this.$element.detach();
+      var _ref;
+      if ((_ref = this.$element) != null) _ref.detach();
+      return this;
     }
   });
   tickable = meta.def('game.tickable', {
@@ -95,23 +104,28 @@ define(function(require) {
       throw new Error('tick must be overridden');
     }
   });
-  drawable = meta.def('game.drawable', tickable, {
-    predraw: function() {
-      throw new Error('predraw must be overridden');
-    },
+  simpleDrawable = meta.def('game.simpleDrawable', {
     draw: function() {
       throw new Error('draw must be overridden');
-    },
-    postdraw: function() {
-      throw new Error('postdraw must be overridden');
     }
+  });
+  drawable = meta.def('game.drawable', tickable, simpleDrawable, {
+    tick: function() {
+      this.predraw();
+      this.draw();
+      this.postdraw();
+      return this;
+    },
+    predraw: function() {},
+    postdraw: function() {}
   });
   loadable = meta.def('game.loadable', {
     init: function() {
       var args;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       this._super.apply(this, args);
-      return this.isLoaded = false;
+      this.isLoaded = false;
+      return this;
     },
     load: function() {
       throw new Error('load must be overridden');
@@ -138,13 +152,22 @@ define(function(require) {
       throw new Error('resume must be overridden');
     }
   });
+  assignable = meta.def('game.assignable', {
+    assignTo: function(canvas) {
+      this.canvas = canvas;
+      this.ctx = canvas.ctx;
+      return this;
+    }
+  });
   return {
     ROLES: ROLES,
     eventable: eventable,
     attachable: attachable,
     tickable: tickable,
     drawable: drawable,
+    simpleDrawable: simpleDrawable,
     loadable: loadable,
-    runnable: runnable
+    runnable: runnable,
+    assignable: assignable
   };
 });

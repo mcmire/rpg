@@ -27,6 +27,7 @@
       urlArgs: 'bust=<%= latest_script_mtime %>'
     }
   </script>
-  <script data-main="/javascripts/app/init.js" src="/javascripts/vendor/require.min.js"></script>
+  <% requirejs_path = ENV['RACK_ENV'] == "production" ? "require.min.js" : "require.js" %>
+  <script data-main="/javascripts/app/init.js" src="/javascripts/vendor/<%= requirejs_path %>"></script>
 </body>
 </html>

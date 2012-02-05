@@ -14,9 +14,8 @@ define (require) ->
     width:  512  # pixels
     height: 448  # pixels
 
-    assignTo: (core) ->
-      @_super(core)
-      @core = core
+    init: (@core) ->
+      @_super(@core)  # attachable
 
     setElement: ->
       @$element = $('<div id="viewport" />').css
@@ -25,8 +24,7 @@ define (require) ->
         'background-repeat': 'no-repeat'
 
     attach: ->
-      @$element.appendTo(@main.$element)
-      @canvas.attach()
+      @_super()
 
     tick: ->
       @draw()

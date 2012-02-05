@@ -9,9 +9,9 @@ define(function(require) {
   viewport = meta.def('game.viewport', attachable, tickable, {
     width: 512,
     height: 448,
-    assignTo: function(core) {
-      this._super(core);
-      return this.core = core;
+    init: function(core) {
+      this.core = core;
+      return this._super(this.core);
     },
     setElement: function() {
       return this.$element = $('<div id="viewport" />').css({
@@ -21,8 +21,7 @@ define(function(require) {
       });
     },
     attach: function() {
-      this.$element.appendTo(this.main.$element);
-      return this.canvas.attach();
+      return this._super();
     },
     tick: function() {
       return this.draw();

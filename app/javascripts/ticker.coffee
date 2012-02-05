@@ -9,14 +9,12 @@ define (require) ->
     isRunning: false
 
     # override
-    extend: (mixin, opts={}) ->
+    _includeMixin: (mixin, opts={}) ->
       opts = $.v.extend {}, opts, {start: '_start', stop: '_stop'}
       @_super mixin, opts
 
     destroy: ->
       @stop()
-
-    assignTo: (@parent) ->
 
     start: ->
       return if @isRunning

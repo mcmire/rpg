@@ -1,3 +1,7 @@
+######
+# THIS IS AN OLD FILE
+######
+
 define (require) ->
   {Class, module} = require('app/meta')
   meta = require('app/meta2')

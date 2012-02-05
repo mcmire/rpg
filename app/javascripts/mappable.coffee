@@ -83,6 +83,8 @@ define (require) ->
       @_recalculateViewportBounds()
 
     _recalculateViewportBounds: ->
+      # XXX: This won't work for MapTile or MapSprite because we need access to
+      # viewport...
       x1 = @bounds.onMap.x1 - @viewport.bounds.x1
       y1 = @bounds.onMap.y1 - @viewport.bounds.y1
       @bounds.inViewport.anchor(x1, y1)

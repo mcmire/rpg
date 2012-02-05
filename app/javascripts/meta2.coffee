@@ -9,7 +9,7 @@ define (require) ->
       @_super = tmp
       return ret
 
-  _clone =
+  _clone = (obj) ->
     Object.create(obj)
 
   _extend = (base, mixin, opts={}) ->
@@ -27,7 +27,7 @@ define (require) ->
 
     for own sk of mixin
       continue if exclusions[sk]
-      tk = key_translations[sk] || sk
+      tk = keyTranslations[sk] || sk
       # TODO: Is this even a good idea? Since mixins can be mixed into other
       # objects in any order, a call to @_super() is really really confusing...
       # maybe just do it when overriding prototype methods but not when
@@ -61,8 +61,7 @@ define (require) ->
 
   proto = {}
   # proto.__key_translations__ = {}
-  # TODO: create should be an explicit method, even if it just calls cloneWith
-  proto.clone =
+  proto.clone = ->
     _clone(this)
   proto.cloneAs = (name) ->
     clone = @clone()
@@ -72,10 +71,15 @@ define (require) ->
     clone = @clone()
     clone.init(args...)
     return clone
-  proto.include =
-  proto.extend = (mixin, opts={}) ->
+  proto.init = ->
+    return this
+  proto._includeMixin = (mixin, opts={}) ->
     _extend(this, mixin, opts)
     @__mixins__[mixin.__name__] = 1 if mixin.__name__
+    return this
+  proto.include =
+  proto.extend = (mixins...) ->
+    @_includeMixin(mixin) for mixin in mixins
     return this
   proto.doesInclude = (obj) ->
     obj.__name__ and @__mixins__[obj.__name__]
@@ -90,7 +94,7 @@ define (require) ->
     obj = _clone(proto)
     Object.defineProperty obj, '__name__', value: name if name
     Object.defineProperty obj, '__mixins__', value: {}
-    obj.extend(mixin) for mixin in mixins
+    obj.extend(mixins...)
     return obj
 
   return {

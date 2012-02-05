@@ -1,10 +1,10 @@
 define (require) ->
-  {Class, module} = require('app/meta')
-  {eventable, attachable} = require('app/roles')
-  plug = require('app/plug')
+  meta = require('app/meta2')
+  {eventable, attachable, tickable, runnable} = require('app/roles')
+  #plug = require('app/plug')
   keyboard = require('app/keyboard')
   core = require('app/core')
-  # fpsReporter = require('app/fps_reporter')
+  #fpsReporter = require('app/fps_reporter')
   #playerDebugger = require('app/playerDebugger')
 
   main = meta.def 'game.main',
@@ -23,19 +23,21 @@ define (require) ->
     debug: false  # or true
 
     init: ->
-      @_super()
+      @_super(document.body)  # attachable
       @keyboard = keyboard.init()
-      @core = core.assignTo(this).init()
+      @core = core.init(this)
       @attach()
       @addEvents()
       @run()
+      return this
 
     setElement: ->
       @$element = $('#main')
 
     attach: ->
+      @_super()
       @core.attach()
-      @$element.appendTo(document.body)
+      return this
 
     addEvents: ->
       self = this
@@ -43,33 +45,44 @@ define (require) ->
       @bindEvents window,
         blur:  -> self.suspend()
         focus: -> self.resume()
+      return this
 
     removeEvents: ->
       @keyboard.removeEvents()
       @unbindEvents window, 'blur', 'focus'
+      return this
 
     load: (callback) ->
-      assetCollections = []
-      assetCollections.push require('app/images')
-      #assetCollections.push require('app/sounds')
-      c.load() for c in assetCollections
-
       self = this
+
+      assetCollections = []
+      imageCollection = require('app/images')(this)
+      assetCollections.push(imageCollection)
+      #assetCollections.push require('app/sounds')
+
       i = 0
-      ticker = window.setInterval (->
+      timer = null
+      fn = ->
         i++
         if i is 20
-          window.clearInterval(ticker)
-          ticker = null
+          window.clearTimeout(timer)
+          timer = null
           throw new Error "Assets haven't been loaded yet?!"
           return
         console.log "Checking to see if all assets are loaded..."
-        isLoaded = (c.isLoaded() for c in assetCollections)
+        isLoaded = $.v.every assetCollections, (c) -> c.isLoaded()
         if isLoaded
-          window.clearInterval(ticker)
-          ticker = null
+          console.log "All assets have been loaded, hey!"
+          window.clearTimeout(timer)
+          timer = null
           callback()
-      ), 100
+        else
+          timer = window.setTimeout fn, 100
+      fn()
+
+      c.load() for c in assetCollections
+
+      return this
 
     run: ->
       main.load -> main.start()
@@ -77,9 +90,21 @@ define (require) ->
 
     start: ->
       @core.start()
+      return this
 
     stop: ->
       @core.stop()
+      return this
+
+    suspend: ->
+      console.log "Suspending..."
+      @core.suspend()
+      return this
+
+    resume: ->
+      console.log "Resuming..."
+      @core.resume()
+      return this
 
     tick: ->
       @core.tick()

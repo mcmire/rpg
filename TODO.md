@@ -116,3 +116,34 @@ X Add a global `images` array for loading images for mobs and the map.
 * The 'lightworld' object isn't really a map, and that bothers me. When core
   says "load map", then it should require a file that returns an instance of
   Map. In fact MapGroup should probably go away.
+* Mappable will not work because in order to map map bounds to viewport bounds,
+  you need an instance of viewport... unfortunately Sprite doesn't have one
+  until we assign it to some map
+* I'm thinking Image and Sprite need to be dumb -- they both need to have a
+  reference to an image element and #load methods, but they don't need to be
+  mappable or drawable (since drawable implies mappable). That job goes to the
+  decorating class -- so MapTile, MapSprite, Mob, and Item, they all just wrap
+  Image or Sprite and provide all the extra logic. (All four classes will be
+  able to access the viewport through the map they are assigned to, as map is
+  assigned to core upon being loaded.)
+* Make an 'assignable' role?
+* Rename roles to interfaces
+* The purpose of assignTo is to attach a clone of an object to some parent
+  object -- for instance:
+
+    enemy = Enemy.create()
+
+    map1 = Map.create()
+    enemy1 = enemy.clone().assignTo(map1)
+    enemy2 = enemy.clone().assignTo(map1)
+
+    map2 = Map.create()
+    enemy3 = enemy.clone().assignTo(map2)
+    enemy4 = enemy.clone().assignTo(map2)
+
+  This also allows a ctx to be associated with the object so that it knows how
+  to draw itself. So that's probably fine.
+
+  Note that this is different from what attachable does, which is to set the
+  @parentElement, so that attach() knows what to attach @element to. (To prevent
+  confusion, this is now named setParentElement().)

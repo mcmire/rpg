@@ -31,11 +31,10 @@ define (require) ->
   ]
 
   PressedKeys = meta.def
-    create: ->
-      @cloneWith
-        # set these here as we don't want them to be shared among prototypes
-        tsByKey: {}
-        keys: []
+    init: ->
+      # set these here as we don't want them to be shared among prototypes
+      @tsByKey = {}
+      @keys = []
 
     get: (key) ->
       @tsByKey[key]
@@ -58,10 +57,9 @@ define (require) ->
       fn(key, @tsByKey[key]) for key in @keys
 
   KeyTracker = meta.def
-    create: (keyCodes) ->
-      @cloneWith
-        trackedKeys: $.v.reduce(keyCodes, ((o, c) -> o[c] = 1; o), {})
-        pressedKeys: PressedKeys.create()
+    init: (keyCodes) ->
+      @trackedKeys = $.v.reduce(keyCodes, ((o, c) -> o[c] = 1; o), {})
+      @pressedKeys = PressedKeys.create()
 
     reset: ->
       @pressedKeys.reset()
@@ -101,9 +99,6 @@ define (require) ->
     keys: KEYS
     modifierKeys: MODIFIER_KEYS
     keyTrackers: []
-
-    init: ->
-      return this
 
     reset: ->
       keyTracker.reset() for keyTracker in @keyTrackers if @keyTrackers
