@@ -1,10 +1,15 @@
-var __slice = Array.prototype.slice;
+(function() {
+  var KEYS, KeyTracker, MODIFIER_KEYS, PressedKeys, eventable, game, keyboard, meta, util,
+    __slice = Array.prototype.slice;
 
-define(function(require) {
-  var KEYS, KeyTracker, MODIFIER_KEYS, PressedKeys, eventable, keyboard, meta, util;
-  util = require('app/util');
-  meta = require('app/meta2');
-  eventable = require('app/roles').eventable;
+  game = (window.game || (window.game = {}));
+
+  util = game.util;
+
+  meta = game.meta2;
+
+  eventable = game.roles.eventable;
+
   KEYS = {
     KEY_TAB: 9,
     KEY_ESC: 27,
@@ -25,7 +30,9 @@ define(function(require) {
     KEY_K: 75,
     KEY_L: 76
   };
+
   MODIFIER_KEYS = [KEYS.KEY_SHIFT, KEYS.KEY_CTRL, KEYS.KEY_ALT, KEYS.KEY_META];
+
   PressedKeys = meta.def({
     init: function() {
       this.tsByKey = {};
@@ -61,6 +68,7 @@ define(function(require) {
       return _results;
     }
   });
+
   KeyTracker = meta.def({
     init: function(keyCodes) {
       this.trackedKeys = $.v.reduce(keyCodes, (function(o, c) {
@@ -109,6 +117,7 @@ define(function(require) {
       return this.pressedKeys.keys[0];
     }
   });
+
   keyboard = meta.def('game.keyboard', eventable, {
     KeyTracker: KeyTracker,
     keys: KEYS,
@@ -248,5 +257,9 @@ define(function(require) {
       }
     }
   });
-  return keyboard;
-});
+
+  game.keyboard = keyboard;
+
+  window.scriptLoaded('app/keyboard');
+
+}).call(this);

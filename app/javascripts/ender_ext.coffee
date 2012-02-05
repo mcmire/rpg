@@ -27,3 +27,5 @@ do ->
       prop and computedStyle[prop] or computedStyle
 
   $.ender(enderMembers, true)
+
+window.scriptLoaded('app/ender_ext')

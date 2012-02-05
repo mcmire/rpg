@@ -1,33 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8" />
-  <title>THE GAME</title>
-  <link rel="stylesheet" href="/stylesheets/app/game.css">
-  <script src="/javascripts/vendor/ender.js"></script>
-  <script>
-    // Go ahead and populate $._select. If Bonzo is available then Bonzo is
-    // required using Ender's require() function and then $._select is
-    // set to bonzo.create (basically). This happens the first time $._select is
-    // called though, not before, so by the time it gets called normally, then
-    // the 'require' variable will be overridden by RequireJS, and therefore
-    // Bonzo never gets placed as $._select.
-    $._select('<div>');
-  </script>
-  <script src="/javascripts/app/ender_ext.js"></script>
+<meta charset="utf-8" />
+<title>THE GAME</title>
+<link rel="stylesheet" href="/stylesheets/app/game.css">
+
+<%= scripts %>
+
 </head>
+
 <body>
-  <p>Use WASD (or arrow keys) to move around.</p>
-
-  <div id="main"></div>
-
-  <script>
-    var require = {
-      baseUrl: '/javascripts',
-      urlArgs: 'bust=<%= latest_script_mtime %>'
-    }
-  </script>
-  <% requirejs_path = ENV['RACK_ENV'] == "production" ? "require.min.js" : "require.js" %>
-  <script data-main="/javascripts/app/init.js" src="/javascripts/vendor/<%= requirejs_path %>"></script>
+<p>Use WASD (or arrow keys) to move around.</p>
+<div id="main"></div>
 </body>
+
 </html>

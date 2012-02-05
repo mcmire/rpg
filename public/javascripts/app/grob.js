@@ -1,12 +1,20 @@
+(function() {
+  var Bounds, Grob, ImageSequence, Mappable, assignable, drawable, game, images, meta, _ref;
 
-define(function(require) {
-  var Bounds, Grob, ImageSequence, Mappable, assignable, drawable, images, meta, _ref;
-  meta = require('app/meta2');
-  _ref = require('app/roles'), assignable = _ref.assignable, drawable = _ref.drawable;
-  Mappable = require('app/mappable');
-  images = require('app/images').images;
-  Bounds = require('app/bounds');
-  ImageSequence = require('app/image_sequence');
+  game = (window.game || (window.game = {}));
+
+  meta = game.meta2;
+
+  _ref = game.roles, assignable = _ref.assignable, drawable = _ref.drawable;
+
+  Mappable = game.Mappable;
+
+  images = game.images.images;
+
+  Bounds = game.Bounds;
+
+  ImageSequence = game.ImageSequence;
+
   Grob = meta.def('game.Grob', assignable, drawable, Mappable, {
     clone: function() {
       var clone;
@@ -32,7 +40,7 @@ define(function(require) {
     draw: function() {
       var biv;
       biv = this.bounds.inViewport;
-      return this.currentState.sequence.draw(biv.x1, biv.y1);
+      return this.currentState.sequence.draw(this.ctx, biv.x1, biv.y1);
     },
     addState: function(name, frameIndices, opts) {
       var state;
@@ -65,5 +73,9 @@ define(function(require) {
       return console.log("bounds.OnMap = " + (this.bounds.onMap.inspect()));
     }
   });
-  return Grob;
-});
+
+  game.Grob = Grob;
+
+  window.numScriptsLoaded++;
+
+}).call(this);

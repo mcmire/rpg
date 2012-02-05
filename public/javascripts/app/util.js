@@ -1,8 +1,10 @@
-var __slice = Array.prototype.slice,
-  __hasProp = Object.prototype.hasOwnProperty;
+(function() {
+  var game, util,
+    __slice = Array.prototype.slice,
+    __hasProp = Object.prototype.hasOwnProperty;
 
-define(function(require) {
-  var util;
+  game = (window.game || (window.game = {}));
+
   util = {
     extend: function() {
       var args, deep, obj, objects, prop, target, _i, _len;
@@ -75,5 +77,9 @@ define(function(require) {
       return arr.splice(item, 1);
     }
   };
-  return util;
-});
+
+  game.util = util;
+
+  window.scriptLoaded('app/util');
+
+}).call(this);

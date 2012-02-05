@@ -146,4 +146,4 @@ X Add a global `images` array for loading images for mobs and the map.
 
   Note that this is different from what attachable does, which is to set the
   @parentElement, so that attach() knows what to attach @element to. (To prevent
-  confusion, this is now named setParentElement().)
+  confusion, this is now named setParentElement.)

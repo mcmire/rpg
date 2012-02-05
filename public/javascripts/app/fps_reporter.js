@@ -1,8 +1,12 @@
+(function() {
+  var attachable, fpsReporter, game, intervalTicker;
 
-define(function(require) {
-  var attachable, fpsReporter, intervalTicker;
-  intervalTicker = require('app/ticker').intervalTicker;
-  attachable = require('app/roles').attachable;
+  game = (window.game || (window.game = {}));
+
+  intervalTicker = game.ticker.intervalTicker;
+
+  attachable = game.roles.attachable;
+
   fpsReporter = intervalTicker.construct('game.fpsReporter', attachable, {
     init: function(main) {
       this.main = main;
@@ -17,5 +21,9 @@ define(function(require) {
       return this.$element.text("" + fps + " FPS");
     }
   });
+
   return fpsReporter;
-});
+
+  window.numScriptsLoaded++;
+
+}).call(this);

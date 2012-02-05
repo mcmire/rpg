@@ -1,115 +1,117 @@
-define (require) ->
-  meta = require('app/meta2')
-  {eventable, attachable, tickable, runnable} = require('app/roles')
-  #plug = require('app/plug')
-  keyboard = require('app/keyboard')
-  core = require('app/core')
-  #fpsReporter = require('app/fps_reporter')
-  #playerDebugger = require('app/playerDebugger')
+game = (window.game ||= {})
 
-  main = meta.def 'game.main',
-    eventable,
-    attachable,
-    tickable,
-    runnable
+meta = game.meta2
+{eventable, attachable, tickable, runnable} = game.roles
+#plug = game.plug
+keyboard = game.keyboard
+core = game.core
+#fpsReporter = game.fpsReporter
+#playerDebugger = game.playerDebugger
 
-  #main.addPlugin(keyboard)
-  #main.addPlugin(core)
-  ##main.addPlugin(fpsReporter)
-  ##main.addPlugin(playerDebugger)
+main = meta.def 'game.main',
+  eventable,
+  attachable,
+  tickable,
+  runnable
 
-  main.extend
-    imagesPath: '/images'
-    debug: false  # or true
+#main.addPlugin(keyboard)
+#main.addPlugin(core)
+##main.addPlugin(fpsReporter)
+##main.addPlugin(playerDebugger)
 
-    init: ->
-      @_super(document.body)  # attachable
-      @keyboard = keyboard.init()
-      @core = core.init(this)
-      @attach()
-      @addEvents()
-      @run()
-      return this
+main.extend
+  imagesPath: '/images'
+  debug: false  # or true
 
-    setElement: ->
-      @$element = $('#main')
+  init: ->
+    @_super(document.body)  # attachable
+    @keyboard = keyboard.init()
+    @core = core.init(this)
+    @attach()
+    @addEvents()
+    @run()
+    return this
 
-    attach: ->
-      @_super()
-      @core.attach()
-      return this
+  setElement: ->
+    @$element = $('#main')
 
-    addEvents: ->
-      self = this
-      @keyboard.addEvents()
-      @bindEvents window,
-        blur:  -> self.suspend()
-        focus: -> self.resume()
-      return this
+  attach: ->
+    @_super()
+    @core.attach()
+    return this
 
-    removeEvents: ->
-      @keyboard.removeEvents()
-      @unbindEvents window, 'blur', 'focus'
-      return this
+  addEvents: ->
+    self = this
+    @keyboard.addEvents()
+    @bindEvents window,
+      blur:  -> self.suspend()
+      focus: -> self.resume()
+    return this
 
-    load: (callback) ->
-      self = this
+  removeEvents: ->
+    @keyboard.removeEvents()
+    @unbindEvents window, 'blur', 'focus'
+    return this
 
-      assetCollections = []
-      imageCollection = require('app/images')(this)
-      assetCollections.push(imageCollection)
-      #assetCollections.push require('app/sounds')
+  load: (callback) ->
+    self = this
 
-      i = 0
-      timer = null
-      fn = ->
-        i++
-        if i is 20
-          window.clearTimeout(timer)
-          timer = null
-          throw new Error "Assets haven't been loaded yet?!"
-          return
-        console.log "Checking to see if all assets are loaded..."
-        isLoaded = $.v.every assetCollections, (c) -> c.isLoaded()
-        if isLoaded
-          console.log "All assets have been loaded, hey!"
-          window.clearTimeout(timer)
-          timer = null
-          callback()
-        else
-          timer = window.setTimeout fn, 100
-      fn()
+    assetCollections = []
+    assetCollections.push(game.images)
+    #assetCollections.push require('app/sounds')
 
-      c.load() for c in assetCollections
+    i = 0
+    timer = null
+    fn = ->
+      i++
+      if i is 20
+        window.clearTimeout(timer)
+        timer = null
+        console.log "Not all assets were loaded!"
+        return
+      console.log "Checking to see if all assets have been loaded..."
+      isLoaded = $.v.every assetCollections, (c) -> c.isLoaded()
+      if isLoaded
+        console.log "Yup, looks like all assets are loaded now."
+        window.clearTimeout(timer)
+        timer = null
+        callback()
+      else
+        timer = window.setTimeout fn, 100
+    fn()
 
-      return this
+    c.load() for c in assetCollections
 
-    run: ->
-      main.load -> main.start()
-      return this
+    return this
 
-    start: ->
-      @core.start()
-      return this
+  run: ->
+    main.load -> main.start()
+    return this
 
-    stop: ->
-      @core.stop()
-      return this
+  start: ->
+    @core.start()
+    return this
 
-    suspend: ->
-      console.log "Suspending..."
-      @core.suspend()
-      return this
+  stop: ->
+    @core.stop()
+    return this
 
-    resume: ->
-      console.log "Resuming..."
-      @core.resume()
-      return this
+  suspend: ->
+    console.log "Suspending..."
+    @core.suspend()
+    return this
 
-    tick: ->
-      @core.tick()
+  resume: ->
+    console.log "Resuming..."
+    @core.resume()
+    return this
 
-    resolveImagePath: (path) ->
-      "#{@imagesPath}/#{path}"
+  tick: ->
+    @core.tick()
 
-  return main
+  resolveImagePath: (path) ->
+    "#{@imagesPath}/#{path}"
+
+game.main = main
+
+window.scriptLoaded('app/main')

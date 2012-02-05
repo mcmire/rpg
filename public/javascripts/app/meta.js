@@ -1,12 +1,16 @@
-var __hasProp = Object.prototype.hasOwnProperty,
-  __slice = Array.prototype.slice;
+(function() {
+  var Class, baseModule, game, module, util, _extend, _fnContainsSuper, _wrap,
+    __hasProp = Object.prototype.hasOwnProperty,
+    __slice = Array.prototype.slice;
 
-define(function(require) {
-  var Class, baseModule, module, util, _extend, _fnContainsSuper, _wrap;
-  util = require('app/util');
+  game = (window.game || (window.game = {}));
+
+  util = game.util;
+
   _fnContainsSuper = function(fn) {
     return /\b_super\b/.test(fn);
   };
+
   _wrap = function(k, fn, val) {
     return function() {
       var ret, tmp;
@@ -17,6 +21,7 @@ define(function(require) {
       return ret;
     };
   };
+
   _extend = function(target, source, opts) {
     var includeRoles, k, role, roles, sk, targetClass, tk, translations, _i, _len, _ref, _ref2, _ref3, _super;
     if (opts == null) opts = {};
@@ -60,20 +65,26 @@ define(function(require) {
     }
     return target;
   };
+
   Class = function() {};
+
   Object.defineProperty(Class, '__name__', {
     value: 'Class',
     writable: false,
     enumerable: false,
     configurable: false
   });
+
   Class.prototype.init = function() {
     return this.reset();
   };
+
   Class.prototype.reset = function() {};
+
   Class.prototype.destroy = function() {
     return this.reset();
   };
+
   Class.extend = function() {
     var args, childClass, classdef, k, members, mixin, mixins, name, noop, parentClass, parentInstance, parentProto, role, roles, statics, v, _i, _j, _len, _len2, _ref, _ref2;
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
@@ -222,6 +233,7 @@ define(function(require) {
     }
     return childClass;
   };
+
   baseModule = (function() {
     var mod;
     mod = {};
@@ -282,6 +294,7 @@ define(function(require) {
     mod._destroy = function() {};
     return mod;
   })();
+
   module = function() {
     var mixins, mod, name;
     mixins = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
@@ -303,9 +316,13 @@ define(function(require) {
     mod.extend.apply(mod, mixins);
     return mod;
   };
-  return {
+
+  game.meta = {
     module: module,
     Class: Class,
     extend: _extend
   };
-});
+
+  window.scriptLoaded('app/meta');
+
+}).call(this);

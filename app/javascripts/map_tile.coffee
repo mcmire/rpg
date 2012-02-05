@@ -1,18 +1,22 @@
-define (require) ->
-  MapTile = meta.def 'game.MapTile',
-    assignable,
-    simpleDrawable,
+game = (window.game ||= {})
 
-    # Initialize the MapTile.
-    #
-    # drawable - Either an Image or an ImageSequence.
-    #
-    init: (@drawable, @x, @y) ->
+meta = game.meta2
+{assignable, simpleDrawable} = game.roles
 
-    assignTo: (map) ->
-      @_super(map)
-      @drawable.assignTo(this)
+MapTile = meta.def 'game.MapTile',
+  assignable,
+  simpleDrawable,
 
-    # Have this
-    draw: ->
-      @drawable.draw(@x, @y)
+  # Initialize the MapTile.
+  #
+  # drawable - Either an Image or an ImageSequence.
+  #
+  init: (@drawable, @x, @y) ->
+
+  draw: ->
+    @drawable.draw(@ctx, @x, @y)
+
+game.MapTile = MapTile
+
+window.scriptLoaded('app/map_tile')
+

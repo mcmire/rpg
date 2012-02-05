@@ -1,8 +1,12 @@
+(function() {
+  var game, intervalTicker, meta, runnable, tickable, ticker, _ref;
 
-define(function(require) {
-  var intervalTicker, meta, runnable, tickable, ticker, _ref;
-  meta = require('app/meta2');
-  _ref = require('app/roles'), runnable = _ref.runnable, tickable = _ref.tickable;
+  game = (window.game || (window.game = {}));
+
+  meta = game.meta2;
+
+  _ref = game.roles, runnable = _ref.runnable, tickable = _ref.tickable;
+
   ticker = meta.def('game.ticker', runnable, tickable, {
     isRunning: false,
     _includeMixin: function(mixin, opts) {
@@ -38,6 +42,7 @@ define(function(require) {
       if (this.wasRunning) return this.start();
     }
   });
+
   intervalTicker = ticker.cloneAs('game.intervalTicker').extend({
     init: function() {
       return this.drawer = this.createIntervalTimer(false, function(df, dt) {
@@ -57,8 +62,12 @@ define(function(require) {
       throw new Error('draw must be overridden');
     }
   });
-  return {
+
+  game.ticker = {
     ticker: ticker,
     intervalTicker: intervalTicker
   };
-});
+
+  window.scriptLoaded('app/ticker');
+
+}).call(this);

@@ -110,3 +110,5 @@ define (require) ->
     return mod
 
   return plug
+
+window.numScriptsLoaded++

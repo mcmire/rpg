@@ -1,8 +1,12 @@
+(function() {
+  var Bounds, Grob, MapBlock, game;
 
-define(function(require) {
-  var Bounds, Grob, MapBlock;
-  Grob = require('app/grob');
-  Bounds = require('app/bounds');
+  game = (window.game || (window.game = {}));
+
+  Grob = game.Grob;
+
+  Bounds = game.Bounds;
+
   MapBlock = Grob.extend('game.MapBlock', {
     init: function(core, x1, y1, width, height) {
       this._initDims = function() {
@@ -16,5 +20,9 @@ define(function(require) {
     },
     tick: function() {}
   });
-  return MapBlock;
-});
+
+  game.MapBlock = MapBlock;
+
+  window.numScriptsLoaded++;
+
+}).call(this);

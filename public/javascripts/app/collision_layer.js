@@ -1,10 +1,16 @@
+(function() {
+  var CollidableCollection, MapBlock, collisionLayer, game, loadable, module, tickable, _ref;
 
-define(function(require) {
-  var CollidableCollection, MapBlock, collisionLayer, loadable, module, tickable, _ref;
-  module = require('app/meta').module;
-  _ref = require('app/roles'), loadable = _ref.loadable, tickable = _ref.tickable;
-  CollidableCollection = require('app/collidable_collection');
-  MapBlock = require('app/map_block');
+  game = (window.game || (window.game = {}));
+
+  module = game.meta.module;
+
+  _ref = game.roles, loadable = _ref.loadable, tickable = _ref.tickable;
+
+  CollidableCollection = game.CollidableCollection;
+
+  MapBlock = game.MapBlock;
+
   collisionLayer = module('game.collisionLayer', loadable, tickable, {
     init: function(core) {
       this.core = core;
@@ -31,5 +37,9 @@ define(function(require) {
       return _results;
     }
   });
-  return collisionLayer;
-});
+
+  game.collisionLayer = collisionLayer;
+
+  window.numScriptsLoaded++;
+
+}).call(this);

@@ -1,49 +1,52 @@
-define (require) ->
-  meta = require('app/meta2')
-  Mappable = require('app/mappable')
-  CollidableCollection = require('app/collidable_collection')
+game = (window.game ||= {})
 
-  _boundsFrom = (boundsOrGrob) ->
-    if boundsOrGrob.bounds?
-      boundsOrGrob.bounds.onMap
+meta = game.meta
+Mappable = game.Mappable
+CollidableCollection = game.CollidableCollection
+
+_boundsFrom = (boundsOrGrob) ->
+  if boundsOrGrob.bounds?
+    boundsOrGrob.bounds.onMap
+  else
+    boundsOrGrob
+
+Collidable = meta.def 'game.Collidable',
+  Mappable,
+
+  # TODO: Can we assume that this is core??
+  init: (@core) ->
+    @_super()
+    {@collisionLayer} = @core
+    @_initCollisionLayer()
+
+  _initCollisionLayer: ->
+    @_super()
+    if @collisionLayer
+      @allCollidables = @collisionLayer.collidables.without(this)
     else
-      boundsOrGrob
+      # null/empty object pattern - still works but does nothing
+      @allCollidables = new CollidableCollection()
 
-  Collidable = meta.def 'game.Collidable',
-    Mappable,
+  intersectsWith: (boundsOrGrob) ->
+    bounds = _boundsFrom(boundsOrGrob)
+    @bounds.onMap.intersectsWith(bounds)
 
-    # TODO: Can we assume that this is core??
-    init: (@core) ->
-      @_super()
-      {@collisionLayer} = @core
-      @_initCollisionLayer()
+  getOuterLeftEdgeBlocking: (boundsOrGrob) ->
+    bounds = _boundsFrom(boundsOrGrob)
+    @bounds.onMap.getOuterLeftEdgeBlocking(bounds)
 
-    _initCollisionLayer: ->
-      @_super()
-      if @collisionLayer
-        @allCollidables = @collisionLayer.collidables.without(this)
-      else
-        # null/empty object pattern - still works but does nothing
-        @allCollidables = new CollidableCollection()
+  getOuterRightEdgeBlocking: (boundsOrGrob) ->
+    bounds = _boundsFrom(boundsOrGrob)
+    @bounds.onMap.getOuterRightEdgeBlocking(bounds)
 
-    intersectsWith: (boundsOrGrob) ->
-      bounds = _boundsFrom(boundsOrGrob)
-      @bounds.onMap.intersectsWith(bounds)
+  getOuterTopEdgeBlocking: (boundsOrGrob) ->
+    bounds = _boundsFrom(boundsOrGrob)
+    @bounds.onMap.getOuterTopEdgeBlocking(bounds)
 
-    getOuterLeftEdgeBlocking: (boundsOrGrob) ->
-      bounds = _boundsFrom(boundsOrGrob)
-      @bounds.onMap.getOuterLeftEdgeBlocking(bounds)
+  getOuterBottomEdgeBlocking: (boundsOrGrob) ->
+    bounds = _boundsFrom(boundsOrGrob)
+    @bounds.onMap.getOuterBottomEdgeBlocking(bounds)
 
-    getOuterRightEdgeBlocking: (boundsOrGrob) ->
-      bounds = _boundsFrom(boundsOrGrob)
-      @bounds.onMap.getOuterRightEdgeBlocking(bounds)
+game.Collidable = Collidable
 
-    getOuterTopEdgeBlocking: (boundsOrGrob) ->
-      bounds = _boundsFrom(boundsOrGrob)
-      @bounds.onMap.getOuterTopEdgeBlocking(bounds)
-
-    getOuterBottomEdgeBlocking: (boundsOrGrob) ->
-      bounds = _boundsFrom(boundsOrGrob)
-      @bounds.onMap.getOuterBottomEdgeBlocking(bounds)
-
-  return Collidable
+window.numScriptsLoaded++

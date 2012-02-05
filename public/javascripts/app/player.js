@@ -1,19 +1,29 @@
+(function() {
+  var Bounds, DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, Mob, dir, eventable, game, keyCode, keyboard, player, util, _i, _j, _len, _len2, _ref;
 
-define(function(require) {
-  var Bounds, DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, Mob, dir, eventable, keyCode, keyboard, player, util, _i, _j, _len, _len2, _ref;
-  util = require('app/util');
-  Mob = require('app/mob');
-  eventable = require('app/roles').eventable;
-  keyboard = require('app/keyboard');
-  Bounds = require('app/bounds');
+  game = (window.game || (window.game = {}));
+
+  util = game.util;
+
+  Mob = game.Mob;
+
+  eventable = game.roles.eventable;
+
+  keyboard = game.keyboard;
+
+  Bounds = game.Bounds;
+
   DIRECTIONS = 'up down left right'.split(' ');
+
   DIRECTION_KEYS = {
     up: keyboard.keyCodesFor('KEY_W', 'KEY_UP', 'KEY_K'),
     down: keyboard.keyCodesFor('KEY_S', 'KEY_DOWN', 'KEY_J'),
     left: keyboard.keyCodesFor('KEY_A', 'KEY_LEFT', 'KEY_H'),
     right: keyboard.keyCodesFor('KEY_D', 'KEY_RIGHT', 'KEY_L')
   };
+
   KEY_DIRECTIONS = {};
+
   for (_i = 0, _len = DIRECTIONS.length; _i < _len; _i++) {
     dir = DIRECTIONS[_i];
     _ref = DIRECTION_KEYS[dir];
@@ -22,40 +32,51 @@ define(function(require) {
       KEY_DIRECTIONS[keyCode] = dir;
     }
   }
+
   KEYS = $.flatten($.values(DIRECTION_KEYS));
+
   player = Mob.cloneAs('game.player');
+
   player.addState('moveLeft', [0, 1, 2, 3, 4, 5, 6, 7], {
     duration: 2,
     repeat: true
   });
+
   player.addState('moveRight', [8, 9, 10, 11, 12, 13, 14, 15], {
     duration: 2,
     repeat: true
   });
+
   player.addState('moveDown', [16, 17, 18, 19, 20, 21, 22], {
     duration: 2,
     repeat: true
   });
+
   player.addState('moveUp', [23, 24, 25, 26, 27, 28], {
     duration: 2,
     repeat: true
   });
+
   player.addState('idleLeft', [0], {
     duration: 2,
     repeat: true
   });
+
   player.addState('idleRight', [8], {
     duration: 2,
     repeat: true
   });
+
   player.addState('idleDown', [19], {
     duration: 2,
     repeat: true
   });
+
   player.addState('idleUp', [23], {
     duration: 2,
     repeat: true
   });
+
   player.extend(eventable, {
     viewportPadding: 30,
     keyTracker: keyboard.KeyTracker.create(KEYS),
@@ -202,5 +223,9 @@ define(function(require) {
       }
     }
   });
-  return player;
-});
+
+  game.player = player;
+
+  window.numScriptsLoaded++;
+
+}).call(this);

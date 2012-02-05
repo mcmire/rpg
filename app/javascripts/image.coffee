@@ -1,39 +1,38 @@
-define (require) ->
-  meta = require('app/meta2')
-  {assignable, simpleDrawable} = require('app/roles')
+game = (window.game ||= {})
 
-  # Have to return a function here since main requires images which requires
-  # image which requires main
-  (main) ->
-    Image = meta.def 'game.Image',
-      assignable,
-      simpleDrawable,
+meta = game.meta2
+{assignable, simpleDrawable} = game.roles
 
-      init: (path, @width, @height) ->
-        @path = path
-        unless /\.[^.]+$/.test(@path)
-          @path += ".gif"
-        unless /^\//.test(@path)
-          @path = main.resolveImagePath(@path)
+Image = meta.def 'game.Image',
+  simpleDrawable,
 
-      load: ->
-        self = this
-        @element = document.createElement('img')
-        # XXX: Actually we don't need this... this is only important for
-        # MapTile... is MapTile an Image?
-        @element.width = @width
-        @element.height = @height
-        # load the image asynchronously (?)
-        @element.src = @path
-        @element.onload = ->
-          console.log "Loaded #{self.path}"
-          self.onLoadCallback?()
-        @element.onerror = -> raise new Error "Could not load image #{self.path}!"
+  init: (path, @width, @height) ->
+    @path = path
+    unless /\.[^.]+$/.test(@path)
+      @path += ".gif"
+    unless /^\//.test(@path)
+      @path = game.main.resolveImagePath(@path)
 
-      onLoad: (fn) ->
-        @onLoadCallback = fn
+  load: ->
+    self = this
+    @element = document.createElement('img')
+    # XXX: Actually we don't need this... this is only important for
+    # MapTile... is MapTile an Image?
+    @element.width = @width
+    @element.height = @height
+    # load the image asynchronously (?)
+    @element.src = @path
+    @element.onload = ->
+      console.log "Loaded #{self.path}"
+      self.onLoadCallback?()
+    @element.onerror = -> raise new Error "Could not load image #{self.path}!"
 
-      draw: (x, y) ->
-        @ctx.drawImage(@element, x, y)
+  onLoad: (fn) ->
+    @onLoadCallback = fn
 
-    return Image
+  draw: (ctx, x, y) ->
+    ctx.drawImage(@element, x, y)
+
+game.Image = Image
+
+window.scriptLoaded('app/image')

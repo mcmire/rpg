@@ -1,33 +1,36 @@
-define (require) ->
-  {module} = require('app/meta')
-  {loadable, tickable} = require('app/roles')
-  CollidableCollection = require('app/collidable_collection')
-  MapBlock = require('app/map_block')
+game = (window.game ||= {})
 
-  collisionLayer = module 'game.collisionLayer',
-    loadable,
-    tickable,
+{module} = game.meta
+{loadable, tickable} = game.roles
+CollidableCollection = game.CollidableCollection
+MapBlock = game.MapBlock
 
-    init: (@core) ->
-      @viewport = @core.viewport
-      @width = @viewport.width
-      @height = @viewport.height
+collisionLayer = module 'game.collisionLayer',
+  loadable,
+  tickable,
 
-      @collidables = new CollidableCollection()
+  init: (@core) ->
+    @viewport = @core.viewport
+    @width = @viewport.width
+    @height = @viewport.height
 
-      # Add map blocks manually until we work out scanning the map image
-      @add new MapBlock(@core, 96, 96, 256, 16)
-      # Add the other grobs
-      # @add(collidable) for collidable in @collidables
+    @collidables = new CollidableCollection()
 
-    add: (collidable) ->
-      @collidables.push(collidable)
+    # Add map blocks manually until we work out scanning the map image
+    @add new MapBlock(@core, 96, 96, 256, 16)
+    # Add the other grobs
+    # @add(collidable) for collidable in @collidables
 
-    load: ->
-      @isLoaded = true
+  add: (collidable) ->
+    @collidables.push(collidable)
 
-    tick: ->
-      for collidable in @collidables.getMapBlocks()
-        collidable.tick()
+  load: ->
+    @isLoaded = true
 
-  return collisionLayer
+  tick: ->
+    for collidable in @collidables.getMapBlocks()
+      collidable.tick()
+
+game.collisionLayer = collisionLayer
+
+window.numScriptsLoaded++

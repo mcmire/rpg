@@ -1,63 +1,65 @@
-define (require) ->
-  meta = require('app/meta2')
-  {runnable, tickable} = require('app/roles')
+game = (window.game ||= {})
 
-  ticker = meta.def 'game.ticker',
-    runnable,
-    tickable,
+meta = game.meta2
+{runnable, tickable} = game.roles
 
-    isRunning: false
+ticker = meta.def 'game.ticker',
+  runnable,
+  tickable,
 
-    # override
-    _includeMixin: (mixin, opts={}) ->
-      opts = $.v.extend {}, opts, {start: '_start', stop: '_stop'}
-      @_super mixin, opts
+  isRunning: false
 
-    destroy: ->
-      @stop()
+  # override
+  _includeMixin: (mixin, opts={}) ->
+    opts = $.v.extend {}, opts, {start: '_start', stop: '_stop'}
+    @_super mixin, opts
 
-    start: ->
-      return if @isRunning
-      @isRunning = true
-      @_start()
-      return this
+  destroy: ->
+    @stop()
 
-    _start: ->
+  start: ->
+    return if @isRunning
+    @isRunning = true
+    @_start()
+    return this
 
-    stop: ->
-      return if not @isRunning
-      @isRunning = false
-      @_stop()
-      return this
+  _start: ->
 
-    _stop: ->
+  stop: ->
+    return if not @isRunning
+    @isRunning = false
+    @_stop()
+    return this
 
-    suspend: ->
-      @wasRunning = @isRunning
-      @stop()
+  _stop: ->
 
-    resume: ->
-      @start() if @wasRunning
+  suspend: ->
+    @wasRunning = @isRunning
+    @stop()
 
-  #---
+  resume: ->
+    @start() if @wasRunning
 
-  intervalTicker = ticker.cloneAs('game.intervalTicker').extend
-    init: ->
-      @drawer = @createIntervalTimer false, (df, dt) ->
-        self.draw(df, dt)
+#---
 
-    start: ->
-      @timer = window.setInterval(@drawer, @tickInterval)
+intervalTicker = ticker.cloneAs('game.intervalTicker').extend
+  init: ->
+    @drawer = @createIntervalTimer false, (df, dt) ->
+      self.draw(df, dt)
 
-    stop: ->
-      if @timer
-        window.clearInterval(@timer)
-        @timer = null
+  start: ->
+    @timer = window.setInterval(@drawer, @tickInterval)
 
-    draw: ->
-      throw new Error 'draw must be overridden'
+  stop: ->
+    if @timer
+      window.clearInterval(@timer)
+      @timer = null
 
-  return {
-    ticker: ticker
-    intervalTicker: intervalTicker
-  }
+  draw: ->
+    throw new Error 'draw must be overridden'
+
+game.ticker =
+  ticker: ticker
+  intervalTicker: intervalTicker
+
+window.scriptLoaded('app/ticker')

@@ -1,10 +1,15 @@
-var __slice = Array.prototype.slice;
+(function() {
+  var Class, CollidableCollection, Grob, MapBlock, game, _boundsFrom,
+    __slice = Array.prototype.slice;
 
-define(function(require) {
-  var Class, CollidableCollection, Grob, MapBlock, _boundsFrom;
-  Class = require('app/meta').Class;
-  MapBlock = require('app/map_block');
-  Grob = require('app/grob');
+  game = (window.game || (window.game = {}));
+
+  Class = game.Class;
+
+  MapBlock = game.MapBlock;
+
+  Grob = game.Grob;
+
   _boundsFrom = function(boundsOrGrob) {
     if (boundsOrGrob instanceof Grob) {
       return boundsOrGrob.bounds.onMap;
@@ -12,6 +17,7 @@ define(function(require) {
       return boundsOrGrob;
     }
   };
+
   CollidableCollection = Class.extend('game.CollidableCollection', {
     init: function() {
       var args;
@@ -124,5 +130,9 @@ define(function(require) {
       return ret;
     }
   });
-  return CollidableCollection;
-});
+
+  game.CollidableCollection = CollidableCollection;
+
+  window.numScriptsLoaded++;
+
+}).call(this);

@@ -1,11 +1,18 @@
+(function() {
+  var attachable, core, eventable, game, keyboard, main, meta, runnable, tickable, _ref;
 
-define(function(require) {
-  var attachable, core, eventable, keyboard, main, meta, runnable, tickable, _ref;
-  meta = require('app/meta2');
-  _ref = require('app/roles'), eventable = _ref.eventable, attachable = _ref.attachable, tickable = _ref.tickable, runnable = _ref.runnable;
-  keyboard = require('app/keyboard');
-  core = require('app/core');
+  game = (window.game || (window.game = {}));
+
+  meta = game.meta2;
+
+  _ref = game.roles, eventable = _ref.eventable, attachable = _ref.attachable, tickable = _ref.tickable, runnable = _ref.runnable;
+
+  keyboard = game.keyboard;
+
+  core = game.core;
+
   main = meta.def('game.main', eventable, attachable, tickable, runnable);
+
   main.extend({
     imagesPath: '/images',
     debug: false,
@@ -46,11 +53,10 @@ define(function(require) {
       return this;
     },
     load: function(callback) {
-      var assetCollections, c, fn, i, imageCollection, self, timer, _i, _len;
+      var assetCollections, c, fn, i, self, timer, _i, _len;
       self = this;
       assetCollections = [];
-      imageCollection = require('app/images')(this);
-      assetCollections.push(imageCollection);
+      assetCollections.push(game.images);
       i = 0;
       timer = null;
       fn = function() {
@@ -59,15 +65,15 @@ define(function(require) {
         if (i === 20) {
           window.clearTimeout(timer);
           timer = null;
-          throw new Error("Assets haven't been loaded yet?!");
+          console.log("Not all assets were loaded!");
           return;
         }
-        console.log("Checking to see if all assets are loaded...");
+        console.log("Checking to see if all assets have been loaded...");
         isLoaded = $.v.every(assetCollections, function(c) {
           return c.isLoaded();
         });
         if (isLoaded) {
-          console.log("All assets have been loaded, hey!");
+          console.log("Yup, looks like all assets are loaded now.");
           window.clearTimeout(timer);
           timer = null;
           return callback();
@@ -113,5 +119,9 @@ define(function(require) {
       return "" + this.imagesPath + "/" + path;
     }
   });
-  return main;
-});
+
+  game.main = main;
+
+  window.scriptLoaded('app/main');
+
+}).call(this);

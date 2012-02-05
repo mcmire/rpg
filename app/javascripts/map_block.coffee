@@ -1,18 +1,21 @@
-define (require) ->
-  Grob = require('app/grob')
-  Bounds = require('app/bounds')
+game = (window.game ||= {})
 
-  # This is a Grob so that if we want to we can draw the collision layer
-  MapBlock = Grob.extend 'game.MapBlock',
-    init: (core, x1, y1, width, height) ->
-      @_initDims = ->
-        @width = width
-        @height = height
-      @_initBoundsOnMap = ->
-        @bounds.onMap = Bounds.rect(x1, y1, width, height)
-      @_super(core)
+Grob = game.Grob
+Bounds = game.Bounds
 
-    tick: ->
-      # don't draw anything
+# This is a Grob so that if we want to we can draw the collision layer
+MapBlock = Grob.extend 'game.MapBlock',
+  init: (core, x1, y1, width, height) ->
+    @_initDims = ->
+      @width = width
+      @height = height
+    @_initBoundsOnMap = ->
+      @bounds.onMap = Bounds.rect(x1, y1, width, height)
+    @_super(core)
 
-  return MapBlock
+  tick: ->
+    # don't draw anything
+
+game.MapBlock = MapBlock
+
+window.numScriptsLoaded++

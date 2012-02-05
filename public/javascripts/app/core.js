@@ -1,11 +1,20 @@
+(function() {
+  var attachable, core, game, maps, player, tickable, ticker, viewport, _ref;
 
-define(function(require) {
-  var attachable, core, player, tickable, ticker, viewport, _ref;
-  ticker = require('app/ticker').ticker;
-  _ref = require('app/roles'), attachable = _ref.attachable, tickable = _ref.tickable;
-  viewport = require('app/viewport');
-  player = require('app/player');
+  game = (window.game || (window.game = {}));
+
+  ticker = game.ticker.ticker;
+
+  _ref = game.roles, attachable = _ref.attachable, tickable = _ref.tickable;
+
+  viewport = game.viewport;
+
+  player = game.player;
+
+  maps = game.maps.maps;
+
   core = ticker.cloneAs('game.core');
+
   core.extend(attachable, tickable, {
     frameRate: 40,
     animMethod: 'setTimeout',
@@ -102,13 +111,14 @@ define(function(require) {
       var self;
       self = this;
       if (this.currentMap) this.currentMap.unload();
-      return require(["app/maps/" + name], function(fn) {
-        var map;
-        self.currentMap = map = fn(self.main);
-        map.load(self, self.player);
-        return self.viewport.setMap(map);
-      });
+      this.currentMap = maps['lw_52'];
+      this.currentMap.load(this, this.player);
+      return this.viewport.setMap(this.currentMap);
     }
   });
-  return core;
-});
+
+  game.core = core;
+
+  window.scriptLoaded('app/core');
+
+}).call(this);

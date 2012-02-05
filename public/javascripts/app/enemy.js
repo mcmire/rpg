@@ -1,64 +1,84 @@
+(function() {
+  var Bounds, DIRECTIONS, Enemy, Mob, game, meta, util;
 
-define(function(require) {
-  var Bounds, DIRECTIONS, Enemy, Mob, meta, util;
-  meta = require('app/meta2');
-  util = require('app/util');
-  Mob = require('app/mob');
-  Bounds = require('app/bounds');
+  game = (window.game || (window.game = {}));
+
+  meta = game.meta2;
+
+  util = game.util;
+
+  Mob = game.Mob;
+
+  Bounds = game.Bounds;
+
   DIRECTIONS = 'right down left up'.split(' ');
+
   Enemy = Mob.cloneAs('game.Enemy');
+
   Enemy.addState('moveDown', [0, 1], {
     duration: 4,
     "do": 'moveDown',
     repeat: true
   });
+
   Enemy.addState('moveRight', [4, 5], {
     duration: 4,
     "do": 'moveRight',
     repeat: true
   });
+
   Enemy.addState('moveLeft', [8, 9], {
     duration: 4,
     "do": 'moveLeft',
     repeat: true
   });
+
   Enemy.addState('moveUp', [12, 13], {
     duration: 4,
     "do": 'moveUp',
     repeat: true
   });
+
   Enemy.addState('upToLeft', [12, 14], {
     duration: 24,
     then: 'moveLeft'
   });
+
   Enemy.addState('downToLeft', [0, 3], {
     duration: 24,
     then: 'moveLeft'
   });
+
   Enemy.addState('upToRight', [12, 15], {
     duration: 24,
     then: 'moveRight'
   });
+
   Enemy.addState('downToRight', [0, 2], {
     duration: 24,
     then: 'moveRight'
   });
+
   Enemy.addState('leftToUp', [8, 11], {
     duration: 24,
     then: 'moveUp'
   });
+
   Enemy.addState('rightToUp', [4, 6], {
     duration: 24,
     then: 'moveUp'
   });
+
   Enemy.addState('leftToDown', [8, 10], {
     duration: 24,
     then: 'moveDown'
   });
+
   Enemy.addState('rightToDown', [4, 7], {
     duration: 24,
     then: 'moveDown'
   });
+
   Enemy.extend({
     __plugged__: function(core) {
       return core.collisionLayer.add(this);
@@ -175,5 +195,9 @@ define(function(require) {
       return this.sequenceLength = util.randomInt(40, 80);
     }
   });
-  return Enemy;
-});
+
+  game.Enemy = Enemy;
+
+  window.numScriptsLoaded++;
+
+}).call(this);

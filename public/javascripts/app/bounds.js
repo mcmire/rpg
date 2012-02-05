@@ -1,8 +1,11 @@
-var __slice = Array.prototype.slice;
+(function() {
+  var Bounds, Class, game,
+    __slice = Array.prototype.slice;
 
-define(function(require) {
-  var Bounds, Class;
-  Class = require('app/meta').Class;
+  game = (window.game || (window.game = {}));
+
+  Class = game.meta.Class;
+
   Bounds = Class.extend('game.Bounds', {
     statics: {
       rect: function(x1, y1, width, height) {
@@ -168,6 +171,11 @@ define(function(require) {
       }
     }
   });
+
   Bounds.prototype.intersectsWith = Bounds.prototype.intersectWith;
-  return Bounds;
-});
+
+  game.Bounds = Bounds;
+
+  window.scriptLoaded('app/bounds');
+
+}).call(this);

@@ -1,11 +1,17 @@
-var __slice = Array.prototype.slice;
+(function() {
+  var Bounds, attachable, canvas, game, meta, tickable, viewport, _ref,
+    __slice = Array.prototype.slice;
 
-define(function(require) {
-  var Bounds, attachable, canvas, meta, tickable, viewport, _ref;
-  meta = require('app/meta2');
-  _ref = require('app/roles'), attachable = _ref.attachable, tickable = _ref.tickable;
-  Bounds = require('app/bounds');
-  canvas = require('app/canvas');
+  game = (window.game || (window.game = {}));
+
+  meta = game.meta2;
+
+  _ref = game.roles, attachable = _ref.attachable, tickable = _ref.tickable;
+
+  Bounds = game.Bounds;
+
+  canvas = game.canvas;
+
   viewport = meta.def('game.viewport', attachable, tickable, {
     width: 512,
     height: 448,
@@ -34,7 +40,7 @@ define(function(require) {
     },
     setMap: function(map) {
       this.currentMap = map;
-      this.$element.css('background-image', map.background.getDataUrl());
+      this.$element.css('background-image', map.background.getDataURL());
       this.$element.html(map.foreground.canvas);
       return this._setBounds();
     },
@@ -55,7 +61,13 @@ define(function(require) {
     debug: function() {
       return console.log("viewport.bounds = " + (this.bounds.inspect()));
     },
-    _setBounds: this.bounds = Bounds.rect(0, 0, this.width, this.height)
+    _setBounds: function() {
+      return this.bounds = Bounds.rect(0, 0, this.width, this.height);
+    }
   });
-  return viewport;
-});
+
+  game.viewport = viewport;
+
+  window.scriptLoaded('app/viewport');
+
+}).call(this);

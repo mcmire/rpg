@@ -1,8 +1,11 @@
-var __slice = Array.prototype.slice;
+(function() {
+  var Pixel, canvas, contextExt, game, imageDataExt, util,
+    __slice = Array.prototype.slice;
 
-define(function(require) {
-  var Pixel, canvas, contextExt, imageDataExt, util;
-  util = require('app/util');
+  game = (window.game || (window.game = {}));
+
+  util = game.util;
+
   Pixel = (function() {
 
     function Pixel(x, y, red, green, blue, alpha) {
@@ -25,6 +28,7 @@ define(function(require) {
     return Pixel;
 
   })();
+
   contextExt = {
     extend: function(ctx) {
       var createImageData, getImageData;
@@ -46,6 +50,7 @@ define(function(require) {
       });
     }
   };
+
   imageDataExt = {
     extend: function(imageData) {
       return $.extend(imageData, {
@@ -88,6 +93,7 @@ define(function(require) {
       });
     }
   };
+
   canvas = {
     create: function() {
       var $element, args, c, height, id, parent, width, _ref;
@@ -99,14 +105,19 @@ define(function(require) {
       $element = $("<canvas/>").attr('width', width).attr('height', height);
       if (id) $element.attr('id', id);
       c.$element = $element;
+      c.element = c.$element[0];
+      c.ctx = contextExt.extend(c.element.getContext("2d"));
       c.attach = function() {
         c.$element.appendTo(parent);
         c.element = c.$element[0];
-        c.ctx = contextExt.extend(c.element.getContext("2d"));
         return c;
       };
       return c;
     }
   };
-  return canvas;
-});
+
+  game.canvas = canvas;
+
+  window.scriptLoaded('app/canvas');
+
+}).call(this);

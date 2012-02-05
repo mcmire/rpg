@@ -1,152 +1,158 @@
-define (require) ->
-  meta = require('app/meta2')
-  {assignable, tickable, simpleDrawable} = require('app/roles')
+game = (window.game ||= {})
 
-  #---
+meta = game.meta2
+{assignable, tickable, simpleDrawable} = game.roles
+canvas = game.canvas
+MapTile = game.MapTile
+ImageSequence = game.ImageSequence
 
-  maps = {}
+#---
 
-  require('app/maps/lw_52')(maps)
+maps = {}
 
-  #---
+#---
 
-  Map = meta.def 'game.Map',
-    tickable,
+Map = meta.def 'game.Map',
+  tickable,
 
-    init: (@name, @width, @height) ->
-      @up = @down = @left = @right = null
+  init: (@name, @width, @height) ->
+    @up = @down = @left = @right = null
 
-    withBackground: (fn) ->
-      @bg = Background.create(this, width, height)
-      fn(@bg)
-      return this
+  withBackground: (fn) ->
+    @background = Background.create(this, @width, @height)
+    fn(@background)
+    return this
 
-    withForeground: (fn) ->
-      @fg = Foreground.create(this, width, height)
-      fn(@fg)
-      return this
+  withForeground: (fn) ->
+    @foreground = Foreground.create(this, @width, @height)
+    fn(@foreground)
+    return this
 
-    load: (@core, @player) ->
-      @bg.load()
-      @fg.add(@player)
-      @fg.load()
+  load: (@core, @player) ->
+    @background.load()
+    @foreground.add(@player)
+    @foreground.load()
 
-    unload: ->
-      @bg.unload()
-      @fg.remove(@player)
-      @fg.unload()
+  unload: ->
+    @background.unload()
+    @foreground.remove(@player)
+    @foreground.unload()
 
-    tick: ->
-      @bg.tick()
-      @fg.tick()
+  tick: ->
+    @background.tick()
+    @foreground.tick()
 
-    connectsUpTo: (other) ->
-      @up = other
+  connectsUpTo: (other) ->
+    @up = other
 
-    connectsDownTo: (other) ->
-      @down = other
+  connectsDownTo: (other) ->
+    @down = other
 
-    connectsLeftTo: (other) ->
-      @left = other
+  connectsLeftTo: (other) ->
+    @left = other
 
-    connectsRightTo: (other) ->
-      @right = other
+  connectsRightTo: (other) ->
+    @right = other
 
-  #---
+#---
 
-  Background = meta.def 'game.Background',
-    assignable,
-    tickable,
+Background = meta.def 'game.Background',
+  assignable,
+  tickable,
 
-    init: (@map, @width, @height) ->
-      @fills = []
-      @tiles = []
-      @sprites = []
+  init: (@map, @width, @height) ->
+    @fills = []
+    @tiles = []
+    @sprites = []
 
-    fill: (color, pos, dims) ->
-      @fills.push([color, pos, dims])
+  fill: (color, pos, dims) ->
+    @fills.push([color, pos, dims])
 
-    addTile: (object, positions...) ->
-      self = this
-      opts = {}
-      if $.v.is.obj(positions[positions.length-1])
-        opts = positions.pop()
-      $.v.each positions, ([x, y]) ->
-        tile = MapTile.create object.cloneWith(opts), x, y
-        tile.assignTo(self)
-        self.tiles.push(tile)
-        self.sprites.push(tile) if object.isPrototypeOf(ImageSequence)
+  addTile: (object, positions...) ->
+    self = this
+    opts = {}
+    if $.v.is.obj(positions[positions.length-1])
+      opts = positions.pop()
+    $.v.each positions, ([x, y]) ->
+      tile = MapTile.create object.clone().extend(opts), x, y
+      tile.assignTo(self)
+      self.tiles.push(tile)
+      self.sprites.push(tile) if object.isPrototypeOf(ImageSequence)
 
-    load: ->
-      # build the map
-      @canvas = canvas.create(@width, @height)
-      ctx = @canvas.ctx
-      for [color, [x1, y1], [width, height]] in @fills
-        ctx.fillStyle = color
-        ctx.fillRect(x1, y1, width, height)
-      tile.draw() for tile in @tiles
+  load: ->
+    # build the map
+    @canvas = canvas.create(@width, @height)
+    @ctx = @canvas.ctx
+    for [color, [x1, y1], [width, height]] in @fills
+      @ctx.fillStyle = color
+      @ctx.fillRect(x1, y1, width, height)
+    for tile in @tiles
+      tile.assignTo(this)
+      tile.draw()
 
-    unload: ->
-      # Free memory. (This may be a pre-optimization, but it kind of seems like
-      # a good idea considering the canvas object will very likely be of a
-      # substantial size.)
-      @canvas = null
+  unload: ->
+    # Free memory. (This may be a pre-optimization, but it kind of seems like
+    # a good idea considering the canvas object will very likely be of a
+    # substantial size.)
+    @canvas = null
+    @ctx = null
 
-    tick: ->
-      # Remember that sprites are animated, so here is where we do that
-      sprite.draw() for sprite in @sprites
+  tick: ->
+    # Remember that sprites are animated, so here is where we do that
+    sprite.draw() for sprite in @sprites
 
-    getDataUrl: ->
-      @canvas.element.toDataUrl()
+  getDataURL: ->
+    @canvas.element.toDataURL()
 
-  Background.add = Background.addTile
+Background.add = Background.addTile
 
-  #---
+#---
 
-  # TODO: What about the collision layer?????
-  Foreground = meta.def 'game.Foreground',
-    assignable,
-    tickable,
+# TODO: What about the collision layer?????
+Foreground = meta.def 'game.Foreground',
+  assignable,
+  tickable,
 
-    init: (@map, @width, @height) ->
-      @objects = []
-      @player = null
-      @playerIndex = -1
+  init: (@map, @width, @height) ->
+    @objects = []
+    @player = null
+    @playerIndex = -1
 
-    addObject: (object, positions...) ->
-      for [x, y] in positions
-        clone = object.clone()
-        clone.setMapPosition(x, y)
-        @objects.push(object)
+  addObject: (object, positions...) ->
+    for [x, y] in positions
+      clone = object.clone()
+      clone.setMapPosition(x, y)
+      @objects.push(object)
 
-    addPlayer: (@player) ->
-      @objects.push(player)
-      @playerIndex = @objects.length-1
+  addPlayer: (@player) ->
+    @objects.push(player)
+    @playerIndex = @objects.length-1
 
-    removePlayer: ->
-      @objects.splice(@playerIndex, 1)
+  removePlayer: ->
+    @objects.splice(@playerIndex, 1)
 
-    load: ->
-      # Place objects on the map
-      # TODO: Place the player somewhere on the map
-      @canvas = canvas.create(@width, @height)
+  load: ->
+    # Place objects on the map
+    # TODO: Place the player somewhere on the map
+    @canvas = canvas.create(@width, @height)
 
-    unload: ->
-      @canvas = null
+  unload: ->
+    @canvas = null
 
-    tick: ->
-      object.tick() for object in @objects
+  tick: ->
+    object.tick() for object in @objects
 
-    getDataUrl: ->
-      @canvas.element.toDataUrl()
+  getDataURL: ->
+    @canvas.element.toDataUrl()
 
-  Foreground.add = Foreground.addObject
+Foreground.add = Foreground.addObject
 
-  #---
+#---
 
-  return {
-    maps: maps
-    Map: Map
-    Background: Background
-    Foreground: Foreground
-  }
+game.maps =
+  maps: maps
+  Map: Map
+  Background: Background
+  Foreground: Foreground
+
+window.scriptLoaded('app/maps')
