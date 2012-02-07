@@ -36,14 +36,14 @@ player.extend \
   init: ->
     @_super('link2x', 34, 48, 4)
 
-    @addState 'moveLeft',  [0,1,2,3,4,5,6,7],       duration: 2, repeat: true
-    @addState 'moveRight', [8,9,10,11,12,13,14,15], duration: 2, repeat: true
-    @addState 'moveDown',  [16,17,18,19,20,21,22],  duration: 2, repeat: true
-    @addState 'moveUp',    [23,24,25,26,27,28],     duration: 2, repeat: true
-    @addState 'idleLeft',  [0],                     duration: 2, repeat: true
-    @addState 'idleRight', [8],                     duration: 2, repeat: true
-    @addState 'idleDown',  [19],                    duration: 2, repeat: true
-    @addState 'idleUp',    [23],                    duration: 2, repeat: true
+    @addState 'moveLeft',  [0,1,2,3,4,5,6,7],       frameDuration: 2, doesRepeat: true, do: 'moveLeft'
+    @addState 'moveRight', [8,9,10,11,12,13,14,15], frameDuration: 2, doesRepeat: true, do: 'moveRight'
+    @addState 'moveDown',  [16,17,18,19,20,21,22],  frameDuration: 2, doesRepeat: true, do: 'moveDown'
+    @addState 'moveUp',    [23,24,25,26,27,28],     frameDuration: 2, doesRepeat: true, do: 'moveUp'
+    @addState 'idleLeft',  [0],                     frameDuration: 2, doesRepeat: true
+    @addState 'idleRight', [8],                     frameDuration: 2, doesRepeat: true
+    @addState 'idleDown',  [19],                    frameDuration: 2, doesRepeat: true
+    @addState 'idleUp',    [23],                    frameDuration: 2, doesRepeat: true
 
     @setState('idleDown')
     @addEvents()

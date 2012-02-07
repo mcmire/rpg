@@ -13,16 +13,12 @@
     init: function(imagePath, width, height, speed) {
       this._super(imagePath, width, height);
       return this.speed = speed;
-    }
-  });
-
-  ({
+    },
     predraw: function() {
       this._super();
       return this.recalculateViewportBounds();
     },
     draw: function() {
-      console.log('grob draw');
       this.currentState.sequence.clear(this.ctx);
       return this._super();
     },

@@ -14,7 +14,7 @@ Grob = game.Grob
 # since mobs can move, they have a concept of a "fence" -- a box on the map
 # that contains them.
 #
-Mob = Grob.cloneAs('game.Mob').extend \
+Mob = Grob.cloneAs('game.Mob').extend
   # drawable,    # implies tickable
   # Collidable,  # implies Mappable
 
@@ -31,7 +31,6 @@ Mob = Grob.cloneAs('game.Mob').extend \
     @recalculateViewportBounds()
 
   draw: ->
-    console.log 'grob draw'
     @currentState.sequence.clear(@ctx)
     @_super()
 

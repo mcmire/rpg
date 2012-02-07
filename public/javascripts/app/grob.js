@@ -41,18 +41,20 @@
       return this.currentState.sequence.draw(this.ctx, biv.x1, biv.y1);
     },
     addState: function(name, frameIndices, opts) {
-      var state;
+      var seq, state;
       if (opts == null) opts = {};
       state = {};
       state.name = name;
-      state.handler = opts.handler;
+      state.handler = opts["do"];
       state.onEnd = opts.then || name;
-      state.sequence = game.ImageSequence.create(this.image, this.width, this.height, frameIndices, {
+      seq = game.ImageSequence.create(this.image, this.width, this.height, frameIndices, {
         frameDelay: opts.frameDelay,
         frameDuration: opts.frameDuration,
         doesRepeat: opts.doesRepeat
       });
-      state.sequence.onEnd(state.onEnd);
+      seq.assignTo(this);
+      seq.onEnd(state.onEnd);
+      state.sequence = seq;
       return this.states[name] = state;
     },
     setState: function(name) {

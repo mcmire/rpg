@@ -9,18 +9,18 @@ DIRECTIONS = 'right down left up'.split(' ')
 
 Enemy = Mob.cloneAs('game.Enemy')
 
-Enemy.addState 'moveDown',    [0,1],   duration: 4,  do: 'moveDown',  repeat: true
-Enemy.addState 'moveRight',   [4,5],   duration: 4,  do: 'moveRight', repeat: true
-Enemy.addState 'moveLeft',    [8,9],   duration: 4,  do: 'moveLeft',  repeat: true
-Enemy.addState 'moveUp',      [12,13], duration: 4,  do: 'moveUp',    repeat: true
-Enemy.addState 'upToLeft',    [12,14], duration: 24, then: 'moveLeft'
-Enemy.addState 'downToLeft',  [0,3],   duration: 24, then: 'moveLeft'
-Enemy.addState 'upToRight',   [12,15], duration: 24, then: 'moveRight'
-Enemy.addState 'downToRight', [0,2],   duration: 24, then: 'moveRight'
-Enemy.addState 'leftToUp',    [8,11],  duration: 24, then: 'moveUp'
-Enemy.addState 'rightToUp',   [4,6],   duration: 24, then: 'moveUp'
-Enemy.addState 'leftToDown',  [8,10],  duration: 24, then: 'moveDown'
-Enemy.addState 'rightToDown', [4,7],   duration: 24, then: 'moveDown'
+Enemy.addState 'moveDown',    [0,1],   frameDuration: 4,  do: 'moveDown',  doesRepeat: true
+Enemy.addState 'moveRight',   [4,5],   frameDuration: 4,  do: 'moveRight', doesRepeat: true
+Enemy.addState 'moveLeft',    [8,9],   frameDuration: 4,  do: 'moveLeft',  doesRepeat: true
+Enemy.addState 'moveUp',      [12,13], frameDuration: 4,  do: 'moveUp',    doesRepeat: true
+Enemy.addState 'upToLeft',    [12,14], frameDuration: 24, then: 'moveLeft'
+Enemy.addState 'downToLeft',  [0,3],   frameDuration: 24, then: 'moveLeft'
+Enemy.addState 'upToRight',   [12,15], frameDuration: 24, then: 'moveRight'
+Enemy.addState 'downToRight', [0,2],   frameDuration: 24, then: 'moveRight'
+Enemy.addState 'leftToUp',    [8,11],  frameDuration: 24, then: 'moveUp'
+Enemy.addState 'rightToUp',   [4,6],   frameDuration: 24, then: 'moveUp'
+Enemy.addState 'leftToDown',  [8,10],  frameDuration: 24, then: 'moveDown'
+Enemy.addState 'rightToDown', [4,7],   frameDuration: 24, then: 'moveDown'
 
 Enemy.extend
   # TODO: This should be moved to lightworld_map.addPlayer

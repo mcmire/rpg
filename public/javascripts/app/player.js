@@ -44,36 +44,40 @@
     init: function() {
       this._super('link2x', 34, 48, 4);
       this.addState('moveLeft', [0, 1, 2, 3, 4, 5, 6, 7], {
-        duration: 2,
-        repeat: true
+        frameDuration: 2,
+        doesRepeat: true,
+        "do": 'moveLeft'
       });
       this.addState('moveRight', [8, 9, 10, 11, 12, 13, 14, 15], {
-        duration: 2,
-        repeat: true
+        frameDuration: 2,
+        doesRepeat: true,
+        "do": 'moveRight'
       });
       this.addState('moveDown', [16, 17, 18, 19, 20, 21, 22], {
-        duration: 2,
-        repeat: true
+        frameDuration: 2,
+        doesRepeat: true,
+        "do": 'moveDown'
       });
       this.addState('moveUp', [23, 24, 25, 26, 27, 28], {
-        duration: 2,
-        repeat: true
+        frameDuration: 2,
+        doesRepeat: true,
+        "do": 'moveUp'
       });
       this.addState('idleLeft', [0], {
-        duration: 2,
-        repeat: true
+        frameDuration: 2,
+        doesRepeat: true
       });
       this.addState('idleRight', [8], {
-        duration: 2,
-        repeat: true
+        frameDuration: 2,
+        doesRepeat: true
       });
       this.addState('idleDown', [19], {
-        duration: 2,
-        repeat: true
+        frameDuration: 2,
+        doesRepeat: true
       });
       this.addState('idleUp', [23], {
-        duration: 2,
-        repeat: true
+        frameDuration: 2,
+        doesRepeat: true
       });
       this.setState('idleDown');
       this.addEvents();
