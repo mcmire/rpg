@@ -17,4 +17,4 @@ add 'flower', 16, 16, [0, 1, 2], frameDuration: 4
 game.spriteCollection =
   get: (name) -> sprites[name]
 
-window.scriptLoaded('app/sprites')
+window.scriptLoaded('app/sprite_collection')

@@ -37,9 +37,12 @@ app/mob
 app/player
 
 app/image  # image must be defined after main
-app/images
-app/sprites
-app/maps
+app/image_collection
+app/sprite_collection
+app/map_collection
+app/background
+app/foreground
+app/map
 app/map_tile
 app/maps/lw_52
 

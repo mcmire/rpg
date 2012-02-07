@@ -1,13 +1,11 @@
 game = (window.game ||= {})
 
 mapCollection = game.mapCollection
-Map = mapCollection.Map
 imageCollection = game.imageCollection
 spriteCollection = game.spriteCollection
 Guard = game.Guard
 
-mapCollection.set 'lw_52', Map.create('lw_52', 1024, 1024)
-  .withBackground (bg) ->
+mapCollection.add 'lw_52', 1024, 1024, (bg, fg) ->
                        # (x1, y1), (width, height)
     bg.fill '#48a048', [0, 0], [1024, 1024]
     bg.fill '#3860b0', [944, 0], [80, 688]
@@ -34,7 +32,6 @@ mapCollection.set 'lw_52', Map.create('lw_52', 1024, 1024)
     bg.add imageCollection.get('links_house'), [288, 352]
     #bg.add sprites['waves'], [whatever, whatever], frameDelay: 2
 
-  .withForeground (fg) ->
     # TODO: Get this to work
     # fg.add Guard,
     #   [407, 944]

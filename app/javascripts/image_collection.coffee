@@ -73,4 +73,4 @@ game.imageCollection =
   load: load
   isLoaded: isLoaded
 
-window.scriptLoaded('app/images')
+window.scriptLoaded('app/image_collection')
