@@ -1,10 +1,8 @@
 (function() {
-  var Pixel, canvas, contextExt, game, imageDataExt, util,
+  var Pixel, canvas, contextExt, game, imageDataExt,
     __slice = Array.prototype.slice;
 
   game = (window.game || (window.game = {}));
-
-  util = game.util;
 
   Pixel = (function() {
 

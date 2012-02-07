@@ -1,7 +1,5 @@
 game = (window.game ||= {})
 
-util = game.util
-
 class Pixel
   constructor: (@x, @y, @red, @green, @blue, @alpha) ->
   isFilled: -> (@red or @green or @blue or @alpha)

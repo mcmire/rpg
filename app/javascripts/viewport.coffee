@@ -2,8 +2,6 @@ game = (window.game ||= {})
 
 meta = game.meta2
 {attachable, tickable} = game.roles
-Bounds = game.Bounds
-canvas = game.canvas
 
 viewport = meta.def 'game.viewport',
   attachable,
@@ -24,9 +22,6 @@ viewport = meta.def 'game.viewport',
       height: @height
       'background-repeat': 'no-repeat'
 
-  attach: ->
-    @_super()
-
   tick: ->
     @draw()
 
@@ -38,7 +33,7 @@ viewport = meta.def 'game.viewport',
   setMap: (map) ->
     @currentMap = map
     @$element.css('background-image', map.background.getDataURL())
-    @$element.html(map.foreground.canvas)
+    @$element.append(map.foreground.canvas.$element)
     @_setBounds()
 
   # Public: Move the bounds of the viewport.
@@ -93,7 +88,7 @@ viewport = meta.def 'game.viewport',
   _setBounds: ->
     # These are the bounds of the viewport on the map itself
     # TODO: Start bounds centered on player
-    @bounds = Bounds.rect(0, 0, @width, @height)
+    @bounds = game.Bounds.rect(0, 0, @width, @height)
 
 game.viewport = viewport
 

@@ -3,9 +3,7 @@ game = (window.game ||= {})
 meta = game.meta2
 {assignable, drawable} = game.roles
 Mappable = game.Mappable
-{images} = game.images
 #Collidable = game.Collidable
-Bounds = game.Bounds
 ImageSequence = game.ImageSequence
 
 # A Grob is a GRaphical OBject. Grobs are located on the map and live in the
@@ -23,14 +21,17 @@ Grob = meta.def 'game.Grob',
   Mappable,
   #Collidable,  # implies Mappable
 
+  states: {}
+
   clone: ->
     clone = @_super()
-    # Set this here so we can add states before init'ing the instance
-    clone.states = {}
+    # Make a copy of the prototype's states so that they don't get shared
+    clone.states = game.util.dup(clone.states)
     return clone
 
   init: (imagePath, @width, @height) ->
-    @image = images[imagePath]
+    @_super()  # Mappable
+    @image = game.imageCollection.get(imagePath)
 
   predraw: ->
     if fn = @currentState.handler
@@ -67,7 +68,7 @@ Grob = meta.def 'game.Grob',
     state.name = name
     state.handler = opts.handler
     state.onEnd = opts.then or name
-    state.sequence = ImageSequence.create @image, @width, @height, frameIndices,
+    state.sequence = game.ImageSequence.create @image, @width, @height, frameIndices,
       frameDelay: opts.frameDelay
       frameDuration: opts.frameDuration
       doesRepeat: opts.doesRepeat
@@ -90,4 +91,4 @@ Grob = meta.def 'game.Grob',
 
 game.Grob = Grob
 
-window.numScriptsLoaded++
+window.scriptLoaded('app/grob')

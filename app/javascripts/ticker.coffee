@@ -11,7 +11,7 @@ ticker = meta.def 'game.ticker',
 
   # override
   _includeMixin: (mixin, opts={}) ->
-    opts = $.v.extend {}, opts, {start: '_start', stop: '_stop'}
+    opts = $.v.extend {}, opts, keyTranslations: {start: '_start', stop: '_stop'}
     @_super mixin, opts
 
   destroy: ->

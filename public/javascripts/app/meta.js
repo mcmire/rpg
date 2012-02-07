@@ -1,11 +1,9 @@
 (function() {
-  var Class, baseModule, game, module, util, _extend, _fnContainsSuper, _wrap,
+  var Class, baseModule, game, module, _extend, _fnContainsSuper, _wrap,
     __hasProp = Object.prototype.hasOwnProperty,
     __slice = Array.prototype.slice;
 
   game = (window.game || (window.game = {}));
-
-  util = game.util;
 
   _fnContainsSuper = function(fn) {
     return /\b_super\b/.test(fn);
@@ -41,8 +39,8 @@
         } else {
           target[tk] = _wrap(sk, source[sk], function() {});
         }
-      } else if ($.v.is.arr(source[k]) || util.isPlainObject(source[k])) {
-        target[k] = util.clone(source[k]);
+      } else if ($.v.is.arr(source[k]) || game.util.isPlainObject(source[k])) {
+        target[k] = game.util.clone(source[k]);
       } else {
         target[tk] = source[sk];
       }
@@ -99,7 +97,7 @@
     if ((classdef.statics != null) || (classdef.members != null) || (classdef.roles != null)) {
       statics = (_ref = classdef.statics) != null ? _ref : {};
       members = (_ref2 = classdef.members) != null ? _ref2 : {};
-      if (classdef.roles != null) util.extend(members, classdef.roles);
+      if (classdef.roles != null) game.util.extend(members, classdef.roles);
     } else {
       statics = {};
       members = classdef;
@@ -299,7 +297,7 @@
     var mixins, mod, name;
     mixins = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
     if (typeof mixins[0] === 'string') name = mixins.shift();
-    mod = util.createFromProto(baseModule);
+    mod = game.util.createFromProto(baseModule);
     mod.__name__ = name;
     Object.defineProperty(mod, '__name__', {
       value: name,

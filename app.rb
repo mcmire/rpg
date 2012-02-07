@@ -3,46 +3,53 @@ require 'pp'
 
 set :views, "app/views"
 
-VENDOR_SCRIPTS = %w(
+def parse_scripts(text)
+  scripts = text.split(/\n/)
+  scripts.each {|s| s.gsub!(/#(.+)$/, ""); s.strip! }
+  scripts.reject! {|s| s =~ /^#/ or s.empty? }
+  scripts
+end
+
+VENDOR_SCRIPTS = parse_scripts <<EOT
   vendor/ender
-)
-APP_SCRIPTS = %w(
-  app/ender_ext
-  app/util
-  app/meta
-  app/meta2
-  app/roles
-  app/keyboard
-  app/ticker
-  app/bounds
-  app/viewport
-  app/map_tile
-  app/canvas
-  app/image
-  app/image_sequence
-  app/maps
-  app/core
-  app/main
-  app/images
-  app/sprites
-  app/maps/lw_52
-  app/init
-)
+EOT
+
+APP_SCRIPTS = parse_scripts <<EOT
+app/ender_ext
+app/util
+app/meta
+app/meta2
+app/roles
+
+app/bounds
+app/canvas
+app/image_sequence
+app/keyboard
+app/main
+app/viewport
+
+app/ticker
+app/core
+
+app/mappable
+app/grob
+app/mob
+app/player
+
+app/image  # image must be defined after main
+app/images
+app/sprites
+app/maps
+app/map_tile
+app/maps/lw_52
+
+app/init
+EOT
 SCRIPTS = VENDOR_SCRIPTS + APP_SCRIPTS
 
 helpers do
-  def latest_script_mtime
-    mtime = nil
-    Dir[ File.expand_path('../public/javascripts/**/*.js', __FILE__) ].each do |fn|
-      t = File.mtime(fn)
-      mtime = t if !mtime or t > mtime
-    end
-    mtime.to_i
-  end
-
   def scripts
     html = ""
-    bust = latest_script_mtime
     html << %(
 <script>
   window.scripts = #{JSON.generate(APP_SCRIPTS)};
@@ -56,6 +63,9 @@ helpers do
 </script>
     )
     for path in SCRIPTS
+      fn = File.expand_path("../public/javascripts/#{path}.js", __FILE__)
+      t = File.mtime(fn)
+      bust = t.to_i
       html << %(<script src="/javascripts/#{path}.js?#{bust}"></script>\n)
     end
     html

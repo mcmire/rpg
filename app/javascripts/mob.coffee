@@ -1,11 +1,9 @@
 game = (window.game ||= {})
 
 meta = game.meta2
-Grob = game.Grob
-{sprites} = game.images
 {drawable} = game.roles
-Collidable = game.Collidable
-Bounds = game.Bounds
+Grob = game.Grob
+# Collidable = game.Collidable
 
 # A Mob is a Movable OBject. It does what a Grob can do -- that is, it lives
 # on the map in the foreground layer, is collidable, and has a sprite. The key
@@ -16,9 +14,9 @@ Bounds = game.Bounds
 # since mobs can move, they have a concept of a "fence" -- a box on the map
 # that contains them.
 #
-Mob = Grob.clone().extend \
-  drawable,    # implies tickable
-  Collidable,  # implies Mappable
+Mob = Grob.cloneAs('game.Mob').extend \
+  # drawable,    # implies tickable
+  # Collidable,  # implies Mappable
 
   init: (imagePath, width, height, speed) ->
     @_super(imagePath, width, height)
@@ -28,11 +26,13 @@ Mob = Grob.clone().extend \
     @_super()
 
     # in calling the handler for the state, the position on the map may have
-    # changed
-    @_recalculateViewportBounds()
+    # changed, or the viewport may have shifted so the viewport bounds may have
+    # changed too
+    @recalculateViewportBounds()
 
   draw: ->
-    @sprite.clear(@ctx)
+    console.log 'grob draw'
+    @currentState.sequence.clear(@ctx)
     @_super()
 
   _initBoundsOnMap: ->
@@ -40,8 +40,9 @@ Mob = Grob.clone().extend \
     @_super()
 
   _initFence: ->
-    @fence = Bounds.rect(0, 0, @map.width, @map.height)
+    @fence = game.Bounds.rect(0, 0, @map.width, @map.height)
 
 game.Mob = Mob
 
-window.numScriptsLoaded++
+window.scriptLoaded('app/mob')
+

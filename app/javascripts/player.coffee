@@ -1,10 +1,9 @@
 game = (window.game ||= {})
 
 util = game.util
-Mob = game.Mob
 {eventable} = game.roles
 keyboard = game.keyboard
-Bounds = game.Bounds
+Mob = game.Mob
 
 DIRECTIONS = 'up down left right'.split(' ')
 
@@ -24,15 +23,6 @@ KEYS = $.flatten($.values(DIRECTION_KEYS))
 
 player = Mob.cloneAs('game.player')
 
-player.addState 'moveLeft',  [0,1,2,3,4,5,6,7],       duration: 2, repeat: true
-player.addState 'moveRight', [8,9,10,11,12,13,14,15], duration: 2, repeat: true
-player.addState 'moveDown',  [16,17,18,19,20,21,22],  duration: 2, repeat: true
-player.addState 'moveUp',    [23,24,25,26,27,28],     duration: 2, repeat: true
-player.addState 'idleLeft',  [0],                     duration: 2, repeat: true
-player.addState 'idleRight', [8],                     duration: 2, repeat: true
-player.addState 'idleDown',  [19],                    duration: 2, repeat: true
-player.addState 'idleUp',    [23],                    duration: 2, repeat: true
-
 player.extend \
   eventable,
 
@@ -44,18 +34,21 @@ player.extend \
     core.collisionLayer.add(this)
 
   init: ->
-    @_super('link2x.gif', 34, 48, 4)
+    @_super('link2x', 34, 48, 4)
+
+    @addState 'moveLeft',  [0,1,2,3,4,5,6,7],       duration: 2, repeat: true
+    @addState 'moveRight', [8,9,10,11,12,13,14,15], duration: 2, repeat: true
+    @addState 'moveDown',  [16,17,18,19,20,21,22],  duration: 2, repeat: true
+    @addState 'moveUp',    [23,24,25,26,27,28],     duration: 2, repeat: true
+    @addState 'idleLeft',  [0],                     duration: 2, repeat: true
+    @addState 'idleRight', [8],                     duration: 2, repeat: true
+    @addState 'idleDown',  [19],                    duration: 2, repeat: true
+    @addState 'idleUp',    [23],                    duration: 2, repeat: true
+
     @setState('idleDown')
     @addEvents()
 
-  # override
-  _initBoundsOnMap: ->
-    @_super()
-    @bounds.onMap = Bounds.at(372, 540, 406, 588)
-
-  # override
-  _initFence: ->
-    @fence = @viewport.bounds.withScale(@viewportPadding)
+    return this
 
   # override
   addEvents: ->
@@ -72,8 +65,8 @@ player.extend \
       direction = KEY_DIRECTIONS[keyCode]
       state = 'move' + util.capitalize(direction)
     else
-      state = @state.name.replace('move', 'idle')
-    if state isnt @state.name
+      state = @currentState.name.replace('move', 'idle')
+    if state isnt @currentState.name
       @setState(state)
 
     @_super()
@@ -281,6 +274,15 @@ player.extend \
         # Yes: shift viewport right.
         @viewport.translateBySide('y2', @bounds.onMap.y2 + @viewportPadding)
 
+  # override
+  _initBoundsOnMap: ->
+    @_super()
+    @bounds.onMap = game.Bounds.at(372, 540, 406, 588)
+
+  # override
+  _initFence: ->
+    @fence = game.Bounds.rect(0, 0, game.viewport.width, game.viewport.height)
+
 game.player = player
 
-window.numScriptsLoaded++
+window.scriptLoaded('game.player')

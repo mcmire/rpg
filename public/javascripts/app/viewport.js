@@ -1,5 +1,5 @@
 (function() {
-  var Bounds, attachable, canvas, game, meta, tickable, viewport, _ref,
+  var attachable, game, meta, tickable, viewport, _ref,
     __slice = Array.prototype.slice;
 
   game = (window.game || (window.game = {}));
@@ -7,10 +7,6 @@
   meta = game.meta2;
 
   _ref = game.roles, attachable = _ref.attachable, tickable = _ref.tickable;
-
-  Bounds = game.Bounds;
-
-  canvas = game.canvas;
 
   viewport = meta.def('game.viewport', attachable, tickable, {
     width: 512,
@@ -26,9 +22,6 @@
         'background-repeat': 'no-repeat'
       });
     },
-    attach: function() {
-      return this._super();
-    },
     tick: function() {
       return this.draw();
     },
@@ -41,7 +34,7 @@
     setMap: function(map) {
       this.currentMap = map;
       this.$element.css('background-image', map.background.getDataURL());
-      this.$element.html(map.foreground.canvas);
+      this.$element.append(map.foreground.canvas.$element);
       return this._setBounds();
     },
     translate: function() {
@@ -62,7 +55,7 @@
       return console.log("viewport.bounds = " + (this.bounds.inspect()));
     },
     _setBounds: function() {
-      return this.bounds = Bounds.rect(0, 0, this.width, this.height);
+      return this.bounds = game.Bounds.rect(0, 0, this.width, this.height);
     }
   });
 

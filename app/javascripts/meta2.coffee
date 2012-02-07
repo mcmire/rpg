@@ -3,12 +3,15 @@ game = (window.game ||= {})
 _fnContainsSuper = (fn) -> /\b_super\b/.test(fn)
 
 _wrap = (k, fn, val) ->
-  return ->
+  newfn = ->
     tmp = @_super
     @_super = val
     ret = fn.apply(this, arguments)
     @_super = tmp
     return ret
+  newfn.original = fn
+  newfn._super = val
+  return newfn
 
 _clone = (obj) ->
   Object.create(obj)
@@ -61,6 +64,7 @@ _extend = (base, mixin, opts={}) ->
   return base
 
 proto = {}
+Object.defineProperty proto, '__name__', value: 'game.meta.proto'
 # proto.__key_translations__ = {}
 proto.clone = ->
   _clone(this)

@@ -143,9 +143,9 @@ runnable = meta.def 'game.runnable',
     throw new Error 'resume must be overridden'
 
 assignable = meta.def 'game.assignable',
-  assignTo: (canvas) ->
-    @canvas = canvas
-    @ctx = canvas.ctx
+  assignTo: (parent) ->
+    @parent = parent
+    @ctx = parent.ctx
     return this
 
 #---

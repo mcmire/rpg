@@ -12,6 +12,7 @@ Image = meta.def 'game.Image',
       @path += ".gif"
     unless /^\//.test(@path)
       @path = game.main.resolveImagePath(@path)
+    @isLoaded = false
 
   load: ->
     self = this
@@ -25,6 +26,7 @@ Image = meta.def 'game.Image',
     @element.onload = ->
       console.log "Loaded #{self.path}"
       self.onLoadCallback?()
+      self.isLoaded = true
     @element.onerror = -> raise new Error "Could not load image #{self.path}!"
 
   onLoad: (fn) ->

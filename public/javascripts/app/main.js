@@ -1,5 +1,5 @@
 (function() {
-  var attachable, core, eventable, game, keyboard, main, meta, runnable, tickable, _ref;
+  var attachable, eventable, game, main, meta, runnable, tickable, _ref;
 
   game = (window.game || (window.game = {}));
 
@@ -7,19 +7,13 @@
 
   _ref = game.roles, eventable = _ref.eventable, attachable = _ref.attachable, tickable = _ref.tickable, runnable = _ref.runnable;
 
-  keyboard = game.keyboard;
-
-  core = game.core;
-
-  main = meta.def('game.main', eventable, attachable, tickable, runnable);
-
-  main.extend({
+  main = meta.def('game.main', eventable, attachable, tickable, runnable, {
     imagesPath: '/images',
     debug: false,
     init: function() {
       this._super(document.body);
-      this.keyboard = keyboard.init();
-      this.core = core.init(this);
+      this.keyboard = game.keyboard.init();
+      this.core = game.core.init(this);
       this.attach();
       this.addEvents();
       this.run();
@@ -56,7 +50,7 @@
       var assetCollections, c, fn, i, self, timer, _i, _len;
       self = this;
       assetCollections = [];
-      assetCollections.push(game.images);
+      assetCollections.push(game.imageCollection);
       i = 0;
       timer = null;
       fn = function() {

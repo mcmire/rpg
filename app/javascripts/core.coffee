@@ -1,18 +1,10 @@
 game = (window.game ||= {})
 
 {ticker} = game.ticker
-# plug = game.plug
 {attachable, tickable} = game.roles
-viewport = game.viewport
 # collisionLayer = game.collisionLayer
-player = game.player
-{maps} = game.maps
 
 core = ticker.cloneAs('game.core')
-
-#core.addPlugin(viewport)
-# TODO: Not sure where this will go
-#core.addPlugin(collisionLayer)
 
 core.extend \
   attachable,
@@ -25,14 +17,14 @@ core.extend \
     @_super(@main)
     self = this
     @keyboard = @main.keyboard
-    @viewport = viewport.init(this)
+    @viewport = game.viewport.init(this)
     @tickInterval = 1000 / @frameRate
     @throttledDraw = @createIntervalTimer @tickInterval, (df, dt) ->
       self.draw(df, dt)
     @numDraws = 0
     @lastTickTime = null
     @numTicks = 0
-    @player = player
+    @player = game.player
     return this
 
   setElement: ->
@@ -42,9 +34,17 @@ core.extend \
     @viewport.attach()
 
   start: ->
-    @loadMap('lw_52')
-    # calling tick() once starts the loop immediately since it calls itself
-    @tick()
+    # return if @hadProblemsStarting
+    # try
+      # calling suspend() and then resume() will call this method again, but we
+      # don't want the map to be re-loaded
+      @loadMap('lw_52') unless @startedBefore
+      # calling tick() once starts the loop immediately since it calls itself
+      @tick()
+      @startedBefore = true
+    # catch e
+      # @hadProblemsStarting = true
+      # throw e
 
   stop: ->
     if @timer
@@ -118,10 +118,11 @@ core.extend \
   loadMap: (name) ->
     self = this
     @currentMap.unload() if @currentMap
-    @currentMap = maps['lw_52']
+    @currentMap = game.mapCollection.get(name)
     @currentMap.load(this, @player)
     # TODO: Transition instead of hard setting
     @viewport.setMap(@currentMap)
+    @currentMap.frameInViewport(@viewport)
 
 game.core = core
 

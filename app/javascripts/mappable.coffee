@@ -7,9 +7,15 @@ Mappable = meta.def 'game.Mappable',
     @_initBounds()
     @_initLastBounds()
 
-  setPositionOnMap: (x, y) ->
+  setMapPosition: (x, y) ->
     @bounds.onMap.anchor(x, y)
-    @_recalculateViewportBounds()
+    # @recalculateViewportBounds()
+
+  recalculateViewportBounds: ->
+    viewport = @parent.getViewport()
+    x1 = @bounds.onMap.x1 - viewport.bounds.x1
+    y1 = @bounds.onMap.y1 - viewport.bounds.y1
+    @bounds.inViewport.anchor(x1, y1)
 
   # Public: Move the viewport and map bounds of the player.
   #
@@ -77,19 +83,12 @@ Mappable = meta.def 'game.Mappable',
     @lastBounds.inViewport = @bounds.inViewport
 
   _initBoundsOnMap: ->
-    @bounds.onMap = Bounds.rect(0, 0, @width, @height)
+    @bounds.onMap = game.Bounds.rect(0, 0, @width, @height)
 
   _initBoundsInViewport: ->
-    @bounds.inViewport = Bounds.rect(0, 0, @width, @height)
-    @_recalculateViewportBounds()
-
-  _recalculateViewportBounds: ->
-    # XXX: This won't work for MapTile or MapSprite because we need access to
-    # viewport...
-    x1 = @bounds.onMap.x1 - @viewport.bounds.x1
-    y1 = @bounds.onMap.y1 - @viewport.bounds.y1
-    @bounds.inViewport.anchor(x1, y1)
+    @bounds.inViewport = game.Bounds.rect(0, 0, @width, @height)
 
 game.Mappable = Mappable
 
-window.numScriptsLoaded++
+window.scriptLoaded('app/mappable')
+

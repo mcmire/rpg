@@ -1,5 +1,5 @@
 (function() {
-  var Bounds, Grob, ImageSequence, Mappable, assignable, drawable, game, images, meta, _ref;
+  var Grob, ImageSequence, Mappable, assignable, drawable, game, meta, _ref;
 
   game = (window.game || (window.game = {}));
 
@@ -9,23 +9,21 @@
 
   Mappable = game.Mappable;
 
-  images = game.images.images;
-
-  Bounds = game.Bounds;
-
   ImageSequence = game.ImageSequence;
 
   Grob = meta.def('game.Grob', assignable, drawable, Mappable, {
+    states: {},
     clone: function() {
       var clone;
       clone = this._super();
-      clone.states = {};
+      clone.states = game.util.dup(clone.states);
       return clone;
     },
     init: function(imagePath, width, height) {
       this.width = width;
       this.height = height;
-      return this.image = images[imagePath];
+      this._super();
+      return this.image = game.imageCollection.get(imagePath);
     },
     predraw: function() {
       var fn;
@@ -49,7 +47,7 @@
       state.name = name;
       state.handler = opts.handler;
       state.onEnd = opts.then || name;
-      state.sequence = ImageSequence.create(this.image, this.width, this.height, frameIndices, {
+      state.sequence = game.ImageSequence.create(this.image, this.width, this.height, frameIndices, {
         frameDelay: opts.frameDelay,
         frameDuration: opts.frameDuration,
         doesRepeat: opts.doesRepeat
@@ -76,6 +74,6 @@
 
   game.Grob = Grob;
 
-  window.numScriptsLoaded++;
+  window.scriptLoaded('app/grob');
 
 }).call(this);

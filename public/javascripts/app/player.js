@@ -1,17 +1,15 @@
 (function() {
-  var Bounds, DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, Mob, dir, eventable, game, keyCode, keyboard, player, util, _i, _j, _len, _len2, _ref;
+  var DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, Mob, dir, eventable, game, keyCode, keyboard, player, util, _i, _j, _len, _len2, _ref;
 
   game = (window.game || (window.game = {}));
 
   util = game.util;
 
-  Mob = game.Mob;
-
   eventable = game.roles.eventable;
 
   keyboard = game.keyboard;
 
-  Bounds = game.Bounds;
+  Mob = game.Mob;
 
   DIRECTIONS = 'up down left right'.split(' ');
 
@@ -37,46 +35,6 @@
 
   player = Mob.cloneAs('game.player');
 
-  player.addState('moveLeft', [0, 1, 2, 3, 4, 5, 6, 7], {
-    duration: 2,
-    repeat: true
-  });
-
-  player.addState('moveRight', [8, 9, 10, 11, 12, 13, 14, 15], {
-    duration: 2,
-    repeat: true
-  });
-
-  player.addState('moveDown', [16, 17, 18, 19, 20, 21, 22], {
-    duration: 2,
-    repeat: true
-  });
-
-  player.addState('moveUp', [23, 24, 25, 26, 27, 28], {
-    duration: 2,
-    repeat: true
-  });
-
-  player.addState('idleLeft', [0], {
-    duration: 2,
-    repeat: true
-  });
-
-  player.addState('idleRight', [8], {
-    duration: 2,
-    repeat: true
-  });
-
-  player.addState('idleDown', [19], {
-    duration: 2,
-    repeat: true
-  });
-
-  player.addState('idleUp', [23], {
-    duration: 2,
-    repeat: true
-  });
-
   player.extend(eventable, {
     viewportPadding: 30,
     keyTracker: keyboard.KeyTracker.create(KEYS),
@@ -84,16 +42,42 @@
       return core.collisionLayer.add(this);
     },
     init: function() {
-      this._super('link2x.gif', 34, 48, 4);
+      this._super('link2x', 34, 48, 4);
+      this.addState('moveLeft', [0, 1, 2, 3, 4, 5, 6, 7], {
+        duration: 2,
+        repeat: true
+      });
+      this.addState('moveRight', [8, 9, 10, 11, 12, 13, 14, 15], {
+        duration: 2,
+        repeat: true
+      });
+      this.addState('moveDown', [16, 17, 18, 19, 20, 21, 22], {
+        duration: 2,
+        repeat: true
+      });
+      this.addState('moveUp', [23, 24, 25, 26, 27, 28], {
+        duration: 2,
+        repeat: true
+      });
+      this.addState('idleLeft', [0], {
+        duration: 2,
+        repeat: true
+      });
+      this.addState('idleRight', [8], {
+        duration: 2,
+        repeat: true
+      });
+      this.addState('idleDown', [19], {
+        duration: 2,
+        repeat: true
+      });
+      this.addState('idleUp', [23], {
+        duration: 2,
+        repeat: true
+      });
       this.setState('idleDown');
-      return this.addEvents();
-    },
-    _initBoundsOnMap: function() {
-      this._super();
-      return this.bounds.onMap = Bounds.at(372, 540, 406, 588);
-    },
-    _initFence: function() {
-      return this.fence = this.viewport.bounds.withScale(this.viewportPadding);
+      this.addEvents();
+      return this;
     },
     addEvents: function() {
       return keyboard.addKeyTracker(this.keyTracker);
@@ -107,9 +91,9 @@
         direction = KEY_DIRECTIONS[keyCode];
         state = 'move' + util.capitalize(direction);
       } else {
-        state = this.state.name.replace('move', 'idle');
+        state = this.currentState.name.replace('move', 'idle');
       }
-      if (state !== this.state.name) this.setState(state);
+      if (state !== this.currentState.name) this.setState(state);
       return this._super();
     },
     moveLeft: function() {
@@ -221,11 +205,18 @@
           return this.viewport.translateBySide('y2', this.bounds.onMap.y2 + this.viewportPadding);
         }
       }
+    },
+    _initBoundsOnMap: function() {
+      this._super();
+      return this.bounds.onMap = game.Bounds.at(372, 540, 406, 588);
+    },
+    _initFence: function() {
+      return this.fence = game.Bounds.rect(0, 0, game.viewport.width, game.viewport.height);
     }
   });
 
   game.player = player;
 
-  window.numScriptsLoaded++;
+  window.scriptLoaded('game.player');
 
 }).call(this);

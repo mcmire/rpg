@@ -2,9 +2,6 @@ game = (window.game ||= {})
 
 meta = game.meta2
 {assignable, tickable, simpleDrawable} = game.roles
-canvas = game.canvas
-MapTile = game.MapTile
-ImageSequence = game.ImageSequence
 
 #---
 
@@ -30,13 +27,16 @@ Map = meta.def 'game.Map',
 
   load: (@core, @player) ->
     @background.load()
-    @foreground.add(@player)
+    @foreground.addPlayer(@player, [100, 100])
     @foreground.load()
 
   unload: ->
     @background.unload()
-    @foreground.remove(@player)
+    @foreground.removePlayer(@player)
     @foreground.unload()
+
+  frameInViewport: (viewport) ->
+    @foreground.calculateAllViewportBounds(viewport)
 
   tick: ->
     @background.tick()
@@ -74,15 +74,15 @@ Background = meta.def 'game.Background',
     if $.v.is.obj(positions[positions.length-1])
       opts = positions.pop()
     $.v.each positions, ([x, y]) ->
-      tile = MapTile.create object.clone().extend(opts), x, y
-      tile.assignTo(self)
+      tile = game.MapTile.create object.clone().extend(opts), x, y
       self.tiles.push(tile)
-      self.sprites.push(tile) if object.isPrototypeOf(ImageSequence)
+      self.sprites.push(tile) if object.isPrototypeOf(game.ImageSequence)
 
   load: ->
     # build the map
-    @canvas = canvas.create(@width, @height)
+    @canvas = game.canvas.create(@width, @height)
     @ctx = @canvas.ctx
+    tile.assignTo(this) for tile in @tiles
     for [color, [x1, y1], [width, height]] in @fills
       @ctx.fillStyle = color
       @ctx.fillRect(x1, y1, width, height)
@@ -102,7 +102,7 @@ Background = meta.def 'game.Background',
     sprite.draw() for sprite in @sprites
 
   getDataURL: ->
-    @canvas.element.toDataURL()
+    'url(' + @canvas.element.toDataURL() + ')'
 
 Background.add = Background.addTile
 
@@ -114,30 +114,46 @@ Foreground = meta.def 'game.Foreground',
   tickable,
 
   init: (@map, @width, @height) ->
+    @objectDefs = []
     @objects = []
     @player = null
-    @playerIndex = -1
 
   addObject: (object, positions...) ->
-    for [x, y] in positions
-      clone = object.clone()
-      clone.setMapPosition(x, y)
-      @objects.push(object)
+    @objectDefs.push([object, positions])
 
-  addPlayer: (@player) ->
-    @objects.push(player)
-    @playerIndex = @objects.length-1
+  addPlayer: (player, position) ->
+    @addObject(player, position)
 
   removePlayer: ->
-    @objects.splice(@playerIndex, 1)
+    index = @objects.indexOf(@player)
+    @objects.splice(index, 1)
 
   load: ->
     # Place objects on the map
     # TODO: Place the player somewhere on the map
-    @canvas = canvas.create(@width, @height)
+    @canvas = game.canvas.create(@width, @height)
+    @ctx = @canvas.ctx
+    for [object, positions] in @objectDefs
+      for [x, y] in positions
+        clone = object.clone().assignTo(this).init()
+        clone.setMapPosition(x, y)
+        @objects.push(clone)
+      if clone.__name__ is 'game.player'
+        @player = clone
 
   unload: ->
+    # Free memory. (This may be a pre-optimization, but it kind of seems like
+    # a good idea considering the canvas object will very likely be of a
+    # substantial size.)
     @canvas = null
+    @ctx = null
+    @objects = []
+    @player = null
+
+  calculateAllViewportBounds: (viewport) ->
+    # Save viewport so that each object has access to it
+    @viewport = viewport
+    object.recalculateViewportBounds() for object in @objects
 
   tick: ->
     object.tick() for object in @objects
@@ -145,12 +161,17 @@ Foreground = meta.def 'game.Foreground',
   getDataURL: ->
     @canvas.element.toDataUrl()
 
+  getViewport: ->
+    @viewport
+
 Foreground.add = Foreground.addObject
+Foreground.remove = Foreground.removeObject
 
 #---
 
-game.maps =
-  maps: maps
+game.mapCollection =
+  get: (name) -> maps[name]
+  set: (name, map) -> maps[name] = map
   Map: Map
   Background: Background
   Foreground: Foreground

@@ -1,17 +1,18 @@
 game = (window.game ||= {})
 
-{Map, maps} = game.maps
-{images} = game.images
-sprites = game.sprites
+mapCollection = game.mapCollection
+Map = mapCollection.Map
+imageCollection = game.imageCollection
+spriteCollection = game.spriteCollection
 Guard = game.Guard
 
-maps['lw_52'] = Map.create('lw_52', 1024, 1024)
+mapCollection.set 'lw_52', Map.create('lw_52', 1024, 1024)
   .withBackground (bg) ->
                        # (x1, y1), (width, height)
     bg.fill '#48a048', [0, 0], [1024, 1024]
     bg.fill '#3860b0', [944, 0], [80, 688]
     bg.fill '#3860b0', [832, 96], [112, 496]
-    bg.add sprites['flower'],
+    bg.add spriteCollection.get('flower'),
       [160, 608]
       [320, 320]
       [336, 336]
@@ -30,7 +31,7 @@ maps['lw_52'] = Map.create('lw_52', 1024, 1024)
       [768, 512]
       [784, 528]
       [800, 512]
-    bg.add images['links_house'], [288, 352]
+    bg.add imageCollection.get('links_house'), [288, 352]
     #bg.add sprites['waves'], [whatever, whatever], frameDelay: 2
 
   .withForeground (fg) ->

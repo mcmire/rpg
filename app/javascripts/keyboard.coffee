@@ -1,6 +1,5 @@
 game = (window.game ||= {})
 
-util = game.util
 meta = game.meta2
 {eventable} = game.roles
 
@@ -33,7 +32,9 @@ MODIFIER_KEYS = [
 
 PressedKeys = meta.def
   init: ->
-    # set these here as we don't want them to be shared among prototypes
+    @reset()
+
+  reset: ->
     @tsByKey = {}
     @keys = []
 
@@ -154,14 +155,14 @@ keyboard = meta.def 'game.keyboard',
     return this
 
   trapKeys: (keys...) ->
-    keys = util.ensureArray(keys)
+    keys = game.util.ensureArray(keys)
     for key in keys
       key = KEYS[key] if typeof key is 'string'
       @trappedKeys[key] = 1
     return this
 
   releaseKeys: (keys...) ->
-    keys = util.ensureArray(keys)
+    keys = game.util.ensureArray(keys)
     for key in keys
       key = KEYS[key] if typeof key is 'string'
       delete @trappedKeys[key]
@@ -193,7 +194,7 @@ keyboard = meta.def 'game.keyboard',
     event.shiftKey or event.ctrlKey or event.altKey or event.metaKey
 
   keyCodesFor: (keys...) ->
-    keys = util.ensureArray(keys)
+    keys = game.util.ensureArray(keys)
     $.map keys, (key) -> keyboard.keyCodeFor(key)
 
   keyCodeFor: (key) ->

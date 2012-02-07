@@ -1,7 +1,5 @@
 game = (window.game ||= {})
 
-util = game.util
-
 _fnContainsSuper = (fn) -> /\b_super\b/.test(fn)
 
 _wrap = (k, fn, val) ->
@@ -80,8 +78,8 @@ _extend = (target, source, opts={}) ->
         # subclass, investigate
         #
         target[tk] = _wrap(sk, source[sk], ->)
-    else if $.v.is.arr(source[k]) or util.isPlainObject(source[k])
-      target[k] = util.clone(source[k])
+    else if $.v.is.arr(source[k]) or game.util.isPlainObject(source[k])
+      target[k] = game.util.clone(source[k])
     else
       target[tk] = source[sk]
 
@@ -220,7 +218,7 @@ Class.extend = (args...) ->
   if classdef.statics? or classdef.members? or classdef.roles?
     statics = classdef.statics ? {}
     members = classdef.members ? {}
-    util.extend members, classdef.roles if classdef.roles?
+    game.util.extend members, classdef.roles if classdef.roles?
   else
     statics = {}
     members = classdef
@@ -456,7 +454,7 @@ baseModule = do ->
 #
 module = (mixins...) ->
   name = mixins.shift() if typeof mixins[0] is 'string'
-  mod = util.createFromProto(baseModule)
+  mod = game.util.createFromProto(baseModule)
   mod.__name__ = name
 
   # Prevent __name__ and __roles__ from showing up in for..in loops

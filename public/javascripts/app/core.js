@@ -1,17 +1,11 @@
 (function() {
-  var attachable, core, game, maps, player, tickable, ticker, viewport, _ref;
+  var attachable, core, game, tickable, ticker, _ref;
 
   game = (window.game || (window.game = {}));
 
   ticker = game.ticker.ticker;
 
   _ref = game.roles, attachable = _ref.attachable, tickable = _ref.tickable;
-
-  viewport = game.viewport;
-
-  player = game.player;
-
-  maps = game.maps.maps;
 
   core = ticker.cloneAs('game.core');
 
@@ -24,7 +18,7 @@
       this._super(this.main);
       self = this;
       this.keyboard = this.main.keyboard;
-      this.viewport = viewport.init(this);
+      this.viewport = game.viewport.init(this);
       this.tickInterval = 1000 / this.frameRate;
       this.throttledDraw = this.createIntervalTimer(this.tickInterval, function(df, dt) {
         return self.draw(df, dt);
@@ -32,7 +26,7 @@
       this.numDraws = 0;
       this.lastTickTime = null;
       this.numTicks = 0;
-      this.player = player;
+      this.player = game.player;
       return this;
     },
     setElement: function() {
@@ -42,8 +36,9 @@
       return this.viewport.attach();
     },
     start: function() {
-      this.loadMap('lw_52');
-      return this.tick();
+      if (!this.startedBefore) this.loadMap('lw_52');
+      this.tick();
+      return this.startedBefore = true;
     },
     stop: function() {
       if (this.timer) {
@@ -111,9 +106,10 @@
       var self;
       self = this;
       if (this.currentMap) this.currentMap.unload();
-      this.currentMap = maps['lw_52'];
+      this.currentMap = game.mapCollection.get(name);
       this.currentMap.load(this, this.player);
-      return this.viewport.setMap(this.currentMap);
+      this.viewport.setMap(this.currentMap);
+      return this.currentMap.frameInViewport(this.viewport);
     }
   });
 

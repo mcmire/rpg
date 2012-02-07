@@ -12,8 +12,10 @@
     _includeMixin: function(mixin, opts) {
       if (opts == null) opts = {};
       opts = $.v.extend({}, opts, {
-        start: '_start',
-        stop: '_stop'
+        keyTranslations: {
+          start: '_start',
+          stop: '_stop'
+        }
       });
       return this._super(mixin, opts);
     },

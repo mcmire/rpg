@@ -1,10 +1,8 @@
 (function() {
-  var KEYS, KeyTracker, MODIFIER_KEYS, PressedKeys, eventable, game, keyboard, meta, util,
+  var KEYS, KeyTracker, MODIFIER_KEYS, PressedKeys, eventable, game, keyboard, meta,
     __slice = Array.prototype.slice;
 
   game = (window.game || (window.game = {}));
-
-  util = game.util;
 
   meta = game.meta2;
 
@@ -35,6 +33,9 @@
 
   PressedKeys = meta.def({
     init: function() {
+      return this.reset();
+    },
+    reset: function() {
       this.tsByKey = {};
       return this.keys = [];
     },
@@ -190,7 +191,7 @@
     trapKeys: function() {
       var key, keys, _i, _len;
       keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      keys = util.ensureArray(keys);
+      keys = game.util.ensureArray(keys);
       for (_i = 0, _len = keys.length; _i < _len; _i++) {
         key = keys[_i];
         if (typeof key === 'string') key = KEYS[key];
@@ -201,7 +202,7 @@
     releaseKeys: function() {
       var key, keys, _i, _len;
       keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      keys = util.ensureArray(keys);
+      keys = game.util.ensureArray(keys);
       for (_i = 0, _len = keys.length; _i < _len; _i++) {
         key = keys[_i];
         if (typeof key === 'string') key = KEYS[key];
@@ -241,7 +242,7 @@
     keyCodesFor: function() {
       var keys;
       keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      keys = util.ensureArray(keys);
+      keys = game.util.ensureArray(keys);
       return $.map(keys, function(key) {
         return keyboard.keyCodeFor(key);
       });

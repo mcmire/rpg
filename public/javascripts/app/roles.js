@@ -166,9 +166,9 @@
   });
 
   assignable = meta.def('game.assignable', {
-    assignTo: function(canvas) {
-      this.canvas = canvas;
-      this.ctx = canvas.ctx;
+    assignTo: function(parent) {
+      this.parent = parent;
+      this.ctx = parent.ctx;
       return this;
     }
   });

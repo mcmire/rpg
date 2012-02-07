@@ -2,9 +2,6 @@ game = (window.game ||= {})
 
 meta = game.meta2
 {eventable, attachable, tickable, runnable} = game.roles
-#plug = game.plug
-keyboard = game.keyboard
-core = game.core
 #fpsReporter = game.fpsReporter
 #playerDebugger = game.playerDebugger
 
@@ -12,21 +9,15 @@ main = meta.def 'game.main',
   eventable,
   attachable,
   tickable,
-  runnable
+  runnable,
 
-#main.addPlugin(keyboard)
-#main.addPlugin(core)
-##main.addPlugin(fpsReporter)
-##main.addPlugin(playerDebugger)
-
-main.extend
   imagesPath: '/images'
   debug: false  # or true
 
   init: ->
     @_super(document.body)  # attachable
-    @keyboard = keyboard.init()
-    @core = core.init(this)
+    @keyboard = game.keyboard.init()
+    @core = game.core.init(this)
     @attach()
     @addEvents()
     @run()
@@ -57,7 +48,7 @@ main.extend
     self = this
 
     assetCollections = []
-    assetCollections.push(game.images)
+    assetCollections.push(game.imageCollection)
     #assetCollections.push require('app/sounds')
 
     i = 0

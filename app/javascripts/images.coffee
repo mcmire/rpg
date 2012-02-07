@@ -64,10 +64,12 @@ add 'links_house', 208, 200
 add 'rock1', 16, 16
 add 'rock2', 16, 16
 
+add 'link2x', 34, 1440
+
 #---
 
-game.images =
-  images: images
+game.imageCollection =
+  get: (name) -> images[name]
   load: load
   isLoaded: isLoaded
 
