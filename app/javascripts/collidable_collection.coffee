@@ -2,13 +2,6 @@ game = (window.game ||= {})
 
 meta = game.meta2
 
-_boundsFrom = (mappableOrBounds) ->
-  # TODO: Remove ? when Bounds is a prototype not a class
-  if mappableOrBounds.doesInclude?('game.Mappable')
-    mappableOrBounds.bounds.onMap
-  else
-    mappableOrBounds
-
 CollidableCollection = meta.def 'game.CollidableCollection',
   # Initialize the collection.
   #
@@ -54,15 +47,14 @@ CollidableCollection = meta.def 'game.CollidableCollection',
   # The collision should be detected correctly whether the given bounds are
   # taller or shorter than the collidable in question.
   #
-  # boundsOrGrob - An instance of Bounds or Grob.
+  # other - An instance of Bounds, or an object that includes Mappable.
   #
   # Returns true or false.
   #
-  intersectsWith: (boundsOrGrob) ->
-    bounds = _boundsFrom(boundsOrGrob)
+  intersectsWith: (other) ->
     ret = false
     @each (collidable) ->
-      if collidable.intersectsWith(bounds)
+      if collidable.intersectsWith(other)
         ret = true
         return false
     return ret
@@ -71,16 +63,15 @@ CollidableCollection = meta.def 'game.CollidableCollection',
   # of a bounds box to prevent it from colliding with a collidable object when
   # moving rightward.
   #
-  # boundsOrGrob - An instance of Bounds or Grob.
+  # other - An instance of Bounds, or an object that includes Mappable.
   #
   # Returns the integer X-coordinate of the left side of the collidable that
   # the given bounds collides with if one exists, or null otherwise.
   #
-  getOuterLeftEdgeBlocking: (boundsOrGrob) ->
-    bounds = _boundsFrom(boundsOrGrob)
+  getOuterLeftEdgeBlocking: (other) ->
     ret = null
     @each (collidable) ->
-      if ret = collidable.getOuterLeftEdgeBlocking(bounds)
+      if ret = collidable.getOuterLeftEdgeBlocking(other)
         return false
     return ret
 
@@ -88,16 +79,15 @@ CollidableCollection = meta.def 'game.CollidableCollection',
   # of a bounds box to prevent it from colliding with a collidable object when
   # moving leftward.
   #
-  # boundsOrGrob - An instance of Bounds or Grob.
+  # other - An instance of Bounds, or an object that includes Mappable.
   #
   # Returns the integer X-coordinate of the right side of the collidable that
   # the given bounds collides with if one exists, or null otherwise.
   #
-  getOuterRightEdgeBlocking: (boundsOrGrob) ->
-    bounds = _boundsFrom(boundsOrGrob)
+  getOuterRightEdgeBlocking: (other) ->
     ret = null
     @each (collidable) ->
-      if ret = collidable.getOuterRightEdgeBlocking(bounds)
+      if ret = collidable.getOuterRightEdgeBlocking(other)
         return false
     return ret
 
@@ -105,16 +95,15 @@ CollidableCollection = meta.def 'game.CollidableCollection',
   # of a bounds box to prevent it from colliding with a collidable object when
   # moving downward.
   #
-  # boundsOrGrob - An instance of Bounds or Grob.
+  # other - An instance of Bounds, or an object that includes Mappable.
   #
   # Returns the integer Y-coordinate of the top side of the collidable that
   # the given bounds collides with if one exists, or null otherwise.
   #
-  getOuterTopEdgeBlocking: (boundsOrGrob) ->
-    bounds = _boundsFrom(boundsOrGrob)
+  getOuterTopEdgeBlocking: (other) ->
     ret = null
     @each (collidable) ->
-      if ret = collidable.getOuterTopEdgeBlocking(bounds)
+      if ret = collidable.getOuterTopEdgeBlocking(other)
         return false
     return ret
 
@@ -122,16 +111,15 @@ CollidableCollection = meta.def 'game.CollidableCollection',
   # of a bounds box to prevent it from colliding with a collidable object when
   # moving upward.
   #
-  # boundsOrGrob - An instance of Bounds or Grob.
+  # other - An instance of Bounds, or an object that includes Mappable.
   #
   # Returns the integer Y-coordinate of the bottom side of the collidable that
   # the given bounds collides with if one exists, or null otherwise.
   #
-  getOuterBottomEdgeBlocking: (boundsOrGrob) ->
-    bounds = _boundsFrom(boundsOrGrob)
+  getOuterBottomEdgeBlocking: (other) ->
     ret = null
     @each (collidable) ->
-      if ret = collidable.getOuterBottomEdgeBlocking(bounds)
+      if ret = collidable.getOuterBottomEdgeBlocking(other)
         return false
     return ret
 

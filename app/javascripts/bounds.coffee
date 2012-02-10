@@ -2,6 +2,13 @@ game = (window.game ||= {})
 
 {Class} = game.meta
 
+_boundsFrom = (mappableOrBounds) ->
+  # TODO: Remove ? when Bounds is a prototype not a class
+  if mappableOrBounds.doesInclude?('game.Mappable')
+    mappableOrBounds.bounds.onMap
+  else
+    mappableOrBounds
+
 # The Bounds class represents a box, such as the box around a mob, or the box
 # that keeps a mob from moving, or the frame of the viewport, or the map itself.
 #
@@ -195,33 +202,29 @@ Bounds = Class.extend 'game.Bounds',
     # The intersection should be detected correctly whether these bounds are
     # taller or shorter than the given bounds.
     #
-    # other - An instance of Bounds.
+    # other - An instance of Bounds, or an object that includes Mappable.
     #
     # Returns true if the Bounds intersect, otherwise false.
     #
     # May also be called as #intersectsWith.
     #
     intersectWith: (other) ->
-      # b[ a{ b] a}
-      x1i = (other.x1 <= @x1 <= other.x2)
-      # a{ b[ a} b]
-      x2i = (other.x1 <= @x2 <= other.x2)
-      # a{ b[ b] a}
+      # I intersect you...
+      other = _boundsFrom(other)
+      # ...if my x1 is in between your X's
+      x1i = (other.x1 < @x1 < other.x2)
+      # ...or my x2 is in between your X's
+      x2i = (other.x1 < @x2 < other.x2)
+      # ... or I am covering you, X-wise
+      # [ this needs to include == or else it won't work ]
       xo  = (@x1 <= other.x1 and @x2 >= other.x2)
-      #  b.==.
-      # a.~~.
-      #  b`==`
-      # a`~~`
-      y1i = (other.y1 <= @y1 <= other.y2)
-      # a.~~.
-      #  b.==.
-      # a`~~`
-      #  b`==`
-      y2i = (other.y1 <= @y2 <= other.y2)
-      # a.~~.
-      #  b.==.
-      #  b`==`
-      # a`~~`
+      # ... and ...
+      # ... if my y1 is in between your Y's
+      y1i = (other.y1 < @y1 < other.y2)
+      # ... or my y2 is in between your Y's
+      y2i = (other.y1 < @y2 < other.y2)
+      # ... or I am covering you, Y-wise
+      # [ this needs to include == or else it won't work ]
       yo  = (@y1 <= other.y1 and @y2 >= other.y2)
       return (
         (x1i or x2i or xo) and
@@ -242,13 +245,14 @@ Bounds = Class.extend 'game.Bounds',
     #   => |_____:_|  |   => |  :_|_____|
     #            |____|   => |____|
     #
-    # other - An instance of Bounds.
+    # other - An instance of Bounds, or an object that includes Mappable.
     #
     # Returns an integer if the given Bounds intersect with these bounds,
     # otherwise returns null.
     #
     getOuterLeftEdgeBlocking: (other) ->
-      @x1-1 if @intersectsWith(other)
+      other = _boundsFrom(other)
+      @x1 if @intersectsWith(other)
 
     # Public: Obtain the X-coordinate of the right side of these bounds which
     # intersects with the given incoming bounds (which are moving left).
@@ -264,13 +268,14 @@ Bounds = Class.extend 'game.Bounds',
     #   |  |_:_____| <=   |_____|_:  | <=
     #   |____|                  |____| <=
     #
-    # other - An instance of Bounds.
+    # other - An instance of Bounds, or an object that includes Mappable.
     #
     # Returns an integer if the given Bounds intersect with these bounds,
     # otherwise returns null.
     #
     getOuterRightEdgeBlocking: (other) ->
-      @x2+1 if @intersectsWith(other)
+      other = _boundsFrom(other)
+      @x2 if @intersectsWith(other)
 
     # Public: Obtain the Y-coordinate of the top side of these bounds which
     # intersects with the given incoming bounds (which are moving down).
@@ -287,13 +292,14 @@ Bounds = Class.extend 'game.Bounds',
     #   2 | |____| |      2    |    |
     #     |________|           |____|
     #
-    # other - An instance of Bounds.
+    # other - An instance of Bounds, or an object that includes Mappable.
     #
     # Returns an integer if the given Bounds intersect with these bounds,
     # otherwise returns null.
     #
     getOuterTopEdgeBlocking: (other) ->
-      @y1-1 if @intersectsWith(other)
+      other = _boundsFrom(other)
+      @y1 if @intersectsWith(other)
 
     # Public: Obtain the Y-coordinate of the bottom side of these bounds which
     # blocks the given incoming bounds (which are moving up).
@@ -310,24 +316,29 @@ Bounds = Class.extend 'game.Bounds',
     #         ^  ^             ^  ^
     #         |  |             |  |
     #
-    # other - An instance of Bounds.
+    # other - An instance of Bounds, or an object that includes Mappable.
     #
     # Returns an integer if the given Bounds intersect with these bounds,
     # otherwise returns null.
     #
     getOuterBottomEdgeBlocking: (other) ->
-      @y2+1 if @intersectsWith(other)
+      other = _boundsFrom(other)
+      @y2 if @intersectsWith(other)
 
     getInnerLeftEdgeBlocking: (other) ->
+      other = _boundsFrom(other)
       @x1 if other.x1 < @x1
 
     getInnerRightEdgeBlocking: (other) ->
+      other = _boundsFrom(other)
       @x2 if other.x2 > @x2
 
     getInnerTopEdgeBlocking: (other) ->
+      other = _boundsFrom(other)
       @y1 if other.y1 < @y1
 
     getInnerBottomEdgeBlocking: (other) ->
+      other = _boundsFrom(other)
       @y2 if other.y2 > @y2
 
     draw: (main) ->

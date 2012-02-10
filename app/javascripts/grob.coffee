@@ -29,6 +29,10 @@ Grob = Block.cloneAs('game.Grob').extend \
     @image = game.imageCollection.get(imagePath)
     return this
 
+  activate: ->
+
+  deactivate: ->
+
   predraw: (ctx) ->
     biv = @bounds.inViewport
     @currentState.sequence.clear(ctx, biv.x1, biv.y1)
@@ -40,8 +44,8 @@ Grob = Block.cloneAs('game.Grob').extend \
       @recalculateViewportBounds()
 
   draw: (ctx) ->
-    biv = @bounds.inViewport
-    @currentState.sequence.draw(ctx, biv.x1, biv.y1)
+    b = @bounds.onMap
+    @currentState.sequence.draw(ctx, b.x1, b.y1)
 
   # Public: Add a new state to the state machine.
   #
@@ -81,6 +85,7 @@ Grob = Block.cloneAs('game.Grob').extend \
 
   setState: (name) ->
     @currentState = @states[name]
+    @recalculateViewportBounds()
     @currentState.sequence.reset()
     throw new Error "Unknown state '#{name}'!" if not @currentState
     @currentState

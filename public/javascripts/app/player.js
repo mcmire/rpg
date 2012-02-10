@@ -45,6 +45,7 @@
       return keyboard.removeKeyTracker(this.keyTracker);
     },
     activate: function() {
+      this.setState('idleRight');
       return this.addEvents();
     },
     deactivate: function() {
@@ -139,7 +140,7 @@
       } else {
         this.bounds.onMap.replace(nextBoundsOnMap);
         if ((this.bounds.inViewport.y1 - this.speed) < this.fence.y1) {
-          return this.viewport.translateBySide('y2', this.bounds.onMap.y1 - this.viewportPadding);
+          return this.viewport.translateBySide('y1', this.bounds.onMap.y1 - this.viewportPadding);
         }
       }
     },
@@ -172,7 +173,7 @@
       }
     },
     _initFence: function() {
-      return this.fence = game.Bounds.rect(0, 0, game.viewport.width, game.viewport.height);
+      return this.fence = game.Bounds.rect(0, 0, game.viewport.width, game.viewport.height).withScale(this.viewportPadding);
     }
   });
 
@@ -223,8 +224,6 @@
     frameDuration: 2,
     doesRepeat: true
   });
-
-  player.setState('idleRight');
 
   game.player = player;
 

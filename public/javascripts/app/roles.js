@@ -86,7 +86,7 @@
       if (typeof parent.doesInclude === "function" ? parent.doesInclude('game.attachable') : void 0) {
         this.parentElement = parent.$element;
       } else {
-        this.parentElement = parent;
+        this.parentElement = $(parent);
       }
       return this;
     },
@@ -98,8 +98,7 @@
       return this._super();
     },
     attach: function() {
-      var _ref;
-      if ((_ref = this.$element) != null) _ref.appendTo(this.parentElement);
+      if (this.$element) this.parentElement.append(this.$element);
       return this;
     },
     detach: function() {

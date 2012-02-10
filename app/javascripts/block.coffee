@@ -11,7 +11,12 @@ Collidable = game.Collidable
 Block = meta.def 'game.Block',
   assignable,
   Mappable,
-  Collidable
+  Collidable,
+
+  # tick: (ctx) ->
+  #   b = @bounds.onMap
+  #   ctx.strokeStyle = '#ff0000'
+  #   ctx.strokeRect(b.x1+0.5, b.y1+0.5, @width-0.5, @height-0.5)
 
 game.Block = Block
 

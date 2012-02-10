@@ -38,13 +38,16 @@ player.extend \
     keyboard.removeKeyTracker(@keyTracker)
 
   activate: ->
+    @setState('idleRight')
     @addEvents()
 
   deactivate: ->
     @removeEvents()
 
   # draw: (ctx) ->
-  #   debugger
+  #   b = @bounds.onMap
+  #   ctx.strokeStyle = '#ff0000'
+  #   ctx.strokeRect(b.x1+0.5, b.y1+0.5, @width-0.5, @height-0.5)
   #   @_super(ctx)
 
   # Respond to keystrokes executed during the "dead time", i.e., the time
@@ -221,7 +224,7 @@ player.extend \
       # Would the player cross the top edge of the fence?
       if (@bounds.inViewport.y1 - @speed) < @fence.y1
         # Yes: shift viewport up.
-        @viewport.translateBySide('y2', @bounds.onMap.y1 - @viewportPadding)
+        @viewport.translateBySide('y1', @bounds.onMap.y1 - @viewportPadding)
 
   # Internal: Move the player downward.
   #
@@ -272,6 +275,7 @@ player.extend \
   # override
   _initFence: ->
     @fence = game.Bounds.rect(0, 0, game.viewport.width, game.viewport.height)
+      .withScale(@viewportPadding)
 
 # Go ahead and init the player, after all we will only have one instance hanging
 # around
@@ -286,8 +290,6 @@ player.addState 'idleLeft',  [0],                     frameDuration: 2, doesRepe
 player.addState 'idleRight', [8],                     frameDuration: 2, doesRepeat: true
 player.addState 'idleDown',  [19],                    frameDuration: 2, doesRepeat: true
 player.addState 'idleUp',    [23],                    frameDuration: 2, doesRepeat: true
-
-player.setState('idleRight')
 
 game.player = player
 

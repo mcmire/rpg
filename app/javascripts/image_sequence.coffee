@@ -42,16 +42,13 @@ ImageSequence = meta.def 'game.ImageSequence',
     @lastDrawAt = null
 
   draw: (ctx, x, y) ->
-    # if @parent?.__name__ is 'game.player'# and @numFrames > 1
-    #   console.log "drawing player image seq at: (#{x}, #{y})"
-
     if @frameDelay > 0
       @frameDelay--
       return
 
     yOffset = @getCurrentFrame() * @height
-    # if @parent?.__name__ is 'game.player' and @numFrames > 1
-    #   console.log "player image seq draw: {currentFrame: #{@currentFrame}, yOffset: #{yOffset}}"
+    # ctx.strokeStyle = '#ff0000'
+    # ctx.strokeRect(x+0.5, y+0.5, @width-0.5, @height-0.5)
     ctx.drawImage(@image.element, 0, yOffset, @width, @height, x, y, @width, @height)
     @lastDrawAt = [x, y]
 

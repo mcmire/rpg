@@ -42,7 +42,7 @@ Map = meta.def 'game.Map',
 
   activate: ->
     @isActive = true
-    @player.addEvents()
+    @foreground.activate()
 
   deactivate: ->
     @isActive = false

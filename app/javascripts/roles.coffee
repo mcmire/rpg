@@ -69,7 +69,7 @@ attachable = meta.def 'game.attachable',
       @parentElement = parent.$element
     else
       # assume that parent is a selector or Bonzo element
-      @parentElement = parent
+      @parentElement = $(parent)
     return this
 
   setElement: (@$element) ->
@@ -79,9 +79,10 @@ attachable = meta.def 'game.attachable',
     @_super()
 
   attach: ->
-    # by default we assume you want to attach to the parent element but it is
+    # By default we assume you want to attach to the parent element but it is
     # totally ok to override this to use another object
-    @$element?.appendTo(@parentElement)
+    # Don't use appendTo() here, it doesn't work for some reason
+    @parentElement.append(@$element) if @$element
     return this
 
   detach: ->

@@ -1,18 +1,10 @@
 (function() {
-  var CollidableCollection, game, meta, _boundsFrom,
+  var CollidableCollection, game, meta,
     __slice = Array.prototype.slice;
 
   game = (window.game || (window.game = {}));
 
   meta = game.meta2;
-
-  _boundsFrom = function(mappableOrBounds) {
-    if (typeof mappableOrBounds.doesInclude === "function" ? mappableOrBounds.doesInclude('game.Mappable') : void 0) {
-      return mappableOrBounds.bounds.onMap;
-    } else {
-      return mappableOrBounds;
-    }
-  };
 
   CollidableCollection = meta.def('game.CollidableCollection', {
     init: function() {
@@ -82,51 +74,46 @@
     without: function(collidable) {
       return this.create(this.collidables, collidable);
     },
-    intersectsWith: function(boundsOrGrob) {
-      var bounds, ret;
-      bounds = _boundsFrom(boundsOrGrob);
+    intersectsWith: function(other) {
+      var ret;
       ret = false;
       this.each(function(collidable) {
-        if (collidable.intersectsWith(bounds)) {
+        if (collidable.intersectsWith(other)) {
           ret = true;
           return false;
         }
       });
       return ret;
     },
-    getOuterLeftEdgeBlocking: function(boundsOrGrob) {
-      var bounds, ret;
-      bounds = _boundsFrom(boundsOrGrob);
+    getOuterLeftEdgeBlocking: function(other) {
+      var ret;
       ret = null;
       this.each(function(collidable) {
-        if (ret = collidable.getOuterLeftEdgeBlocking(bounds)) return false;
+        if (ret = collidable.getOuterLeftEdgeBlocking(other)) return false;
       });
       return ret;
     },
-    getOuterRightEdgeBlocking: function(boundsOrGrob) {
-      var bounds, ret;
-      bounds = _boundsFrom(boundsOrGrob);
+    getOuterRightEdgeBlocking: function(other) {
+      var ret;
       ret = null;
       this.each(function(collidable) {
-        if (ret = collidable.getOuterRightEdgeBlocking(bounds)) return false;
+        if (ret = collidable.getOuterRightEdgeBlocking(other)) return false;
       });
       return ret;
     },
-    getOuterTopEdgeBlocking: function(boundsOrGrob) {
-      var bounds, ret;
-      bounds = _boundsFrom(boundsOrGrob);
+    getOuterTopEdgeBlocking: function(other) {
+      var ret;
       ret = null;
       this.each(function(collidable) {
-        if (ret = collidable.getOuterTopEdgeBlocking(bounds)) return false;
+        if (ret = collidable.getOuterTopEdgeBlocking(other)) return false;
       });
       return ret;
     },
-    getOuterBottomEdgeBlocking: function(boundsOrGrob) {
-      var bounds, ret;
-      bounds = _boundsFrom(boundsOrGrob);
+    getOuterBottomEdgeBlocking: function(other) {
+      var ret;
       ret = null;
       this.each(function(collidable) {
-        if (ret = collidable.getOuterBottomEdgeBlocking(bounds)) return false;
+        if (ret = collidable.getOuterBottomEdgeBlocking(other)) return false;
       });
       return ret;
     }

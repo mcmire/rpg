@@ -33,14 +33,17 @@ mapCollection.add 'lw_52', 1024, 1024, (fg, bg) ->
     bg.add imageCollection.get('links_house'), [288, 352]
     #bg.add sprites['waves'], [whatever, whatever], frameDelay: 2
 
-    # fg.add Block,
-    #   # x1, y1, width, height
-    #   [96, 96, 352, 112]
+    fg.add Block,
+      # x1, y1, width, height
+      [288, 352, 192, 176]
     # TODO: Get this to work
     # fg.add Guard,
     #   [407, 944]
     #   [478, 944]
     #   [950, 752]
     #   [950, 816]
+
+    fg.onLoad ->
+      @player.setMapPosition(368, 592)
 
 window.scriptLoaded('app/maps/lw_52')

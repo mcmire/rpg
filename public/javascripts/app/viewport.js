@@ -47,7 +47,18 @@
       return console.log("viewport.bounds = " + (this.bounds.inspect()));
     },
     _setBounds: function() {
-      return this.bounds = game.Bounds.rect(0, 0, this.width, this.height);
+      var p, pb, phh, pwh, vhh, vwh, x1, y1;
+      p = this.core.player;
+      pb = p.bounds.onMap;
+      pwh = Math.round(p.width / 2);
+      phh = Math.round(p.height / 2);
+      vwh = Math.round(this.width / 2);
+      vhh = Math.round(this.height / 2);
+      x1 = pb.x1 + pwh - vwh;
+      if (x1 < 0) x1 = 0;
+      y1 = pb.y1 + phh - vhh;
+      if (y1 < 0) y1 = 0;
+      return this.bounds = game.Bounds.rect(x1, y1, this.width, this.height);
     }
   });
 

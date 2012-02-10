@@ -115,8 +115,8 @@
       map.addPlayer(this.player);
       map.load();
       map.attachToViewport();
-      map.activate();
       this.viewport.setMap(map);
+      map.activate();
       return this.currentMap = map;
     }
   });

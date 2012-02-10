@@ -76,10 +76,21 @@ viewport = meta.def 'game.viewport',
   debug: ->
     console.log "viewport.bounds = #{@bounds.inspect()}"
 
+  # Set the bounds of the viewport on the map itself.
   _setBounds: ->
-    # These are the bounds of the viewport on the map itself
-    # TODO: Start bounds centered on player
-    @bounds = game.Bounds.rect(0, 0, @width, @height)
+    p = @core.player
+    pb = p.bounds.onMap
+    pwh = Math.round(p.width / 2)
+    phh = Math.round(p.height / 2)
+    vwh  = Math.round(@width / 2)
+    vhh  = Math.round(@height / 2)
+    # Center the viewport on the player
+    # Once we start with the player's coordinates then it makes sense
+    x1 = pb.x1 + pwh - vwh
+    x1 = 0 if x1 < 0
+    y1 = pb.y1 + phh - vhh
+    y1 = 0 if y1 < 0
+    @bounds = game.Bounds.rect(x1, y1, @width, @height)
 
 game.viewport = viewport
 

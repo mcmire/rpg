@@ -129,9 +129,10 @@ core.extend \
     map.addPlayer(@player)
     map.load()
     map.attachToViewport()
-    map.activate()
-
     @viewport.setMap(map)
+    # have to put this after setting map b/c by this point viewport bounds are
+    # set and so we can calculate viewport bounds for grobs
+    map.activate()
 
     @currentMap = map
 

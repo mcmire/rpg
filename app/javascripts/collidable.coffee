@@ -2,12 +2,6 @@ game = (window.game ||= {})
 
 meta = game.meta2
 
-_boundsFrom = (mappableOrBounds) ->
-  if mappableOrBounds.doesInclude('game.Mappable')
-    mappableOrBounds.bounds.onMap
-  else
-    mappableOrBounds
-
 # This assumes Mappable
 Collidable = meta.def 'game.Collidable',
   assignToMap: (map) ->
@@ -22,25 +16,20 @@ Collidable = meta.def 'game.Collidable',
       # null/empty object pattern - still works but does nothing
       @mapCollidables = game.CollidableCollection.create()
 
-  intersectsWith: (boundsOrGrob) ->
-    bounds = _boundsFrom(boundsOrGrob)
-    @bounds.onMap.intersectsWith(bounds)
+  intersectsWith: (other) ->
+    @bounds.onMap.intersectsWith(other)
 
-  getOuterLeftEdgeBlocking: (boundsOrGrob) ->
-    bounds = _boundsFrom(boundsOrGrob)
-    @bounds.onMap.getOuterLeftEdgeBlocking(bounds)
+  getOuterLeftEdgeBlocking: (other) ->
+    @bounds.onMap.getOuterLeftEdgeBlocking(other)
 
-  getOuterRightEdgeBlocking: (boundsOrGrob) ->
-    bounds = _boundsFrom(boundsOrGrob)
-    @bounds.onMap.getOuterRightEdgeBlocking(bounds)
+  getOuterRightEdgeBlocking: (other) ->
+    @bounds.onMap.getOuterRightEdgeBlocking(other)
 
-  getOuterTopEdgeBlocking: (boundsOrGrob) ->
-    bounds = _boundsFrom(boundsOrGrob)
-    @bounds.onMap.getOuterTopEdgeBlocking(bounds)
+  getOuterTopEdgeBlocking: (other) ->
+    @bounds.onMap.getOuterTopEdgeBlocking(other)
 
-  getOuterBottomEdgeBlocking: (boundsOrGrob) ->
-    bounds = _boundsFrom(boundsOrGrob)
-    @bounds.onMap.getOuterBottomEdgeBlocking(bounds)
+  getOuterBottomEdgeBlocking: (other) ->
+    @bounds.onMap.getOuterBottomEdgeBlocking(other)
 
 game.Collidable = Collidable
 

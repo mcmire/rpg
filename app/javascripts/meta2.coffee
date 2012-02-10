@@ -74,8 +74,10 @@ proto.extend = (mixins...) ->
   @_includeMixin(mixin) for mixin in mixins
   return this
 proto.doesInclude = (obj) ->
-  obj.__name__ and @__mixins__[obj.__name__]
-  return this
+  if typeof obj is 'string'
+    @__mixins__[obj]
+  else if obj.__name__
+    @__mixins__[obj.__name__]
 # proto.addTranslations = (obj) ->
 #   # write property in own properties so it doesn't modify
 #   # proto.__key_translations__

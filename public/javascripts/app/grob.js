@@ -22,6 +22,8 @@
       this.image = game.imageCollection.get(imagePath);
       return this;
     },
+    activate: function() {},
+    deactivate: function() {},
     predraw: function(ctx) {
       var biv, fn;
       biv = this.bounds.inViewport;
@@ -36,9 +38,9 @@
       }
     },
     draw: function(ctx) {
-      var biv;
-      biv = this.bounds.inViewport;
-      return this.currentState.sequence.draw(ctx, biv.x1, biv.y1);
+      var b;
+      b = this.bounds.onMap;
+      return this.currentState.sequence.draw(ctx, b.x1, b.y1);
     },
     addState: function(name, frameIndices, opts) {
       var seq, state;
@@ -59,6 +61,7 @@
     },
     setState: function(name) {
       this.currentState = this.states[name];
+      this.recalculateViewportBounds();
       this.currentState.sequence.reset();
       if (!this.currentState) throw new Error("Unknown state '" + name + "'!");
       return this.currentState;

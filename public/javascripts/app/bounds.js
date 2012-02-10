@@ -1,10 +1,18 @@
 (function() {
-  var Bounds, Class, game,
+  var Bounds, Class, game, _boundsFrom,
     __slice = Array.prototype.slice;
 
   game = (window.game || (window.game = {}));
 
   Class = game.meta.Class;
+
+  _boundsFrom = function(mappableOrBounds) {
+    if (typeof mappableOrBounds.doesInclude === "function" ? mappableOrBounds.doesInclude('game.Mappable') : void 0) {
+      return mappableOrBounds.bounds.onMap;
+    } else {
+      return mappableOrBounds;
+    }
+  };
 
   Bounds = Class.extend('game.Bounds', {
     statics: {
@@ -111,36 +119,45 @@
       },
       intersectWith: function(other) {
         var x1i, x2i, xo, y1i, y2i, yo, _ref, _ref2, _ref3, _ref4;
-        x1i = (other.x1 <= (_ref = this.x1) && _ref <= other.x2);
-        x2i = (other.x1 <= (_ref2 = this.x2) && _ref2 <= other.x2);
+        other = _boundsFrom(other);
+        x1i = (other.x1 < (_ref = this.x1) && _ref < other.x2);
+        x2i = (other.x1 < (_ref2 = this.x2) && _ref2 < other.x2);
         xo = this.x1 <= other.x1 && this.x2 >= other.x2;
-        y1i = (other.y1 <= (_ref3 = this.y1) && _ref3 <= other.y2);
-        y2i = (other.y1 <= (_ref4 = this.y2) && _ref4 <= other.y2);
+        y1i = (other.y1 < (_ref3 = this.y1) && _ref3 < other.y2);
+        y2i = (other.y1 < (_ref4 = this.y2) && _ref4 < other.y2);
         yo = this.y1 <= other.y1 && this.y2 >= other.y2;
         return (x1i || x2i || xo) && (y1i || y2i || yo);
       },
       getOuterLeftEdgeBlocking: function(other) {
-        if (this.intersectsWith(other)) return this.x1 - 1;
+        other = _boundsFrom(other);
+        if (this.intersectsWith(other)) return this.x1;
       },
       getOuterRightEdgeBlocking: function(other) {
-        if (this.intersectsWith(other)) return this.x2 + 1;
+        other = _boundsFrom(other);
+        if (this.intersectsWith(other)) return this.x2;
       },
       getOuterTopEdgeBlocking: function(other) {
-        if (this.intersectsWith(other)) return this.y1 - 1;
+        other = _boundsFrom(other);
+        if (this.intersectsWith(other)) return this.y1;
       },
       getOuterBottomEdgeBlocking: function(other) {
-        if (this.intersectsWith(other)) return this.y2 + 1;
+        other = _boundsFrom(other);
+        if (this.intersectsWith(other)) return this.y2;
       },
       getInnerLeftEdgeBlocking: function(other) {
+        other = _boundsFrom(other);
         if (other.x1 < this.x1) return this.x1;
       },
       getInnerRightEdgeBlocking: function(other) {
+        other = _boundsFrom(other);
         if (other.x2 > this.x2) return this.x2;
       },
       getInnerTopEdgeBlocking: function(other) {
+        other = _boundsFrom(other);
         if (other.y1 < this.y1) return this.y1;
       },
       getInnerBottomEdgeBlocking: function(other) {
+        other = _boundsFrom(other);
         if (other.y2 > this.y2) return this.y2;
       },
       draw: function(main) {
