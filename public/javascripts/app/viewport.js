@@ -8,34 +8,26 @@
 
   _ref = game.roles, attachable = _ref.attachable, tickable = _ref.tickable;
 
-  viewport = meta.def('game.viewport', attachable, tickable, {
+  viewport = meta.def('game.viewport', attachable, {
     width: 512,
     height: 448,
-    init: function(core) {
+    init: function(core, player) {
       this.core = core;
+      this.player = player;
       return this._super(this.core);
     },
     setElement: function() {
       return this.$element = $('<div id="viewport" />').css({
         width: this.width,
-        height: this.height,
-        'background-repeat': 'no-repeat'
+        height: this.height
       });
-    },
-    tick: function() {
-      return this.draw();
-    },
-    draw: function() {
-      var bom, positionStr;
-      bom = this.bounds;
-      positionStr = [-bom.x1 + 'px', -bom.y1 + 'px'].join(" ");
-      return this.$element.css('background-position', positionStr);
     },
     setMap: function(map) {
       this.currentMap = map;
-      this.$element.css('background-image', map.background.getDataURL());
-      this.$element.append(map.foreground.canvas.$element);
       return this._setBounds();
+    },
+    unsetMap: function() {
+      return this.currentMap.detach();
     },
     translate: function() {
       var args, _ref2;

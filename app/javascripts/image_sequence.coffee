@@ -34,17 +34,24 @@ ImageSequence = meta.def 'game.ImageSequence',
     @frameDelay = opts.frameDelay or 0
     @frameDuration = opts.frameDuration or 1
     @doesRepeat = opts.doesRepeat
+    @reset()
 
+  reset: ->
     @numDraws = 0
     @currentFrame = 0
     @lastDrawAt = null
 
   draw: (ctx, x, y) ->
+    # if @parent?.__name__ is 'game.player'# and @numFrames > 1
+    #   console.log "drawing player image seq at: (#{x}, #{y})"
+
     if @frameDelay > 0
       @frameDelay--
       return
 
     yOffset = @getCurrentFrame() * @height
+    # if @parent?.__name__ is 'game.player' and @numFrames > 1
+    #   console.log "player image seq draw: {currentFrame: #{@currentFrame}, yOffset: #{yOffset}}"
     ctx.drawImage(@image.element, 0, yOffset, @width, @height, x, y, @width, @height)
     @lastDrawAt = [x, y]
 
@@ -61,9 +68,11 @@ ImageSequence = meta.def 'game.ImageSequence',
 
     return
 
-  clear: (ctx) ->
-    if @lastDrawAt
-      ctx.clearRect(@lastDrawAt[0], @lastDrawAt[1], @width, @height)
+  clear: (ctx, x, y) ->
+    return unless @lastDrawAt
+    # if @parent?.__name__ is 'game.player'
+      # console.log "clearing player image seq at (#{@lastDrawAt[0]}, #{@lastDrawAt[1]})"
+    ctx.clearRect(@lastDrawAt[0], @lastDrawAt[1], @width, @height)
 
   getCurrentFrame: ->
     frame = @frameIndices[@currentFrame]

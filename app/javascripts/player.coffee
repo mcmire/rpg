@@ -3,7 +3,7 @@ game = (window.game ||= {})
 util = game.util
 {eventable} = game.roles
 keyboard = game.keyboard
-Mob = game.Mob
+Grob = game.Grob
 
 DIRECTIONS = 'up down left right'.split(' ')
 
@@ -21,34 +21,13 @@ for dir in DIRECTIONS
 
 KEYS = $.flatten($.values(DIRECTION_KEYS))
 
-player = Mob.cloneAs('game.player')
+player = Grob.cloneAs('game.player')
 
 player.extend \
   eventable,
 
   viewportPadding: 30
   keyTracker: keyboard.KeyTracker.create(KEYS)
-
-  # TODO: This should be moved to lightworld_map.addPlayer
-  __plugged__: (core) ->
-    core.collisionLayer.add(this)
-
-  init: ->
-    @_super('link2x', 34, 48, 4)
-
-    @addState 'moveLeft',  [0,1,2,3,4,5,6,7],       frameDuration: 2, doesRepeat: true, do: 'moveLeft'
-    @addState 'moveRight', [8,9,10,11,12,13,14,15], frameDuration: 2, doesRepeat: true, do: 'moveRight'
-    @addState 'moveDown',  [16,17,18,19,20,21,22],  frameDuration: 2, doesRepeat: true, do: 'moveDown'
-    @addState 'moveUp',    [23,24,25,26,27,28],     frameDuration: 2, doesRepeat: true, do: 'moveUp'
-    @addState 'idleLeft',  [0],                     frameDuration: 2, doesRepeat: true
-    @addState 'idleRight', [8],                     frameDuration: 2, doesRepeat: true
-    @addState 'idleDown',  [19],                    frameDuration: 2, doesRepeat: true
-    @addState 'idleUp',    [23],                    frameDuration: 2, doesRepeat: true
-
-    @setState('idleDown')
-    @addEvents()
-
-    return this
 
   # override
   addEvents: ->
@@ -58,18 +37,29 @@ player.extend \
   removeEvents: ->
     keyboard.removeKeyTracker(@keyTracker)
 
+  activate: ->
+    @addEvents()
+
+  deactivate: ->
+    @removeEvents()
+
+  # draw: (ctx) ->
+  #   debugger
+  #   @_super(ctx)
+
   # Respond to keystrokes executed during the "dead time", i.e., the time
   # between the end of the last iteration and the start of this iteration
-  predraw: ->
+  predraw: (ctx) ->
+    @_super(ctx)
+
     if keyCode = @keyTracker.getLastPressedKey()
       direction = KEY_DIRECTIONS[keyCode]
       state = 'move' + util.capitalize(direction)
     else
       state = @currentState.name.replace('move', 'idle')
     if state isnt @currentState.name
+      # console.log "player: setting state to #{state}"
       @setState(state)
-
-    @_super()
 
   # Internal: Move the position of the player leftward, possibly shifting the
   # viewport to keep the player within it, and also keeping the player from
@@ -89,7 +79,7 @@ player.extend \
     nextBoundsOnMap = @bounds.onMap.withTranslation(x: -@speed)
 
     # Would the player cross the right edge of a collision box?
-    if x = @allCollidables.getOuterRightEdgeBlocking(nextBoundsOnMap)
+    if x = @mapCollidables.getOuterRightEdgeBlocking(nextBoundsOnMap)
       # Yes: Move it just at the edge so it no longer collides
       @bounds.onMap.translateBySide('x1', x)
       return
@@ -97,9 +87,9 @@ player.extend \
     # Would the viewport move beyond the left edge of the map?
     if (@viewport.bounds.x1 - @speed) < 0
       # Yes: Is there another map to load to the left?
-      if map = @core.currentMap.getAreaLeft?()
+      if map = @map.getAreaLeft?()
         # Yes: Load it
-        @core.currentMap.loadArea(map)
+        @map.loadArea(map)
       else
         # No: Put the viewport at the left edge of the map
         @viewport.translateBySide('x1', 0)
@@ -159,22 +149,22 @@ player.extend \
   #
   moveRight: ->
     # Calculate next position of the player moving right
-    @bounds.onMap.withTranslation(x: +@speed)
+    nextBoundsOnMap = @bounds.onMap.withTranslation(x: +@speed)
 
     # Would the player cross the left edge of a collision box?
-    if x = @allCollidables.getOuterLeftEdgeBlocking(nextBoundsOnMap)
+    if x = @mapCollidables.getOuterLeftEdgeBlocking(nextBoundsOnMap)
       # Yes: Move it just at the edge so it no longer collides
       @bounds.onMap.translateBySide('x2', x)
       return
 
-    mapWidth = @core.currentMap.width
+    mapWidth = @map.width
 
     # Would the viewport move beyond the right edge of the map?
     if (@viewport.bounds.x2 + @speed) > mapWidth
       # Yes: Is there another map to load to the right?
-      if map = @core.currentMap.getAreaRight?()
+      if map = @map.getAreaRight?()
         # Yes: Load it
-        @core.currentMap.loadArea(map)
+        @map.loadArea(map)
       else
         # No: Put the viewport at the right edge of the map
         @viewport.translateBySide('x2', mapWidth)
@@ -203,7 +193,7 @@ player.extend \
     nextBoundsOnMap = @bounds.onMap.withTranslation(y: -@speed)
 
     # Would the player cross the bottom edge of a collision box?
-    if y = @allCollidables.getOuterBottomEdgeBlocking(nextBoundsOnMap)
+    if y = @mapCollidables.getOuterBottomEdgeBlocking(nextBoundsOnMap)
       # Yes: move it just at the edge so it no longer collides
       @bounds.onMap.translateBySide('y1', y)
       return
@@ -211,9 +201,9 @@ player.extend \
     # Would the viewport move beyond the top edge of the map?
     if (@viewport.bounds.y1 - @speed) < 0
       # Yes: Is there another map to load to the top?
-      if map = @core.currentMap.getAreaUp?()
+      if map = @map.getAreaUp?()
         # Yes: Load it
-        @core.currentMap.loadArea(map)
+        @map.loadArea(map)
       else
         # No: Put the viewport at the top edge of the map
         @viewport.translateBySide('y1', 0)
@@ -242,19 +232,19 @@ player.extend \
     nextBoundsOnMap = @bounds.onMap.withTranslation(y: @speed)
 
     # Would the player cross the top edge of a collision box?
-    if y = @allCollidables.getOuterTopEdgeBlocking(nextBoundsOnMap)
+    if y = @mapCollidables.getOuterTopEdgeBlocking(nextBoundsOnMap)
       # Yes: move it just at the edge so it no longer collides
       @translateBySide('y2', y)
       return
 
-    mapHeight = @core.currentMap.height
+    mapHeight = @map.height
 
     # Would the viewport move beyond the bottom edge of the map?
     if (@viewport.bounds.y2 + @speed) > mapHeight
       # Yes: Is there another map to load to the bottom?
-      if map = @core.currentMap.getAreaDown?()
+      if map = @map.getAreaDown?()
         # Yes: Load it
-        @core.currentMap.loadArea(map)
+        @map.loadArea(map)
       else
         # No: Put the viewport at the bottom edge of the map
         @viewport.translateBySide('y2', mapHeight)
@@ -275,14 +265,30 @@ player.extend \
         @viewport.translateBySide('y2', @bounds.onMap.y2 + @viewportPadding)
 
   # override
-  _initBoundsOnMap: ->
-    @_super()
-    @bounds.onMap = game.Bounds.at(372, 540, 406, 588)
+  # _initBoundsOnMap: ->
+  #   @_super()
+  #   @bounds.onMap = game.Bounds.at(372, 540, 406, 588)
 
   # override
   _initFence: ->
     @fence = game.Bounds.rect(0, 0, game.viewport.width, game.viewport.height)
 
+# Go ahead and init the player, after all we will only have one instance hanging
+# around
+player.init('link2x', 34, 48)
+player.speed = 4  # px/tick
+
+player.addState 'moveLeft',  [0,1,2,3,4,5,6,7],       frameDuration: 2, doesRepeat: true, do: 'moveLeft'
+player.addState 'moveRight', [8,9,10,11,12,13,14,15], frameDuration: 2, doesRepeat: true, do: 'moveRight'
+player.addState 'moveDown',  [16,17,18,19,20,21,22],  frameDuration: 2, doesRepeat: true, do: 'moveDown'
+player.addState 'moveUp',    [23,24,25,26,27,28],     frameDuration: 2, doesRepeat: true, do: 'moveUp'
+player.addState 'idleLeft',  [0],                     frameDuration: 2, doesRepeat: true
+player.addState 'idleRight', [8],                     frameDuration: 2, doesRepeat: true
+player.addState 'idleDown',  [19],                    frameDuration: 2, doesRepeat: true
+player.addState 'idleUp',    [23],                    frameDuration: 2, doesRepeat: true
+
+player.setState('idleRight')
+
 game.player = player
 
-window.scriptLoaded('game.player')
+window.scriptLoaded('app/player')

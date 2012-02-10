@@ -5,7 +5,6 @@ meta = game.meta2
 
 viewport = meta.def 'game.viewport',
   attachable,
-  tickable,
 
   # Set the dimensions of the playable area - note that this is the official
   # resolution that Link to the Past ran on (x2 of course).
@@ -13,28 +12,20 @@ viewport = meta.def 'game.viewport',
   width:  512  # pixels
   height: 448  # pixels
 
-  init: (@core) ->
+  init: (@core, @player) ->
     @_super(@core)  # attachable
 
   setElement: ->
     @$element = $('<div id="viewport" />').css
       width: @width
       height: @height
-      'background-repeat': 'no-repeat'
-
-  tick: ->
-    @draw()
-
-  draw: ->
-    bom = @bounds
-    positionStr = [-bom.x1 + 'px', -bom.y1 + 'px'].join(" ")
-    @$element.css('background-position', positionStr)
 
   setMap: (map) ->
     @currentMap = map
-    @$element.css('background-image', map.background.getDataURL())
-    @$element.append(map.foreground.canvas.$element)
     @_setBounds()
+
+  unsetMap: ->
+    @currentMap.detach()
 
   # Public: Move the bounds of the viewport.
   #

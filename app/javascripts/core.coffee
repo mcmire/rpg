@@ -16,15 +16,15 @@ core.extend \
   init: (@main) ->
     @_super(@main)
     self = this
+    @player = game.player.assignTo(this)
     @keyboard = @main.keyboard
-    @viewport = game.viewport.init(this)
+    @viewport = game.viewport.init(this, @player)
     @tickInterval = 1000 / @frameRate
     @throttledDraw = @createIntervalTimer @tickInterval, (df, dt) ->
       self.draw(df, dt)
     @numDraws = 0
     @lastTickTime = null
     @numTicks = 0
-    @player = game.player
     return this
 
   setElement: ->
@@ -94,7 +94,6 @@ core.extend \
     core.numTicks++
 
   draw: ->
-    @viewport.tick()
     @currentMap.tick()
     @numDraws++
 
@@ -117,12 +116,24 @@ core.extend \
 
   loadMap: (name) ->
     self = this
-    @currentMap.unload() if @currentMap
-    @currentMap = game.mapCollection.get(name)
-    @currentMap.load(this, @player)
-    # TODO: Transition instead of hard setting
-    @viewport.setMap(@currentMap)
-    @currentMap.frameInViewport(@viewport)
+
+    if map = @currentMap
+      map.deactivate()
+      map.detachFromViewport()
+      map.unload()
+      map.removePlayer()
+
+    map = game.mapCollection.get(name)
+    # assign this first so grobs have access to the viewport
+    map.assignTo(@viewport)
+    map.addPlayer(@player)
+    map.load()
+    map.attachToViewport()
+    map.activate()
+
+    @viewport.setMap(map)
+
+    @currentMap = map
 
 game.core = core
 

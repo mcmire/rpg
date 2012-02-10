@@ -7,29 +7,51 @@ Map = meta.def 'game.Map',
   tickable,
 
   init: (@name, @width, @height, fn) ->
-    bg = game.Background.create(this, @width, @height)
     fg = game.Foreground.create(this, @width, @height)
-    fn(bg, fg)
-    @background = bg
+    bg = game.Background.create(this, @width, @height)
+    fn(fg, bg)
     @foreground = fg
+    @background = bg
     @up = @down = @left = @right = null
+    @isActive = false
 
-  load: (@core, @player) ->
-    @background.load()
-    @foreground.addPlayer(@player, [100, 100])
+  assignTo: (@viewport) ->
+    @foreground.assignToViewport(@viewport)
+    @background.assignToViewport(@viewport)
+
+  addPlayer: (@player) ->
+    @foreground.addPlayer(player)
+
+  load: ->
     @foreground.load()
+    @background.load()
 
   unload: ->
-    @background.unload()
-    @foreground.removePlayer(@player)
     @foreground.unload()
+    @background.unload()
 
-  frameInViewport: (viewport) ->
-    @foreground.calculateAllViewportBounds(viewport)
+  attachToViewport: ->
+    @foreground.attachTo(@viewport)
+    @background.attachTo(@viewport)
+    return this
+
+  detachFromViewport: ->
+    @foreground.detach()
+    @background.detach()
+    return this
+
+  activate: ->
+    @isActive = true
+    @player.addEvents()
+
+  deactivate: ->
+    @isActive = false
+    @player.removeEvents()
 
   tick: ->
-    @background.tick()
-    @foreground.tick()
+    if @isActive
+      @background.tick()
+      @foreground.tick()
 
   connectsUpTo: (other) ->
     @up = other
@@ -45,4 +67,4 @@ Map = meta.def 'game.Map',
 
 game.Map = Map
 
-window.scriptLoaded('app/map_collection')
+window.scriptLoaded('app/map')

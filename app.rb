@@ -16,25 +16,28 @@ EOT
 
 APP_SCRIPTS = parse_scripts <<EOT
 app/ender_ext
+app/ext
 app/util
 app/meta
 app/meta2
 app/roles
 
+# things that don't have an immediate dependency
 app/bounds
 app/canvas
+app/collidable
+app/collidable_collection
 app/image_sequence
 app/keyboard
 app/main
+app/mappable
 app/viewport
 
 app/ticker
 app/core
 
-app/mappable
+app/block
 app/grob
-app/mob
-app/player
 
 app/image  # image must be defined after main
 app/image_collection
@@ -45,6 +48,8 @@ app/foreground
 app/map
 app/map_tile
 app/maps/lw_52
+
+app/player
 
 app/init
 EOT

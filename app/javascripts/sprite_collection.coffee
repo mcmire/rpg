@@ -10,7 +10,7 @@ add = (imagePath, width, height, frameIndices, opts={}) ->
 
 #---
 
-add 'flower', 16, 16, [0, 1, 2], frameDuration: 4
+add 'flower', 16, 16, [2, 0, 1], frameDuration: 6, doesRepeat: true
 
 #---
 

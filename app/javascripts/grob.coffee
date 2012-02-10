@@ -1,10 +1,8 @@
 game = (window.game ||= {})
 
 meta = game.meta2
-{assignable, drawable} = game.roles
-Mappable = game.Mappable
-#Collidable = game.Collidable
-ImageSequence = game.ImageSequence
+Block = game.Block
+{drawable} = game.roles
 
 # A Grob is a GRaphical OBject. Grobs are located on the map and live in the
 # foreground (collision) layer. They can also be programmed to be in different
@@ -15,11 +13,8 @@ ImageSequence = game.ImageSequence
 # animated. This animation can either play repeatedly, or stop after it is
 # complete.
 #
-Grob = meta.def 'game.Grob',
-  assignable,
-  drawable,    # implies tickable
-  Mappable,
-  #Collidable,  # implies Mappable
+Grob = Block.cloneAs('game.Grob').extend \
+  drawable,  # implies tickable
 
   states: {}
 
@@ -29,17 +24,24 @@ Grob = meta.def 'game.Grob',
     clone.states = game.util.dup(clone.states)
     return clone
 
-  init: (imagePath, @width, @height) ->
-    @_super()  # Mappable
+  init: (imagePath, width, height) ->
+    @_super(width, height)  # Block
     @image = game.imageCollection.get(imagePath)
+    return this
 
-  predraw: ->
+  predraw: (ctx) ->
+    biv = @bounds.inViewport
+    @currentState.sequence.clear(ctx, biv.x1, biv.y1)
     if fn = @currentState.handler
       if typeof fn is 'function' then @fn() else @[fn]()
+      # in calling the handler for the state, the position on the map may have
+      # changed, or the viewport may have shifted so the viewport bounds may
+      # have changed too
+      @recalculateViewportBounds()
 
-  draw: ->
+  draw: (ctx) ->
     biv = @bounds.inViewport
-    @currentState.sequence.draw(@ctx, biv.x1, biv.y1)
+    @currentState.sequence.draw(ctx, biv.x1, biv.y1)
 
   # Public: Add a new state to the state machine.
   #
@@ -79,17 +81,17 @@ Grob = meta.def 'game.Grob',
 
   setState: (name) ->
     @currentState = @states[name]
+    @currentState.sequence.reset()
     throw new Error "Unknown state '#{name}'!" if not @currentState
     @currentState
 
-  inspect: ->
-    JSON.stringify
-      "bounds.inViewport": @bounds.inViewport.inspect(),
-      "bounds.onMap": @bounds.onMap.inspect()
+  _initBoundsOnMap: ->
+    @_initFence()
+    @_super()
 
-  debug: ->
-    console.log "bounds.inViewport = #{@bounds.inViewport.inspect()}"
-    console.log "bounds.OnMap = #{@bounds.onMap.inspect()}"
+  _initFence: ->
+    # This really only applies if the Grob is movable
+    @fence = game.Bounds.rect(0, 0, @map.width, @map.height)
 
 game.Grob = Grob
 

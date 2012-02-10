@@ -1,17 +1,15 @@
 (function() {
-  var Grob, ImageSequence, Mappable, assignable, drawable, game, meta, _ref;
+  var Block, Grob, drawable, game, meta;
 
   game = (window.game || (window.game = {}));
 
   meta = game.meta2;
 
-  _ref = game.roles, assignable = _ref.assignable, drawable = _ref.drawable;
+  Block = game.Block;
 
-  Mappable = game.Mappable;
+  drawable = game.roles.drawable;
 
-  ImageSequence = game.ImageSequence;
-
-  Grob = meta.def('game.Grob', assignable, drawable, Mappable, {
+  Grob = Block.cloneAs('game.Grob').extend(drawable, {
     states: {},
     clone: function() {
       var clone;
@@ -20,25 +18,27 @@
       return clone;
     },
     init: function(imagePath, width, height) {
-      this.width = width;
-      this.height = height;
-      this._super();
-      return this.image = game.imageCollection.get(imagePath);
+      this._super(width, height);
+      this.image = game.imageCollection.get(imagePath);
+      return this;
     },
-    predraw: function() {
-      var fn;
+    predraw: function(ctx) {
+      var biv, fn;
+      biv = this.bounds.inViewport;
+      this.currentState.sequence.clear(ctx, biv.x1, biv.y1);
       if (fn = this.currentState.handler) {
         if (typeof fn === 'function') {
-          return this.fn();
+          this.fn();
         } else {
-          return this[fn]();
+          this[fn]();
         }
+        return this.recalculateViewportBounds();
       }
     },
-    draw: function() {
+    draw: function(ctx) {
       var biv;
       biv = this.bounds.inViewport;
-      return this.currentState.sequence.draw(this.ctx, biv.x1, biv.y1);
+      return this.currentState.sequence.draw(ctx, biv.x1, biv.y1);
     },
     addState: function(name, frameIndices, opts) {
       var seq, state;
@@ -59,18 +59,16 @@
     },
     setState: function(name) {
       this.currentState = this.states[name];
+      this.currentState.sequence.reset();
       if (!this.currentState) throw new Error("Unknown state '" + name + "'!");
       return this.currentState;
     },
-    inspect: function() {
-      return JSON.stringify({
-        "bounds.inViewport": this.bounds.inViewport.inspect(),
-        "bounds.onMap": this.bounds.onMap.inspect()
-      });
+    _initBoundsOnMap: function() {
+      this._initFence();
+      return this._super();
     },
-    debug: function() {
-      console.log("bounds.inViewport = " + (this.bounds.inViewport.inspect()));
-      return console.log("bounds.OnMap = " + (this.bounds.onMap.inspect()));
+    _initFence: function() {
+      return this.fence = game.Bounds.rect(0, 0, this.map.width, this.map.height);
     }
   });
 

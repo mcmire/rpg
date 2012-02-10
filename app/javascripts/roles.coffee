@@ -72,8 +72,7 @@ attachable = meta.def 'game.attachable',
       @parentElement = parent
     return this
 
-  setElement: ->
-    # throw new Error 'setElement must be overridden'
+  setElement: (@$element) ->
 
   destroy: ->
     @detach()
@@ -101,16 +100,16 @@ drawable = meta.def 'game.drawable',
   tickable,
   simpleDrawable,
 
-  tick: ->
-    @predraw()
-    @draw()
-    @postdraw()
+  tick: (ctx) ->
+    @predraw(ctx)
+    @draw(ctx)
+    @postdraw(ctx)
     return this
 
-  predraw: ->
+  predraw: (ctx) ->
     # throw new Error 'predraw must be overridden'
 
-  postdraw: ->
+  postdraw: (ctx) ->
     # throw new Error 'postdraw must be overridden'
 
 loadable = meta.def 'game.loadable',
@@ -145,7 +144,6 @@ runnable = meta.def 'game.runnable',
 assignable = meta.def 'game.assignable',
   assignTo: (parent) ->
     @parent = parent
-    @ctx = parent.ctx
     return this
 
 #---

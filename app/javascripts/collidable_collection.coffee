@@ -1,25 +1,30 @@
 game = (window.game ||= {})
 
-Class = game.Class
-MapBlock = game.MapBlock
-Grob = game.Grob
+meta = game.meta2
 
-_boundsFrom = (boundsOrGrob) ->
-  if boundsOrGrob instanceof Grob
-    boundsOrGrob.bounds.onMap
+_boundsFrom = (mappableOrBounds) ->
+  # TODO: Remove ? when Bounds is a prototype not a class
+  if mappableOrBounds.doesInclude?('game.Mappable')
+    mappableOrBounds.bounds.onMap
   else
-    boundsOrGrob
+    mappableOrBounds
 
-# TODO: Make this a singleton?
-CollidableCollection = Class.extend 'game.CollidableCollection',
+CollidableCollection = meta.def 'game.CollidableCollection',
+  # Initialize the collection.
+  #
+  # collidables - An optional Array of Grobs to populate the collection with
+  #               (default: []).
+  # exception   - An optional Grob which will be left out when the collection is
+  #               iterated over (default: nothing).
+  #
   init: (args...) ->
     if args.length
       [@collidables, @exception] = args
     else
       @collidables = []
 
-  getMapBlocks: ->
-    c for c in @collidables when c instanceof MapBlock
+  getBlocks: ->
+    c for c in @collidables when game.Block.isPrototypeOf(c) and not game.Grob.isPrototypeOf(c)
 
   each: (fn) ->
     if @exception
@@ -38,8 +43,11 @@ CollidableCollection = Class.extend 'game.CollidableCollection',
   push: (collidable) ->
     @collidables.push(collidable)
 
+  delete: (collidable) ->
+    @collidables.delete(collidable)
+
   without: (collidable) ->
-    new @constructor(@collidables, collidable)
+    @create(@collidables, collidable)
 
   # Public: Return whether the given bounds intersects with a collidable object.
   #
@@ -129,4 +137,4 @@ CollidableCollection = Class.extend 'game.CollidableCollection',
 
 game.CollidableCollection = CollidableCollection
 
-window.numScriptsLoaded++
+window.scriptLoaded('app/collidable_collection')

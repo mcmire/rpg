@@ -4,10 +4,23 @@ body {
 }
 
 #viewport {
-  // float: left;
-  border: 1px solid red;
-  // margin-right: 20px;
-  position: relative
+  // border: 1px solid red;
+  // margin: 0 auto;
+  position: relative;
+  overflow: hidden
+}
+
+#viewport canvas {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  overflow: hidden
+}
+#viewport .background {
+  z-index: 1
+}
+#viewport .foreground {
+  z-index: 2
 }
 
 #fps-reporter {

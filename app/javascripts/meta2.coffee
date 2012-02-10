@@ -9,6 +9,7 @@ _wrap = (k, fn, val) ->
     ret = fn.apply(this, arguments)
     @_super = tmp
     return ret
+  # These are just for debugging purposes
   newfn.original = fn
   newfn._super = val
   return newfn
@@ -36,25 +37,10 @@ _extend = (base, mixin, opts={}) ->
     # objects in any order, a call to @_super() is really really confusing...
     # maybe just do it when overriding prototype methods but not when
     # overriding mixin methods?
-    if typeof mixin[sk] is 'function' and _fnContainsSuper(mixin[sk])
-      if typeof _super[tk] is 'function'
-        base[tk] = _wrap(sk, mixin[sk], _super[tk])
-      else
-        # The current method has no equivalent higher up in the inheritance
-        # chain, so rewrite the method so that if _super is called nothing
-        # happens. This is to prevent a recursive call in the case where this
-        # method does have an equivalent in a *subclass* (and is therefore
-        # being called via _super) - in this case _super refers to this same
-        # method and so calling it results in us calling ourselves.
-        # Additionally, we could also throw an exception here, except that
-        # this would not do for modules, for which (unlike classes) _super may
-        # actually exist depending on where the module is mixed in (since a
-        # module can be mixed in anywhere).
-        #
-        # TODO: This may not work if super is called multiple times in a
-        # subclass, investigate
-        #
-        base[tk] = _wrap(sk, mixin[sk], ->)
+    if typeof mixin[sk] is 'function' and
+    _fnContainsSuper(mixin[sk]) and
+    typeof _super[tk] is 'function'
+      base[tk] = _wrap(sk, mixin[sk], _super[tk])
     else
       base[tk] = mixin[sk]
 
@@ -65,6 +51,7 @@ _extend = (base, mixin, opts={}) ->
 
 proto = {}
 Object.defineProperty proto, '__name__', value: 'game.meta.proto'
+Object.defineProperty proto, '_super', value: ->
 # proto.__key_translations__ = {}
 proto.clone = ->
   _clone(this)

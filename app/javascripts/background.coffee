@@ -1,7 +1,7 @@
 game = (window.game ||= {})
 
 meta = game.meta2
-{assignable, tickable} = game.roles
+{attachable, assignable, tickable} = game.roles
 
 Background = meta.def 'game.Background',
   assignable,
@@ -12,6 +12,8 @@ Background = meta.def 'game.Background',
     @tiles = []
     @sprites = []
 
+  assignToViewport: (@viewport) ->
+
   fill: (color, pos, dims) ->
     @fills.push([color, pos, dims])
 
@@ -21,35 +23,48 @@ Background = meta.def 'game.Background',
     if $.v.is.obj(positions[positions.length-1])
       opts = positions.pop()
     $.v.each positions, ([x, y]) ->
-      tile = game.MapTile.create object.clone().extend(opts), x, y
+      drawable = object.clone().extend(opts)
+      tile = game.MapTile.create(drawable).assignToMap(this)
+      tile.setMapPosition(x, y)
       self.tiles.push(tile)
-      self.sprites.push(tile) if object.isPrototypeOf(game.ImageSequence)
+      self.sprites.push(tile) if game.ImageSequence.isPrototypeOf(object)
 
   load: ->
+    @$canvas = $('<canvas>')
+      .attr('width', @width)
+      .attr('height', @height)
+      .addClass('background')
+    ctx = @$canvas[0].getContext('2d')
     # build the map
-    @canvas = game.canvas.create(@width, @height)
-    @ctx = @canvas.ctx
-    tile.assignTo(this) for tile in @tiles
+    # ctx.save()
     for [color, [x1, y1], [width, height]] in @fills
-      @ctx.fillStyle = color
-      @ctx.fillRect(x1, y1, width, height)
-    for tile in @tiles
-      tile.assignTo(this)
-      tile.draw()
+      ctx.fillStyle = color
+      ctx.fillRect(x1, y1, width, height)
+    # ctx.restore()
+
+    tile.draw(ctx) for tile in @tiles
 
   unload: ->
     # Free memory. (This may be a pre-optimization, but it kind of seems like
     # a good idea considering the canvas object will very likely be of a
     # substantial size.)
-    @canvas = null
+    @$canvas = null
     @ctx = null
 
-  tick: ->
-    # Remember that sprites are animated, so here is where we do that
-    sprite.draw() for sprite in @sprites
+  attachTo: (@viewport) ->
+    # don't use appendTo here, that will clear the canvas for some reason
+    @viewport.$element.append(@$canvas)
+    @ctx = @$canvas[0].getContext('2d')
 
-  getDataURL: ->
-    'url(' + @canvas.element.toDataURL() + ')'
+  detach: ->
+    @$canvas.detach()
+
+  tick: ->
+    @$canvas.css
+      top: -@viewport.bounds.y1
+      left: -@viewport.bounds.x1
+    # Remember that sprites are animated, so here is where we do that
+    sprite.draw(@ctx) for sprite in @sprites
 
 Background.add = Background.addTile
 

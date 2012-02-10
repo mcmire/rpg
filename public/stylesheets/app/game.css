@@ -3,8 +3,20 @@ body {
   font-family: Helvetica; }
 
 #viewport {
-  border: 1px solid red;
-  position: relative; }
+  position: relative;
+  overflow: hidden; }
+
+#viewport canvas {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  overflow: hidden; }
+
+#viewport .background {
+  z-index: 1; }
+
+#viewport .foreground {
+  z-index: 2; }
 
 #fps-reporter {
   width: 85px;

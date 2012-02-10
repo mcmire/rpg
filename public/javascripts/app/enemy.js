@@ -1,5 +1,5 @@
 (function() {
-  var Bounds, DIRECTIONS, Enemy, Mob, game, meta, util;
+  var DIRECTIONS, Enemy, Grob, game, meta, util;
 
   game = (window.game || (window.game = {}));
 
@@ -7,13 +7,11 @@
 
   util = game.util;
 
-  Mob = game.Mob;
-
-  Bounds = game.Bounds;
+  Grob = game.Grob;
 
   DIRECTIONS = 'right down left up'.split(' ');
 
-  Enemy = Mob.cloneAs('game.Enemy');
+  Enemy = Grob.cloneAs('game.Enemy');
 
   Enemy.addState('moveDown', [0, 1], {
     frameDuration: 4,
@@ -90,7 +88,7 @@
       return this._chooseSequenceLength();
     },
     _initFence: function() {
-      return this.fence = Bounds.rect(100, 100, 300, 300);
+      return this.fence = game.Bounds.rect(100, 100, 300, 300);
     },
     _initBoundsOnMap: function() {
       var fn, self, _results;
@@ -167,12 +165,12 @@
         return this.bounds.onMap.replace(nextBoundsOnMap);
       }
     },
-    postdraw: function() {
+    postdraw: function(ctx) {
       if (this._directionChangeNeeded || this.numSeqFrameDraws === this.sequenceLength) {
         this._directionChangeNeeded = false;
         return this._chooseAnotherDirection();
       } else {
-        return this._super();
+        return this._super(ctx);
       }
     },
     _chooseAnotherDirection: function() {

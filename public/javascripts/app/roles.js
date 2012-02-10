@@ -90,7 +90,9 @@
       }
       return this;
     },
-    setElement: function() {},
+    setElement: function($element) {
+      this.$element = $element;
+    },
     destroy: function() {
       this.detach();
       return this._super();
@@ -120,14 +122,14 @@
   });
 
   drawable = meta.def('game.drawable', tickable, simpleDrawable, {
-    tick: function() {
-      this.predraw();
-      this.draw();
-      this.postdraw();
+    tick: function(ctx) {
+      this.predraw(ctx);
+      this.draw(ctx);
+      this.postdraw(ctx);
       return this;
     },
-    predraw: function() {},
-    postdraw: function() {}
+    predraw: function(ctx) {},
+    postdraw: function(ctx) {}
   });
 
   loadable = meta.def('game.loadable', {
@@ -168,7 +170,6 @@
   assignable = meta.def('game.assignable', {
     assignTo: function(parent) {
       this.parent = parent;
-      this.ctx = parent.ctx;
       return this;
     }
   });

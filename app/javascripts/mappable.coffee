@@ -2,19 +2,30 @@ game = (window.game ||= {})
 
 meta = game.meta2
 
+# This assumes assignable
 Mappable = meta.def 'game.Mappable',
-  init: ->
+  init: (@width, @height) ->
     @_initBounds()
     @_initLastBounds()
+    return this
+
+  assignToMap: (map) ->
+    @assignTo(map)
+    @map = map
+    # I don't like this, but it's useful for the player
+    @viewport = @map.viewport
+    return this
 
   setMapPosition: (x, y) ->
     @bounds.onMap.anchor(x, y)
+    # Don't worry about setting the viewport bounds, that happens when the
+    # object is drawn
     # @recalculateViewportBounds()
 
   recalculateViewportBounds: ->
-    viewport = @parent.getViewport()
-    x1 = @bounds.onMap.x1 - viewport.bounds.x1
-    y1 = @bounds.onMap.y1 - viewport.bounds.y1
+    # XXX: Move this to the viewport?
+    x1 = @bounds.onMap.x1 - @viewport.bounds.x1
+    y1 = @bounds.onMap.y1 - @viewport.bounds.y1
     @bounds.inViewport.anchor(x1, y1)
 
   # Public: Move the viewport and map bounds of the player.

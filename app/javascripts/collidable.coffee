@@ -1,31 +1,26 @@
 game = (window.game ||= {})
 
-meta = game.meta
-Mappable = game.Mappable
-CollidableCollection = game.CollidableCollection
+meta = game.meta2
 
-_boundsFrom = (boundsOrGrob) ->
-  if boundsOrGrob.bounds?
-    boundsOrGrob.bounds.onMap
+_boundsFrom = (mappableOrBounds) ->
+  if mappableOrBounds.doesInclude('game.Mappable')
+    mappableOrBounds.bounds.onMap
   else
-    boundsOrGrob
+    mappableOrBounds
 
+# This assumes Mappable
 Collidable = meta.def 'game.Collidable',
-  Mappable,
+  assignToMap: (map) ->
+    @_super(map)
+    @_initCollidables()
+    return this
 
-  # TODO: Can we assume that this is core??
-  init: (@core) ->
-    @_super()
-    {@collisionLayer} = @core
-    @_initCollisionLayer()
-
-  _initCollisionLayer: ->
-    @_super()
-    if @collisionLayer
-      @allCollidables = @collisionLayer.collidables.without(this)
+  _initCollidables: ->
+    if @map.enableCollisions
+      @mapCollidables = @map.getObjectsWithout(this)
     else
       # null/empty object pattern - still works but does nothing
-      @allCollidables = new CollidableCollection()
+      @mapCollidables = game.CollidableCollection.create()
 
   intersectsWith: (boundsOrGrob) ->
     bounds = _boundsFrom(boundsOrGrob)
@@ -49,4 +44,4 @@ Collidable = meta.def 'game.Collidable',
 
 game.Collidable = Collidable
 
-window.numScriptsLoaded++
+window.scriptLoaded('app/collidable')

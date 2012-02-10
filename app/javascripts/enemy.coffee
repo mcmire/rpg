@@ -2,12 +2,11 @@ game = (window.game ||= {})
 
 meta = game.meta2
 util = game.util
-Mob = game.Mob
-Bounds = game.Bounds
+Grob = game.Grob
 
 DIRECTIONS = 'right down left up'.split(' ')
 
-Enemy = Mob.cloneAs('game.Enemy')
+Enemy = Grob.cloneAs('game.Enemy')
 
 Enemy.addState 'moveDown',    [0,1],   frameDuration: 4,  do: 'moveDown',  doesRepeat: true
 Enemy.addState 'moveRight',   [4,5],   frameDuration: 4,  do: 'moveRight', doesRepeat: true
@@ -36,7 +35,7 @@ Enemy.extend
 
   # override
   _initFence: ->
-    @fence = Bounds.rect(100, 100, 300, 300)
+    @fence = game.Bounds.rect(100, 100, 300, 300)
 
   # override
   _initBoundsOnMap: ->
@@ -157,12 +156,12 @@ Enemy.extend
   #   fenceInViewport.draw(@main)
 
   # override
-  postdraw: ->
+  postdraw: (ctx) ->
     if @_directionChangeNeeded or @numSeqFrameDraws is @sequenceLength
       @_directionChangeNeeded = false
       @_chooseAnotherDirection()
     else
-      @_super()
+      @_super(ctx)
 
   _chooseAnotherDirection: ->
     validDirections = switch @direction

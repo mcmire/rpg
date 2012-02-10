@@ -4,6 +4,7 @@ meta = game.meta2
 {assignable, simpleDrawable} = game.roles
 
 Image = meta.def 'game.Image',
+  assignable,
   simpleDrawable,
 
   init: (path, @width, @height) ->

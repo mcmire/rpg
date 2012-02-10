@@ -55,24 +55,38 @@ imageDataExt =
           i += 4
 
 canvas =
+  # XXX: Yes I admit this is rather hacked up...
   create: (args...) ->
     [height, width, id, parent] = args.reverse()
-    c = {}
-    c.width = width
-    c.height = height
+
     $element = $("<canvas/>")
       .attr('width', width)
       .attr('height', height)
     $element.attr('id', id) if id
+
+    c = {}
+    c.width = width
+    c.height = height
     c.$element = $element
     c.element = c.$element[0]
-    c.ctx = contextExt.extend(c.element.getContext("2d"))
+    # c.ctx = contextExt.extend(c.element.getContext("2d"))
+    c.getContext = ->
+      ctx = @element.getContext("2d")
+      # contextExt.extend(ctx)
+      return ctx
     c.attach = ->
-      c.$element.appendTo(parent)
+      @$element.appendTo(parent)
       # for some reason we have to re-assign this *after* the element is added
       # to the DOM otherwise c.$element[0] !== c.$element[0]
-      c.element = c.$element[0]
-      return c
+      @element = @$element[0]
+      return this
+    c.appendTo = (parent) ->
+      @$element.appendTo(parent)
+      # for some reason we have to re-assign this *after* the element is added
+      # to the DOM otherwise c.$element[0] !== c.$element[0]
+      @element = @$element[0]
+      return this
+
     # callback(c) if callback
     return c
 

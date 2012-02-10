@@ -15,19 +15,10 @@
       return this.speed = speed;
     },
     predraw: function() {
-      this._super();
-      return this.recalculateViewportBounds();
+      return this._super();
     },
     draw: function() {
-      this.currentState.sequence.clear(this.ctx);
       return this._super();
-    },
-    _initBoundsOnMap: function() {
-      this._initFence();
-      return this._super();
-    },
-    _initFence: function() {
-      return this.fence = game.Bounds.rect(0, 0, this.map.width, this.map.height);
     }
   });
 

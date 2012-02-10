@@ -97,18 +97,27 @@
       var $element, args, c, height, id, parent, width, _ref;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       _ref = args.reverse(), height = _ref[0], width = _ref[1], id = _ref[2], parent = _ref[3];
+      $element = $("<canvas/>").attr('width', width).attr('height', height);
+      if (id) $element.attr('id', id);
       c = {};
       c.width = width;
       c.height = height;
-      $element = $("<canvas/>").attr('width', width).attr('height', height);
-      if (id) $element.attr('id', id);
       c.$element = $element;
       c.element = c.$element[0];
-      c.ctx = contextExt.extend(c.element.getContext("2d"));
+      c.getContext = function() {
+        var ctx;
+        ctx = this.element.getContext("2d");
+        return ctx;
+      };
       c.attach = function() {
-        c.$element.appendTo(parent);
-        c.element = c.$element[0];
-        return c;
+        this.$element.appendTo(parent);
+        this.element = this.$element[0];
+        return this;
+      };
+      c.appendTo = function(parent) {
+        this.$element.appendTo(parent);
+        this.element = this.$element[0];
+        return this;
       };
       return c;
     }

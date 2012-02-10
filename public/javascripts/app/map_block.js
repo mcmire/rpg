@@ -1,28 +1,25 @@
 (function() {
-  var Bounds, Grob, MapBlock, game;
+  var Block, Collidable, Mappable, assignable, game, meta;
 
   game = (window.game || (window.game = {}));
 
-  Grob = game.Grob;
+  meta = game.meta2;
 
-  Bounds = game.Bounds;
+  assignable = game.roles.assignable;
 
-  MapBlock = Grob.extend('game.MapBlock', {
-    init: function(core, x1, y1, width, height) {
-      this._initDims = function() {
-        this.width = width;
-        return this.height = height;
-      };
-      this._initBoundsOnMap = function() {
-        return this.bounds.onMap = Bounds.rect(x1, y1, width, height);
-      };
-      return this._super(core);
-    },
-    tick: function() {}
+  Mappable = game.Mappable;
+
+  Collidable = game.Collidable;
+
+  Block = Mob.extend('game.Block', assignable, Mappable, Collidable, {
+    assignTo: function(parent) {
+      this._super(parent);
+      return this.map = parent;
+    }
   });
 
   game.MapBlock = MapBlock;
 
-  window.numScriptsLoaded++;
+  window.scriptLoaded('app/block');
 
 }).call(this);

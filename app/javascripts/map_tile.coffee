@@ -2,6 +2,7 @@ game = (window.game ||= {})
 
 meta = game.meta2
 {assignable, simpleDrawable} = game.roles
+Mappable = game.Mappable
 
 MapTile = meta.def 'game.MapTile',
   assignable,
@@ -11,10 +12,18 @@ MapTile = meta.def 'game.MapTile',
   #
   # drawable - Either an Image or an ImageSequence.
   #
-  init: (@drawable, @x, @y) ->
+  init: (@drawable) ->
 
-  draw: ->
-    @drawable.draw(@ctx, @x, @y)
+  setMapPosition: (@x, @y) ->
+
+  assignToMap: (map) ->
+    @_super(map)
+    @map = map
+    @drawable.assignTo(this)
+    return this
+
+  draw: (ctx) ->
+    @drawable.draw(ctx, @x, @y)
 
 game.MapTile = MapTile
 

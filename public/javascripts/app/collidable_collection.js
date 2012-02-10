@@ -1,24 +1,20 @@
 (function() {
-  var Class, CollidableCollection, Grob, MapBlock, game, _boundsFrom,
+  var CollidableCollection, game, meta, _boundsFrom,
     __slice = Array.prototype.slice;
 
   game = (window.game || (window.game = {}));
 
-  Class = game.Class;
+  meta = game.meta2;
 
-  MapBlock = game.MapBlock;
-
-  Grob = game.Grob;
-
-  _boundsFrom = function(boundsOrGrob) {
-    if (boundsOrGrob instanceof Grob) {
-      return boundsOrGrob.bounds.onMap;
+  _boundsFrom = function(mappableOrBounds) {
+    if (typeof mappableOrBounds.doesInclude === "function" ? mappableOrBounds.doesInclude('game.Mappable') : void 0) {
+      return mappableOrBounds.bounds.onMap;
     } else {
-      return boundsOrGrob;
+      return mappableOrBounds;
     }
   };
 
-  CollidableCollection = Class.extend('game.CollidableCollection', {
+  CollidableCollection = meta.def('game.CollidableCollection', {
     init: function() {
       var args;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
@@ -28,13 +24,15 @@
         return this.collidables = [];
       }
     },
-    getMapBlocks: function() {
+    getBlocks: function() {
       var c, _i, _len, _ref, _results;
       _ref = this.collidables;
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         c = _ref[_i];
-        if (c instanceof MapBlock) _results.push(c);
+        if (game.Block.isPrototypeOf(c) && !game.Grob.isPrototypeOf(c)) {
+          _results.push(c);
+        }
       }
       return _results;
     },
@@ -78,8 +76,11 @@
     push: function(collidable) {
       return this.collidables.push(collidable);
     },
+    "delete": function(collidable) {
+      return this.collidables["delete"](collidable);
+    },
     without: function(collidable) {
-      return new this.constructor(this.collidables, collidable);
+      return this.create(this.collidables, collidable);
     },
     intersectsWith: function(boundsOrGrob) {
       var bounds, ret;
@@ -133,6 +134,6 @@
 
   game.CollidableCollection = CollidableCollection;
 
-  window.numScriptsLoaded++;
+  window.scriptLoaded('app/collidable_collection');
 
 }).call(this);
