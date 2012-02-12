@@ -14,7 +14,6 @@
       this._super(document.body);
       this.keyboard = game.keyboard.init();
       this.core = game.core.init(this);
-      this.attach();
       this.addEvents();
       this.run();
       return this;
@@ -83,8 +82,11 @@
       return this;
     },
     run: function() {
+      var self;
+      self = this;
       main.load(function() {
-        return main.start();
+        self.attach();
+        return self.core.run();
       });
       return this;
     },

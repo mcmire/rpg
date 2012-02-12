@@ -35,10 +35,12 @@
     attach: function() {
       return this.viewport.attach();
     },
+    run: function() {
+      this.loadMap('lw_52');
+      return this.start();
+    },
     start: function() {
-      if (!this.startedBefore) this.loadMap('lw_52');
-      this.tick();
-      return this.startedBefore = true;
+      return this.tick();
     },
     stop: function() {
       if (this.timer) {

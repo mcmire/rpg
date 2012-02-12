@@ -33,18 +33,13 @@ core.extend \
   attach: ->
     @viewport.attach()
 
+  run: ->
+    @loadMap('lw_52')
+    @start()
+
   start: ->
-    # return if @hadProblemsStarting
-    # try
-      # calling suspend() and then resume() will call this method again, but we
-      # don't want the map to be re-loaded
-      @loadMap('lw_52') unless @startedBefore
-      # calling tick() once starts the loop immediately since it calls itself
-      @tick()
-      @startedBefore = true
-    # catch e
-      # @hadProblemsStarting = true
-      # throw e
+    # calling tick() once starts the loop immediately since it calls itself
+    @tick()
 
   stop: ->
     if @timer

@@ -18,7 +18,6 @@ main = meta.def 'game.main',
     @_super(document.body)  # attachable
     @keyboard = game.keyboard.init()
     @core = game.core.init(this)
-    @attach()
     @addEvents()
     @run()
     return this
@@ -76,7 +75,10 @@ main = meta.def 'game.main',
     return this
 
   run: ->
-    main.load -> main.start()
+    self = this
+    main.load ->
+      self.attach()
+      self.core.run()
     return this
 
   start: ->
