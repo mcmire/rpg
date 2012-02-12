@@ -9,10 +9,10 @@ DIRECTIONS = 'up down left right'.split(' ')
 
 # TODO: Probably can move these shortcuts into keyboard
 DIRECTION_KEYS =
-  up:    keyboard.keyCodesFor('KEY_W', 'KEY_UP',    'KEY_K')
-  down:  keyboard.keyCodesFor('KEY_S', 'KEY_DOWN',  'KEY_J')
-  left:  keyboard.keyCodesFor('KEY_A', 'KEY_LEFT',  'KEY_H')
-  right: keyboard.keyCodesFor('KEY_D', 'KEY_RIGHT', 'KEY_L')
+  up:    keyboard.keyCodesFor('KEY_W', 'KEY_UP')
+  down:  keyboard.keyCodesFor('KEY_S', 'KEY_DOWN')
+  left:  keyboard.keyCodesFor('KEY_A', 'KEY_LEFT')
+  right: keyboard.keyCodesFor('KEY_D', 'KEY_RIGHT')
 
 KEY_DIRECTIONS = {}
 for dir in DIRECTIONS
