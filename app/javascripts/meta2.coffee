@@ -1,17 +1,26 @@
 game = (window.game ||= {})
 
-_fnContainsSuper = (fn) -> /\b_super\b/.test(fn)
+# Notice that the test is for /\b_super\(/ not /\b_super\b/: this is so the
+# function returned by _wrap() below does not get detected as a function
+# containing _super in case it is ever double-wrapped.
+_fnContainsSuper = (fn) -> /\b_super(?:\.apply)?\(/.test(fn)
 
-_wrap = (k, fn, val) ->
+_wrap = (fn, val) ->
+  # TODO: Is this even a good idea? Since mixins can be mixed into other
+  # objects in any order, a call to @_super() is really really confusing...
+  # maybe just do it when overriding prototype methods but not when
+  # overriding mixin methods?
   newfn = ->
     tmp = @_super
     @_super = val
     ret = fn.apply(this, arguments)
     @_super = tmp
     return ret
-  # These are just for debugging purposes
-  newfn.original = fn
-  newfn._super = val
+  # These are mainly used for debugging purposes, but they are also used to
+  # detect if a function has been wrapped and re-wrap it depending on context
+  # when an object is mixed into another object.
+  newfn.__original__ = fn
+  newfn.__super__ = val
   return newfn
 
 _clone = (obj) ->
@@ -28,19 +37,33 @@ _extend = (base, mixin, opts={}) ->
   _super = base
 
   # Prevent mixins from being mixed in twice
-  return if base.includes?(mixin)
+  return if base.doesInclude?(mixin)
 
   for own sk of mixin
     continue if exclusions[sk]
     tk = keyTranslations[sk] || sk
-    # TODO: Is this even a good idea? Since mixins can be mixed into other
-    # objects in any order, a call to @_super() is really really confusing...
-    # maybe just do it when overriding prototype methods but not when
-    # overriding mixin methods?
-    if typeof mixin[sk] is 'function' and
-    _fnContainsSuper(mixin[sk]) and
-    typeof _super[tk] is 'function'
-      base[tk] = _wrap(sk, mixin[sk], _super[tk])
+    if (
+      typeof mixin[sk] is 'function' and
+      mixin[sk].__original__?
+    )
+      # If a module has a function that contains _super, it has already been
+      # wrapped. The problem is that an attempt to mix it into this object
+      # will result in a double-wrapped function; plus, the original
+      # object's _super call will also most likely refer to the default _super
+      # function (which is an empty function). So, here we unwrap the function
+      # and re-wrap it in this context.
+      base[tk] = _wrap(mixin[sk].__original__, _super[tk])
+    else if (
+      typeof mixin[sk] is 'function' and
+      _fnContainsSuper(mixin[sk]) and
+      typeof _super[tk] is 'function'
+    )
+      # If base and the object we're mixing into the object both have a
+      # function with the same name, and the mixin's function contains a call
+      # to _super(), replace base's function with the mixin's function, but
+      # first wrap the mixin's function in another function that sets _super
+      # to the base function.
+      base[tk] = _wrap(mixin[sk], _super[tk])
     else
       base[tk] = mixin[sk]
 
