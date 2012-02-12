@@ -46,16 +46,16 @@
       return this;
     },
     load: function(callback) {
-      var assetCollections, c, fn, i, self, timer, _i, _len;
+      var assetCollections, c, fn, self, t, timer, _i, _len;
       self = this;
       assetCollections = [];
       assetCollections.push(game.imageCollection);
-      i = 0;
+      t = new Date();
       timer = null;
       fn = function() {
-        var isLoaded;
-        i++;
-        if (i === 20) {
+        var isLoaded, t2;
+        t2 = new Date();
+        if ((t2 - t) > (10 * 1000)) {
           window.clearTimeout(timer);
           timer = null;
           console.log("Not all assets were loaded!");
@@ -71,7 +71,7 @@
           timer = null;
           return callback();
         } else {
-          return timer = window.setTimeout(fn, 100);
+          return timer = window.setTimeout(fn, 300);
         }
       };
       fn();

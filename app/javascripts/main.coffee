@@ -50,11 +50,11 @@ main = meta.def 'game.main',
     assetCollections.push(game.imageCollection)
     #assetCollections.push require('app/sounds')
 
-    i = 0
+    t = new Date()
     timer = null
     fn = ->
-      i++
-      if i is 20
+      t2 = new Date()
+      if (t2 - t) > (10 * 1000)
         window.clearTimeout(timer)
         timer = null
         console.log "Not all assets were loaded!"
@@ -67,7 +67,7 @@ main = meta.def 'game.main',
         timer = null
         callback()
       else
-        timer = window.setTimeout fn, 100
+        timer = window.setTimeout fn, 300
     fn()
 
     c.load() for c in assetCollections
