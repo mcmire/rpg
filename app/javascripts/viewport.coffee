@@ -20,6 +20,11 @@ viewport = meta.def 'game.viewport',
       width: @width
       height: @height
 
+  attach: ->
+    @parentElement.html("")
+    @_super()
+    @parentElement.append('<p>Controls: arrow keys (WASD also works too)</p>')
+
   setMap: (map) ->
     @currentMap = map
     @_setBounds()

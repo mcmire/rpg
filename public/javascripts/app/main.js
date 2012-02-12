@@ -20,7 +20,7 @@
       return this;
     },
     setElement: function() {
-      return this.$element = $('#main');
+      return this.$element = $('#game');
     },
     attach: function() {
       this._super();

@@ -22,6 +22,11 @@
         height: this.height
       });
     },
+    attach: function() {
+      this.parentElement.html("");
+      this._super();
+      return this.parentElement.append('<p>Controls: arrow keys (WASD also works too)</p>');
+    },
     setMap: function(map) {
       this.currentMap = map;
       return this._setBounds();

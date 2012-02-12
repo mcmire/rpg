@@ -24,7 +24,7 @@ main = meta.def 'game.main',
     return this
 
   setElement: ->
-    @$element = $('#main')
+    @$element = $('#game')
 
   attach: ->
     @_super()
