@@ -1,15 +1,14 @@
 (function() {
-  var Block, Grob, drawable, game, meta;
+  var LiveObject, StillObject, game, meta,
+    __slice = Array.prototype.slice;
 
   game = (window.game || (window.game = {}));
 
   meta = game.meta2;
 
-  Block = game.Block;
+  StillObject = game.StillObject;
 
-  drawable = game.roles.drawable;
-
-  Grob = Block.cloneAs('game.Grob').extend(drawable, {
+  LiveObject = StillObject.cloneAs('game.LiveObject').extend({
     states: {},
     clone: function() {
       var clone;
@@ -17,17 +16,9 @@
       clone.states = game.util.dup(clone.states);
       return clone;
     },
-    init: function(imagePath, width, height) {
-      this._super(width, height);
-      this.image = game.imageCollection.get(imagePath);
-      return this;
-    },
-    activate: function() {},
-    deactivate: function() {},
     predraw: function(ctx) {
-      var biv, fn;
-      biv = this.bounds.inViewport;
-      this.currentState.sequence.clear(ctx, biv.x1, biv.y1);
+      var fn;
+      this.currentState.sequence.clear(ctx, this.mbounds.x1, this.mbounds.y1);
       if (fn = this.currentState.handler) {
         if (typeof fn === 'function') {
           this.fn();
@@ -38,9 +29,7 @@
       }
     },
     draw: function(ctx) {
-      var b;
-      b = this.bounds.onMap;
-      return this.currentState.sequence.draw(ctx, b.x1, b.y1);
+      return this.currentState.sequence.draw(ctx, this.mbounds.x1, this.mbounds.y1);
     },
     addState: function(name, frameIndices, opts) {
       var seq, state;
@@ -66,6 +55,19 @@
       if (!this.currentState) throw new Error("Unknown state '" + name + "'!");
       return this.currentState;
     },
+    translate: function() {
+      var args, _ref, _ref2;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      (_ref = this.vbounds).translate.apply(_ref, args);
+      return (_ref2 = this.mbounds).translate.apply(_ref2, args);
+    },
+    translateBySide: function(side, value) {
+      var axis, distMoved;
+      axis = side[0];
+      distMoved = this.mbounds.translateBySide(side, value);
+      this.vbounds.translate(axis, distMoved);
+      return distMoved;
+    },
     _initBoundsOnMap: function() {
       this._initFence();
       return this._super();
@@ -75,8 +77,8 @@
     }
   });
 
-  game.Grob = Grob;
+  game.LiveObject = LiveObject;
 
-  window.scriptLoaded('app/grob');
+  window.scriptLoaded('app/live_object');
 
 }).call(this);

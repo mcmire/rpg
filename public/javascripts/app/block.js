@@ -11,14 +11,13 @@
 
   Collidable = game.Collidable;
 
-  Block = Mob.extend('game.Block', assignable, Mappable, Collidable, {
-    assignTo: function(parent) {
-      this._super(parent);
-      return this.map = parent;
+  Block = meta.def('game.Block', assignable, Mappable, Collidable, {
+    _initCollidableBounds: function() {
+      return this.cbounds = game.Bounds.rect(0, 0, this.width, this.height);
     }
   });
 
-  game.MapBlock = MapBlock;
+  game.Block = Block;
 
   window.scriptLoaded('app/block');
 
