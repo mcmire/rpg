@@ -39,7 +39,6 @@ app/core
 app/block
 app/still_object
 app/live_object
-app/mob
 
 app/image  # image must be defined after main
 app/image_collection
