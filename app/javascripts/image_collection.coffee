@@ -20,6 +20,7 @@ isLoaded = ->
 
 #---
 
+add '8stone', 32, 32
 add 'dirt1', 16, 16
 add 'dirt2', 16, 16
 add 'dirt3', 16, 16
@@ -57,10 +58,11 @@ add 'hill_sw2', 16, 64
 add 'hill_sw3', 16, 64
 add 'hill_sw4', 16, 32
 add 'hill_w', 48, 16
+add 'links_door_closed', 32, 32
+add 'links_house', 208, 200
 add 'post1', 16, 32
 add 'post2', 16, 32
 add 'post3', 16, 32
-add 'links_house', 208, 200
 add 'rock1', 16, 16
 add 'rock2', 16, 16
 
@@ -69,7 +71,7 @@ add 'link2x', 34, 1440
 #---
 
 game.imageCollection =
-  get: (name) -> images[name]
+  get: (name) -> images[name] or throw new Error "Couldn't find image #{name}!"
   load: load
   isLoaded: isLoaded
 

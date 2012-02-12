@@ -19,10 +19,10 @@ Foreground = meta.def 'game.Foreground',
   addObject: (proto, positions...) ->
     self = this
     $.v.each positions, ([x, y, width, height]) ->
-      object = proto.clone().assignToMap(self).init(width, height)
+      object = proto.clone().assignToMap(self)#.init(width, height)
       object.setMapPosition(x, y)
       self.objects.push(object)
-      if game.Grob.isPrototypeOf(object)
+      if game.StillObject.isPrototypeOf(object)
         self.grobs.push(object)
       else if object.tick?
         self.blocks.push(object)
