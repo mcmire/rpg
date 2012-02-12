@@ -1,21 +1,18 @@
 game = (window.game ||= {})
 
 meta = game.meta2
-Block = game.Block
-{drawable} = game.roles
+StillObject = game.StillObject
 
-# A Grob is a GRaphical OBject. Grobs are located on the map and live in the
-# foreground (collision) layer. They can also be programmed to be in different
-# states, such as "alive" or "dead". Finally, a grob has a sprite for an
-# image, which is to say the image is composed of frames, and each state is
-# associated with a slice of those frames. If a slice has only one frame then
-# the grob is drawn to have a static image; otherwise, the frames are
-# animated. This animation can either play repeatedly, or stop after it is
-# complete.
+# A LiveObject represents an object on the map that lives in the foreground
+# layer and is thus collidable. In addition, it can also be programmed to be in
+# different states, such as "alive" or "dead" or "moving left". Finally, a
+# LiveObject has a sprite for an image, which is to say the image is composed of
+# frames, and each state is associated with a slice of those frames. If a slice
+# has only one frame then the object is drawn to have a static image; otherwise,
+# the frames are animated. This animation can either play repeatedly, or stop
+# after it is complete.
 #
-Grob = Block.cloneAs('game.Grob').extend \
-  drawable,  # implies tickable
-
+LiveObject = StillObject.cloneAs('game.LiveObject').extend
   states: {}
 
   clone: ->
@@ -24,18 +21,8 @@ Grob = Block.cloneAs('game.Grob').extend \
     clone.states = game.util.dup(clone.states)
     return clone
 
-  init: (imagePath, width, height) ->
-    @_super(width, height)  # Block
-    @image = game.imageCollection.get(imagePath)
-    return this
-
-  activate: ->
-
-  deactivate: ->
-
   predraw: (ctx) ->
-    biv = @bounds.inViewport
-    @currentState.sequence.clear(ctx, biv.x1, biv.y1)
+    @currentState.sequence.clear(ctx, @mbounds.x1, @mbounds.y1)
     if fn = @currentState.handler
       if typeof fn is 'function' then @fn() else @[fn]()
       # in calling the handler for the state, the position on the map may have
@@ -44,8 +31,7 @@ Grob = Block.cloneAs('game.Grob').extend \
       @recalculateViewportBounds()
 
   draw: (ctx) ->
-    b = @bounds.onMap
-    @currentState.sequence.draw(ctx, b.x1, b.y1)
+    @currentState.sequence.draw(ctx, @mbounds.x1, @mbounds.y1)
 
   # Public: Add a new state to the state machine.
   #
@@ -90,14 +76,59 @@ Grob = Block.cloneAs('game.Grob').extend \
     throw new Error "Unknown state '#{name}'!" if not @currentState
     @currentState
 
+  # Public: Move the viewport and map bounds of the player.
+  #
+  # Signatures:
+  #
+  # translate(axis, amount)
+  #
+  #   axis   - A String: 'x' or 'y'.
+  #   amount - An integer by which to move the bounds in the axis.
+  #
+  # translate(obj)
+  #
+  #   obj - Object:
+  #         x - An integer by which to move x1 and x2 (optional).
+  #         y - An integer by which to move y1 and y2 (optional).
+  #
+  # Examples:
+  #
+  #   translateBounds('x', 20)
+  #   translateBounds(x: 2, y: -9)
+  #
+  # Returns the self-same Viewport.
+  #
+  # Also see Bounds#translate.
+  #
+  translate: (args...) ->
+    @vbounds.translate(args...)
+    @mbounds.translate(args...)
+
+  # Public: Move the X- or Y- bounds of the player by specifying the position
+  # of one side of the map bounds. The viewport bounds will be moved
+  # accordingly.
+  #
+  # side  - A String name of the side of the bounds: 'x1', 'x2', 'y1', or 'y2'.
+  # value - An integer. The `side` is set to the `value`, and the corresponding
+  #         sides are moved accordingly.
+  #
+  # Returns the integer distance the bounds were moved.
+  #
+  # Also see Bounds#translateBySide.
+  #
+  translateBySide: (side, value) ->
+    axis = side[0]
+    distMoved = @mbounds.translateBySide(side, value)
+    @vbounds.translate(axis, distMoved)
+    return distMoved
+
   _initBoundsOnMap: ->
     @_initFence()
     @_super()
 
   _initFence: ->
-    # This really only applies if the Grob is movable
     @fence = game.Bounds.rect(0, 0, @map.width, @map.height)
 
-game.Grob = Grob
+game.LiveObject = LiveObject
 
-window.scriptLoaded('app/grob')
+window.scriptLoaded('app/live_object')

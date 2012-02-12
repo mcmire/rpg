@@ -49,7 +49,7 @@
     _setBounds: function() {
       var p, pb, phh, pwh, vhh, vwh, x1, y1;
       p = this.core.player;
-      pb = p.bounds.onMap;
+      pb = p.mbounds;
       pwh = Math.round(p.width / 2);
       phh = Math.round(p.height / 2);
       vwh = Math.round(this.width / 2);

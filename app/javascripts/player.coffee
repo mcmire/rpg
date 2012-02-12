@@ -3,7 +3,7 @@ game = (window.game ||= {})
 util = game.util
 {eventable} = game.roles
 keyboard = game.keyboard
-Grob = game.Grob
+LiveObject = game.LiveObject
 
 DIRECTIONS = 'up down left right'.split(' ')
 
@@ -21,7 +21,7 @@ for dir in DIRECTIONS
 
 KEYS = $.flatten($.values(DIRECTION_KEYS))
 
-player = Grob.cloneAs('game.player')
+player = LiveObject.cloneAs('game.player')
 
 player.extend \
   eventable,
@@ -45,7 +45,7 @@ player.extend \
     @removeEvents()
 
   # draw: (ctx) ->
-  #   b = @bounds.onMap
+  #   b = @mbounds
   #   ctx.strokeStyle = '#ff0000'
   #   ctx.strokeRect(b.x1+0.5, b.y1+0.5, @width-0.5, @height-0.5)
   #   @_super(ctx)
@@ -79,12 +79,12 @@ player.extend \
   #
   moveLeft: ->
     # Calculate next position of the player moving left
-    nextBoundsOnMap = @bounds.onMap.withTranslation(x: -@speed)
+    nextBoundsOnMap = @mbounds.withTranslation(x: -@speed)
 
     # Would the player cross the right edge of a collision box?
     if x = @mapCollidables.getOuterRightEdgeBlocking(nextBoundsOnMap)
       # Yes: Move it just at the edge so it no longer collides
-      @bounds.onMap.translateBySide('x1', x)
+      @mbounds.translateBySide('x1', x)
       return
 
     # Would the viewport move beyond the left edge of the map?
@@ -99,16 +99,16 @@ player.extend \
         # Would the player cross the left edge of the map?
         if nextBoundsOnMap.x1 < 0
           # Yes: put it at the edge
-          @bounds.onMap.translateBySide('x1', 0)
+          @mbounds.translateBySide('x1', 0)
         else
           # No: Move the player right
-          @bounds.onMap.replace(nextBoundsOnMap)
+          @mbounds.replace(nextBoundsOnMap)
     else
       # The viewport is still within the map
       # Move the player left
-      @bounds.onMap.replace(nextBoundsOnMap)
+      @mbounds.replace(nextBoundsOnMap)
       # Would the player cross the left edge of the fence?
-      if (@bounds.inViewport.x1 - @speed) < @fence.x1
+      if (@vbounds.x1 - @speed) < @fence.x1
         # Yes: Shift viewport left.
         #
         # This is not so straightforward as one might think because if the
@@ -118,8 +118,8 @@ player.extend \
         #
         # For example, assuming player.bounds.fence.x1 = 10 and:
         #
-        #   player.bounds.inViewport.x1 = 14
-        #   player.bounds.onMap.x1 = 114
+        #   player.vbounds.x1 = 14
+        #   player.mbounds.x1 = 114
         #   viewport.bounds.x1 = 100
         #
         # moving the player 10 pixels to the left looks like (o is the current
@@ -140,11 +140,11 @@ player.extend \
         #
         # or, in code, this needs to be true:
         #
-        #   player.bounds.inViewport.x1 = 10
-        #   player.bounds.onMap.x1 = 104
+        #   player.vbounds.x1 = 10
+        #   player.mbounds.x1 = 104
         #   viewport.bounds.x1 = 94
         #
-        @viewport.translateBySide('x1', @bounds.onMap.x1 - @viewportPadding)
+        @viewport.translateBySide('x1', @mbounds.x1 - @viewportPadding)
 
   # Internal: Move the player rightward.
   #
@@ -152,12 +152,12 @@ player.extend \
   #
   moveRight: ->
     # Calculate next position of the player moving right
-    nextBoundsOnMap = @bounds.onMap.withTranslation(x: +@speed)
+    nextBoundsOnMap = @mbounds.withTranslation(x: +@speed)
 
     # Would the player cross the left edge of a collision box?
     if x = @mapCollidables.getOuterLeftEdgeBlocking(nextBoundsOnMap)
       # Yes: Move it just at the edge so it no longer collides
-      @bounds.onMap.translateBySide('x2', x)
+      @mbounds.translateBySide('x2', x)
       return
 
     mapWidth = @map.width
@@ -174,18 +174,18 @@ player.extend \
         # Would the player cross the right edge of the map?
         if nextBoundsOnMap.x2 > mapWidth
           # Yes: put it at the edge
-          @bounds.onMap.translateBySide('x2', mapWidth)
+          @mbounds.translateBySide('x2', mapWidth)
         else
           # No: Move the player right
-          @bounds.onMap.replace(nextBoundsOnMap)
+          @mbounds.replace(nextBoundsOnMap)
     else
       # The viewport is still within the map
       # No: Move the player right
-      @bounds.onMap.replace(nextBoundsOnMap)
+      @mbounds.replace(nextBoundsOnMap)
       # Would the player cross the right edge of the fence?
-      if (@bounds.inViewport.x2 + @speed) > @fence.x2
+      if (@vbounds.x2 + @speed) > @fence.x2
         # Yes: shift viewport right.
-        @viewport.translateBySide('x2', @bounds.onMap.x2 + @viewportPadding)
+        @viewport.translateBySide('x2', @mbounds.x2 + @viewportPadding)
 
   # Internal: Move the player upward.
   #
@@ -193,12 +193,12 @@ player.extend \
   #
   moveUp: ->
     # Calculate the next position of the player moving up
-    nextBoundsOnMap = @bounds.onMap.withTranslation(y: -@speed)
+    nextBoundsOnMap = @mbounds.withTranslation(y: -@speed)
 
     # Would the player cross the bottom edge of a collision box?
     if y = @mapCollidables.getOuterBottomEdgeBlocking(nextBoundsOnMap)
       # Yes: move it just at the edge so it no longer collides
-      @bounds.onMap.translateBySide('y1', y)
+      @mbounds.translateBySide('y1', y)
       return
 
     # Would the viewport move beyond the top edge of the map?
@@ -213,18 +213,18 @@ player.extend \
         # Would the player cross the top edge of the map?
         if nextBoundsOnMap.y1 < 0
           # Yes: put it at the edge
-          @bounds.onMap.translateBySide('y1', 0)
+          @mbounds.translateBySide('y1', 0)
         else
           # No: Move the player up
-          @bounds.onMap.replace(nextBoundsOnMap)
+          @mbounds.replace(nextBoundsOnMap)
     else
       # The viewport is still within the map
       # Move the player up
-      @bounds.onMap.replace(nextBoundsOnMap)
+      @mbounds.replace(nextBoundsOnMap)
       # Would the player cross the top edge of the fence?
-      if (@bounds.inViewport.y1 - @speed) < @fence.y1
+      if (@vbounds.y1 - @speed) < @fence.y1
         # Yes: shift viewport up.
-        @viewport.translateBySide('y1', @bounds.onMap.y1 - @viewportPadding)
+        @viewport.translateBySide('y1', @mbounds.y1 - @viewportPadding)
 
   # Internal: Move the player downward.
   #
@@ -232,7 +232,7 @@ player.extend \
   #
   moveDown: ->
     # Calculate the next position of the player moving down
-    nextBoundsOnMap = @bounds.onMap.withTranslation(y: @speed)
+    nextBoundsOnMap = @mbounds.withTranslation(y: @speed)
 
     # Would the player cross the top edge of a collision box?
     if y = @mapCollidables.getOuterTopEdgeBlocking(nextBoundsOnMap)
@@ -254,23 +254,23 @@ player.extend \
         # Would the player move beyond the bottom edge of the map?
         if nextBoundsOnMap.y2 > mapHeight
           # Yes: put it at the edge
-          @bounds.onMap.translateBySide('y2', mapHeight)
+          @mbounds.translateBySide('y2', mapHeight)
         else
           # No: Move the player down
-          @bounds.onMap.replace(nextBoundsOnMap)
+          @mbounds.replace(nextBoundsOnMap)
     else
       # The viewport is still within the map
       # No: Move the player right
-      @bounds.onMap.replace(nextBoundsOnMap)
+      @mbounds.replace(nextBoundsOnMap)
       # Would the player move beyond the right edge of the fence?
-      if (@bounds.inViewport.y2 + @speed) > @fence.y2
+      if (@vbounds.y2 + @speed) > @fence.y2
         # Yes: shift viewport right.
-        @viewport.translateBySide('y2', @bounds.onMap.y2 + @viewportPadding)
+        @viewport.translateBySide('y2', @mbounds.y2 + @viewportPadding)
 
   # override
   # _initBoundsOnMap: ->
   #   @_super()
-  #   @bounds.onMap = game.Bounds.at(372, 540, 406, 588)
+  #   @mbounds = game.Bounds.at(372, 540, 406, 588)
 
   # override
   _initFence: ->

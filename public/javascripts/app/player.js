@@ -1,5 +1,5 @@
 (function() {
-  var DIRECTIONS, DIRECTION_KEYS, Grob, KEYS, KEY_DIRECTIONS, dir, eventable, game, keyCode, keyboard, player, util, _i, _j, _len, _len2, _ref;
+  var DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, LiveObject, dir, eventable, game, keyCode, keyboard, player, util, _i, _j, _len, _len2, _ref;
 
   game = (window.game || (window.game = {}));
 
@@ -9,7 +9,7 @@
 
   keyboard = game.keyboard;
 
-  Grob = game.Grob;
+  LiveObject = game.LiveObject;
 
   DIRECTIONS = 'up down left right'.split(' ');
 
@@ -33,7 +33,7 @@
 
   KEYS = $.flatten($.values(DIRECTION_KEYS));
 
-  player = Grob.cloneAs('game.player');
+  player = LiveObject.cloneAs('game.player');
 
   player.extend(eventable, {
     viewportPadding: 30,
@@ -64,11 +64,11 @@
     },
     moveLeft: function() {
       var map, nextBoundsOnMap, x, _base;
-      nextBoundsOnMap = this.bounds.onMap.withTranslation({
+      nextBoundsOnMap = this.mbounds.withTranslation({
         x: -this.speed
       });
       if (x = this.mapCollidables.getOuterRightEdgeBlocking(nextBoundsOnMap)) {
-        this.bounds.onMap.translateBySide('x1', x);
+        this.mbounds.translateBySide('x1', x);
         return;
       }
       if ((this.viewport.bounds.x1 - this.speed) < 0) {
@@ -77,25 +77,25 @@
         } else {
           this.viewport.translateBySide('x1', 0);
           if (nextBoundsOnMap.x1 < 0) {
-            return this.bounds.onMap.translateBySide('x1', 0);
+            return this.mbounds.translateBySide('x1', 0);
           } else {
-            return this.bounds.onMap.replace(nextBoundsOnMap);
+            return this.mbounds.replace(nextBoundsOnMap);
           }
         }
       } else {
-        this.bounds.onMap.replace(nextBoundsOnMap);
-        if ((this.bounds.inViewport.x1 - this.speed) < this.fence.x1) {
-          return this.viewport.translateBySide('x1', this.bounds.onMap.x1 - this.viewportPadding);
+        this.mbounds.replace(nextBoundsOnMap);
+        if ((this.vbounds.x1 - this.speed) < this.fence.x1) {
+          return this.viewport.translateBySide('x1', this.mbounds.x1 - this.viewportPadding);
         }
       }
     },
     moveRight: function() {
       var map, mapWidth, nextBoundsOnMap, x, _base;
-      nextBoundsOnMap = this.bounds.onMap.withTranslation({
+      nextBoundsOnMap = this.mbounds.withTranslation({
         x: +this.speed
       });
       if (x = this.mapCollidables.getOuterLeftEdgeBlocking(nextBoundsOnMap)) {
-        this.bounds.onMap.translateBySide('x2', x);
+        this.mbounds.translateBySide('x2', x);
         return;
       }
       mapWidth = this.map.width;
@@ -105,25 +105,25 @@
         } else {
           this.viewport.translateBySide('x2', mapWidth);
           if (nextBoundsOnMap.x2 > mapWidth) {
-            return this.bounds.onMap.translateBySide('x2', mapWidth);
+            return this.mbounds.translateBySide('x2', mapWidth);
           } else {
-            return this.bounds.onMap.replace(nextBoundsOnMap);
+            return this.mbounds.replace(nextBoundsOnMap);
           }
         }
       } else {
-        this.bounds.onMap.replace(nextBoundsOnMap);
-        if ((this.bounds.inViewport.x2 + this.speed) > this.fence.x2) {
-          return this.viewport.translateBySide('x2', this.bounds.onMap.x2 + this.viewportPadding);
+        this.mbounds.replace(nextBoundsOnMap);
+        if ((this.vbounds.x2 + this.speed) > this.fence.x2) {
+          return this.viewport.translateBySide('x2', this.mbounds.x2 + this.viewportPadding);
         }
       }
     },
     moveUp: function() {
       var map, nextBoundsOnMap, y, _base;
-      nextBoundsOnMap = this.bounds.onMap.withTranslation({
+      nextBoundsOnMap = this.mbounds.withTranslation({
         y: -this.speed
       });
       if (y = this.mapCollidables.getOuterBottomEdgeBlocking(nextBoundsOnMap)) {
-        this.bounds.onMap.translateBySide('y1', y);
+        this.mbounds.translateBySide('y1', y);
         return;
       }
       if ((this.viewport.bounds.y1 - this.speed) < 0) {
@@ -132,21 +132,21 @@
         } else {
           this.viewport.translateBySide('y1', 0);
           if (nextBoundsOnMap.y1 < 0) {
-            return this.bounds.onMap.translateBySide('y1', 0);
+            return this.mbounds.translateBySide('y1', 0);
           } else {
-            return this.bounds.onMap.replace(nextBoundsOnMap);
+            return this.mbounds.replace(nextBoundsOnMap);
           }
         }
       } else {
-        this.bounds.onMap.replace(nextBoundsOnMap);
-        if ((this.bounds.inViewport.y1 - this.speed) < this.fence.y1) {
-          return this.viewport.translateBySide('y1', this.bounds.onMap.y1 - this.viewportPadding);
+        this.mbounds.replace(nextBoundsOnMap);
+        if ((this.vbounds.y1 - this.speed) < this.fence.y1) {
+          return this.viewport.translateBySide('y1', this.mbounds.y1 - this.viewportPadding);
         }
       }
     },
     moveDown: function() {
       var map, mapHeight, nextBoundsOnMap, y, _base;
-      nextBoundsOnMap = this.bounds.onMap.withTranslation({
+      nextBoundsOnMap = this.mbounds.withTranslation({
         y: this.speed
       });
       if (y = this.mapCollidables.getOuterTopEdgeBlocking(nextBoundsOnMap)) {
@@ -160,15 +160,15 @@
         } else {
           this.viewport.translateBySide('y2', mapHeight);
           if (nextBoundsOnMap.y2 > mapHeight) {
-            return this.bounds.onMap.translateBySide('y2', mapHeight);
+            return this.mbounds.translateBySide('y2', mapHeight);
           } else {
-            return this.bounds.onMap.replace(nextBoundsOnMap);
+            return this.mbounds.replace(nextBoundsOnMap);
           }
         }
       } else {
-        this.bounds.onMap.replace(nextBoundsOnMap);
-        if ((this.bounds.inViewport.y2 + this.speed) > this.fence.y2) {
-          return this.viewport.translateBySide('y2', this.bounds.onMap.y2 + this.viewportPadding);
+        this.mbounds.replace(nextBoundsOnMap);
+        if ((this.vbounds.y2 + this.speed) > this.fence.y2) {
+          return this.viewport.translateBySide('y2', this.mbounds.y2 + this.viewportPadding);
         }
       }
     },

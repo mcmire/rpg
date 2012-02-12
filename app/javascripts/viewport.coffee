@@ -79,7 +79,7 @@ viewport = meta.def 'game.viewport',
   # Set the bounds of the viewport on the map itself.
   _setBounds: ->
     p = @core.player
-    pb = p.bounds.onMap
+    pb = p.mbounds
     pwh = Math.round(p.width / 2)
     phh = Math.round(p.height / 2)
     vwh  = Math.round(@width / 2)

@@ -2,7 +2,6 @@ game = (window.game ||= {})
 
 meta = game.meta2
 {assignable, simpleDrawable} = game.roles
-Mappable = game.Mappable
 
 MapTile = meta.def 'game.MapTile',
   assignable,
