@@ -82,10 +82,10 @@ player.extend \
     nextBoundsOnMap = @mbounds.withTranslation(x: -@speed)
 
     # Would the player cross the right edge of a collision box?
-    # if x = @mapCollidables.getOuterRightEdgeBlocking(nextBoundsOnMap)
-    #   # Yes: Move it just at the edge so it no longer collides
-    #   @callOnMapBounds('translateBySide', 'x1', x)
-    #   return
+    if x = @mapCollidables.getOuterRightEdgeBlocking(nextBoundsOnMap)
+      # Yes: Move it just at the edge so it no longer collides
+      @callOnMapBounds('translateBySide', 'x1', x)
+      return
 
     # Would the viewport move beyond the left edge of the map?
     if (@viewport.bounds.x1 - @speed) < 0
@@ -155,10 +155,10 @@ player.extend \
     nextBoundsOnMap = @mbounds.withTranslation(x: +@speed)
 
     # Would the player cross the left edge of a collision box?
-    # if x = @mapCollidables.getOuterLeftEdgeBlocking(nextBoundsOnMap)
-    #   # Yes: Move it just at the edge so it no longer collides
-    #   @callOnMapBounds('translateBySide', 'x2', x)
-    #   return
+    if x = @mapCollidables.getOuterLeftEdgeBlocking(nextBoundsOnMap)
+      # Yes: Move it just at the edge so it no longer collides
+      @callOnMapBounds('translateBySide', 'x2', x)
+      return
 
     mapWidth = @map.width
 
@@ -196,10 +196,10 @@ player.extend \
     nextBoundsOnMap = @mbounds.withTranslation(y: -@speed)
 
     # Would the player cross the bottom edge of a collision box?
-    # if y = @mapCollidables.getOuterBottomEdgeBlocking(nextBoundsOnMap)
-    #   # Yes: move it just at the edge so it no longer collides
-    #   @callOnMapBounds('translateBySide', 'y1', y)
-    #   return
+    if y = @mapCollidables.getOuterBottomEdgeBlocking(nextBoundsOnMap)
+      # Yes: move it just at the edge so it no longer collides
+      @callOnMapBounds('translateBySide', 'y1', y)
+      return
 
     # Would the viewport move beyond the top edge of the map?
     if (@viewport.bounds.y1 - @speed) < 0
@@ -235,10 +235,10 @@ player.extend \
     nextBoundsOnMap = @mbounds.withTranslation(y: @speed)
 
     # Would the player cross the top edge of a collision box?
-    # if y = @mapCollidables.getOuterTopEdgeBlocking(nextBoundsOnMap)
-    #   # Yes: move it just at the edge so it no longer collides
-    #   @translateBySide('y2', y)
-    #   return
+    if y = @mapCollidables.getOuterTopEdgeBlocking(nextBoundsOnMap)
+      # Yes: move it just at the edge so it no longer collides
+      @translateBySide('y2', y)
+      return
 
     mapHeight = @map.height
 

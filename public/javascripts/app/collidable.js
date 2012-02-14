@@ -21,7 +21,9 @@
     callOnMapBounds: function() {
       var args;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      return this._super.apply(this, args);
+      this.mapCollidables.remove(this);
+      this._super.apply(this, args);
+      return this.mapCollidables.add(this);
     },
     setMapPosition: function(x, y) {
       this._super(x, y);
@@ -55,7 +57,6 @@
       return this.cbounds.getOuterBottomEdgeBlocking(other);
     },
     _replaceInMapCollidables: function() {
-      this.mapCollidables.remove(this);
       return this.mapCollidables.add(this);
     },
     _initCollidableBounds: function() {

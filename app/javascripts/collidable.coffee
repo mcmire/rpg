@@ -14,8 +14,12 @@ Collidable = meta.def 'game.Collidable',
     return this
 
   callOnMapBounds: (args...) ->
+    # Ensure that the player is in the right place in the sorted list of map
+    # objects. If the player is now behind another object, then we want it to be
+    # drawn behind that object instead of being clobbered.
+    @mapCollidables.remove(this)
     @_super(args...)
-    # @_replaceInMapCollidables()
+    @mapCollidables.add(this)
 
   setMapPosition: (x, y) ->
     @_super(x, y)
@@ -45,11 +49,6 @@ Collidable = meta.def 'game.Collidable',
     @cbounds.getOuterBottomEdgeBlocking(other)
 
   _replaceInMapCollidables: ->
-    # Ensure that the player is in the right place in the sorted list of map
-    # objects (this really only matters if the player is moving vertically).
-    # If the player is now behind another object, then we want it to be drawn
-    # behind that object instead of being clobbered.
-    @mapCollidables.remove(this)
     @mapCollidables.add(this)
 
   _initCollidableBounds: ->

@@ -2,7 +2,7 @@ game = (window.game ||= {})
 
 meta = game.meta2
 {attachable, assignable, tickable} = game.roles
-SortedObjectCollection = game.SortedObjectCollection
+SortedObjectMatrix = game.SortedObjectMatrix
 
 Background = meta.def 'game.Background',
   assignable,
@@ -11,8 +11,8 @@ Background = meta.def 'game.Background',
   init: (@map, @width, @height) ->
     @fills = []
     @tiles = []
-    @sprites = game.SortedObjectCollection.create()
-    @framedSprites = @sprites.clone().extend(game.FramedObjectCollection)
+    @sprites = game.SortedObjectMatrix.create()
+    @framedSprites = @sprites.clone().extend(game.FramedObjectMatrix)
 
   assignToViewport: (@viewport) ->
     @framedSprites.frameWithin(@viewport.bounds)

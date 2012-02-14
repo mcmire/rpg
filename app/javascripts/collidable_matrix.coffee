@@ -1,9 +1,9 @@
 game = (window.game ||= {})
 
 meta = game.meta2
-SortedObjectCollection = game.SortedObjectCollection
+SortedObjectMatrix = game.SortedObjectMatrix
 
-CollidableCollection = SortedObjectCollection.cloneAs('game.CollidableCollection').extend
+CollidableMatrix = SortedObjectMatrix.cloneAs('game.CollidableMatrix').extend
   # Public: Determine whether the given bounds intersect with an object in
   # @objects.
   #
@@ -83,6 +83,6 @@ CollidableCollection = SortedObjectCollection.cloneAs('game.CollidableCollection
         return false
     return ret
 
-game.CollidableCollection = CollidableCollection
+game.CollidableMatrix = CollidableMatrix
 
-window.scriptLoaded('app/collidable_collection')
+window.scriptLoaded('app/collidable_matrix')

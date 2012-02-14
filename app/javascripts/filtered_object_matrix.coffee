@@ -2,7 +2,7 @@ game = (window.game ||= {})
 
 meta = game.meta2
 
-FilteredObjectCollection = meta.def 'game.FilteredObjectCollection',
+FilteredObjectMatrix = meta.def 'game.FilteredObjectMatrix',
   without: (@exception) ->
     return this
 
@@ -13,6 +13,6 @@ FilteredObjectCollection = meta.def 'game.FilteredObjectCollection',
         ret = fn(object)
         return false if ret is false
 
-game.FilteredObjectCollection = FilteredObjectCollection
+game.FilteredObjectMatrix = FilteredObjectMatrix
 
-window.scriptLoaded('app/filtered_object_collection')
+window.scriptLoaded('app/filtered_object_matrix')

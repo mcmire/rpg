@@ -1,5 +1,5 @@
 (function() {
-  var Background, SortedObjectCollection, assignable, attachable, game, meta, tickable, _ref,
+  var Background, SortedObjectMatrix, assignable, attachable, game, meta, tickable, _ref,
     __slice = Array.prototype.slice;
 
   game = (window.game || (window.game = {}));
@@ -8,7 +8,7 @@
 
   _ref = game.roles, attachable = _ref.attachable, assignable = _ref.assignable, tickable = _ref.tickable;
 
-  SortedObjectCollection = game.SortedObjectCollection;
+  SortedObjectMatrix = game.SortedObjectMatrix;
 
   Background = meta.def('game.Background', assignable, tickable, {
     init: function(map, width, height) {
@@ -17,8 +17,8 @@
       this.height = height;
       this.fills = [];
       this.tiles = [];
-      this.sprites = game.SortedObjectCollection.create();
-      return this.framedSprites = this.sprites.clone().extend(game.FramedObjectCollection);
+      this.sprites = game.SortedObjectMatrix.create();
+      return this.framedSprites = this.sprites.clone().extend(game.FramedObjectMatrix);
     },
     assignToViewport: function(viewport) {
       this.viewport = viewport;

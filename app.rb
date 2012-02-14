@@ -30,12 +30,13 @@ app/image_sequence
 app/keyboard
 app/main
 app/mappable
+app/ordered_map
 app/viewport
 
-app/sorted_object_collection
-app/collidable_collection
-app/framed_object_collection
-app/filtered_object_collection
+app/sorted_object_matrix
+app/collidable_matrix
+app/framed_object_matrix
+app/filtered_object_matrix
 
 app/ticker
 app/core

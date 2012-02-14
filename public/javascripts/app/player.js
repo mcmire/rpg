@@ -63,10 +63,14 @@
       if (state !== this.currentState.name) return this.setState(state);
     },
     moveLeft: function() {
-      var map, nextBoundsOnMap, _base;
+      var map, nextBoundsOnMap, x, _base;
       nextBoundsOnMap = this.mbounds.withTranslation({
         x: -this.speed
       });
+      if (x = this.mapCollidables.getOuterRightEdgeBlocking(nextBoundsOnMap)) {
+        this.callOnMapBounds('translateBySide', 'x1', x);
+        return;
+      }
       if ((this.viewport.bounds.x1 - this.speed) < 0) {
         if (map = typeof (_base = this.map).getAreaLeft === "function" ? _base.getAreaLeft() : void 0) {
           return this.map.loadArea(map);
@@ -86,10 +90,14 @@
       }
     },
     moveRight: function() {
-      var map, mapWidth, nextBoundsOnMap, _base;
+      var map, mapWidth, nextBoundsOnMap, x, _base;
       nextBoundsOnMap = this.mbounds.withTranslation({
         x: +this.speed
       });
+      if (x = this.mapCollidables.getOuterLeftEdgeBlocking(nextBoundsOnMap)) {
+        this.callOnMapBounds('translateBySide', 'x2', x);
+        return;
+      }
       mapWidth = this.map.width;
       if ((this.viewport.bounds.x2 + this.speed) > mapWidth) {
         if (map = typeof (_base = this.map).getAreaRight === "function" ? _base.getAreaRight() : void 0) {
@@ -110,10 +118,14 @@
       }
     },
     moveUp: function() {
-      var map, nextBoundsOnMap, _base;
+      var map, nextBoundsOnMap, y, _base;
       nextBoundsOnMap = this.mbounds.withTranslation({
         y: -this.speed
       });
+      if (y = this.mapCollidables.getOuterBottomEdgeBlocking(nextBoundsOnMap)) {
+        this.callOnMapBounds('translateBySide', 'y1', y);
+        return;
+      }
       if ((this.viewport.bounds.y1 - this.speed) < 0) {
         if (map = typeof (_base = this.map).getAreaUp === "function" ? _base.getAreaUp() : void 0) {
           return this.map.loadArea(map);
@@ -133,10 +145,14 @@
       }
     },
     moveDown: function() {
-      var map, mapHeight, nextBoundsOnMap, _base;
+      var map, mapHeight, nextBoundsOnMap, y, _base;
       nextBoundsOnMap = this.mbounds.withTranslation({
         y: this.speed
       });
+      if (y = this.mapCollidables.getOuterTopEdgeBlocking(nextBoundsOnMap)) {
+        this.translateBySide('y2', y);
+        return;
+      }
       mapHeight = this.map.height;
       if ((this.viewport.bounds.y2 + this.speed) > mapHeight) {
         if (map = typeof (_base = this.map).getAreaDown === "function" ? _base.getAreaDown() : void 0) {

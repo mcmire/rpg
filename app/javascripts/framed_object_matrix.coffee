@@ -2,7 +2,7 @@ game = (window.game ||= {})
 
 meta = game.meta2
 
-FramedObjectCollection = meta.def 'game.FramedObjectCollection',
+FramedObjectMatrix = meta.def 'game.FramedObjectMatrix',
   frameWithin: (@bounds) ->
     return this
 
@@ -13,6 +13,6 @@ FramedObjectCollection = meta.def 'game.FramedObjectCollection',
         ret = fn(object)
         return false if ret is false
 
-game.FramedObjectCollection = FramedObjectCollection
+game.FramedObjectMatrix = FramedObjectMatrix
 
-window.scriptLoaded('app/framed_object_collection')
+window.scriptLoaded('app/framed_object_matrix')

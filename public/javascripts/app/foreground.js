@@ -13,8 +13,8 @@
       this.map = map;
       this.width = width;
       this.height = height;
-      this.objects = game.CollidableCollection.create();
-      this.framedObjects = this.objects.clone().extend(game.FramedObjectCollection);
+      this.objects = game.CollidableMatrix.create(this);
+      this.framedObjects = this.objects.clone().extend(game.FramedObjectMatrix);
       this.blocks = [];
       this.player = null;
       return this.enableCollisions = true;
@@ -94,7 +94,7 @@
       });
     },
     getObjectsWithout: function(object) {
-      return this.framedObjects.clone().extend(game.FilteredObjectCollection).without(object);
+      return this.framedObjects.clone().extend(game.FilteredObjectMatrix).without(object);
     }
   });
 

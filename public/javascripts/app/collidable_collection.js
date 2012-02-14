@@ -1,13 +1,13 @@
 (function() {
-  var CollidableCollection, SortedObjectCollection, game, meta;
+  var CollidableMatrix, SortedObjectMatrix, game, meta;
 
   game = (window.game || (window.game = {}));
 
   meta = game.meta2;
 
-  SortedObjectCollection = game.SortedObjectCollection;
+  SortedObjectMatrix = game.SortedObjectMatrix;
 
-  CollidableCollection = SortedObjectCollection.cloneAs('game.CollidableCollection').extend({
+  CollidableMatrix = SortedObjectMatrix.cloneAs('game.CollidableMatrix').extend({
     intersectsWith: function(other) {
       var ret;
       ret = false;
@@ -53,8 +53,8 @@
     }
   });
 
-  game.CollidableCollection = CollidableCollection;
+  game.CollidableMatrix = CollidableMatrix;
 
-  window.scriptLoaded('app/collidable_collection');
+  window.scriptLoaded('app/collidable_matrix');
 
 }).call(this);

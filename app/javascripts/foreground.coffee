@@ -8,8 +8,8 @@ Foreground = meta.def 'game.Foreground',
   tickable,
 
   init: (@map, @width, @height) ->
-    @objects = game.CollidableCollection.create()
-    @framedObjects = @objects.clone().extend(game.FramedObjectCollection)
+    @objects = game.CollidableMatrix.create(this)
+    @framedObjects = @objects.clone().extend(game.FramedObjectMatrix)
     @blocks = []
     @player = null
     @enableCollisions = true
@@ -74,7 +74,7 @@ Foreground = meta.def 'game.Foreground',
     @$canvas.css
       top: -@viewport.bounds.y1
       left: -@viewport.bounds.x1
-    # Clear all of the objects first before drawing all of them so that we can #
+    # Clear all of the objects first before drawing all of them so that we can
     # layer sprites on top of each other - if each object clears and draws
     # itself separately then an object that sits behind another will get
     # partially or fully erased before the object in front is drawn
@@ -83,7 +83,7 @@ Foreground = meta.def 'game.Foreground',
     @framedObjects.each (object) -> object.postdraw?(self.ctx)
 
   getObjectsWithout: (object) ->
-    @framedObjects.clone().extend(game.FilteredObjectCollection).without(object)
+    @framedObjects.clone().extend(game.FilteredObjectMatrix).without(object)
 
 Foreground.add = Foreground.addObject
 Foreground.remove = Foreground.removeObject
