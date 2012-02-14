@@ -37,6 +37,9 @@
     onLoad: function(fn) {
       return this.onLoadCallback = fn;
     },
+    clear: function(ctx, x, y) {
+      return ctx.clearRect(x, y, this.width, this.height);
+    },
     draw: function(ctx, x, y) {
       return ctx.drawImage(this.element, x, y);
     }

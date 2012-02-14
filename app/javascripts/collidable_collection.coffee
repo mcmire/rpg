@@ -1,51 +1,11 @@
 game = (window.game ||= {})
 
 meta = game.meta2
+SortedObjectCollection = game.SortedObjectCollection
 
-CollidableCollection = meta.def 'game.CollidableCollection',
-  # Initialize the collection.
-  #
-  # collidables - An optional Array of Grobs to populate the collection with
-  #               (default: []).
-  # exception   - An optional Grob which will be left out when the collection is
-  #               iterated over (default: nothing).
-  #
-  init: (args...) ->
-    if args.length
-      [@collidables, @exception] = args
-    else
-      @collidables = []
-
-  getBlocks: ->
-    c for c in @collidables when game.Block.isPrototypeOf(c) and not game.Grob.isPrototypeOf(c)
-
-  each: (fn) ->
-    if @exception
-      for collidable in @collidables
-        if collidable isnt @exception
-          ret = fn(collidable)
-          break if ret is false
-    else
-      for collidable in @collidables
-        ret = fn(collidable)
-        break if ret is false
-
-  get: (index) ->
-    @collidables[index]
-
-  push: (collidable) ->
-    @collidables.push(collidable)
-
-  delete: (collidable) ->
-    @collidables.delete(collidable)
-
-  without: (collidable) ->
-    @create(@collidables, collidable)
-
-  # Public: Return whether the given bounds intersects with a collidable object.
-  #
-  # The collision should be detected correctly whether the given bounds are
-  # taller or shorter than the collidable in question.
+CollidableCollection = SortedObjectCollection.cloneAs('game.CollidableCollection').extend
+  # Public: Determine whether the given bounds intersect with an object in
+  # @objects.
   #
   # other - An instance of Bounds, or an object that includes Mappable.
   #
@@ -60,7 +20,7 @@ CollidableCollection = meta.def 'game.CollidableCollection',
     return ret
 
   # Public: Calculate a value that should be subtracted from the x1 coordinate
-  # of a bounds box to prevent it from colliding with a collidable object when
+  # of a bounds box to prevent it from colliding with an object in @objects when
   # moving rightward.
   #
   # other - An instance of Bounds, or an object that includes Mappable.

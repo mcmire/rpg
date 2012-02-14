@@ -56,15 +56,15 @@
       return this.currentState;
     },
     translate: function() {
-      var args, _ref, _ref2;
+      var args, _ref;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       (_ref = this.vbounds).translate.apply(_ref, args);
-      return (_ref2 = this.mbounds).translate.apply(_ref2, args);
+      return this.callOnMapBounds.apply(this, ['translate'].concat(__slice.call(args)));
     },
     translateBySide: function(side, value) {
       var axis, distMoved;
       axis = side[0];
-      distMoved = this.mbounds.translateBySide(side, value);
+      distMoved = this.callOnMapBounds('translateBySide', side, value);
       this.vbounds.translate(axis, distMoved);
       return distMoved;
     },

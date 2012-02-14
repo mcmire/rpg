@@ -16,7 +16,23 @@
 * Use Rack middleware for compiling Coffee and Sass on the fly
   (performance is not important for this app)
 
-* Add collision boxes to StillObjects -- they will create their own box which is
-  shortened by 8 pixels on the bottom edge
-
 * Rename Bounds to Box, to prevent intersectsWith/intersectWith
+
+* When viewport is adjusted, recompile "framed objects" or list of objects
+  within view - unfortunately this means that for each object within view, *its*
+  objects array, its awareness of all other objects within view, has to be
+  updated. Which means we need to update the "framed objects" array, not replace
+  it - if we do this then the objects should be automatically updated
+
+* The "framed objects" - these should be a list of objects that are 32px (4
+  tiles) outside of the viewport, in case any objects are sitting right outside
+  of view and move into view
+
+* The way that objects are stored (first by Y, then by X, in nested arrays)
+  seems a bit excessive. Is there a way to do a binary search on two values
+  rather than one? Or should we even worry about sorting objects by X since that
+  doesn't matter in terms of drawing the objects?
+
+* There's probably no need for a separate collision bounds -- just change
+  Bounds#intersectsWith so that it allows objects to encroach 8px into a
+  collision box on the bottom edge

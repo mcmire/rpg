@@ -77,7 +77,11 @@ Object.defineProperty proto, '__name__', value: 'game.meta.proto'
 Object.defineProperty proto, '_super', value: ->
 # proto.__key_translations__ = {}
 proto.clone = ->
-  _clone(this)
+  clone = _clone(this)
+  # Copy this so if clone adds to mixins then it won't get added to prototype
+  # and thus possibly prevent future objects from being able to be mixed in
+  clone.__mixins__ = game.util.dup(this.__mixins__)
+  return clone
 proto.cloneAs = (name) ->
   clone = @clone()
   clone.__name__ = name
@@ -95,6 +99,12 @@ proto._includeMixin = (mixin, opts={}) ->
 proto.include =
 proto.extend = (mixins...) ->
   @_includeMixin(mixin) for mixin in mixins
+  return this
+proto.aliases = (map) ->
+  self = this
+  $.v.each map, (orig, aliases) ->
+    aliases = [aliases] unless $.v.is.arr(aliases)
+    self[alias] = self[orig] for alias in aliases
   return this
 proto.doesInclude = (obj) ->
   if typeof obj is 'string'

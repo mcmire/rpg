@@ -67,7 +67,10 @@
   });
 
   proto.clone = function() {
-    return _clone(this);
+    var clone;
+    clone = _clone(this);
+    clone.__mixins__ = game.util.dup(this.__mixins__);
+    return clone;
   };
 
   proto.cloneAs = function(name) {
@@ -103,6 +106,22 @@
       mixin = mixins[_i];
       this._includeMixin(mixin);
     }
+    return this;
+  };
+
+  proto.aliases = function(map) {
+    var self;
+    self = this;
+    $.v.each(map, function(orig, aliases) {
+      var alias, _i, _len, _results;
+      if (!$.v.is.arr(aliases)) aliases = [aliases];
+      _results = [];
+      for (_i = 0, _len = aliases.length; _i < _len; _i++) {
+        alias = aliases[_i];
+        _results.push(self[alias] = self[orig]);
+      }
+      return _results;
+    });
     return this;
   };
 

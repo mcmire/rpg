@@ -93,8 +93,8 @@ LiveObject = StillObject.cloneAs('game.LiveObject').extend
   #
   # Examples:
   #
-  #   translateBounds('x', 20)
-  #   translateBounds(x: 2, y: -9)
+  #   translate('x', 20)
+  #   translate(x: 2, y: -9)
   #
   # Returns the self-same Viewport.
   #
@@ -102,7 +102,7 @@ LiveObject = StillObject.cloneAs('game.LiveObject').extend
   #
   translate: (args...) ->
     @vbounds.translate(args...)
-    @mbounds.translate(args...)
+    @callOnMapBounds('translate', args...)
 
   # Public: Move the X- or Y- bounds of the player by specifying the position
   # of one side of the map bounds. The viewport bounds will be moved
@@ -118,7 +118,7 @@ LiveObject = StillObject.cloneAs('game.LiveObject').extend
   #
   translateBySide: (side, value) ->
     axis = side[0]
-    distMoved = @mbounds.translateBySide(side, value)
+    distMoved = @callOnMapBounds('translateBySide', side, value)
     @vbounds.translate(axis, distMoved)
     return distMoved
 

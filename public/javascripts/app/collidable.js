@@ -18,9 +18,26 @@
       this._initCollidables();
       return this;
     },
+    callOnMapBounds: function() {
+      var args;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      return this._super.apply(this, args);
+    },
     setMapPosition: function(x, y) {
       this._super(x, y);
       return this.cbounds.anchor(x, y);
+    },
+    translate: function() {
+      var args, _ref;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      this._super.apply(this, args);
+      return (_ref = this.cbounds).translate.apply(_ref, args);
+    },
+    translateBySide: function() {
+      var args, _ref;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      this._super.apply(this, args);
+      return (_ref = this.cbounds).translateBySide.apply(_ref, args);
     },
     intersectsWith: function(other) {
       return this.cbounds.intersectsWith(other);
@@ -37,6 +54,10 @@
     getOuterBottomEdgeBlocking: function(other) {
       return this.cbounds.getOuterBottomEdgeBlocking(other);
     },
+    _replaceInMapCollidables: function() {
+      this.mapCollidables.remove(this);
+      return this.mapCollidables.add(this);
+    },
     _initCollidableBounds: function() {
       return this.cbounds = game.Bounds.rect(0, 0, this.width, this.height - 8);
     },
@@ -44,7 +65,7 @@
       if (this.map.enableCollisions) {
         return this.mapCollidables = this.map.getObjectsWithout(this);
       } else {
-        return this.mapCollidables = game.CollidableCollection.create();
+        return this.mapCollidables = game.CollidableCollection.getEmpty();
       }
     }
   });

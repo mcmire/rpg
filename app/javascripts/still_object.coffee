@@ -25,9 +25,11 @@ StillObject = meta.def 'game.StillObject',
 
   deactivate: ->
 
+  predraw: (ctx) ->
+    @image.clear(ctx, @mbounds.x1, @mbounds.y1)
+
   draw: (ctx) ->
-    b = @mbounds
-    @image.draw(ctx, b.x1, b.y1)
+    @image.draw(ctx, @mbounds.x1, @mbounds.y1)
 
 game.StillObject = StillObject
 

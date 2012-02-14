@@ -14,7 +14,9 @@
     init: function(core, player) {
       this.core = core;
       this.player = player;
-      return this._super(this.core);
+      this._super(this.core);
+      this.bounds = game.Bounds.rect(0, 0, this.width, this.height);
+      return this;
     },
     setElement: function() {
       return this.$element = $('<div id="viewport" />').css({
@@ -41,7 +43,9 @@
       return this;
     },
     translateBySide: function(side, value) {
-      return this.bounds.translateBySide(side, value);
+      var ret;
+      ret = this.bounds.translateBySide(side, value);
+      return ret;
     },
     inspect: function() {
       return JSON.stringify({
@@ -63,7 +67,7 @@
       if (x1 < 0) x1 = 0;
       y1 = pb.y1 + phh - vhh;
       if (y1 < 0) y1 = 0;
-      return this.bounds = game.Bounds.rect(x1, y1, this.width, this.height);
+      return this.bounds.anchor(x1, y1);
     }
   });
 

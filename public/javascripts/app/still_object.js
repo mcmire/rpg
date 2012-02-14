@@ -21,10 +21,11 @@
     },
     activate: function() {},
     deactivate: function() {},
+    predraw: function(ctx) {
+      return this.image.clear(ctx, this.mbounds.x1, this.mbounds.y1);
+    },
     draw: function(ctx) {
-      var b;
-      b = this.mbounds;
-      return this.image.draw(ctx, b.x1, b.y1);
+      return this.image.draw(ctx, this.mbounds.x1, this.mbounds.y1);
     }
   });
 

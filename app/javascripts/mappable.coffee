@@ -16,8 +16,11 @@ Mappable = meta.def 'game.Mappable',
     @viewport = @map.viewport
     return this
 
+  callOnMapBounds: (methodName, args...) ->
+    @mbounds[methodName](args...)
+
   setMapPosition: (x, y) ->
-    @mbounds.anchor(x, y)
+    @callOnMapBounds('anchor', x, y)
     # Don't worry about setting the viewport bounds, that happens when the
     # object is drawn
 

@@ -2,6 +2,7 @@ game = (window.game ||= {})
 
 meta = game.meta2
 {attachable, assignable, tickable} = game.roles
+SortedObjectCollection = game.SortedObjectCollection
 
 Background = meta.def 'game.Background',
   assignable,
@@ -10,24 +11,26 @@ Background = meta.def 'game.Background',
   init: (@map, @width, @height) ->
     @fills = []
     @tiles = []
-    @sprites = []
+    @sprites = game.SortedObjectCollection.create()
+    @framedSprites = @sprites.clone().extend(game.FramedObjectCollection)
 
   assignToViewport: (@viewport) ->
+    @framedSprites.frameWithin(@viewport.bounds)
 
   fill: (color, pos, dims) ->
     @fills.push([color, pos, dims])
 
-  addTile: (object, positions...) ->
+  addTile: (proto, positions...) ->
     self = this
     opts = {}
     if $.v.is.obj(positions[positions.length-1])
       opts = positions.pop()
     $.v.each positions, ([x, y]) ->
-      drawable = object.clone().extend(opts)
-      tile = game.MapTile.create(drawable).assignToMap(this)
+      object = proto.clone().extend(opts)
+      tile = game.MapTile.create(object).assignToMap(this)
       tile.setMapPosition(x, y)
       self.tiles.push(tile)
-      self.sprites.push(tile) if game.ImageSequence.isPrototypeOf(object)
+      self.sprites.push(tile) if game.ImageSequence.isPrototypeOf(proto)
 
   load: ->
     @$canvas = $('<canvas>')
@@ -60,11 +63,12 @@ Background = meta.def 'game.Background',
     @$canvas.detach()
 
   tick: ->
+    self = this
     @$canvas.css
       top: -@viewport.bounds.y1
       left: -@viewport.bounds.x1
     # Remember that sprites are animated, so here is where we do that
-    sprite.draw(@ctx) for sprite in @sprites
+    @framedSprites.each (sprite) -> sprite.draw(self.ctx)
 
 Background.add = Background.addTile
 

@@ -26,12 +26,16 @@ app/roles
 app/bounds
 app/canvas
 app/collidable
-app/collidable_collection
 app/image_sequence
 app/keyboard
 app/main
 app/mappable
 app/viewport
+
+app/sorted_object_collection
+app/collidable_collection
+app/framed_object_collection
+app/filtered_object_collection
 
 app/ticker
 app/core

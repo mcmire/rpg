@@ -1,5 +1,5 @@
 (function() {
-  var Background, assignable, attachable, game, meta, tickable, _ref,
+  var Background, SortedObjectCollection, assignable, attachable, game, meta, tickable, _ref,
     __slice = Array.prototype.slice;
 
   game = (window.game || (window.game = {}));
@@ -8,6 +8,8 @@
 
   _ref = game.roles, attachable = _ref.attachable, assignable = _ref.assignable, tickable = _ref.tickable;
 
+  SortedObjectCollection = game.SortedObjectCollection;
+
   Background = meta.def('game.Background', assignable, tickable, {
     init: function(map, width, height) {
       this.map = map;
@@ -15,28 +17,30 @@
       this.height = height;
       this.fills = [];
       this.tiles = [];
-      return this.sprites = [];
+      this.sprites = game.SortedObjectCollection.create();
+      return this.framedSprites = this.sprites.clone().extend(game.FramedObjectCollection);
     },
     assignToViewport: function(viewport) {
       this.viewport = viewport;
+      return this.framedSprites.frameWithin(this.viewport.bounds);
     },
     fill: function(color, pos, dims) {
       return this.fills.push([color, pos, dims]);
     },
     addTile: function() {
-      var object, opts, positions, self;
-      object = arguments[0], positions = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      var opts, positions, proto, self;
+      proto = arguments[0], positions = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       self = this;
       opts = {};
       if ($.v.is.obj(positions[positions.length - 1])) opts = positions.pop();
       return $.v.each(positions, function(_arg) {
-        var drawable, tile, x, y;
+        var object, tile, x, y;
         x = _arg[0], y = _arg[1];
-        drawable = object.clone().extend(opts);
-        tile = game.MapTile.create(drawable).assignToMap(this);
+        object = proto.clone().extend(opts);
+        tile = game.MapTile.create(object).assignToMap(this);
         tile.setMapPosition(x, y);
         self.tiles.push(tile);
-        if (game.ImageSequence.isPrototypeOf(object)) {
+        if (game.ImageSequence.isPrototypeOf(proto)) {
           return self.sprites.push(tile);
         }
       });
@@ -72,18 +76,15 @@
       return this.$canvas.detach();
     },
     tick: function() {
-      var sprite, _i, _len, _ref2, _results;
+      var self;
+      self = this;
       this.$canvas.css({
         top: -this.viewport.bounds.y1,
         left: -this.viewport.bounds.x1
       });
-      _ref2 = this.sprites;
-      _results = [];
-      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-        sprite = _ref2[_i];
-        _results.push(sprite.draw(this.ctx));
-      }
-      return _results;
+      return this.framedSprites.each(function(sprite) {
+        return sprite.draw(self.ctx);
+      });
     }
   });
 

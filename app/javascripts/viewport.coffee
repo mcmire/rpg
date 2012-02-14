@@ -14,6 +14,8 @@ viewport = meta.def 'game.viewport',
 
   init: (@core, @player) ->
     @_super(@core)  # attachable
+    @bounds = game.Bounds.rect(0, 0, @width, @height)
+    return this
 
   setElement: ->
     @$element = $('<div id="viewport" />').css
@@ -49,8 +51,8 @@ viewport = meta.def 'game.viewport',
   #
   # Examples:
   #
-  #   translateBounds('x', 20)
-  #   translateBounds(x: 2, y: -9)
+  #   translate('x', 20)
+  #   translate(x: 2, y: -9)
   #
   # Returns the self-same Viewport.
   #
@@ -72,7 +74,8 @@ viewport = meta.def 'game.viewport',
   # Also see Bounds#translateBySide.
   #
   translateBySide: (side, value) ->
-    @bounds.translateBySide(side, value)
+    ret = @bounds.translateBySide(side, value)
+    return ret
 
   inspect: ->
     JSON.stringify
@@ -95,7 +98,7 @@ viewport = meta.def 'game.viewport',
     x1 = 0 if x1 < 0
     y1 = pb.y1 + phh - vhh
     y1 = 0 if y1 < 0
-    @bounds = game.Bounds.rect(x1, y1, @width, @height)
+    @bounds.anchor(x1, y1)
 
 game.viewport = viewport
 

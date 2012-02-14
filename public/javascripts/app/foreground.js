@@ -14,13 +14,14 @@
       this.width = width;
       this.height = height;
       this.objects = game.CollidableCollection.create();
-      this.grobs = [];
+      this.framedObjects = this.objects.clone().extend(game.FramedObjectCollection);
       this.blocks = [];
       this.player = null;
       return this.enableCollisions = true;
     },
     assignToViewport: function(viewport) {
       this.viewport = viewport;
+      return this.framedObjects.frameWithin(this.viewport.bounds);
     },
     addObject: function() {
       var positions, proto, self;
@@ -31,23 +32,16 @@
         x = _arg[0], y = _arg[1], width = _arg[2], height = _arg[3];
         object = proto.clone().assignToMap(self);
         object.setMapPosition(x, y);
-        self.objects.push(object);
-        if (game.StillObject.isPrototypeOf(object)) {
-          return self.grobs.push(object);
-        } else if (object.tick != null) {
-          return self.blocks.push(object);
-        }
+        return self.objects.push(object);
       });
     },
     removeObject: function(object) {
-      this.objects["delete"](object);
-      return this.grobs["delete"](object);
+      return this.objects.remove(object);
     },
     addPlayer: function(player) {
       this.player = player;
       this.player.assignToMap(this);
-      this.objects.push(this.player);
-      return this.grobs.push(this.player);
+      return this.objects.add(this.player);
     },
     removePlayer: function() {
       return this.removeObject(this.player);
@@ -65,24 +59,14 @@
       return this.ctx = null;
     },
     activate: function() {
-      var grob, _i, _len, _ref2, _results;
-      _ref2 = this.grobs;
-      _results = [];
-      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-        grob = _ref2[_i];
-        _results.push(grob.activate());
-      }
-      return _results;
+      return this.objects.each(function(object) {
+        return typeof object.activate === "function" ? object.activate() : void 0;
+      });
     },
     deactivate: function() {
-      var grob, _i, _len, _ref2, _results;
-      _ref2 = this.grobs;
-      _results = [];
-      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-        grob = _ref2[_i];
-        _results.push(grob.deactivate());
-      }
-      return _results;
+      return this.objects.each(function(object) {
+        return typeof object.deactivate === "function" ? object.deactivate() : void 0;
+      });
     },
     attachTo: function(viewport) {
       this.viewport = viewport;
@@ -93,26 +77,24 @@
       return this.$canvas.detach();
     },
     tick: function() {
-      var block, grob, _i, _j, _len, _len2, _ref2, _ref3, _results;
+      var self;
+      self = this;
       this.$canvas.css({
         top: -this.viewport.bounds.y1,
         left: -this.viewport.bounds.x1
       });
-      _ref2 = this.grobs;
-      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-        grob = _ref2[_i];
-        grob.tick(this.ctx);
-      }
-      _ref3 = this.blocks;
-      _results = [];
-      for (_j = 0, _len2 = _ref3.length; _j < _len2; _j++) {
-        block = _ref3[_j];
-        _results.push(block.tick(this.ctx));
-      }
-      return _results;
+      this.framedObjects.each(function(object) {
+        return typeof object.predraw === "function" ? object.predraw(self.ctx) : void 0;
+      });
+      this.framedObjects.each(function(object) {
+        return typeof object.draw === "function" ? object.draw(self.ctx) : void 0;
+      });
+      return this.framedObjects.each(function(object) {
+        return typeof object.postdraw === "function" ? object.postdraw(self.ctx) : void 0;
+      });
     },
     getObjectsWithout: function(object) {
-      return this.objects.without(object);
+      return this.framedObjects.clone().extend(game.FilteredObjectCollection).without(object);
     }
   });
 

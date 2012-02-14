@@ -63,41 +63,33 @@
       if (state !== this.currentState.name) return this.setState(state);
     },
     moveLeft: function() {
-      var map, nextBoundsOnMap, x, _base;
+      var map, nextBoundsOnMap, _base;
       nextBoundsOnMap = this.mbounds.withTranslation({
         x: -this.speed
       });
-      if (x = this.mapCollidables.getOuterRightEdgeBlocking(nextBoundsOnMap)) {
-        this.mbounds.translateBySide('x1', x);
-        return;
-      }
       if ((this.viewport.bounds.x1 - this.speed) < 0) {
         if (map = typeof (_base = this.map).getAreaLeft === "function" ? _base.getAreaLeft() : void 0) {
           return this.map.loadArea(map);
         } else {
           this.viewport.translateBySide('x1', 0);
           if (nextBoundsOnMap.x1 < 0) {
-            return this.mbounds.translateBySide('x1', 0);
+            return this.callOnMapBounds('translateBySide', 'x1', 0);
           } else {
-            return this.mbounds.replace(nextBoundsOnMap);
+            return this.callOnMapBounds('replace', nextBoundsOnMap);
           }
         }
       } else {
-        this.mbounds.replace(nextBoundsOnMap);
+        this.callOnMapBounds('replace', nextBoundsOnMap);
         if ((this.vbounds.x1 - this.speed) < this.fence.x1) {
           return this.viewport.translateBySide('x1', this.mbounds.x1 - this.viewportPadding);
         }
       }
     },
     moveRight: function() {
-      var map, mapWidth, nextBoundsOnMap, x, _base;
+      var map, mapWidth, nextBoundsOnMap, _base;
       nextBoundsOnMap = this.mbounds.withTranslation({
         x: +this.speed
       });
-      if (x = this.mapCollidables.getOuterLeftEdgeBlocking(nextBoundsOnMap)) {
-        this.mbounds.translateBySide('x2', x);
-        return;
-      }
       mapWidth = this.map.width;
       if ((this.viewport.bounds.x2 + this.speed) > mapWidth) {
         if (map = typeof (_base = this.map).getAreaRight === "function" ? _base.getAreaRight() : void 0) {
@@ -105,54 +97,46 @@
         } else {
           this.viewport.translateBySide('x2', mapWidth);
           if (nextBoundsOnMap.x2 > mapWidth) {
-            return this.mbounds.translateBySide('x2', mapWidth);
+            return this.callOnMapBounds('translateBySide', 'x2', mapWidth);
           } else {
-            return this.mbounds.replace(nextBoundsOnMap);
+            return this.callOnMapBounds('replace', nextBoundsOnMap);
           }
         }
       } else {
-        this.mbounds.replace(nextBoundsOnMap);
+        this.callOnMapBounds('replace', nextBoundsOnMap);
         if ((this.vbounds.x2 + this.speed) > this.fence.x2) {
           return this.viewport.translateBySide('x2', this.mbounds.x2 + this.viewportPadding);
         }
       }
     },
     moveUp: function() {
-      var map, nextBoundsOnMap, y, _base;
+      var map, nextBoundsOnMap, _base;
       nextBoundsOnMap = this.mbounds.withTranslation({
         y: -this.speed
       });
-      if (y = this.mapCollidables.getOuterBottomEdgeBlocking(nextBoundsOnMap)) {
-        this.mbounds.translateBySide('y1', y);
-        return;
-      }
       if ((this.viewport.bounds.y1 - this.speed) < 0) {
         if (map = typeof (_base = this.map).getAreaUp === "function" ? _base.getAreaUp() : void 0) {
           return this.map.loadArea(map);
         } else {
           this.viewport.translateBySide('y1', 0);
           if (nextBoundsOnMap.y1 < 0) {
-            return this.mbounds.translateBySide('y1', 0);
+            return this.callOnMapBounds('translateBySide', 'y1', 0);
           } else {
-            return this.mbounds.replace(nextBoundsOnMap);
+            return this.callOnMapBounds('replace', nextBoundsOnMap);
           }
         }
       } else {
-        this.mbounds.replace(nextBoundsOnMap);
+        this.callOnMapBounds('replace', nextBoundsOnMap);
         if ((this.vbounds.y1 - this.speed) < this.fence.y1) {
           return this.viewport.translateBySide('y1', this.mbounds.y1 - this.viewportPadding);
         }
       }
     },
     moveDown: function() {
-      var map, mapHeight, nextBoundsOnMap, y, _base;
+      var map, mapHeight, nextBoundsOnMap, _base;
       nextBoundsOnMap = this.mbounds.withTranslation({
         y: this.speed
       });
-      if (y = this.mapCollidables.getOuterTopEdgeBlocking(nextBoundsOnMap)) {
-        this.translateBySide('y2', y);
-        return;
-      }
       mapHeight = this.map.height;
       if ((this.viewport.bounds.y2 + this.speed) > mapHeight) {
         if (map = typeof (_base = this.map).getAreaDown === "function" ? _base.getAreaDown() : void 0) {
@@ -160,13 +144,13 @@
         } else {
           this.viewport.translateBySide('y2', mapHeight);
           if (nextBoundsOnMap.y2 > mapHeight) {
-            return this.mbounds.translateBySide('y2', mapHeight);
+            return this.callOnMapBounds('translateBySide', 'y2', mapHeight);
           } else {
-            return this.mbounds.replace(nextBoundsOnMap);
+            return this.callOnMapBounds('replace', nextBoundsOnMap);
           }
         }
       } else {
-        this.mbounds.replace(nextBoundsOnMap);
+        this.callOnMapBounds('replace', nextBoundsOnMap);
         if ((this.vbounds.y2 + this.speed) > this.fence.y2) {
           return this.viewport.translateBySide('y2', this.mbounds.y2 + this.viewportPadding);
         }

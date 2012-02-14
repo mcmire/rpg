@@ -33,6 +33,9 @@ Image = meta.def 'game.Image',
   onLoad: (fn) ->
     @onLoadCallback = fn
 
+  clear: (ctx, x, y) ->
+    ctx.clearRect(x, y, @width, @height)
+
   draw: (ctx, x, y) ->
     ctx.drawImage(@element, x, y)
 

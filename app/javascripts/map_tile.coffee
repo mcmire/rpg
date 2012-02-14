@@ -12,8 +12,10 @@ MapTile = meta.def 'game.MapTile',
   # drawable - Either an Image or an ImageSequence.
   #
   init: (@drawable) ->
+    @mbounds = game.Bounds.rect(0, 0, @drawable.width, @drawable.height)
 
-  setMapPosition: (@x, @y) ->
+  setMapPosition: (x, y) ->
+    @mbounds.anchor(x, y)
 
   assignToMap: (map) ->
     @_super(map)
@@ -22,7 +24,7 @@ MapTile = meta.def 'game.MapTile',
     return this
 
   draw: (ctx) ->
-    @drawable.draw(ctx, @x, @y)
+    @drawable.draw(ctx, @mbounds.x1, @mbounds.y1)
 
 game.MapTile = MapTile
 
