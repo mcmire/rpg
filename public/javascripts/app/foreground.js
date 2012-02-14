@@ -17,7 +17,7 @@
       this.framedObjects = this.objects.clone().extend(game.FramedObjectMatrix);
       this.blocks = [];
       this.player = null;
-      return this.enableCollisions = true;
+      return this.enableCollisions = false;
     },
     assignToViewport: function(viewport) {
       this.viewport = viewport;
@@ -94,7 +94,10 @@
       });
     },
     getObjectsWithout: function(object) {
-      return this.framedObjects.clone().extend(game.FilteredObjectMatrix).without(object);
+      var coll;
+      coll = this.enableCollisions ? this.framedObjects.clone() : game.CollidableMatrix.create(this);
+      coll.extend(game.FilteredObjectMatrix).without(object);
+      return coll;
     }
   });
 

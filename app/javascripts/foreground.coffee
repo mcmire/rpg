@@ -12,7 +12,7 @@ Foreground = meta.def 'game.Foreground',
     @framedObjects = @objects.clone().extend(game.FramedObjectMatrix)
     @blocks = []
     @player = null
-    @enableCollisions = true
+    @enableCollisions = false
 
   assignToViewport: (@viewport) ->
     @framedObjects.frameWithin(@viewport.bounds)
@@ -83,7 +83,14 @@ Foreground = meta.def 'game.Foreground',
     @framedObjects.each (object) -> object.postdraw?(self.ctx)
 
   getObjectsWithout: (object) ->
-    @framedObjects.clone().extend(game.FilteredObjectMatrix).without(object)
+    coll =
+      if @enableCollisions
+        @framedObjects.clone()
+      else
+        # null/empty object pattern - still works but does nothing
+        game.CollidableMatrix.create(this)
+    coll.extend(game.FilteredObjectMatrix).without(object)
+    return coll
 
 Foreground.add = Foreground.addObject
 Foreground.remove = Foreground.removeObject

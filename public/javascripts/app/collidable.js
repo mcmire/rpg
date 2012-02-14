@@ -21,9 +21,9 @@
     callOnMapBounds: function() {
       var args;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      this.mapCollidables.remove(this);
+      this.map.objects.remove(this);
       this._super.apply(this, args);
-      return this.mapCollidables.add(this);
+      return this.map.objects.add(this);
     },
     setMapPosition: function(x, y) {
       this._super(x, y);
@@ -56,18 +56,11 @@
     getOuterBottomEdgeBlocking: function(other) {
       return this.cbounds.getOuterBottomEdgeBlocking(other);
     },
-    _replaceInMapCollidables: function() {
-      return this.mapCollidables.add(this);
-    },
     _initCollidableBounds: function() {
       return this.cbounds = game.Bounds.rect(0, 0, this.width, this.height - 8);
     },
     _initCollidables: function() {
-      if (this.map.enableCollisions) {
-        return this.mapCollidables = this.map.getObjectsWithout(this);
-      } else {
-        return this.mapCollidables = game.CollidableCollection.getEmpty();
-      }
+      return this.mapCollidables = this.map.getObjectsWithout(this);
     }
   });
 
