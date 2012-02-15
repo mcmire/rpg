@@ -24,7 +24,7 @@ OrderedMap = meta.def 'game.OrderedMap',
       # Have to add a check here... I guess what is happening is that
       # keys is getting modified while we are iterating over it thus by the time
       # this is called keys.length may be 1 less than when the loop started
-      if k
+      if k?
         v = @map[k]
         ret = fn(v)
         return false if ret is false

@@ -28,7 +28,7 @@
       _ref = this.keys;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         k = _ref[_i];
-        if (k) {
+        if (k != null) {
           v = this.map[k];
           ret = fn(v);
           if (ret === false) return false;
