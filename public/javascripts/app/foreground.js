@@ -17,7 +17,7 @@
       this.framedObjects = this.objects.clone().extend(game.FramedObjectMatrix);
       this.blocks = [];
       this.player = null;
-      return this.enableCollisions = false;
+      return this.enableCollisions = true;
     },
     assignToViewport: function(viewport) {
       this.viewport = viewport;

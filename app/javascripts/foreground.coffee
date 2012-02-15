@@ -12,7 +12,7 @@ Foreground = meta.def 'game.Foreground',
     @framedObjects = @objects.clone().extend(game.FramedObjectMatrix)
     @blocks = []
     @player = null
-    @enableCollisions = false
+    @enableCollisions = true
 
   assignToViewport: (@viewport) ->
     @framedObjects.frameWithin(@viewport.bounds)
