@@ -20,13 +20,13 @@
       this.viewport = this.map.viewport;
       return this;
     },
-    callOnMapBounds: function() {
+    doToMapBounds: function() {
       var args, methodName, _ref;
       methodName = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       return (_ref = this.mbounds)[methodName].apply(_ref, args);
     },
     setMapPosition: function(x, y) {
-      return this.callOnMapBounds('anchor', x, y);
+      return this.doToMapBounds('anchor', x, y);
     },
     recalculateViewportBounds: function() {
       var x1, y1;

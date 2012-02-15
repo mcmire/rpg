@@ -84,7 +84,7 @@ player.extend \
     # Would the player cross the right edge of a collision box?
     if x = @mapCollidables.getOuterRightEdgeBlocking(nextBoundsOnMap)
       # Yes: Move it just at the edge so it no longer collides
-      @callOnMapBounds('translateBySide', 'x1', x)
+      @doToMapBounds('translateBySide', 'x1', x)
       return
 
     # Would the viewport move beyond the left edge of the map?
@@ -99,14 +99,14 @@ player.extend \
         # Would the player cross the left edge of the map?
         if nextBoundsOnMap.x1 < 0
           # Yes: put it at the edge
-          @callOnMapBounds('translateBySide', 'x1', 0)
+          @doToMapBounds('translateBySide', 'x1', 0)
         else
           # No: Move the player right
-          @callOnMapBounds('replace', nextBoundsOnMap)
+          @doToMapBounds('replace', nextBoundsOnMap)
     else
       # The viewport is still within the map
       # Move the player left
-      @callOnMapBounds('replace', nextBoundsOnMap)
+      @doToMapBounds('replace', nextBoundsOnMap)
       # Would the player cross the left edge of the fence?
       if (@vbounds.x1 - @speed) < @fence.x1
         # Yes: Shift viewport left.
@@ -157,7 +157,7 @@ player.extend \
     # Would the player cross the left edge of a collision box?
     if x = @mapCollidables.getOuterLeftEdgeBlocking(nextBoundsOnMap)
       # Yes: Move it just at the edge so it no longer collides
-      @callOnMapBounds('translateBySide', 'x2', x)
+      @doToMapBounds('translateBySide', 'x2', x)
       return
 
     mapWidth = @map.width
@@ -174,14 +174,14 @@ player.extend \
         # Would the player cross the right edge of the map?
         if nextBoundsOnMap.x2 > mapWidth
           # Yes: put it at the edge
-          @callOnMapBounds('translateBySide', 'x2', mapWidth)
+          @doToMapBounds('translateBySide', 'x2', mapWidth)
         else
           # No: Move the player right
-          @callOnMapBounds('replace', nextBoundsOnMap)
+          @doToMapBounds('replace', nextBoundsOnMap)
     else
       # The viewport is still within the map
       # No: Move the player right
-      @callOnMapBounds('replace', nextBoundsOnMap)
+      @doToMapBounds('replace', nextBoundsOnMap)
       # Would the player cross the right edge of the fence?
       if (@vbounds.x2 + @speed) > @fence.x2
         # Yes: shift viewport right.
@@ -198,7 +198,7 @@ player.extend \
     # Would the player cross the bottom edge of a collision box?
     if y = @mapCollidables.getOuterBottomEdgeBlocking(nextBoundsOnMap)
       # Yes: move it just at the edge so it no longer collides
-      @callOnMapBounds('translateBySide', 'y1', y)
+      @doToMapBounds('translateBySide', 'y1', y)
       return
 
     # Would the viewport move beyond the top edge of the map?
@@ -213,14 +213,14 @@ player.extend \
         # Would the player cross the top edge of the map?
         if nextBoundsOnMap.y1 < 0
           # Yes: put it at the edge
-          @callOnMapBounds('translateBySide', 'y1', 0)
+          @doToMapBounds('translateBySide', 'y1', 0)
         else
           # No: Move the player up
-          @callOnMapBounds('replace', nextBoundsOnMap)
+          @doToMapBounds('replace', nextBoundsOnMap)
     else
       # The viewport is still within the map
       # Move the player up
-      @callOnMapBounds('replace', nextBoundsOnMap)
+      @doToMapBounds('replace', nextBoundsOnMap)
       # Would the player cross the top edge of the fence?
       if (@vbounds.y1 - @speed) < @fence.y1
         # Yes: shift viewport up.
@@ -254,14 +254,14 @@ player.extend \
         # Would the player move beyond the bottom edge of the map?
         if nextBoundsOnMap.y2 > mapHeight
           # Yes: put it at the edge
-          @callOnMapBounds('translateBySide', 'y2', mapHeight)
+          @doToMapBounds('translateBySide', 'y2', mapHeight)
         else
           # No: Move the player down
-          @callOnMapBounds('replace', nextBoundsOnMap)
+          @doToMapBounds('replace', nextBoundsOnMap)
     else
       # The viewport is still within the map
       # No: Move the player right
-      @callOnMapBounds('replace', nextBoundsOnMap)
+      @doToMapBounds('replace', nextBoundsOnMap)
       # Would the player move beyond the right edge of the fence?
       if (@vbounds.y2 + @speed) > @fence.y2
         # Yes: shift viewport right.

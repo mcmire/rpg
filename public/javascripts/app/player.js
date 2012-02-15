@@ -68,7 +68,7 @@
         x: -this.speed
       });
       if (x = this.mapCollidables.getOuterRightEdgeBlocking(nextBoundsOnMap)) {
-        this.callOnMapBounds('translateBySide', 'x1', x);
+        this.doToMapBounds('translateBySide', 'x1', x);
         return;
       }
       if ((this.viewport.bounds.x1 - this.speed) < 0) {
@@ -77,13 +77,13 @@
         } else {
           this.viewport.translateBySide('x1', 0);
           if (nextBoundsOnMap.x1 < 0) {
-            return this.callOnMapBounds('translateBySide', 'x1', 0);
+            return this.doToMapBounds('translateBySide', 'x1', 0);
           } else {
-            return this.callOnMapBounds('replace', nextBoundsOnMap);
+            return this.doToMapBounds('replace', nextBoundsOnMap);
           }
         }
       } else {
-        this.callOnMapBounds('replace', nextBoundsOnMap);
+        this.doToMapBounds('replace', nextBoundsOnMap);
         if ((this.vbounds.x1 - this.speed) < this.fence.x1) {
           return this.viewport.translateBySide('x1', this.mbounds.x1 - this.viewportPadding);
         }
@@ -95,7 +95,7 @@
         x: +this.speed
       });
       if (x = this.mapCollidables.getOuterLeftEdgeBlocking(nextBoundsOnMap)) {
-        this.callOnMapBounds('translateBySide', 'x2', x);
+        this.doToMapBounds('translateBySide', 'x2', x);
         return;
       }
       mapWidth = this.map.width;
@@ -105,13 +105,13 @@
         } else {
           this.viewport.translateBySide('x2', mapWidth);
           if (nextBoundsOnMap.x2 > mapWidth) {
-            return this.callOnMapBounds('translateBySide', 'x2', mapWidth);
+            return this.doToMapBounds('translateBySide', 'x2', mapWidth);
           } else {
-            return this.callOnMapBounds('replace', nextBoundsOnMap);
+            return this.doToMapBounds('replace', nextBoundsOnMap);
           }
         }
       } else {
-        this.callOnMapBounds('replace', nextBoundsOnMap);
+        this.doToMapBounds('replace', nextBoundsOnMap);
         if ((this.vbounds.x2 + this.speed) > this.fence.x2) {
           return this.viewport.translateBySide('x2', this.mbounds.x2 + this.viewportPadding);
         }
@@ -123,7 +123,7 @@
         y: -this.speed
       });
       if (y = this.mapCollidables.getOuterBottomEdgeBlocking(nextBoundsOnMap)) {
-        this.callOnMapBounds('translateBySide', 'y1', y);
+        this.doToMapBounds('translateBySide', 'y1', y);
         return;
       }
       if ((this.viewport.bounds.y1 - this.speed) < 0) {
@@ -132,13 +132,13 @@
         } else {
           this.viewport.translateBySide('y1', 0);
           if (nextBoundsOnMap.y1 < 0) {
-            return this.callOnMapBounds('translateBySide', 'y1', 0);
+            return this.doToMapBounds('translateBySide', 'y1', 0);
           } else {
-            return this.callOnMapBounds('replace', nextBoundsOnMap);
+            return this.doToMapBounds('replace', nextBoundsOnMap);
           }
         }
       } else {
-        this.callOnMapBounds('replace', nextBoundsOnMap);
+        this.doToMapBounds('replace', nextBoundsOnMap);
         if ((this.vbounds.y1 - this.speed) < this.fence.y1) {
           return this.viewport.translateBySide('y1', this.mbounds.y1 - this.viewportPadding);
         }
@@ -160,13 +160,13 @@
         } else {
           this.viewport.translateBySide('y2', mapHeight);
           if (nextBoundsOnMap.y2 > mapHeight) {
-            return this.callOnMapBounds('translateBySide', 'y2', mapHeight);
+            return this.doToMapBounds('translateBySide', 'y2', mapHeight);
           } else {
-            return this.callOnMapBounds('replace', nextBoundsOnMap);
+            return this.doToMapBounds('replace', nextBoundsOnMap);
           }
         }
       } else {
-        this.callOnMapBounds('replace', nextBoundsOnMap);
+        this.doToMapBounds('replace', nextBoundsOnMap);
         if ((this.vbounds.y2 + this.speed) > this.fence.y2) {
           return this.viewport.translateBySide('y2', this.mbounds.y2 + this.viewportPadding);
         }

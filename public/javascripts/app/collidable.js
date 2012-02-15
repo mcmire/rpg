@@ -18,7 +18,7 @@
       this._initCollidables();
       return this;
     },
-    callOnMapBounds: function() {
+    doToMapBounds: function() {
       var args;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       this.map.objects.remove(this);

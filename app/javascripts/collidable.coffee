@@ -13,7 +13,7 @@ Collidable = meta.def 'game.Collidable',
     @_initCollidables()
     return this
 
-  callOnMapBounds: (args...) ->
+  doToMapBounds: (args...) ->
     # Ensure that the player is in the right place in the sorted list of map
     # objects. If the player is now behind another object, then we want it to be
     # drawn behind that object instead of being clobbered.

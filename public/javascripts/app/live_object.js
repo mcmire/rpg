@@ -59,12 +59,12 @@
       var args, _ref;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       (_ref = this.vbounds).translate.apply(_ref, args);
-      return this.callOnMapBounds.apply(this, ['translate'].concat(__slice.call(args)));
+      return this.doToMapBounds.apply(this, ['translate'].concat(__slice.call(args)));
     },
     translateBySide: function(side, value) {
       var axis, distMoved;
       axis = side[0];
-      distMoved = this.callOnMapBounds('translateBySide', side, value);
+      distMoved = this.doToMapBounds('translateBySide', side, value);
       this.vbounds.translate(axis, distMoved);
       return distMoved;
     },
