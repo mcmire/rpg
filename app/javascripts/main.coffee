@@ -2,7 +2,7 @@ game = (window.game ||= {})
 
 meta = game.meta2
 {eventable, attachable, tickable, runnable} = game.roles
-#fpsReporter = game.fpsReporter
+fpsReporter = game.fpsReporter
 #playerDebugger = game.playerDebugger
 
 main = meta.def 'game.main',
@@ -15,19 +15,19 @@ main = meta.def 'game.main',
   debug: false  # or true
 
   init: ->
-    @_super(document.body)  # attachable
+    @attachTo(document.body)
+    @setElement $('#game')
     @keyboard = game.keyboard.init()
     @core = game.core.init(this)
+    @fpsReporter = game.fpsReporter.init(this)
     @addEvents()
     @run()
     return this
 
-  setElement: ->
-    @$element = $('#game')
-
   attach: ->
     @_super()
     @core.attach()
+    @fpsReporter.attach()
     return this
 
   addEvents: ->
@@ -79,28 +79,30 @@ main = meta.def 'game.main',
     main.load ->
       self.attach()
       self.core.run()
+      self.fpsReporter.run()
     return this
 
   start: ->
     @core.start()
+    @fpsReporter.start()
     return this
 
   stop: ->
     @core.stop()
+    @fpsReporter.stop()
     return this
 
   suspend: ->
     console.log "Suspending..."
     @core.suspend()
+    @fpsReporter.suspend()
     return this
 
   resume: ->
     console.log "Resuming..."
     @core.resume()
+    @fpsReporter.resume()
     return this
-
-  tick: ->
-    @core.tick()
 
   resolveImagePath: (path) ->
     "#{@imagesPath}/#{path}"

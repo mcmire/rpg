@@ -13,19 +13,15 @@ viewport = meta.def 'game.viewport',
   height: 448  # pixels
 
   init: (@core, @player) ->
-    @_super(@core)  # attachable
+    @attachTo(@core)
+    @setElement $('<div id="viewport" />').css(width: @width, height: @height)
     @bounds = game.Bounds.rect(0, 0, @width, @height)
     return this
 
-  setElement: ->
-    @$element = $('<div id="viewport" />').css
-      width: @width
-      height: @height
-
   attach: ->
-    @parentElement.html("")
+    @getParentElement().html("")
     @_super()
-    @parentElement.append('<p>Controls: arrow keys (WASD also works too)</p>')
+    @getParentElement().append('<p>Controls: arrow keys (WASD also works too)</p>')
 
   setMap: (map) ->
     @currentMap = map

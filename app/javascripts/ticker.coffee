@@ -17,6 +17,9 @@ ticker = meta.def 'game.ticker',
   destroy: ->
     @stop()
 
+  run: ->
+    @start()
+
   start: ->
     return if @isRunning
     @isRunning = true
@@ -40,26 +43,9 @@ ticker = meta.def 'game.ticker',
   resume: ->
     @start() if @wasRunning
 
-#---
+  tick: ->
+    throw new Error 'You need to override #tick'
 
-intervalTicker = ticker.cloneAs('game.intervalTicker').extend
-  init: ->
-    @drawer = @createIntervalTimer false, (df, dt) ->
-      self.draw(df, dt)
-
-  start: ->
-    @timer = window.setInterval(@drawer, @tickInterval)
-
-  stop: ->
-    if @timer
-      window.clearInterval(@timer)
-      @timer = null
-
-  draw: ->
-    throw new Error 'draw must be overridden'
-
-game.ticker =
-  ticker: ticker
-  intervalTicker: intervalTicker
+game.ticker = ticker
 
 window.scriptLoaded('app/ticker')

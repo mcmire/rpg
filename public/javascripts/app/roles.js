@@ -74,31 +74,29 @@
   });
 
   attachable = meta.def('game.attachable', {
-    init: function() {
-      var args;
-      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      this._super.apply(this, args);
-      this.setParentElement(args[0]);
-      this.setElement();
-      return this;
-    },
-    setParentElement: function(parent) {
-      if (typeof parent.doesInclude === "function" ? parent.doesInclude('game.attachable') : void 0) {
-        this.parentElement = parent.$element;
-      } else {
-        this.parentElement = $(parent);
-      }
-      return this;
-    },
-    setElement: function($element) {
-      this.$element = $element;
-    },
     destroy: function() {
       this.detach();
       return this._super();
     },
+    attachTo: function(parent) {
+      if (typeof parent.doesInclude === "function" ? parent.doesInclude('game.attachable') : void 0) {
+        this.$parentElement = parent.$element;
+      } else {
+        this.$parentElement = $(parent);
+      }
+      return this;
+    },
+    getElement: function() {
+      return this.$element;
+    },
+    setElement: function($element) {
+      this.$element = $element;
+    },
+    getParentElement: function() {
+      return this.$parentElement;
+    },
     attach: function() {
-      if (this.$element) this.parentElement.append(this.$element);
+      if (this.$element) this.$parentElement.append(this.$element);
       return this;
     },
     detach: function() {

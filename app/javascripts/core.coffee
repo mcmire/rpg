@@ -1,12 +1,9 @@
 game = (window.game ||= {})
 
-{ticker} = game.ticker
+ticker = game.ticker
 {attachable, tickable} = game.roles
-# collisionLayer = game.collisionLayer
 
-core = ticker.cloneAs('game.core')
-
-core.extend \
+core = ticker.cloneAs('game.core').extend \
   attachable,
   tickable,
 
@@ -14,28 +11,25 @@ core.extend \
   animMethod: 'setTimeout'  # or 'requestAnimFrame'
 
   init: (@main) ->
-    @_super(@main)
-    self = this
+    @attachTo(@main)
+    @setElement(@main.getElement())
     @player = game.player.assignTo(this)
     @keyboard = @main.keyboard
     @viewport = game.viewport.init(this, @player)
     @tickInterval = 1000 / @frameRate
-    @throttledDraw = @createIntervalTimer @tickInterval, (df, dt) ->
-      self.draw(df, dt)
+    draw = @draw
+    @throttledDrawFn = @createIntervalTimer @tickInterval, (df, dt) -> draw(df, dt)
     @numDraws = 0
     @lastTickTime = null
     @numTicks = 0
     return this
-
-  setElement: ->
-    @$element = @parentElement
 
   attach: ->
     @viewport.attach()
 
   run: ->
     @loadMap('lw_52')
-    @start()
+    @_super()
 
   start: ->
     # calling tick() once starts the loop immediately since it calls itself
@@ -62,7 +56,7 @@ core.extend \
     if core.animMethod is 'setTimeout'
       core.draw()
     else
-      core.throttledDraw()
+      core.throttledDrawFn()
 
     if core.main.debug
       t2 = (new Date()).getTime()
@@ -92,23 +86,6 @@ core.extend \
     @currentMap.tick()
     @numDraws++
 
-  # TODO: This produces an FPS which is 10 less than the desired FPS... any idea why?
-  createIntervalTimer: (arg, fn) ->
-    if arg is true
-      always = true
-    else
-      interval = arg
-    t0 = (new Date()).getTime()
-    f0 = @numDraws
-    return ->
-      t = (new Date()).getTime()
-      dt = t - t0
-      df = @numDraws - f0
-      if always or dt >= interval
-        fn(df, dt)
-        t0 = (new Date()).getTime()
-        f0 = @numDraws
-
   loadMap: (name) ->
     self = this
 
@@ -130,6 +107,24 @@ core.extend \
     map.activate()
 
     @currentMap = map
+
+  # TODO: This produces an FPS which is 10 less than the desired FPS... any idea why?
+  createIntervalTimer: (arg, fn) ->
+    self = this
+    if arg is true
+      always = true
+    else
+      interval = arg
+    t0 = (new Date()).getTime()
+    f0 = @numDraws
+    return ->
+      t = (new Date()).getTime()
+      dt = t - t0
+      df = self.numDraws - f0
+      if always or dt >= interval
+        fn(df, dt)
+        t0 = (new Date()).getTime()
+        f0 = self.numDraws
 
 game.core = core
 

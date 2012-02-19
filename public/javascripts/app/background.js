@@ -1,12 +1,12 @@
 (function() {
-  var Background, SortedObjectMatrix, assignable, attachable, game, meta, tickable, _ref,
+  var Background, SortedObjectMatrix, assignable, game, meta, tickable, _ref,
     __slice = Array.prototype.slice;
 
   game = (window.game || (window.game = {}));
 
   meta = game.meta2;
 
-  _ref = game.roles, attachable = _ref.attachable, assignable = _ref.assignable, tickable = _ref.tickable;
+  _ref = game.roles, assignable = _ref.assignable, tickable = _ref.tickable;
 
   SortedObjectMatrix = game.SortedObjectMatrix;
 
@@ -69,7 +69,7 @@
     },
     attachTo: function(viewport) {
       this.viewport = viewport;
-      this.viewport.$element.append(this.$canvas);
+      this.viewport.getElement().append(this.$canvas);
       return this.ctx = this.$canvas[0].getContext('2d');
     },
     detach: function() {

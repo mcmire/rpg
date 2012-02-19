@@ -1,5 +1,5 @@
 (function() {
-  var attachable, eventable, game, main, meta, runnable, tickable, _ref;
+  var attachable, eventable, fpsReporter, game, main, meta, runnable, tickable, _ref;
 
   game = (window.game || (window.game = {}));
 
@@ -7,23 +7,25 @@
 
   _ref = game.roles, eventable = _ref.eventable, attachable = _ref.attachable, tickable = _ref.tickable, runnable = _ref.runnable;
 
+  fpsReporter = game.fpsReporter;
+
   main = meta.def('game.main', eventable, attachable, tickable, runnable, {
     imagesPath: '/images',
     debug: false,
     init: function() {
-      this._super(document.body);
+      this.attachTo(document.body);
+      this.setElement($('#game'));
       this.keyboard = game.keyboard.init();
       this.core = game.core.init(this);
+      this.fpsReporter = game.fpsReporter.init(this);
       this.addEvents();
       this.run();
       return this;
     },
-    setElement: function() {
-      return this.$element = $('#game');
-    },
     attach: function() {
       this._super();
       this.core.attach();
+      this.fpsReporter.attach();
       return this;
     },
     addEvents: function() {
@@ -86,30 +88,32 @@
       self = this;
       main.load(function() {
         self.attach();
-        return self.core.run();
+        self.core.run();
+        return self.fpsReporter.run();
       });
       return this;
     },
     start: function() {
       this.core.start();
+      this.fpsReporter.start();
       return this;
     },
     stop: function() {
       this.core.stop();
+      this.fpsReporter.stop();
       return this;
     },
     suspend: function() {
       console.log("Suspending...");
       this.core.suspend();
+      this.fpsReporter.suspend();
       return this;
     },
     resume: function() {
       console.log("Resuming...");
       this.core.resume();
+      this.fpsReporter.resume();
       return this;
-    },
-    tick: function() {
-      return this.core.tick();
     },
     resolveImagePath: function(path) {
       return "" + this.imagesPath + "/" + path;

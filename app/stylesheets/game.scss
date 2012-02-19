@@ -28,10 +28,13 @@ body {
   height: 40px;
   line-height: 40px;
   text-align: center;
-  background-color: white;
   position: absolute;
-  right: 0;
-  bottom: 0
+  z-index: 3;
+  right: 2px;
+  bottom: 2px;
+}
+#fps-reporter.loaded {
+  background-color: white;
 }
 
 #collision-layer-debug-overlay {

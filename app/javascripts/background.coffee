@@ -1,7 +1,7 @@
 game = (window.game ||= {})
 
 meta = game.meta2
-{attachable, assignable, tickable} = game.roles
+{assignable, tickable} = game.roles
 SortedObjectMatrix = game.SortedObjectMatrix
 
 Background = meta.def 'game.Background',
@@ -56,7 +56,7 @@ Background = meta.def 'game.Background',
 
   attachTo: (@viewport) ->
     # don't use appendTo here, that will clear the canvas for some reason
-    @viewport.$element.append(@$canvas)
+    @viewport.getElement().append(@$canvas)
     @ctx = @$canvas[0].getContext('2d')
 
   detach: ->

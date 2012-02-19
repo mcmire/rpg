@@ -40,6 +40,7 @@ app/filtered_object_matrix
 
 app/ticker
 app/core
+app/fps_reporter
 
 app/block
 app/still_object
@@ -72,7 +73,7 @@ helpers do
     scriptsLoaded.push(name);
     var numScripts = window.scripts.length;
     var numScriptsLoaded = window.scriptsLoaded.length;
-    # console.log(">> " + name + " loaded (" + numScriptsLoaded + "/" + numScripts + ").");
+    console.log(">> " + name + " loaded (" + numScriptsLoaded + "/" + numScripts + ").");
   };
 </script>
     )

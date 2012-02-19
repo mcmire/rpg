@@ -1,7 +1,7 @@
 game = (window.game ||= {})
 
 meta = game.meta2
-{attachable, assignable, tickable} = game.roles
+{assignable, tickable} = game.roles
 
 Foreground = meta.def 'game.Foreground',
   assignable,
@@ -63,7 +63,7 @@ Foreground = meta.def 'game.Foreground',
     # Save viewport so that each object has access to it through the magic
     # of the Mappable interface
     # don't use appendTo here, that messes stuff up for some reason
-    @viewport.$element.append(@$canvas)
+    @viewport.getElement().append(@$canvas)
     @ctx = @$canvas[0].getContext('2d')
 
   detach: ->

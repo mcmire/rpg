@@ -1,19 +1,33 @@
 game = (window.game ||= {})
 
-{intervalTicker} = game.ticker
+meta = game.meta2
+ticker = game.ticker
 {attachable} = game.roles
 
-fpsReporter = intervalTicker.construct 'game.fpsReporter', attachable,
+fpsReporter = ticker.cloneAs('game.fpsReporter').extend \
+  attachable,
+
   init: (@main) ->
-    @core = @main.core
-    @_super(@main)
+    self = this
+    @attachTo(@main.core.viewport)
+    @setElement $('<div id="fps-reporter">00.0 FPS</div>')
     @tickInterval = 1000
-    @$element = $('<div id="fps-reporter" />')
+    @drawFn = game.core.createIntervalTimer false, (df, dt) -> self.draw(self, df, dt)
+    return this
 
-  draw: (df, dt) ->
+  start: ->
+    @timer = window.setInterval(@drawFn, @tickInterval)
+
+  stop: ->
+    if @timer
+      window.clearInterval(@timer)
+      @timer = null
+
+  draw: (fpsReporter, df, dt) ->
     fps = ((df / dt) * 1000).toFixed(1)
-    @$element.text("#{fps} FPS")
+    fpsReporter.getElement().addClass('loaded').text("#{fps} FPS")
 
-return fpsReporter
+game.fpsReporter = fpsReporter
 
-window.numScriptsLoaded++
+window.scriptLoaded('app/fps_reporter')
+

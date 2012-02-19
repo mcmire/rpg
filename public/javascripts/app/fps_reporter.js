@@ -1,29 +1,45 @@
 (function() {
-  var attachable, fpsReporter, game, intervalTicker;
+  var attachable, fpsReporter, game, meta, ticker;
 
   game = (window.game || (window.game = {}));
 
-  intervalTicker = game.ticker.intervalTicker;
+  meta = game.meta2;
+
+  ticker = game.ticker;
 
   attachable = game.roles.attachable;
 
-  fpsReporter = intervalTicker.construct('game.fpsReporter', attachable, {
+  fpsReporter = ticker.cloneAs('game.fpsReporter').extend(attachable, {
     init: function(main) {
+      var self;
       this.main = main;
-      this.core = this.main.core;
-      this._super(this.main);
+      self = this;
+      this.attachTo(this.main.core.viewport);
+      this.setElement($('<div id="fps-reporter">00.0 FPS</div>'));
       this.tickInterval = 1000;
-      return this.$element = $('<div id="fps-reporter" />');
+      this.drawFn = game.core.createIntervalTimer(false, function(df, dt) {
+        return self.draw(self, df, dt);
+      });
+      return this;
     },
-    draw: function(df, dt) {
+    start: function() {
+      return this.timer = window.setInterval(this.drawFn, this.tickInterval);
+    },
+    stop: function() {
+      if (this.timer) {
+        window.clearInterval(this.timer);
+        return this.timer = null;
+      }
+    },
+    draw: function(fpsReporter, df, dt) {
       var fps;
       fps = ((df / dt) * 1000).toFixed(1);
-      return this.$element.text("" + fps + " FPS");
+      return fpsReporter.getElement().addClass('loaded').text("" + fps + " FPS");
     }
   });
 
-  return fpsReporter;
+  game.fpsReporter = fpsReporter;
 
-  window.numScriptsLoaded++;
+  window.scriptLoaded('app/fps_reporter');
 
 }).call(this);

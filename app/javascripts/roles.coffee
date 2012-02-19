@@ -58,31 +58,27 @@ eventable = meta.def 'game.eventable',
 # TODO: This could probably be cleaned up... setElement() could set anything
 # which we don't necessarily want
 attachable = meta.def 'game.attachable',
-  init: (args...) ->
-    @_super(args...)
-    @setParentElement(args[0])
-    @setElement()
-    return this
-
-  setParentElement: (parent) ->
-    if parent.doesInclude?('game.attachable')
-      @parentElement = parent.$element
-    else
-      # assume that parent is a selector or Bonzo element
-      @parentElement = $(parent)
-    return this
-
-  setElement: (@$element) ->
-
   destroy: ->
     @detach()
     @_super()
 
+  attachTo: (parent) ->
+    if parent.doesInclude?('game.attachable')
+      @$parentElement = parent.$element
+    else
+      # assume that parent is a selector or Bonzo element
+      @$parentElement = $(parent)
+    return this
+
+  getElement: -> @$element
+
+  setElement: (@$element) ->
+
+  getParentElement: -> @$parentElement
+
   attach: ->
-    # By default we assume you want to attach to the parent element but it is
-    # totally ok to override this to use another object
     # Don't use appendTo() here, it doesn't work for some reason
-    @parentElement.append(@$element) if @$element
+    @$parentElement.append(@$element) if @$element
     return this
 
   detach: ->

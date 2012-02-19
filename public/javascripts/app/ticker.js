@@ -1,5 +1,5 @@
 (function() {
-  var game, intervalTicker, meta, runnable, tickable, ticker, _ref;
+  var game, meta, runnable, tickable, ticker, _ref;
 
   game = (window.game || (window.game = {}));
 
@@ -22,6 +22,9 @@
     destroy: function() {
       return this.stop();
     },
+    run: function() {
+      return this.start();
+    },
     start: function() {
       if (this.isRunning) return;
       this.isRunning = true;
@@ -42,33 +45,13 @@
     },
     resume: function() {
       if (this.wasRunning) return this.start();
+    },
+    tick: function() {
+      throw new Error('You need to override #tick');
     }
   });
 
-  intervalTicker = ticker.cloneAs('game.intervalTicker').extend({
-    init: function() {
-      return this.drawer = this.createIntervalTimer(false, function(df, dt) {
-        return self.draw(df, dt);
-      });
-    },
-    start: function() {
-      return this.timer = window.setInterval(this.drawer, this.tickInterval);
-    },
-    stop: function() {
-      if (this.timer) {
-        window.clearInterval(this.timer);
-        return this.timer = null;
-      }
-    },
-    draw: function() {
-      throw new Error('draw must be overridden');
-    }
-  });
-
-  game.ticker = {
-    ticker: ticker,
-    intervalTicker: intervalTicker
-  };
+  game.ticker = ticker;
 
   window.scriptLoaded('app/ticker');
 

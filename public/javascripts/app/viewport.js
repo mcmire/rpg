@@ -14,20 +14,18 @@
     init: function(core, player) {
       this.core = core;
       this.player = player;
-      this._super(this.core);
+      this.attachTo(this.core);
+      this.setElement($('<div id="viewport" />').css({
+        width: this.width,
+        height: this.height
+      }));
       this.bounds = game.Bounds.rect(0, 0, this.width, this.height);
       return this;
     },
-    setElement: function() {
-      return this.$element = $('<div id="viewport" />').css({
-        width: this.width,
-        height: this.height
-      });
-    },
     attach: function() {
-      this.parentElement.html("");
+      this.getParentElement().html("");
       this._super();
-      return this.parentElement.append('<p>Controls: arrow keys (WASD also works too)</p>');
+      return this.getParentElement().append('<p>Controls: arrow keys (WASD also works too)</p>');
     },
     setMap: function(map) {
       this.currentMap = map;

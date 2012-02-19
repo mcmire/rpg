@@ -3,41 +3,37 @@
 
   game = (window.game || (window.game = {}));
 
-  ticker = game.ticker.ticker;
+  ticker = game.ticker;
 
   _ref = game.roles, attachable = _ref.attachable, tickable = _ref.tickable;
 
-  core = ticker.cloneAs('game.core');
-
-  core.extend(attachable, tickable, {
+  core = ticker.cloneAs('game.core').extend(attachable, tickable, {
     frameRate: 40,
     animMethod: 'setTimeout',
     init: function(main) {
-      var self;
+      var draw;
       this.main = main;
-      this._super(this.main);
-      self = this;
+      this.attachTo(this.main);
+      this.setElement(this.main.getElement());
       this.player = game.player.assignTo(this);
       this.keyboard = this.main.keyboard;
       this.viewport = game.viewport.init(this, this.player);
       this.tickInterval = 1000 / this.frameRate;
-      this.throttledDraw = this.createIntervalTimer(this.tickInterval, function(df, dt) {
-        return self.draw(df, dt);
+      draw = this.draw;
+      this.throttledDrawFn = this.createIntervalTimer(this.tickInterval, function(df, dt) {
+        return draw(df, dt);
       });
       this.numDraws = 0;
       this.lastTickTime = null;
       this.numTicks = 0;
       return this;
     },
-    setElement: function() {
-      return this.$element = this.parentElement;
-    },
     attach: function() {
       return this.viewport.attach();
     },
     run: function() {
       this.loadMap('lw_52');
-      return this.start();
+      return this._super();
     },
     start: function() {
       return this.tick();
@@ -62,7 +58,7 @@
       if (core.animMethod === 'setTimeout') {
         core.draw();
       } else {
-        core.throttledDraw();
+        core.throttledDrawFn();
       }
       if (core.main.debug) {
         t2 = (new Date()).getTime();
@@ -82,27 +78,6 @@
       this.currentMap.tick();
       return this.numDraws++;
     },
-    createIntervalTimer: function(arg, fn) {
-      var always, f0, interval, t0;
-      if (arg === true) {
-        always = true;
-      } else {
-        interval = arg;
-      }
-      t0 = (new Date()).getTime();
-      f0 = this.numDraws;
-      return function() {
-        var df, dt, t;
-        t = (new Date()).getTime();
-        dt = t - t0;
-        df = this.numDraws - f0;
-        if (always || dt >= interval) {
-          fn(df, dt);
-          t0 = (new Date()).getTime();
-          return f0 = this.numDraws;
-        }
-      };
-    },
     loadMap: function(name) {
       var map, self;
       self = this;
@@ -120,6 +95,28 @@
       this.viewport.setMap(map);
       map.activate();
       return this.currentMap = map;
+    },
+    createIntervalTimer: function(arg, fn) {
+      var always, f0, interval, self, t0;
+      self = this;
+      if (arg === true) {
+        always = true;
+      } else {
+        interval = arg;
+      }
+      t0 = (new Date()).getTime();
+      f0 = this.numDraws;
+      return function() {
+        var df, dt, t;
+        t = (new Date()).getTime();
+        dt = t - t0;
+        df = self.numDraws - f0;
+        if (always || dt >= interval) {
+          fn(df, dt);
+          t0 = (new Date()).getTime();
+          return f0 = self.numDraws;
+        }
+      };
     }
   });
 
