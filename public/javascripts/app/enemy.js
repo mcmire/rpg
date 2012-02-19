@@ -9,6 +9,9 @@
 
   Grob = game.Grob;
 
+  /* FIXME
+  */
+
   DIRECTIONS = 'right down left up'.split(' ');
 
   Enemy = Grob.cloneAs('game.Enemy');

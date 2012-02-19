@@ -4,6 +4,8 @@ meta = game.meta2
 util = game.util
 Grob = game.Grob
 
+### FIXME ###
+
 DIRECTIONS = 'right down left up'.split(' ')
 
 Enemy = Grob.cloneAs('game.Enemy')
