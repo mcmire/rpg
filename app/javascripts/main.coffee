@@ -17,6 +17,7 @@ main = meta.def 'game.main',
   init: ->
     @attachTo(document.body)
     @setElement $('#game')
+    @$controlsDiv = $('<div id="controls">')
     @keyboard = game.keyboard.init()
     @core = game.core.init(this)
     @fpsReporter = game.fpsReporter.init(this)
@@ -24,10 +25,13 @@ main = meta.def 'game.main',
     @run()
     return this
 
+  getControlsDiv: -> @$controlsDiv
+
   attach: ->
     @_super()
     @core.attach()
     @fpsReporter.attach()
+    @getElement().append(@$controlsDiv)
     return this
 
   addEvents: ->
@@ -79,17 +83,14 @@ main = meta.def 'game.main',
     main.load ->
       self.attach()
       self.core.run()
-      self.fpsReporter.run()
     return this
 
   start: ->
     @core.start()
-    @fpsReporter.start()
     return this
 
   stop: ->
     @core.stop()
-    @fpsReporter.stop()
     return this
 
   suspend: ->

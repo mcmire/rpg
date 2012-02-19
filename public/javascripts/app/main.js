@@ -15,6 +15,7 @@
     init: function() {
       this.attachTo(document.body);
       this.setElement($('#game'));
+      this.$controlsDiv = $('<div id="controls">');
       this.keyboard = game.keyboard.init();
       this.core = game.core.init(this);
       this.fpsReporter = game.fpsReporter.init(this);
@@ -22,10 +23,14 @@
       this.run();
       return this;
     },
+    getControlsDiv: function() {
+      return this.$controlsDiv;
+    },
     attach: function() {
       this._super();
       this.core.attach();
       this.fpsReporter.attach();
+      this.getElement().append(this.$controlsDiv);
       return this;
     },
     addEvents: function() {
@@ -88,19 +93,16 @@
       self = this;
       main.load(function() {
         self.attach();
-        self.core.run();
-        return self.fpsReporter.run();
+        return self.core.run();
       });
       return this;
     },
     start: function() {
       this.core.start();
-      this.fpsReporter.start();
       return this;
     },
     stop: function() {
       this.core.stop();
-      this.fpsReporter.stop();
       return this;
     },
     suspend: function() {

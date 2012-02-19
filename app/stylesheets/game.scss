@@ -23,18 +23,21 @@ body {
   z-index: 2
 }
 
-#fps-reporter {
+#viewport .fps-reporter {
   width: 85px;
   height: 40px;
   line-height: 40px;
   text-align: center;
+  background-color: white;
   position: absolute;
   z-index: 3;
   right: 2px;
   bottom: 2px;
-}
-#fps-reporter.loaded {
-  background-color: white;
+  opacity: 0;
+
+  &.first-draw {
+    opacity: 1
+  }
 }
 
 #collision-layer-debug-overlay {

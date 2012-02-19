@@ -10,10 +10,32 @@ fpsReporter = ticker.cloneAs('game.fpsReporter').extend \
   init: (@main) ->
     self = this
     @attachTo(@main.core.viewport)
-    @setElement $('<div id="fps-reporter">00.0 FPS</div>')
+    @setElement $('<div class="fps-reporter">00.0 FPS</div>')
+    @_initCheckbox()
     @tickInterval = 1000
     @drawFn = game.core.createIntervalTimer false, (df, dt) -> self.draw(self, df, dt)
+    @disable()
     return this
+
+  attach: ->
+    @_super()
+    @main.getControlsDiv().append(@$checkbox)
+
+  toggle: ->
+    if @isEnabled
+      @disable()
+    else
+      @enable()
+
+  enable: ->
+    @getElement().show()
+    @start()
+    @isEnabled = true
+
+  disable: ->
+    @getElement().hide().removeClass('first-draw')
+    @stop()
+    @isEnabled = false
 
   start: ->
     @timer = window.setInterval(@drawFn, @tickInterval)
@@ -25,7 +47,19 @@ fpsReporter = ticker.cloneAs('game.fpsReporter').extend \
 
   draw: (fpsReporter, df, dt) ->
     fps = ((df / dt) * 1000).toFixed(1)
-    fpsReporter.getElement().addClass('loaded').text("#{fps} FPS")
+    fpsReporter.getElement().addClass('first-draw').text("#{fps} FPS")
+
+  _initCheckbox: ->
+    self = this
+    @$checkbox = $('
+      <p class="fps-reporter">
+        <label>
+          <input type="checkbox" />
+          Show FPS
+        </label>
+      </p>
+    ')
+    @$checkbox.on 'change', -> self.toggle()
 
 game.fpsReporter = fpsReporter
 

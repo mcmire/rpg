@@ -15,12 +15,35 @@
       this.main = main;
       self = this;
       this.attachTo(this.main.core.viewport);
-      this.setElement($('<div id="fps-reporter">00.0 FPS</div>'));
+      this.setElement($('<div class="fps-reporter">00.0 FPS</div>'));
+      this._initCheckbox();
       this.tickInterval = 1000;
       this.drawFn = game.core.createIntervalTimer(false, function(df, dt) {
         return self.draw(self, df, dt);
       });
+      this.disable();
       return this;
+    },
+    attach: function() {
+      this._super();
+      return this.main.getControlsDiv().append(this.$checkbox);
+    },
+    toggle: function() {
+      if (this.isEnabled) {
+        return this.disable();
+      } else {
+        return this.enable();
+      }
+    },
+    enable: function() {
+      this.getElement().show();
+      this.start();
+      return this.isEnabled = true;
+    },
+    disable: function() {
+      this.getElement().hide().removeClass('first-draw');
+      this.stop();
+      return this.isEnabled = false;
     },
     start: function() {
       return this.timer = window.setInterval(this.drawFn, this.tickInterval);
@@ -34,7 +57,22 @@
     draw: function(fpsReporter, df, dt) {
       var fps;
       fps = ((df / dt) * 1000).toFixed(1);
-      return fpsReporter.getElement().addClass('loaded').text("" + fps + " FPS");
+      return fpsReporter.getElement().addClass('first-draw').text("" + fps + " FPS");
+    },
+    _initCheckbox: function() {
+      var self;
+      self = this;
+      this.$checkbox = $('\
+      <p class="fps-reporter">\
+        <label>\
+          <input type="checkbox" />\
+          Show FPS\
+        </label>\
+      </p>\
+    ');
+      return this.$checkbox.on('change', function() {
+        return self.toggle();
+      });
     }
   });
 
