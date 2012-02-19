@@ -1,38 +1,48 @@
 # TODO
 
-* Do not attempt to draw entities which are off the screen (out of the viewport)
+## Game
 
 * Fix sprites for the player and the enemy
-
-* CollisionLayer: Instead of a @collisionBoxes array, store @collisionBoxesByX
-  and @collisionBoxesByY arrays. These are arrays sorted by x1 and y1, and as
-  the player moves through the world and crosses X and Y coordinates of boxes,
-  pointers would be updated which point to boxes in the two arrays. So we have
-  pointers that point to the last boxes that the player has crossed (in the X
-  and Y directions). Since the collision box arrays are sorted, the next box
-  that the player reaches will be next in the array after the pointer, so we
-  don't have to search the entire array every time.
 
 * Use Rack middleware for compiling Coffee and Sass on the fly
   (performance is not important for this app)
 
 * Rename Bounds to Box, to prevent intersectsWith/intersectWith
 
-* When viewport is adjusted, recompile "framed objects" or list of objects
-  within view - unfortunately this means that for each object within view, *its*
-  objects array, its awareness of all other objects within view, has to be
-  updated. Which means we need to update the "framed objects" array, not replace
-  it - if we do this then the objects should be automatically updated
-
 * The "framed objects" - these should be a list of objects that are 32px (4
   tiles) outside of the viewport, in case any objects are sitting right outside
   of view and move into view
 
-* The way that objects are stored (first by Y, then by X, in nested arrays)
-  seems a bit excessive. Is there a way to do a binary search on two values
-  rather than one? Or should we even worry about sorting objects by X since that
-  doesn't matter in terms of drawing the objects?
-
 * There's probably no need for a separate collision bounds -- just change
   Bounds#intersectsWith so that it allows objects to encroach 8px into a
   collision box on the bottom edge
+
+## Editor
+
+* In the default view, there are two panes, the sidebar with a list of available
+  maps and the viewport that will display an open map. When a map is loaded, a
+  third pane appears with objects for adding to the map.
+
+* To add a new map, double-click on "Add new map" in the sidebar. A modal will
+  appear with textboxes for the desired dimensions of the map, and when the
+  modal is submitted a new canvas is created and loaded into the viewport.
+
+* Maps are scrollable a la Google Maps - just drag the map to see another area.
+
+* There are two layers on a map: foreground and background. These can be
+  switched with a small dropdown in the upper right hand corner of the viewport.
+  Switching to the foreground layer will render the background as washed out,
+  and vice versa. In background mode, the right-hand pane lists images and
+  sprites, in foreground mode the right-hand pane lists collidable scenery,
+  items, and mobs.
+
+* To add an object to the map, just drag it over from the objects pane.
+
+* To move an object already on the map, just drag it to a new location. Objects
+  are snapped to an 8px grid (which is always overlaid on top of the map). Two
+  objects cannot share the same space. If an object being dragged is hovering
+  over an invalid location, it will turn red (a la the icons on the home screen
+  in Android); lifting off would then cancel the drag.
+
+* An open map is saved automatically every minute, and also when closed, when
+  another map is opened, or when the browser window/tab closes.
