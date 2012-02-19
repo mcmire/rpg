@@ -9,18 +9,24 @@
     return /\b_super(?:\.apply)?\(/.test(fn);
   };
 
-  _wrap = function(fn, val) {
+  _wrap = function(original, _super) {
     var newfn;
     newfn = function() {
       var ret, tmp;
       tmp = this._super;
-      this._super = val;
-      ret = fn.apply(this, arguments);
-      this._super = tmp;
+      Object.defineProperty(this, '_super', {
+        value: _super,
+        configurable: true
+      });
+      ret = original.apply(this, arguments);
+      Object.defineProperty(this, '_super', {
+        value: tmp,
+        configurable: true
+      });
       return ret;
     };
-    newfn.__original__ = fn;
-    newfn.__super__ = val;
+    newfn.__original__ = original;
+    newfn.__super__ = _super;
     return newfn;
   };
 
@@ -29,7 +35,7 @@
   };
 
   _extend = function(base, mixin, opts) {
-    var exclusions, keyTranslations, sk, tk, _super;
+    var exclusions, keyTranslations, properBaseName, properMixinName, sk, tk, _super;
     if (opts == null) opts = {};
     exclusions = opts.without ? $.v.reduce($.v.flatten([opts.without]), (function(h, v) {
       h[v] = 1;
@@ -40,6 +46,8 @@
     if (typeof base.doesInclude === "function" ? base.doesInclude(mixin) : void 0) {
       return;
     }
+    properBaseName = base.__name__ || 'A_BASE';
+    properMixinName = mixin.__name__ || 'A_MIXIN';
     for (sk in mixin) {
       if (!__hasProp.call(mixin, sk)) continue;
       if (exclusions[sk]) continue;
@@ -59,24 +67,32 @@
   proto = {};
 
   Object.defineProperty(proto, '__name__', {
-    value: 'game.meta.proto'
+    value: 'game.meta.proto',
+    configurable: true
   });
 
   Object.defineProperty(proto, '_super', {
-    value: function() {}
+    value: function() {},
+    configurable: true
   });
 
   proto.clone = function() {
     var clone;
     clone = _clone(this);
-    clone.__mixins__ = game.util.dup(this.__mixins__);
+    Object.defineProperty(clone, '__mixins__', {
+      value: game.util.dup(this.__mixins__),
+      configurable: true
+    });
     return clone;
   };
 
   proto.cloneAs = function(name) {
     var clone;
     clone = this.clone();
-    clone.__name__ = name;
+    Object.defineProperty(clone, '__name__', {
+      value: name,
+      configurable: true
+    });
     return clone;
   };
 
@@ -140,11 +156,13 @@
     obj = _clone(proto);
     if (name) {
       Object.defineProperty(obj, '__name__', {
-        value: name
+        value: name,
+        configurable: true
       });
     }
     Object.defineProperty(obj, '__mixins__', {
-      value: {}
+      value: {},
+      configurable: true
     });
     obj.extend.apply(obj, mixins);
     return obj;

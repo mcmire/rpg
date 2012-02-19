@@ -5,22 +5,29 @@ game = (window.game ||= {})
 # containing _super in case it is ever double-wrapped.
 _fnContainsSuper = (fn) -> /\b_super(?:\.apply)?\(/.test(fn)
 
-_wrap = (fn, val) ->
+_wrap = (original, _super) ->
   # TODO: Is this even a good idea? Since mixins can be mixed into other
   # objects in any order, a call to @_super() is really really confusing...
   # maybe just do it when overriding prototype methods but not when
   # overriding mixin methods?
   newfn = ->
     tmp = @_super
-    @_super = val
-    ret = fn.apply(this, arguments)
-    @_super = tmp
+    # Remember that we defined _super with defineProperty in the `proto` object.
+    # If we do not set it using defineProperty below, then Firefox
+    # (specifically FF 11) secretly, silently drops it! Go figure!!
+    Object.defineProperty this, '_super',
+      value: _super
+      configurable: true
+    ret = original.apply(this, arguments)
+    Object.defineProperty this, '_super',
+      value: tmp
+      configurable: true
     return ret
   # These are mainly used for debugging purposes, but they are also used to
   # detect if a function has been wrapped and re-wrap it depending on context
   # when an object is mixed into another object.
-  newfn.__original__ = fn
-  newfn.__super__ = val
+  newfn.__original__ = original
+  newfn.__super__ = _super
   return newfn
 
 _clone = (obj) ->
@@ -32,12 +39,15 @@ _extend = (base, mixin, opts={}) ->
       $.v.reduce($.v.flatten([opts.without]), ((h,v) -> h[v] = 1; h); {})
     else
       {}
-  # key_translations = base.__key_translations__ || {}
   keyTranslations = opts.keyTranslations || {}
   _super = base
 
   # Prevent mixins from being mixed in twice
   return if base.doesInclude?(mixin)
+
+  properBaseName = base.__name__ or 'A_BASE'
+  properMixinName = mixin.__name__ or 'A_MIXIN'
+  # console.log "Mixing #{properMixinName} into #{properBaseName}"
 
   for own sk of mixin
     continue if exclusions[sk]
@@ -46,6 +56,7 @@ _extend = (base, mixin, opts={}) ->
       typeof mixin[sk] is 'function' and
       mixin[sk].__original__?
     )
+      # console.log "}{ #{properMixinName}[#{sk}] }{ -> #{properBaseName}[#{tk}]"
       # If a module has a function that contains _super, it has already been
       # wrapped. The problem is that an attempt to mix it into this object
       # will result in a double-wrapped function; plus, the original
@@ -58,6 +69,9 @@ _extend = (base, mixin, opts={}) ->
       _fnContainsSuper(mixin[sk]) and
       typeof _super[tk] is 'function'
     )
+      # console.log "{ #{properMixinName}[#{sk}] } -> #{properBaseName}[#{tk}]"
+      # if properBaseName is 'game.ticker' and tk is '_includeMixin'
+        # console.log _super[tk].toString()
       # If base and the object we're mixing into the object both have a
       # function with the same name, and the mixin's function contains a call
       # to _super(), replace base's function with the mixin's function, but
@@ -65,6 +79,7 @@ _extend = (base, mixin, opts={}) ->
       # to the base function.
       base[tk] = _wrap(mixin[sk], _super[tk])
     else
+      # console.log "#{properMixinName}[#{sk}] -> #{properBaseName}[#{tk}]"
       base[tk] = mixin[sk]
 
     # Call extended hook
@@ -73,18 +88,25 @@ _extend = (base, mixin, opts={}) ->
   return base
 
 proto = {}
-Object.defineProperty proto, '__name__', value: 'game.meta.proto'
-Object.defineProperty proto, '_super', value: ->
-# proto.__key_translations__ = {}
+Object.defineProperty proto, '__name__',
+  value: 'game.meta.proto',
+  configurable: true
+Object.defineProperty proto, '_super',
+  value: ->,
+  configurable: true
 proto.clone = ->
   clone = _clone(this)
   # Copy this so if clone adds to mixins then it won't get added to prototype
   # and thus possibly prevent future objects from being able to be mixed in
-  clone.__mixins__ = game.util.dup(this.__mixins__)
+  Object.defineProperty clone, '__mixins__',
+    value: game.util.dup(@__mixins__)
+    configurable: true
   return clone
 proto.cloneAs = (name) ->
   clone = @clone()
-  clone.__name__ = name
+  Object.defineProperty clone, '__name__',
+    value: name
+    configurable: true
   return clone
 proto.create = (args...) ->
   clone = @clone()
@@ -111,16 +133,17 @@ proto.doesInclude = (obj) ->
     @__mixins__[obj]
   else if obj.__name__
     @__mixins__[obj.__name__]
-# proto.addTranslations = (obj) ->
-#   # write property in own properties so it doesn't modify
-#   # proto.__key_translations__
-#   @__key_translations__ = $.v.extend {}, @__key_translations__, obj
 
 _def = (mixins...) ->
   name = mixins.shift() if typeof mixins[0] is 'string'
   obj = _clone(proto)
-  Object.defineProperty obj, '__name__', value: name if name
-  Object.defineProperty obj, '__mixins__', value: {}
+  if name
+    Object.defineProperty obj, '__name__',
+      value: name
+      configurable: true
+  Object.defineProperty obj, '__mixins__',
+    value: {}
+    configurable: true
   obj.extend(mixins...)
   return obj
 
