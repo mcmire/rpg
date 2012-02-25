@@ -1,70 +1,62 @@
-game = (window.game ||= {})
+(game = @game).define 'fpsReporter', (name) ->
+  fpsReporter = @ticker.cloneAs(name).extend \
+    @roles.attachable,
 
-meta = game.meta2
-ticker = game.ticker
-{attachable} = game.roles
-
-fpsReporter = ticker.cloneAs('game.fpsReporter').extend \
-  attachable,
-
-  init: (@main) ->
-    self = this
-    @attachTo(@main.core.viewport)
-    @setElement $('<div class="fps-reporter">00.0 FPS</div>')
-    @_initCheckbox()
-    @$playerDebug = $('<p/>')
-    @tickInterval = 1000
-    @drawFn = game.core.createIntervalTimer false, (df, dt) -> self.draw(self, df, dt)
-    @disable()
-    return this
-
-  attach: ->
-    @_super()
-    @main.getControlsDiv().append(@$checkbox)
-    @main.getControlsDiv().append @$playerDebug
-
-  toggle: ->
-    if @isEnabled
+    init: (@main) ->
+      self = this
+      @attachTo(@main.core.viewport)
+      @setElement $('<div class="fps-reporter">00.0 FPS</div>')
+      @_initCheckbox()
+      @$playerDebug = $('<p/>')
+      @tickInterval = 1000
+      @drawFn = game.core.createIntervalTimer false, (df, dt) -> self.draw(self, df, dt)
       @disable()
-    else
-      @enable()
+      return this
 
-  enable: ->
-    @getElement().show()
-    @start()
-    @isEnabled = true
+    attach: ->
+      @_super()
+      @main.getControlsDiv().append(@$checkbox)
+      @main.getControlsDiv().append @$playerDebug
 
-  disable: ->
-    @getElement().hide().removeClass('first-draw')
-    @stop()
-    @isEnabled = false
+    toggle: ->
+      if @isEnabled
+        @disable()
+      else
+        @enable()
 
-  start: ->
-    @timer = window.setInterval(@drawFn, @tickInterval)
+    enable: ->
+      @getElement().show()
+      @start()
+      @isEnabled = true
 
-  stop: ->
-    if @timer
-      window.clearInterval(@timer)
-      @timer = null
+    disable: ->
+      @getElement().hide().removeClass('first-draw')
+      @stop()
+      @isEnabled = false
 
-  draw: (fpsReporter, df, dt) ->
-    fps = ((df / dt) * 1000).toFixed(1)
-    fpsReporter.getElement().addClass('first-draw').text("#{fps} FPS")
-    @$playerDebug.html @main.core.player.mbounds.inspect()
+    start: ->
+      @timer = window.setInterval(@drawFn, @tickInterval)
 
-  _initCheckbox: ->
-    self = this
-    @$checkbox = $('
-      <p class="fps-reporter">
-        <label>
-          <input type="checkbox" />
-          Show FPS
-        </label>
-      </p>
-    ')
-    @$checkbox.on 'change', -> self.toggle()
+    stop: ->
+      if @timer
+        window.clearInterval(@timer)
+        @timer = null
 
-game.fpsReporter = fpsReporter
+    draw: (fpsReporter, df, dt) ->
+      fps = ((df / dt) * 1000).toFixed(1)
+      fpsReporter.getElement().addClass('first-draw').text("#{fps} FPS")
+      @$playerDebug.html @main.core.player.mbounds.inspect()
 
-window.scriptLoaded('app/fps_reporter')
+    _initCheckbox: ->
+      self = this
+      @$checkbox = $('
+        <p class="fps-reporter">
+          <label>
+            <input type="checkbox" />
+            Show FPS
+          </label>
+        </p>
+      ')
+      @$checkbox.on 'change', -> self.toggle()
 
+  return fpsReporter

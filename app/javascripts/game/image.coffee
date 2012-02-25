@@ -1,44 +1,38 @@
-game = (window.game ||= {})
+(game = @game).define 'Image', (name) ->
+  Image = @meta.def name,
+    @roles.assignable,
+    @roles.simpleDrawable,
 
-meta = game.meta2
-{assignable, simpleDrawable} = game.roles
+    init: (path, @width, @height) ->
+      @path = path
+      unless /\.[^.]+$/.test(@path)
+        @path += ".gif"
+      unless /^\//.test(@path)
+        @path = game.main.resolveImagePath(@path)
+      @isLoaded = false
 
-Image = meta.def 'game.Image',
-  assignable,
-  simpleDrawable,
+    load: ->
+      self = this
+      @element = document.createElement('img')
+      # XXX: Actually we don't need this... this is only important for
+      # MapTile... is MapTile an Image?
+      @element.width = @width
+      @element.height = @height
+      # load the image asynchronously (?)
+      @element.src = @path
+      @element.onload = ->
+        console.log "Loaded #{self.path}"
+        self.onLoadCallback?()
+        self.isLoaded = true
+      @element.onerror = -> raise new Error "Could not load image #{self.path}!"
 
-  init: (path, @width, @height) ->
-    @path = path
-    unless /\.[^.]+$/.test(@path)
-      @path += ".gif"
-    unless /^\//.test(@path)
-      @path = game.main.resolveImagePath(@path)
-    @isLoaded = false
+    onLoad: (fn) ->
+      @onLoadCallback = fn
 
-  load: ->
-    self = this
-    @element = document.createElement('img')
-    # XXX: Actually we don't need this... this is only important for
-    # MapTile... is MapTile an Image?
-    @element.width = @width
-    @element.height = @height
-    # load the image asynchronously (?)
-    @element.src = @path
-    @element.onload = ->
-      console.log "Loaded #{self.path}"
-      self.onLoadCallback?()
-      self.isLoaded = true
-    @element.onerror = -> raise new Error "Could not load image #{self.path}!"
+    clear: (ctx, x, y) ->
+      ctx.clearRect(x, y, @width, @height)
 
-  onLoad: (fn) ->
-    @onLoadCallback = fn
+    draw: (ctx, x, y) ->
+      ctx.drawImage(@element, x, y)
 
-  clear: (ctx, x, y) ->
-    ctx.clearRect(x, y, @width, @height)
-
-  draw: (ctx, x, y) ->
-    ctx.drawImage(@element, x, y)
-
-game.Image = Image
-
-window.scriptLoaded('app/image')
+  return Image

@@ -1,19 +1,15 @@
 (function() {
-  var game, maps;
+  var game;
 
-  game = (window.game || (window.game = {}));
-
-  maps = {};
-
-  game.mapCollection = {
-    get: function(name) {
-      return maps[name];
-    },
-    add: function(name, width, height, fn) {
-      return maps[name] = game.Map.create(name, width, height, fn);
-    }
-  };
-
-  window.scriptLoaded('app/map_collection');
+  (game = this.game).define('mapCollection', function(name) {
+    return {
+      get: function(name) {
+        return maps[name];
+      },
+      add: function(name, width, height, fn) {
+        return maps[name] = game.Map.create(name, width, height, fn);
+      }
+    };
+  });
 
 }).call(this);

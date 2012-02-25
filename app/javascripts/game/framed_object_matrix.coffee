@@ -1,18 +1,13 @@
-game = (window.game ||= {})
+(game = @game).define 'FramedObjectMatrix', (name) ->
+  FramedObjectMatrix = @meta.def name,
+    frameWithin: (@bounds) ->
+      return this
 
-meta = game.meta2
+    each: (fn) ->
+      self = this
+      @_super (object) ->
+        if self.bounds.doesContain(object)
+          ret = fn(object)
+          return false if ret is false
 
-FramedObjectMatrix = meta.def 'game.FramedObjectMatrix',
-  frameWithin: (@bounds) ->
-    return this
-
-  each: (fn) ->
-    self = this
-    @_super (object) ->
-      if self.bounds.doesContain(object)
-        ret = fn(object)
-        return false if ret is false
-
-game.FramedObjectMatrix = FramedObjectMatrix
-
-window.scriptLoaded('app/framed_object_matrix')
+  return FramedObjectMatrix

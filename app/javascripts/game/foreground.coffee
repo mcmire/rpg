@@ -1,100 +1,94 @@
-game = (window.game ||= {})
+(game = @game).define 'Foreground', (name) ->
+  Foreground = @meta.def name,
+    @roles.assignable,
+    @roles.tickable,
 
-meta = game.meta2
-{assignable, tickable} = game.roles
+    init: (@map, @width, @height) ->
+      @objects = game.CollidableMatrix.create(this)
+      @framedObjects = @objects.clone().extend(game.FramedObjectMatrix)
+      @blocks = []
+      @player = null
+      @enableCollisions = true
 
-Foreground = meta.def 'game.Foreground',
-  assignable,
-  tickable,
+    assignToViewport: (@viewport) ->
+      @framedObjects.frameWithin(@viewport.bounds)
 
-  init: (@map, @width, @height) ->
-    @objects = game.CollidableMatrix.create(this)
-    @framedObjects = @objects.clone().extend(game.FramedObjectMatrix)
-    @blocks = []
-    @player = null
-    @enableCollisions = true
+    addObject: (proto, positions...) ->
+      self = this
+      $.v.each positions, ([x, y, width, height]) ->
+        object = proto.clone().assignToMap(self)#.init(width, height)
+        object.setMapPosition(x, y)
+        self.objects.push(object)
 
-  assignToViewport: (@viewport) ->
-    @framedObjects.frameWithin(@viewport.bounds)
+    removeObject: (object) ->
+      @objects.remove(object)
 
-  addObject: (proto, positions...) ->
-    self = this
-    $.v.each positions, ([x, y, width, height]) ->
-      object = proto.clone().assignToMap(self)#.init(width, height)
-      object.setMapPosition(x, y)
-      self.objects.push(object)
+    addPlayer: (@player) ->
+      @player.assignToMap(this)
+      @objects.add(@player)
 
-  removeObject: (object) ->
-    @objects.remove(object)
+    removePlayer: ->
+      @removeObject(@player)
 
-  addPlayer: (@player) ->
-    @player.assignToMap(this)
-    @objects.add(@player)
+    onLoad: (@onLoadCallback) ->
 
-  removePlayer: ->
-    @removeObject(@player)
+    load: ->
+      @$canvas = $('<canvas>')
+        .attr('width', @width)
+        .attr('height', @height)
+        .addClass('foreground')
+      @onLoadCallback?.call(this)
 
-  onLoad: (@onLoadCallback) ->
+    unload: ->
+      # Free memory. (This may be a pre-optimization, but it kind of seems like a
+      # good idea considering the canvas object will very likely be of a
+      # substantial size.)
+      @$canvas = null
+      @ctx = null
 
-  load: ->
-    @$canvas = $('<canvas>')
-      .attr('width', @width)
-      .attr('height', @height)
-      .addClass('foreground')
-    @onLoadCallback?.call(this)
+    # resume the map
+    activate: ->
+      @objects.each (object) -> object.activate?()
 
-  unload: ->
-    # Free memory. (This may be a pre-optimization, but it kind of seems like a
-    # good idea considering the canvas object will very likely be of a
-    # substantial size.)
-    @$canvas = null
-    @ctx = null
+    # pause the map, freeze input
+    # this isn't really used currently, but it's a nice idea
+    deactivate: ->
+      @objects.each (object) -> object.deactivate?()
 
-  # resume the map
-  activate: ->
-    @objects.each (object) -> object.activate?()
+    attachTo: (@viewport) ->
+      # Save viewport so that each object has access to it through the magic
+      # of the Mappable interface
+      # don't use appendTo here, that messes stuff up for some reason
+      @viewport.getElement().append(@$canvas)
+      @ctx = @$canvas[0].getContext('2d')
 
-  # pause the map, freeze input
-  # this isn't really used currently, but it's a nice idea
-  deactivate: ->
-    @objects.each (object) -> object.deactivate?()
+    detach: ->
+      @$canvas.detach()
 
-  attachTo: (@viewport) ->
-    # Save viewport so that each object has access to it through the magic
-    # of the Mappable interface
-    # don't use appendTo here, that messes stuff up for some reason
-    @viewport.getElement().append(@$canvas)
-    @ctx = @$canvas[0].getContext('2d')
+    tick: ->
+      self = this
+      @$canvas.css
+        top: -@viewport.bounds.y1
+        left: -@viewport.bounds.x1
+      # Clear all of the objects first before drawing all of them so that we can
+      # layer sprites on top of each other - if each object clears and draws
+      # itself separately then an object that sits behind another will get
+      # partially or fully erased before the object in front is drawn
+      @framedObjects.each (object) -> object.predraw?(self.ctx)
+      @framedObjects.each (object) -> object.draw?(self.ctx)
+      @framedObjects.each (object) -> object.postdraw?(self.ctx)
 
-  detach: ->
-    @$canvas.detach()
+    getObjectsWithout: (object) ->
+      coll =
+        if @enableCollisions
+          @framedObjects.clone()
+        else
+          # null/empty object pattern - still works but does nothing
+          game.CollidableMatrix.create(this)
+      coll.extend(game.FilteredObjectMatrix).without(object)
+      return coll
 
-  tick: ->
-    self = this
-    @$canvas.css
-      top: -@viewport.bounds.y1
-      left: -@viewport.bounds.x1
-    # Clear all of the objects first before drawing all of them so that we can
-    # layer sprites on top of each other - if each object clears and draws
-    # itself separately then an object that sits behind another will get
-    # partially or fully erased before the object in front is drawn
-    @framedObjects.each (object) -> object.predraw?(self.ctx)
-    @framedObjects.each (object) -> object.draw?(self.ctx)
-    @framedObjects.each (object) -> object.postdraw?(self.ctx)
+  Foreground.add = Foreground.addObject
+  Foreground.remove = Foreground.removeObject
 
-  getObjectsWithout: (object) ->
-    coll =
-      if @enableCollisions
-        @framedObjects.clone()
-      else
-        # null/empty object pattern - still works but does nothing
-        game.CollidableMatrix.create(this)
-    coll.extend(game.FilteredObjectMatrix).without(object)
-    return coll
-
-Foreground.add = Foreground.addObject
-Foreground.remove = Foreground.removeObject
-
-game.Foreground = Foreground
-
-window.scriptLoaded('app/foreground')
+  return Foreground

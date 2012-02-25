@@ -1,24 +1,14 @@
 (function() {
-  var Block, Collidable, Mappable, assignable, game, meta;
+  var game;
 
-  game = (window.game || (window.game = {}));
-
-  meta = game.meta2;
-
-  assignable = game.roles.assignable;
-
-  Mappable = game.Mappable;
-
-  Collidable = game.Collidable;
-
-  Block = meta.def('game.Block', assignable, Mappable, Collidable, {
-    _initCollidableBounds: function() {
-      return this.cbounds = game.Bounds.rect(0, 0, this.width, this.height);
-    }
+  (game = this.game).define('Block', function(name) {
+    var Block;
+    Block = this.meta.def(name, this.roles.assignable, this.Mappable, this.Collidable, {
+      _initCollidableBounds: function() {
+        return this.cbounds = game.Bounds.rect(0, 0, this.width, this.height);
+      }
+    });
+    return Block;
   });
-
-  game.Block = Block;
-
-  window.scriptLoaded('app/block');
 
 }).call(this);

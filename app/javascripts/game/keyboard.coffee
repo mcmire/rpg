@@ -1,210 +1,204 @@
-game = (window.game ||= {})
+(game = @game).define 'keyboard', (name) ->
+  KEYS =
+    KEY_TAB: 9
+    KEY_ESC: 27
+    KEY_SHIFT: 16
+    KEY_CTRL: 17
+    KEY_ALT: 18
+    KEY_META: 91
+    KEY_UP: 38
+    KEY_DOWN: 40
+    KEY_LEFT: 37
+    KEY_RIGHT: 39
+    KEY_W: 87
+    KEY_A: 65
+    KEY_S: 83
+    KEY_D: 68
+    KEY_H: 72
+    KEY_J: 74
+    KEY_K: 75
+    KEY_L: 76
 
-meta = game.meta2
-{eventable} = game.roles
+  MODIFIER_KEYS = [
+    KEYS.KEY_SHIFT
+    KEYS.KEY_CTRL
+    KEYS.KEY_ALT
+    KEYS.KEY_META
+  ]
 
-KEYS =
-  KEY_TAB: 9
-  KEY_ESC: 27
-  KEY_SHIFT: 16
-  KEY_CTRL: 17
-  KEY_ALT: 18
-  KEY_META: 91
-  KEY_UP: 38
-  KEY_DOWN: 40
-  KEY_LEFT: 37
-  KEY_RIGHT: 39
-  KEY_W: 87
-  KEY_A: 65
-  KEY_S: 83
-  KEY_D: 68
-  KEY_H: 72
-  KEY_J: 74
-  KEY_K: 75
-  KEY_L: 76
+  PressedKeys = @meta.def 'PressedKeys',
+    init: ->
+      @reset()
 
-MODIFIER_KEYS = [
-  KEYS.KEY_SHIFT
-  KEYS.KEY_CTRL
-  KEYS.KEY_ALT
-  KEYS.KEY_META
-]
+    reset: ->
+      @tsByKey = {}
+      @keys = []
 
-PressedKeys = meta.def
-  init: ->
-    @reset()
+    get: (key) ->
+      @tsByKey[key]
 
-  reset: ->
-    @tsByKey = {}
-    @keys = []
+    put: (key, ts) ->
+      @del(key) if @has(key)
+      @tsByKey[key] = ts
+      @keys.unshift(key)
 
-  get: (key) ->
-    @tsByKey[key]
+    del: (key) ->
+      if @has(key)
+        ts = @tsByKey[key]
+        delete @tsByKey[key]
+        @keys.splice(@keys.indexOf(key), 1)
 
-  put: (key, ts) ->
-    @del(key) if @has(key)
-    @tsByKey[key] = ts
-    @keys.unshift(key)
+    has: (key) ->
+      @tsByKey.hasOwnProperty(key)
 
-  del: (key) ->
-    if @has(key)
-      ts = @tsByKey[key]
-      delete @tsByKey[key]
-      @keys.splice(@keys.indexOf(key), 1)
+    each: (fn) ->
+      fn(key, @tsByKey[key]) for key in @keys
 
-  has: (key) ->
-    @tsByKey.hasOwnProperty(key)
+  KeyTracker = @meta.def 'KeyTracker',
+    init: (keyCodes) ->
+      @trackedKeys = $.v.reduce(keyCodes, ((o, c) -> o[c] = 1; o), {})
+      @pressedKeys = PressedKeys.create()
 
-  each: (fn) ->
-    fn(key, @tsByKey[key]) for key in @keys
+    reset: ->
+      @pressedKeys.reset()
+      return this
 
-KeyTracker = meta.def
-  init: (keyCodes) ->
-    @trackedKeys = $.v.reduce(keyCodes, ((o, c) -> o[c] = 1; o), {})
-    @pressedKeys = PressedKeys.create()
+    keydown: (keyCode, ts) ->
+      if @trackedKeys.hasOwnProperty(keyCode)
+        @pressedKeys.put(keyCode, ts)
+        return true
+      return false
 
-  reset: ->
-    @pressedKeys.reset()
-    return this
+    keyup: (keyCode) ->
+      if @trackedKeys.hasOwnProperty(keyCode)
+        @pressedKeys.del(keyCode)
+        return true
+      return false
 
-  keydown: (keyCode, ts) ->
-    if @trackedKeys.hasOwnProperty(keyCode)
-      @pressedKeys.put(keyCode, ts)
-      return true
-    return false
+    isKeyPressed: (keys...) ->
+      for key in $.flatten(keys)
+        keyCode = keyboard.keyCodeFor(key)
+        return true if self.pressedKeys.has(keyCode)
+      return false
 
-  keyup: (keyCode) ->
-    if @trackedKeys.hasOwnProperty(keyCode)
-      @pressedKeys.del(keyCode)
-      return true
-    return false
+    clearStuckKeys: (now) ->
+      self = this
+      @pressedKeys.each (key, ts) ->
+        if (now - ts) >= 500
+          self.pressedKeys.del(key)
 
-  isKeyPressed: (keys...) ->
-    for key in $.flatten(keys)
-      keyCode = keyboard.keyCodeFor(key)
-      return true if self.pressedKeys.has(keyCode)
-    return false
+    getLastPressedKey: ->
+      @pressedKeys.keys[0]
 
-  clearStuckKeys: (now) ->
-    self = this
-    @pressedKeys.each (key, ts) ->
-      if (now - ts) >= 500
-        self.pressedKeys.del(key)
+  keyboard = meta.def 'keyboard',
+    @eventable,
 
-  getLastPressedKey: ->
-    @pressedKeys.keys[0]
+    KeyTracker: KeyTracker
+    keys: KEYS
+    modifierKeys: MODIFIER_KEYS
+    keyTrackers: []
 
-keyboard = meta.def 'game.keyboard',
-  eventable,
+    reset: ->
+      keyTracker.reset() for keyTracker in @keyTrackers if @keyTrackers
+      return this
 
-  KeyTracker: KeyTracker
-  keys: KEYS
-  modifierKeys: MODIFIER_KEYS
-  keyTrackers: []
+    addEvents: ->
+      self = this
 
-  reset: ->
-    keyTracker.reset() for keyTracker in @keyTrackers if @keyTrackers
-    return this
+      @bindEvents document,
+        keydown: (event) ->
+          key = event.keyCode
+          # console.log "keydown #{key} #{++_id}"
+          # Keep track of which keys are being held down at any given time
+          # unless self.pressedKeys.has(key)
+          #   self.pressedKeys.put(key, (new Date()).getTime())
+          isTracked = false
+          for keyTracker in self.keyTrackers
+            if keyTracker.keydown(key, event.timeStamp)
+              isTracked = true
+          if isTracked
+            event.preventDefault()
+            return false
 
-  addEvents: ->
-    self = this
+        keyup: (event) ->
+          key = event.keyCode
+          isTracked = false
+          for keyTracker in self.keyTrackers
+            if keyTracker.keyup(key)
+              isTracked = true
+          if isTracked
+            event.preventDefault()
+            return false
 
-    @bindEvents document,
-      keydown: (event) ->
-        key = event.keyCode
-        # console.log "keydown #{key} #{++_id}"
-        # Keep track of which keys are being held down at any given time
-        # unless self.pressedKeys.has(key)
-        #   self.pressedKeys.put(key, (new Date()).getTime())
-        isTracked = false
-        for keyTracker in self.keyTrackers
-          if keyTracker.keydown(key, event.timeStamp)
-            isTracked = true
-        if isTracked
-          event.preventDefault()
-          return false
+      @bindEvents window,
+        blur: (event) ->
+          self.reset()
 
-      keyup: (event) ->
-        key = event.keyCode
-        isTracked = false
-        for keyTracker in self.keyTrackers
-          if keyTracker.keyup(key)
-            isTracked = true
-        if isTracked
-          event.preventDefault()
-          return false
+      return this
 
-    @bindEvents window,
-      blur: (event) ->
-        self.reset()
+    removeEvents: ->
+      @unbindEvents document, 'keydown', 'keyup'
+      @unbindEvents window, 'blur'
+      return this
 
-    return this
+    addKeyTracker: (tracker) ->
+      @keyTrackers.push(tracker)
+      return this
 
-  removeEvents: ->
-    @unbindEvents document, 'keydown', 'keyup'
-    @unbindEvents window, 'blur'
-    return this
+    removeKeyTracker: (tracker) ->
+      # seriously, Javascript, how am I supposed to live without a delete method
+      @keyTrackers.splice @keyTrackers.indexOf(tracker), 1
+      return this
 
-  addKeyTracker: (tracker) ->
-    @keyTrackers.push(tracker)
-    return this
+    trapKeys: (keys...) ->
+      keys = game.util.ensureArray(keys)
+      for key in keys
+        key = KEYS[key] if typeof key is 'string'
+        @trappedKeys[key] = 1
+      return this
 
-  removeKeyTracker: (tracker) ->
-    # seriously, Javascript, how am I supposed to live without a delete method
-    @keyTrackers.splice @keyTrackers.indexOf(tracker), 1
-    return this
+    releaseKeys: (keys...) ->
+      keys = game.util.ensureArray(keys)
+      for key in keys
+        key = KEYS[key] if typeof key is 'string'
+        delete @trappedKeys[key]
+      return this
 
-  trapKeys: (keys...) ->
-    keys = game.util.ensureArray(keys)
-    for key in keys
-      key = KEYS[key] if typeof key is 'string'
-      @trappedKeys[key] = 1
-    return this
+    # Public: Determine whether a key or keys are being pressed.
+    #
+    # keys - Numbers that are key codes, or strings that map to key codes in the
+    #        KEYS hash.
+    #
+    # Examples:
+    #
+    #   isKeyPressed(37)  # left arrow key
+    #   isKeyPressed('KEY_LEFT')
+    #   isKeyPressed('KEY_LEFT', 'KEY_A')
+    #
+    # Returns true if any of the given keys are being held down currently, or false
+    # otherwise.
+    #
+    isKeyPressed: (keys...) ->
+      return true if tracker.isKeyPressed(keys) for tracker in @keyTrackers
+      return false
 
-  releaseKeys: (keys...) ->
-    keys = game.util.ensureArray(keys)
-    for key in keys
-      key = KEYS[key] if typeof key is 'string'
-      delete @trappedKeys[key]
-    return this
+    clearStuckKeys: (now) ->
+      tracker.clearStuckKeys(now) for tracker in @keyTrackers
+      return this
 
-  # Public: Determine whether a key or keys are being pressed.
-  #
-  # keys - Numbers that are key codes, or strings that map to key codes in the
-  #        KEYS hash.
-  #
-  # Examples:
-  #
-  #   isKeyPressed(37)  # left arrow key
-  #   isKeyPressed('KEY_LEFT')
-  #   isKeyPressed('KEY_LEFT', 'KEY_A')
-  #
-  # Returns true if any of the given keys are being held down currently, or false
-  # otherwise.
-  #
-  isKeyPressed: (keys...) ->
-    return true if tracker.isKeyPressed(keys) for tracker in @keyTrackers
-    return false
+    modifierKeyPressed: (event) ->
+      event.shiftKey or event.ctrlKey or event.altKey or event.metaKey
 
-  clearStuckKeys: (now) ->
-    tracker.clearStuckKeys(now) for tracker in @keyTrackers
-    return this
+    keyCodesFor: (keys...) ->
+      keys = game.util.ensureArray(keys)
+      $.map keys, (key) -> keyboard.keyCodeFor(key)
 
-  modifierKeyPressed: (event) ->
-    event.shiftKey or event.ctrlKey or event.altKey or event.metaKey
+    keyCodeFor: (key) ->
+      if typeof key is 'string'
+        keyCode = KEYS[key]
+        throw new Error("'#{arg}' is not a valid key") unless keyCode
+        return keyCode
+      else
+        return key
 
-  keyCodesFor: (keys...) ->
-    keys = game.util.ensureArray(keys)
-    $.map keys, (key) -> keyboard.keyCodeFor(key)
-
-  keyCodeFor: (key) ->
-    if typeof key is 'string'
-      keyCode = KEYS[key]
-      throw new Error("'#{arg}' is not a valid key") unless keyCode
-      return keyCode
-    else
-      return key
-
-game.keyboard = keyboard
-
-window.scriptLoaded('app/keyboard')
+  return keyboard

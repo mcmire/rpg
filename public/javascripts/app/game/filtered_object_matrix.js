@@ -1,30 +1,26 @@
 (function() {
-  var FilteredObjectMatrix, game, meta;
+  var game;
 
-  game = (window.game || (window.game = {}));
-
-  meta = game.meta2;
-
-  FilteredObjectMatrix = meta.def('game.FilteredObjectMatrix', {
-    without: function(exception) {
-      this.exception = exception;
-      return this;
-    },
-    each: function(fn) {
-      var self;
-      self = this;
-      return this._super(function(object) {
-        var ret;
-        if (object !== self.exception) {
-          ret = fn(object);
-          if (ret === false) return false;
-        }
-      });
-    }
+  (game = this.game).define('FilteredObjectMatrix', function(name) {
+    var FilteredObjectMatrix;
+    FilteredObjectMatrix = this.meta.def(name, {
+      without: function(exception) {
+        this.exception = exception;
+        return this;
+      },
+      each: function(fn) {
+        var self;
+        self = this;
+        return this._super(function(object) {
+          var ret;
+          if (object !== self.exception) {
+            ret = fn(object);
+            if (ret === false) return false;
+          }
+        });
+      }
+    });
+    return FilteredObjectMatrix;
   });
-
-  game.FilteredObjectMatrix = FilteredObjectMatrix;
-
-  window.scriptLoaded('app/filtered_object_matrix');
 
 }).call(this);
