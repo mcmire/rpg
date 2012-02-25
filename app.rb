@@ -1,73 +1,35 @@
+
 require 'sinatra'
-require 'pp'
+require 'jammit/sinatra'
+require 'yajl/json_gem'
+
+Sinatra.register(Jammit)
 
 set :views, "app/views"
 
-def parse_scripts(text)
-  scripts = text.split(/\n/)
-  scripts.each {|s| s.gsub!(/#(.+)$/, ""); s.strip! }
-  scripts.reject! {|s| s =~ /^#/ or s.empty? }
-  scripts
-end
-
-VENDOR_SCRIPTS = parse_scripts <<EOT
-  vendor/ender
-EOT
-
-APP_SCRIPTS = parse_scripts <<EOT
-app/ender_ext
-app/ext
-app/util
-app/meta
-app/meta2
-app/roles
-
-# things that don't have an immediate dependency
-app/bounds
-app/canvas
-app/collidable
-app/image_sequence
-app/keyboard
-app/main
-app/mappable
-app/ordered_map
-app/viewport
-
-app/sorted_object_matrix
-app/collidable_matrix
-app/framed_object_matrix
-app/filtered_object_matrix
-
-app/ticker
-app/core
-app/fps_reporter
-
-app/block
-app/still_object
-app/live_object
-
-app/image  # image must be defined after main
-app/image_collection
-app/sprite_collection
-app/map_collection
-app/background
-app/foreground
-app/map
-app/map_tile
-app/maps/lw_52
-
-app/player
-
-app/init
-EOT
-SCRIPTS = VENDOR_SCRIPTS + APP_SCRIPTS
+FILE_MTIMES = {}
 
 helpers do
-  def scripts
+  def stylesheet_link_tag(path, options={})
+    fn = _resolve_path(path, 'stylesheets')
+    bust = _get_bust(fn)
+    %(<link rel="stylesheet" href="#{fn}?#{bust}">\n)
+  end
+
+  def javascript_include_tag(path, options={})
+    fn = _resolve_path(path, 'javascripts')
+    bust = _get_bust(fn)
+    %(<script src="#{path}?#{bust}"></script>\n)
+  end
+
+  def scripts(group)
     html = ""
+    script_paths = Jammit.packager.individual_urls(group.to_sym, :js).map { |url|
+      url.sub("/javascripts/", "").sub(/\.js$/, "")
+    }
     html << %(
 <script>
-  window.scripts = #{JSON.generate(APP_SCRIPTS)};
+  window.scripts = #{JSON.generate(script_paths)};
   window.scriptsLoaded = [];
   window.scriptLoaded = function(name) {
     scriptsLoaded.push(name);
@@ -77,18 +39,29 @@ helpers do
   };
 </script>
     )
-    for path in SCRIPTS
-      fn = File.expand_path("../public/javascripts/#{path}.js", __FILE__)
-      t = File.mtime(fn)
-      bust = t.to_i
-      html << %(<script src="/javascripts/#{path}.js?#{bust}"></script>\n)
-    end
-    html
+    html << include_javascripts(group)
+    return html
+  end
+
+  def styles(group)
+    include_stylesheets(group)
+  end
+
+  def _resolve_path(path, type)
+    fn = path.dup
+    ext = (type == 'javascripts') ? '.js' : '.css'
+    fn << ext unless fn.end_with?(ext)
+    File.expand_path("../public/#{fn}", __FILE__)
+  end
+
+  def _get_bust(fn)
+    t = FILE_MTIMES[fn] ||= File.mtime(fn)
+    return t.to_i
   end
 end
 
 get "/?" do
-  erb :index
+  erb :game
 end
 
 get "/keyboard_test/?" do

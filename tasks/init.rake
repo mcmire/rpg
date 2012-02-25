@@ -1,5 +1,3 @@
-main = self
-
 module RakeMixins
   def root(*paths)
     @_root_dir ||= File.expand_path('../..', __FILE__)
@@ -8,6 +6,6 @@ module RakeMixins
 end
 
 task :init do
-  # Rake::DSL.__send__(:include, RakeMixins)
+  require File.expand_path('../../config/boot', __FILE__)
   include RakeMixins
 end

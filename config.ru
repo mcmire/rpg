@@ -1,11 +1,5 @@
-root = File.expand_path("..", __FILE__)
 
-require 'rubygems'
-
-require 'bundler'
-Bundler.setup(:default, ENV["RACK_ENV"])
-Bundler.require
-
-require "#{root}/app"
+require File.expand_path('../config/boot', __FILE__)
+require "#{APP_ROOT}/app"
 
 run Sinatra::Application

@@ -1,0 +1,55 @@
+compress_assets: <%= APP_ENV == 'production' ? 'on' : 'off' %>
+javascript_compressor: closure
+gzip_assets: true
+
+javascripts:
+  game:
+    - public/javascripts/vendor/ender.js
+
+    - public/javascripts/app/game/ender_ext.js
+    - public/javascripts/app/game/ext.js
+    - public/javascripts/app/game/util.js
+    - public/javascripts/app/game/meta2.js
+    - public/javascripts/app/game/roles.js
+
+    # things that don't have an immediate dependency
+    - public/javascripts/app/game/bounds.js
+    - public/javascripts/app/game/canvas.js
+    - public/javascripts/app/game/collidable.js
+    - public/javascripts/app/game/image_sequence.js
+    - public/javascripts/app/game/keyboard.js
+    - public/javascripts/app/game/main.js
+    - public/javascripts/app/game/mappable.js
+    - public/javascripts/app/game/ordered_map.js
+    - public/javascripts/app/game/viewport.js
+
+    - public/javascripts/app/game/sorted_object_matrix.js
+    - public/javascripts/app/game/collidable_matrix.js
+    - public/javascripts/app/game/framed_object_matrix.js
+    - public/javascripts/app/game/filtered_object_matrix.js
+
+    - public/javascripts/app/game/ticker.js
+    - public/javascripts/app/game/core.js
+    - public/javascripts/app/game/fps_reporter.js
+
+    - public/javascripts/app/game/block.js
+    - public/javascripts/app/game/still_object.js
+    - public/javascripts/app/game/live_object.js
+
+    - public/javascripts/app/game/image.js  # image must be defined after main
+    - public/javascripts/app/game/image_collection.js
+    - public/javascripts/app/game/sprite_collection.js
+    - public/javascripts/app/game/map_collection.js
+    - public/javascripts/app/game/background.js
+    - public/javascripts/app/game/foreground.js
+    - public/javascripts/app/game/map.js
+    - public/javascripts/app/game/map_tile.js
+    - public/javascripts/app/game/maps/lw_52.js
+
+    - public/javascripts/app/game/player.js
+
+    - public/javascripts/app/game/init.js
+
+stylesheets:
+  game:
+    - public/stylesheets/app/game.css
