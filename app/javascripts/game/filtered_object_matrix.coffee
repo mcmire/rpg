@@ -1,13 +1,16 @@
-(game = @game).define 'FilteredObjectMatrix', (name) ->
-  FilteredObjectMatrix = @meta.def name,
-    without: (@exception) ->
-      return this
+game = (window.game ||= {})
 
-    each: (fn) ->
-      self = this
-      @_super (object) ->
-        if object isnt self.exception
-          ret = fn(object)
-          return false if ret is false
+meta = game.meta2
 
-  return FilteredObjectMatrix
+FilteredObjectMatrix = meta.def 'game.FilteredObjectMatrix',
+  without: (@exception) ->
+    return this
+
+  each: (fn) ->
+    self = this
+    @_super (object) ->
+      if object isnt self.exception
+        ret = fn(object)
+        return false if ret is false
+
+game.FilteredObjectMatrix = FilteredObjectMatrix

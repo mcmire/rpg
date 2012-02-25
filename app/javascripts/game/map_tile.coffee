@@ -1,26 +1,29 @@
-(game = @game).define 'MapTile', (name) ->
-  MapTile = @meta.def name,
-    @roles.assignable,
-    @roles.simpleDrawable,
+game = (window.game ||= {})
 
-    # Initialize the MapTile.
-    #
-    # drawable - Either an Image or an ImageSequence.
-    #
-    init: (@drawable) ->
-      @mbounds = game.Bounds.rect(0, 0, @drawable.width, @drawable.height)
+meta = game.meta2
+{assignable, simpleDrawable} = game.roles
 
-    setMapPosition: (x, y) ->
-      @mbounds.anchor(x, y)
+MapTile = meta.def 'game.MapTile',
+  assignable,
+  simpleDrawable,
 
-    assignToMap: (map) ->
-      @_super(map)
-      @map = map
-      @drawable.assignTo(this)
-      return this
+  # Initialize the MapTile.
+  #
+  # drawable - Either an Image or an ImageSequence.
+  #
+  init: (@drawable) ->
+    @mbounds = game.Bounds.rect(0, 0, @drawable.width, @drawable.height)
 
-    draw: (ctx) ->
-      @drawable.draw(ctx, @mbounds.x1, @mbounds.y1)
+  setMapPosition: (x, y) ->
+    @mbounds.anchor(x, y)
 
-  return MapTile
+  assignToMap: (map) ->
+    @_super(map)
+    @map = map
+    @drawable.assignTo(this)
+    return this
 
+  draw: (ctx) ->
+    @drawable.draw(ctx, @mbounds.x1, @mbounds.y1)
+
+game.MapTile = MapTile

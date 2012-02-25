@@ -63,6 +63,4 @@
 
   game.Mappable = Mappable;
 
-  window.scriptLoaded('app/mappable');
-
 }).call(this);

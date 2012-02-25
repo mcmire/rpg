@@ -1,45 +1,49 @@
-(game = @game).define 'ticker', (name) ->
-  ticker = @meta.def name,
-    @roles.runnable,
-    @roles.tickable,
+game = (window.game ||= {})
 
-    isRunning: false
+meta = game.meta2
+{runnable, tickable} = game.roles
 
-    # override
-    _includeMixin: (mixin, opts={}) ->
-      opts = $.v.extend {}, opts, keyTranslations: {start: '_start', stop: '_stop'}
-      @_super mixin, opts
+ticker = meta.def 'game.ticker',
+  runnable,
+  tickable,
 
-    destroy: ->
-      @stop()
+  isRunning: false
 
-    run: ->
-      @start()
+  # override
+  _includeMixin: (mixin, opts={}) ->
+    opts = $.v.extend {}, opts, keyTranslations: {start: '_start', stop: '_stop'}
+    @_super mixin, opts
 
-    start: ->
-      return if @isRunning
-      @isRunning = true
-      @_start()
-      return this
+  destroy: ->
+    @stop()
 
-    _start: ->
+  run: ->
+    @start()
 
-    stop: ->
-      return if not @isRunning
-      @isRunning = false
-      @_stop()
-      return this
+  start: ->
+    return if @isRunning
+    @isRunning = true
+    @_start()
+    return this
 
-    _stop: ->
+  _start: ->
 
-    suspend: ->
-      @wasRunning = @isRunning
-      @stop()
+  stop: ->
+    return if not @isRunning
+    @isRunning = false
+    @_stop()
+    return this
 
-    resume: ->
-      @start() if @wasRunning
+  _stop: ->
 
-    tick: ->
-      throw new Error 'You need to override #tick'
+  suspend: ->
+    @wasRunning = @isRunning
+    @stop()
 
-  return ticker
+  resume: ->
+    @start() if @wasRunning
+
+  tick: ->
+    throw new Error 'You need to override #tick'
+
+game.ticker = ticker

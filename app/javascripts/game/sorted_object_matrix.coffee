@@ -1,44 +1,47 @@
-(game = @game).define 'SortedObjectMatrix', (name) ->
-  SortedObjectMatrix = @meta.def name,
-    # Initialize the collection.
-    #
-    # map - An instance of Foreground or Background.
-    #
-    init: (@map) ->
-      @rows = game.OrderedMap.create()
+game = (window.game ||= {})
 
-    # Public: Add an object to the collection, keeping @objects in sorted order.
-    #
-    add: (object) ->
-      [y, x] = [object.mbounds.y1, object.mbounds.x1]
-      unless row = @rows.get(y)
-        row = game.OrderedMap.create()
-        @rows.set(y, row)
-      row.set(x, object)
+meta = game.meta2
 
-    # Public: Remove an object from the collection, patching holes.
-    #
-    remove: (object) ->
-      [y, x] = [object.mbounds.y1, object.mbounds.x1]
-      if row = @rows.get(y)
-        row.delete(x)
-        if row.isEmpty()
-          @rows.delete(y)
+SortedObjectMatrix = meta.def 'game.SortedObjectMatrix',
+  # Initialize the collection.
+  #
+  # map - An instance of Foreground or Background.
+  #
+  init: (@map) ->
+    @rows = game.OrderedMap.create()
 
-    each: (fn) ->
-      @rows.each (row) ->
-        ret = row.each (object) ->
-          ret2 = fn(object)
-          return false if ret2 is false
-        return false if ret is false
+  # Public: Add an object to the collection, keeping @objects in sorted order.
+  #
+  add: (object) ->
+    [y, x] = [object.mbounds.y1, object.mbounds.x1]
+    unless row = @rows.get(y)
+      row = game.OrderedMap.create()
+      @rows.set(y, row)
+    row.set(x, object)
 
-    getObjects: ->
-      objects = []
-      @each (object) -> objects.push(object)
-      return objects
+  # Public: Remove an object from the collection, patching holes.
+  #
+  remove: (object) ->
+    [y, x] = [object.mbounds.y1, object.mbounds.x1]
+    if row = @rows.get(y)
+      row.delete(x)
+      if row.isEmpty()
+        @rows.delete(y)
 
-  SortedObjectMatrix.aliases
-    add: 'push'
-    remove: 'delete'
+  each: (fn) ->
+    @rows.each (row) ->
+      ret = row.each (object) ->
+        ret2 = fn(object)
+        return false if ret2 is false
+      return false if ret is false
 
-  return SortedObjectMatrix
+  getObjects: ->
+    objects = []
+    @each (object) -> objects.push(object)
+    return objects
+
+SortedObjectMatrix.aliases
+  add: 'push'
+  remove: 'delete'
+
+game.SortedObjectMatrix = SortedObjectMatrix

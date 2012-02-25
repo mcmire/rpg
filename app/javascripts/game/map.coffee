@@ -1,64 +1,68 @@
-(game = @game).define 'Map', (name) ->
-  Map = @meta.def name,
-    @roles.tickable,
+game = (window.game ||= {})
 
-    init: (@name, @width, @height, fn) ->
-      fg = game.Foreground.create(this, @width, @height)
-      bg = game.Background.create(this, @width, @height)
-      fn(fg, bg)
-      @foreground = fg
-      @background = bg
-      @up = @down = @left = @right = null
-      @isActive = false
+meta = game.meta2
+{tickable} = game.roles
 
-    assignTo: (@viewport) ->
-      @foreground.assignToViewport(@viewport)
-      @background.assignToViewport(@viewport)
+Map = meta.def 'game.Map',
+  tickable,
 
-    addPlayer: (@player) ->
-      @foreground.addPlayer(player)
+  init: (@name, @width, @height, fn) ->
+    fg = game.Foreground.create(this, @width, @height)
+    bg = game.Background.create(this, @width, @height)
+    fn(fg, bg)
+    @foreground = fg
+    @background = bg
+    @up = @down = @left = @right = null
+    @isActive = false
 
-    load: ->
-      @foreground.load()
-      @background.load()
+  assignTo: (@viewport) ->
+    @foreground.assignToViewport(@viewport)
+    @background.assignToViewport(@viewport)
 
-    unload: ->
-      @foreground.unload()
-      @background.unload()
+  addPlayer: (@player) ->
+    @foreground.addPlayer(player)
 
-    attachToViewport: ->
-      @foreground.attachTo(@viewport)
-      @background.attachTo(@viewport)
-      return this
+  load: ->
+    @foreground.load()
+    @background.load()
 
-    detachFromViewport: ->
-      @foreground.detach()
-      @background.detach()
-      return this
+  unload: ->
+    @foreground.unload()
+    @background.unload()
 
-    activate: ->
-      @isActive = true
-      @foreground.activate()
+  attachToViewport: ->
+    @foreground.attachTo(@viewport)
+    @background.attachTo(@viewport)
+    return this
 
-    deactivate: ->
-      @isActive = false
-      @player.removeEvents()
+  detachFromViewport: ->
+    @foreground.detach()
+    @background.detach()
+    return this
 
-    tick: ->
-      if @isActive
-        @background.tick()
-        @foreground.tick()
+  activate: ->
+    @isActive = true
+    @foreground.activate()
 
-    connectsUpTo: (other) ->
-      @up = other
+  deactivate: ->
+    @isActive = false
+    @player.removeEvents()
 
-    connectsDownTo: (other) ->
-      @down = other
+  tick: ->
+    if @isActive
+      @background.tick()
+      @foreground.tick()
 
-    connectsLeftTo: (other) ->
-      @left = other
+  connectsUpTo: (other) ->
+    @up = other
 
-    connectsRightTo: (other) ->
-      @right = other
+  connectsDownTo: (other) ->
+    @down = other
 
-  return Map
+  connectsLeftTo: (other) ->
+    @left = other
+
+  connectsRightTo: (other) ->
+    @right = other
+
+game.Map = Map

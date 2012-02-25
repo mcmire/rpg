@@ -55,6 +55,3 @@ Mappable = meta.def 'game.Mappable',
     @vbounds = game.Bounds.rect(0, 0, @width, @height)
 
 game.Mappable = Mappable
-
-window.scriptLoaded('app/mappable')
-

@@ -1,18 +1,18 @@
-(game = @game).define 'spriteCollection', (name) ->
-  ImageSequence = @ImageSequence
-  imageCollection = @imageCollection
+game = (window.game ||= {})
 
-  sprites = {}
+ImageSequence = game.ImageSequence
+imageCollection = game.imageCollection
 
-  add = (imagePath, width, height, frameIndices, opts={}) ->
-    sprites[imagePath] = ImageSequence.create(imageCollection.get(imagePath), width, height, frameIndices, opts)
+sprites = {}
 
-  #---
+add = (imagePath, width, height, frameIndices, opts={}) ->
+  sprites[imagePath] = ImageSequence.create(imageCollection.get(imagePath), width, height, frameIndices, opts)
 
-  add 'flower', 16, 16, [2, 0, 1], frameDuration: 6, doesRepeat: true
+#---
 
-  #---
+add 'flower', 16, 16, [2, 0, 1], frameDuration: 6, doesRepeat: true
 
-  return {
-    get: (name) -> sprites[name]
-  }
+#---
+
+game.spriteCollection =
+  get: (name) -> sprites[name]

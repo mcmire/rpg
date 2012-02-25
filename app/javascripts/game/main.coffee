@@ -1,105 +1,110 @@
-(game = @game).define 'main', (name) ->
-  main = @meta.def name,
-    @roles.eventable,
-    @roles.attachable,
-    @roles.tickable,
-    @roles.runnable,
+game = (window.game ||= {})
 
-    imagesPath: '/images'
-    debug: false  # or true
+meta = game.meta2
+{eventable, attachable, tickable, runnable} = game.roles
+fpsReporter = game.fpsReporter
 
-    init: ->
-      @attachTo(document.body)
-      @setElement $('#game')
-      @$controlsDiv = $('<div id="controls">')
-      @keyboard = game.keyboard.init()
-      @core = game.core.init(this)
-      @fpsReporter = game.fpsReporter.init(this)
-      @addEvents()
-      @run()
-      return this
+main = meta.def 'game.main',
+  eventable,
+  attachable,
+  tickable,
+  runnable,
 
-    getControlsDiv: -> @$controlsDiv
+  imagesPath: '/images'
+  debug: false  # or true
 
-    attach: ->
-      @_super()
-      @core.attach()
-      @fpsReporter.attach()
-      @getElement().append(@$controlsDiv)
-      return this
+  init: ->
+    @attachTo(document.body)
+    @setElement $('#game')
+    @$controlsDiv = $('<div id="controls">')
+    @keyboard = game.keyboard.init()
+    @core = game.core.init(this)
+    @fpsReporter = game.fpsReporter.init(this)
+    @addEvents()
+    @run()
+    return this
 
-    addEvents: ->
-      self = this
-      @keyboard.addEvents()
-      @bindEvents window,
-        blur:  -> self.suspend()
-        focus: -> self.resume()
-      return this
+  getControlsDiv: -> @$controlsDiv
 
-    removeEvents: ->
-      @keyboard.removeEvents()
-      @unbindEvents window, 'blur', 'focus'
-      return this
+  attach: ->
+    @_super()
+    @core.attach()
+    @fpsReporter.attach()
+    @getElement().append(@$controlsDiv)
+    return this
 
-    load: (callback) ->
-      self = this
+  addEvents: ->
+    self = this
+    @keyboard.addEvents()
+    @bindEvents window,
+      blur:  -> self.suspend()
+      focus: -> self.resume()
+    return this
 
-      assetCollections = []
-      assetCollections.push(game.imageCollection)
-      #assetCollections.push require('app/sounds')
+  removeEvents: ->
+    @keyboard.removeEvents()
+    @unbindEvents window, 'blur', 'focus'
+    return this
 
-      t = new Date()
-      timer = null
-      fn = ->
-        t2 = new Date()
-        if (t2 - t) > (10 * 1000)
-          window.clearTimeout(timer)
-          timer = null
-          console.log "Not all assets were loaded!"
-          return
-        console.log "Checking to see if all assets have been loaded..."
-        isLoaded = $.v.every assetCollections, (c) -> c.isLoaded()
-        if isLoaded
-          console.log "Yup, looks like all assets are loaded now."
-          window.clearTimeout(timer)
-          timer = null
-          callback()
-        else
-          timer = window.setTimeout fn, 300
-      fn()
+  load: (callback) ->
+    self = this
 
-      c.load() for c in assetCollections
+    assetCollections = []
+    assetCollections.push(game.imageCollection)
+    #assetCollections.push require('app/sounds')
 
-      return this
+    t = new Date()
+    timer = null
+    fn = ->
+      t2 = new Date()
+      if (t2 - t) > (10 * 1000)
+        window.clearTimeout(timer)
+        timer = null
+        console.log "Not all assets were loaded!"
+        return
+      console.log "Checking to see if all assets have been loaded..."
+      isLoaded = $.v.every assetCollections, (c) -> c.isLoaded()
+      if isLoaded
+        console.log "Yup, looks like all assets are loaded now."
+        window.clearTimeout(timer)
+        timer = null
+        callback()
+      else
+        timer = window.setTimeout fn, 300
+    fn()
 
-    run: ->
-      self = this
-      main.load ->
-        self.attach()
-        self.core.run()
-      return this
+    c.load() for c in assetCollections
 
-    start: ->
-      @core.start()
-      return this
+    return this
 
-    stop: ->
-      @core.stop()
-      return this
+  run: ->
+    self = this
+    main.load ->
+      self.attach()
+      self.core.run()
+    return this
 
-    suspend: ->
-      console.log "Suspending..."
-      @core.suspend()
-      @fpsReporter.suspend()
-      return this
+  start: ->
+    @core.start()
+    return this
 
-    resume: ->
-      console.log "Resuming..."
-      @core.resume()
-      @fpsReporter.resume()
-      return this
+  stop: ->
+    @core.stop()
+    return this
 
-    resolveImagePath: (path) ->
-      "#{@imagesPath}/#{path}"
+  suspend: ->
+    console.log "Suspending..."
+    @core.suspend()
+    @fpsReporter.suspend()
+    return this
 
-  return main
+  resume: ->
+    console.log "Resuming..."
+    @core.resume()
+    @fpsReporter.resume()
+    return this
+
+  resolveImagePath: (path) ->
+    "#{@imagesPath}/#{path}"
+
+game.main = main

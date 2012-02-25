@@ -5,21 +5,12 @@ meta = window.meta
 game = {}
 
 scriptsLoaded = []
-definitions = {}
-
-addNamespace = ->
-  meta.addNamespace('game')
 
 recordLoadedScripts = ->
   $('script.game').load ->
     name = this.src
       .replace(/^(.+)\/public\/javascripts\/app\//, "")
       .replace(/\.js$/, "")
-    scriptsLoaded.push(name)
-
-realizeAll = ->
-  for name, fn of definitions
-    @[name] = fn.call(this)
     scriptsLoaded.push(name)
 
 onAllLoaded = (fn) ->
@@ -45,13 +36,7 @@ onAllLoaded = (fn) ->
 init = ->
   game.main.init()
 
-game.define = (name, fn) ->
-  definitions[name] = fn
-
 recordLoadedScripts()
-onAllLoaded ->
-  realizeAll()
-  addNamespace()
-  init()
+onAllLoaded -> init()
 
 window.game = game

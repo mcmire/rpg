@@ -8,5 +8,3 @@ Array.prototype.delete = (value) ->
 #
 Array.prototype.deleteAt = (index) ->
   @splice(index, 1)
-
-window.scriptLoaded('app/ext')

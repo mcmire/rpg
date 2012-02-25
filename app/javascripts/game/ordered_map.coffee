@@ -1,38 +1,41 @@
-(game = @game).define 'OrderedMap', (name) ->
-  OrderedMap = meta.def 'game.OrderedMap',
-    init: ->
-      @keys = []
-      @map = {}
+game = (window.game ||= {})
 
-    get: (k) -> @map[k]
+meta = game.meta2
 
-    set: (k, v) ->
-      @keys.push(k)
-      @map[k] = v
-      @keys = @keys.sort()
-      return v
+OrderedMap = meta.def 'game.OrderedMap',
+  init: ->
+    @keys = []
+    @map = {}
 
-    delete: (k) ->
-      @keys.delete(k)
-      delete @map[k]
+  get: (k) -> @map[k]
 
-    each: (fn) ->
-      for k in @keys
-        # Have to add a check here... I guess what is happening is that
-        # keys is getting modified while we are iterating over it thus by the time
-        # this is called keys.length may be 1 less than when the loop started
-        if k?
-          v = @map[k]
-          ret = fn(v)
-          return false if ret is false
+  set: (k, v) ->
+    @keys.push(k)
+    @map[k] = v
+    @keys = @keys.sort()
+    return v
 
-    getKeys: -> @keys
+  delete: (k) ->
+    @keys.delete(k)
+    delete @map[k]
 
-    getValues: (fn) ->
-      values = []
-      @each (v) -> values.push(v)
-      return values
+  each: (fn) ->
+    for k in @keys
+      # Have to add a check here... I guess what is happening is that
+      # keys is getting modified while we are iterating over it thus by the time
+      # this is called keys.length may be 1 less than when the loop started
+      if k?
+        v = @map[k]
+        ret = fn(v)
+        return false if ret is false
 
-    isEmpty: -> @keys.length is 0
+  getKeys: -> @keys
 
-  return OrderedMap
+  getValues: (fn) ->
+    values = []
+    @each (v) -> values.push(v)
+    return values
+
+  isEmpty: -> @keys.length is 0
+
+game.OrderedMap = OrderedMap

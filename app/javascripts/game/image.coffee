@@ -1,38 +1,42 @@
-(game = @game).define 'Image', (name) ->
-  Image = @meta.def name,
-    @roles.assignable,
-    @roles.simpleDrawable,
+game = (window.game ||= {})
 
-    init: (path, @width, @height) ->
-      @path = path
-      unless /\.[^.]+$/.test(@path)
-        @path += ".gif"
-      unless /^\//.test(@path)
-        @path = game.main.resolveImagePath(@path)
-      @isLoaded = false
+meta = game.meta2
+{assignable, simpleDrawable} = game.roles
 
-    load: ->
-      self = this
-      @element = document.createElement('img')
-      # XXX: Actually we don't need this... this is only important for
-      # MapTile... is MapTile an Image?
-      @element.width = @width
-      @element.height = @height
-      # load the image asynchronously (?)
-      @element.src = @path
-      @element.onload = ->
-        console.log "Loaded #{self.path}"
-        self.onLoadCallback?()
-        self.isLoaded = true
-      @element.onerror = -> raise new Error "Could not load image #{self.path}!"
+Image = meta.def 'game.Image',
+  assignable,
+  simpleDrawable,
 
-    onLoad: (fn) ->
-      @onLoadCallback = fn
+  init: (path, @width, @height) ->
+    @path = path
+    unless /\.[^.]+$/.test(@path)
+      @path += ".gif"
+    unless /^\//.test(@path)
+      @path = game.main.resolveImagePath(@path)
+    @isLoaded = false
 
-    clear: (ctx, x, y) ->
-      ctx.clearRect(x, y, @width, @height)
+  load: ->
+    self = this
+    @element = document.createElement('img')
+    # XXX: Actually we don't need this... this is only important for
+    # MapTile... is MapTile an Image?
+    @element.width = @width
+    @element.height = @height
+    # load the image asynchronously (?)
+    @element.src = @path
+    @element.onload = ->
+      console.log "Loaded #{self.path}"
+      self.onLoadCallback?()
+      self.isLoaded = true
+    @element.onerror = -> raise new Error "Could not load image #{self.path}!"
 
-    draw: (ctx, x, y) ->
-      ctx.drawImage(@element, x, y)
+  onLoad: (fn) ->
+    @onLoadCallback = fn
 
-  return Image
+  clear: (ctx, x, y) ->
+    ctx.clearRect(x, y, @width, @height)
+
+  draw: (ctx, x, y) ->
+    ctx.drawImage(@element, x, y)
+
+game.Image = Image

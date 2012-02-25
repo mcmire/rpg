@@ -1,71 +1,75 @@
+game = (window.game ||= {})
 
-(game = @game).define 'Background', (name) ->
-  Background = @meta.def name,
-    @roles.assignable,
-    @roles.tickable,
+meta = game.meta2
+{assignable, tickable} = game.roles
+SortedObjectMatrix = game.SortedObjectMatrix
 
-    init: (@map, @width, @height) ->
-      @fills = []
-      @tiles = []
-      @sprites = game.SortedObjectMatrix.create()
-      @framedSprites = @sprites.clone().extend(game.FramedObjectMatrix)
+Background = meta.def 'game.Background',
+  assignable,
+  tickable,
 
-    assignToViewport: (@viewport) ->
-      @framedSprites.frameWithin(@viewport.bounds)
+  init: (@map, @width, @height) ->
+    @fills = []
+    @tiles = []
+    @sprites = game.SortedObjectMatrix.create()
+    @framedSprites = @sprites.clone().extend(game.FramedObjectMatrix)
 
-    fill: (color, pos, dims) ->
-      @fills.push([color, pos, dims])
+  assignToViewport: (@viewport) ->
+    @framedSprites.frameWithin(@viewport.bounds)
 
-    addTile: (proto, positions...) ->
-      self = this
-      opts = {}
-      if $.v.is.obj(positions[positions.length-1])
-        opts = positions.pop()
-      $.v.each positions, ([x, y]) ->
-        object = proto.clone().extend(opts)
-        tile = game.MapTile.create(object).assignToMap(this)
-        tile.setMapPosition(x, y)
-        self.tiles.push(tile)
-        self.sprites.push(tile) if game.ImageSequence.isPrototypeOf(proto)
+  fill: (color, pos, dims) ->
+    @fills.push([color, pos, dims])
 
-    load: ->
-      @$canvas = $('<canvas>')
-        .attr('width', @width)
-        .attr('height', @height)
-        .addClass('background')
-      ctx = @$canvas[0].getContext('2d')
-      # build the map
-      # ctx.save()
-      for [color, [x1, y1], [width, height]] in @fills
-        ctx.fillStyle = color
-        ctx.fillRect(x1, y1, width, height)
-      # ctx.restore()
+  addTile: (proto, positions...) ->
+    self = this
+    opts = {}
+    if $.v.is.obj(positions[positions.length-1])
+      opts = positions.pop()
+    $.v.each positions, ([x, y]) ->
+      object = proto.clone().extend(opts)
+      tile = game.MapTile.create(object).assignToMap(this)
+      tile.setMapPosition(x, y)
+      self.tiles.push(tile)
+      self.sprites.push(tile) if game.ImageSequence.isPrototypeOf(proto)
 
-      tile.draw(ctx) for tile in @tiles
+  load: ->
+    @$canvas = $('<canvas>')
+      .attr('width', @width)
+      .attr('height', @height)
+      .addClass('background')
+    ctx = @$canvas[0].getContext('2d')
+    # build the map
+    # ctx.save()
+    for [color, [x1, y1], [width, height]] in @fills
+      ctx.fillStyle = color
+      ctx.fillRect(x1, y1, width, height)
+    # ctx.restore()
 
-    unload: ->
-      # Free memory. (This may be a pre-optimization, but it kind of seems like
-      # a good idea considering the canvas object will very likely be of a
-      # substantial size.)
-      @$canvas = null
-      @ctx = null
+    tile.draw(ctx) for tile in @tiles
 
-    attachTo: (@viewport) ->
-      # don't use appendTo here, that will clear the canvas for some reason
-      @viewport.getElement().append(@$canvas)
-      @ctx = @$canvas[0].getContext('2d')
+  unload: ->
+    # Free memory. (This may be a pre-optimization, but it kind of seems like
+    # a good idea considering the canvas object will very likely be of a
+    # substantial size.)
+    @$canvas = null
+    @ctx = null
 
-    detach: ->
-      @$canvas.detach()
+  attachTo: (@viewport) ->
+    # don't use appendTo here, that will clear the canvas for some reason
+    @viewport.getElement().append(@$canvas)
+    @ctx = @$canvas[0].getContext('2d')
 
-    tick: ->
-      self = this
-      @$canvas.css
-        top: -@viewport.bounds.y1
-        left: -@viewport.bounds.x1
-      # Remember that sprites are animated, so here is where we do that
-      @framedSprites.each (sprite) -> sprite.draw(self.ctx)
+  detach: ->
+    @$canvas.detach()
 
-  Background.add = Background.addTile
+  tick: ->
+    self = this
+    @$canvas.css
+      top: -@viewport.bounds.y1
+      left: -@viewport.bounds.x1
+    # Remember that sprites are animated, so here is where we do that
+    @framedSprites.each (sprite) -> sprite.draw(self.ctx)
 
-  return Background
+Background.add = Background.addTile
+
+game.Background = Background

@@ -1,54 +1,57 @@
-(game = @game).define 'Collidable', (name) ->
-  # This assumes Mappable
-  Collidable = @meta.def name,
-    init: (args...) ->
-      @_super(args...)
-      @_initCollidableBounds()
+game = (window.game ||= {})
 
-    assignToMap: (map) ->
-      @_super(map)
-      @_initCollidables()
-      return this
+meta = game.meta2
 
-    doToMapBounds: (args...) ->
-      # Ensure that the player is in the right place in the sorted list of map
-      # objects. If the player is now behind another object, then we want it to be
-      # drawn behind that object instead of being clobbered.
-      @map.objects.remove(this)
-      @_super(args...)
-      @map.objects.add(this)
+# This assumes Mappable
+Collidable = meta.def 'game.Collidable',
+  init: (args...) ->
+    @_super(args...)
+    @_initCollidableBounds()
 
-    setMapPosition: (x, y) ->
-      @_super(x, y)
-      @cbounds.anchor(x, y)
+  assignToMap: (map) ->
+    @_super(map)
+    @_initCollidables()
+    return this
 
-    translate: (args...) ->
-      @_super(args...)
-      @cbounds.translate(args...)
+  doToMapBounds: (args...) ->
+    # Ensure that the player is in the right place in the sorted list of map
+    # objects. If the player is now behind another object, then we want it to be
+    # drawn behind that object instead of being clobbered.
+    @map.objects.remove(this)
+    @_super(args...)
+    @map.objects.add(this)
 
-    translateBySide: (args...) ->
-      @_super(args...)
-      @cbounds.translateBySide(args...)
+  setMapPosition: (x, y) ->
+    @_super(x, y)
+    @cbounds.anchor(x, y)
 
-    intersectsWith: (other) ->
-      @cbounds.intersectsWith(other)
+  translate: (args...) ->
+    @_super(args...)
+    @cbounds.translate(args...)
 
-    getOuterLeftEdgeBlocking: (other) ->
-      @cbounds.getOuterLeftEdgeBlocking(other)
+  translateBySide: (args...) ->
+    @_super(args...)
+    @cbounds.translateBySide(args...)
 
-    getOuterRightEdgeBlocking: (other) ->
-      @cbounds.getOuterRightEdgeBlocking(other)
+  intersectsWith: (other) ->
+    @cbounds.intersectsWith(other)
 
-    getOuterTopEdgeBlocking: (other) ->
-      @cbounds.getOuterTopEdgeBlocking(other)
+  getOuterLeftEdgeBlocking: (other) ->
+    @cbounds.getOuterLeftEdgeBlocking(other)
 
-    getOuterBottomEdgeBlocking: (other) ->
-      @cbounds.getOuterBottomEdgeBlocking(other)
+  getOuterRightEdgeBlocking: (other) ->
+    @cbounds.getOuterRightEdgeBlocking(other)
 
-    _initCollidableBounds: ->
-      @cbounds = game.Bounds.rect(0, 0, @width, @height-8)
+  getOuterTopEdgeBlocking: (other) ->
+    @cbounds.getOuterTopEdgeBlocking(other)
 
-    _initCollidables: ->
-      @mapCollidables = @map.getObjectsWithout(this)
+  getOuterBottomEdgeBlocking: (other) ->
+    @cbounds.getOuterBottomEdgeBlocking(other)
 
-  return Collidable
+  _initCollidableBounds: ->
+    @cbounds = game.Bounds.rect(0, 0, @width, @height-8)
+
+  _initCollidables: ->
+    @mapCollidables = @map.getObjectsWithout(this)
+
+game.Collidable = Collidable
