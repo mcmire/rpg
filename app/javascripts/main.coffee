@@ -3,7 +3,6 @@ game = (window.game ||= {})
 meta = game.meta2
 {eventable, attachable, tickable, runnable} = game.roles
 fpsReporter = game.fpsReporter
-#playerDebugger = game.playerDebugger
 
 main = meta.def 'game.main',
   eventable,

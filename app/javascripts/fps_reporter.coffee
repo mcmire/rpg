@@ -12,6 +12,7 @@ fpsReporter = ticker.cloneAs('game.fpsReporter').extend \
     @attachTo(@main.core.viewport)
     @setElement $('<div class="fps-reporter">00.0 FPS</div>')
     @_initCheckbox()
+    @$playerDebug = $('<p/>')
     @tickInterval = 1000
     @drawFn = game.core.createIntervalTimer false, (df, dt) -> self.draw(self, df, dt)
     @disable()
@@ -20,6 +21,7 @@ fpsReporter = ticker.cloneAs('game.fpsReporter').extend \
   attach: ->
     @_super()
     @main.getControlsDiv().append(@$checkbox)
+    @main.getControlsDiv().append @$playerDebug
 
   toggle: ->
     if @isEnabled
@@ -48,6 +50,7 @@ fpsReporter = ticker.cloneAs('game.fpsReporter').extend \
   draw: (fpsReporter, df, dt) ->
     fps = ((df / dt) * 1000).toFixed(1)
     fpsReporter.getElement().addClass('first-draw').text("#{fps} FPS")
+    @$playerDebug.html @main.core.player.mbounds.inspect()
 
   _initCheckbox: ->
     self = this
