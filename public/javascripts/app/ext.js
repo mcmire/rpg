@@ -8,6 +8,4 @@
     return this.splice(index, 1);
   };
 
-  window.scriptLoaded('app/ext');
-
 }).call(this);

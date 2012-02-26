@@ -174,6 +174,4 @@
     clone: _clone
   };
 
-  window.scriptLoaded('app/meta2');
-
 }).call(this);

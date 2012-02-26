@@ -1,19 +1,20 @@
 
 SCRIPTS = window.SCRIPTS
-meta = window.meta
-
-game = {}
-
 scriptsLoaded = []
 
-recordLoadedScripts = ->
-  $('script.game').load ->
-    name = this.src
-      .replace(/^(.+)\/public\/javascripts\/app\//, "")
-      .replace(/\.js$/, "")
-    scriptsLoaded.push(name)
+loadScripts = ->
+  $.v.each SCRIPTS, (url) ->
+    name = url
+      .replace(/^\/javascripts\/app\//, "")
+      .replace(/\.js(.*)$/, ".js")
+    script = document.createElement('script')
+    script.src = url
+    script.onload = ->
+      console.log ">> Loaded #{name}"
+      scriptsLoaded.push(name)
+    $('head').append(script)
 
-onAllLoaded = (fn) ->
+whenAllScriptsLoaded = (fn) ->
   timer = null
   i = 0
   check = ->
@@ -32,11 +33,10 @@ onAllLoaded = (fn) ->
       fn()
     else
       timer = window.setTimeout check, 100
+  check()
 
 init = ->
-  game.main.init()
+  window.game.main.init()
 
-recordLoadedScripts()
-onAllLoaded -> init()
-
-window.game = game
+loadScripts()
+whenAllScriptsLoaded -> init()

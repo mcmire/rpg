@@ -13,7 +13,7 @@ helpers do
   def stylesheet_link_tag(path, options={})
     fn = _resolve_path(path, 'stylesheets')
     bust = _get_bust(fn)
-    %(<link rel="stylesheet" href="#{fn}?#{bust}">\n)
+    %(<link rel="stylesheet" href="#{path}?#{bust}">\n)
   end
 
   def javascript_include_tag(path, options={})
@@ -24,22 +24,15 @@ helpers do
 
   def scripts(group)
     html = ""
-    script_paths = Jammit.packager.individual_urls(group.to_sym, :js).map { |url|
-      url.sub("/javascripts/", "").sub(/\.js$/, "")
-    }
-    html << %(
-<script>
-  window.scripts = #{JSON.generate(script_paths)};
-  window.scriptsLoaded = [];
-  window.scriptLoaded = function(name) {
-    scriptsLoaded.push(name);
-    var numScripts = window.scripts.length;
-    var numScriptsLoaded = window.scriptsLoaded.length;
-    console.log(">> " + name + " loaded (" + numScriptsLoaded + "/" + numScripts + ").");
-  };
-</script>
-    )
-    html << include_javascripts(group)
+    script_paths =
+      if APP_ENV == 'development'
+        Jammit.packager.individual_urls(group.to_sym, :js)
+      else
+        Jammit.asset_url(group.to_sym, :css)
+      end
+    html << javascript_include_tag('/javascripts/vendor/ender.js')
+    html << %!<script>window.SCRIPTS = #{JSON.generate(script_paths)}</script>!
+    html << javascript_include_tag('/javascripts/app/game.js')
     return html
   end
 

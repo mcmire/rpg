@@ -40,6 +40,4 @@
     return $.ender(enderMembers, true);
   })();
 
-  window.scriptLoaded('app/ender_ext');
-
 }).call(this);

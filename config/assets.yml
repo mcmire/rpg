@@ -4,12 +4,10 @@ gzip_assets: true
 
 javascripts:
   game:
-    - public/javascripts/vendor/ender.js
-
-    - public/javascripts/app/game/ender_ext.js
-    - public/javascripts/app/game/ext.js
+    - public/javascripts/app/ender_ext.js
+    - public/javascripts/app/ext.js
     - public/javascripts/app/game/util.js
-    - public/javascripts/app/game/meta2.js
+    - public/javascripts/app/game/meta.js
     - public/javascripts/app/game/roles.js
 
     # things that don't have an immediate dependency
@@ -47,8 +45,6 @@ javascripts:
     - public/javascripts/app/game/maps/lw_52.js
 
     - public/javascripts/app/game/player.js
-
-    - public/javascripts/app/game/init.js
 
 stylesheets:
   game:
