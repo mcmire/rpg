@@ -100,8 +100,9 @@
       return this;
     },
     detach: function() {
-      var _ref;
-      if ((_ref = this.$element) != null) _ref.detach();
+      if (this.$element && this.$element[0] !== document.body) {
+        this.$element.detach();
+      }
       return this;
     }
   });

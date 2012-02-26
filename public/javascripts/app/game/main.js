@@ -13,8 +13,7 @@
     imagesPath: '/images',
     debug: false,
     init: function() {
-      this.attachTo(document.body);
-      this.setElement($('#game'));
+      this.setElement($(document.body));
       this.$controlsDiv = $('<div id="controls">');
       this.keyboard = game.keyboard.init();
       this.core = game.core.init(this);
@@ -27,7 +26,7 @@
       return this.$controlsDiv;
     },
     attach: function() {
-      this._super();
+      this.getElement().html("");
       this.core.attach();
       this.fpsReporter.attach();
       this.getElement().append(this.$controlsDiv);

@@ -14,8 +14,7 @@ main = meta.def 'game.main',
   debug: false  # or true
 
   init: ->
-    @attachTo(document.body)
-    @setElement $('#game')
+    @setElement $(document.body)
     @$controlsDiv = $('<div id="controls">')
     @keyboard = game.keyboard.init()
     @core = game.core.init(this)
@@ -27,7 +26,7 @@ main = meta.def 'game.main',
   getControlsDiv: -> @$controlsDiv
 
   attach: ->
-    @_super()
+    @getElement().html("")
     @core.attach()
     @fpsReporter.attach()
     @getElement().append(@$controlsDiv)

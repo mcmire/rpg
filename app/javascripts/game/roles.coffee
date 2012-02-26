@@ -82,7 +82,7 @@ attachable = meta.def 'game.attachable',
     return this
 
   detach: ->
-    @$element?.detach()
+    @$element.detach() if @$element and @$element[0] != document.body
     return this
 
 tickable = meta.def 'game.tickable',

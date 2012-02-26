@@ -19,7 +19,6 @@ viewport = meta.def 'game.viewport',
     return this
 
   attach: ->
-    @getParentElement().html("")
     @_super()
     @getParentElement().append('<p>Controls: arrow keys (WASD also works too)</p>')
 

@@ -23,7 +23,6 @@
       return this;
     },
     attach: function() {
-      this.getParentElement().html("");
       this._super();
       return this.getParentElement().append('<p>Controls: arrow keys (WASD also works too)</p>');
     },
