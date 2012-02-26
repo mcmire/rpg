@@ -6,6 +6,9 @@ javascripts:
   game:
     - public/javascripts/app/ender_ext.js
     - public/javascripts/app/ext.js
+
+    - public/javascripts/app/game.js
+
     - public/javascripts/app/game/util.js
     - public/javascripts/app/game/meta.js
     - public/javascripts/app/game/roles.js
