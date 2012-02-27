@@ -1,6 +1,6 @@
 (function() {
   var KEYS, KeyTracker, MODIFIER_KEYS, PressedKeys, eventable, game, keyboard, meta,
-    __slice = Array.prototype.slice;
+    __slice = [].slice;
 
   game = (window.game || (window.game = {}));
 
@@ -43,7 +43,9 @@
       return this.tsByKey[key];
     },
     put: function(key, ts) {
-      if (this.has(key)) this.del(key);
+      if (this.has(key)) {
+        this.del(key);
+      }
       this.tsByKey[key] = ts;
       return this.keys.unshift(key);
     },
@@ -103,7 +105,9 @@
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         key = _ref[_i];
         keyCode = keyboard.keyCodeFor(key);
-        if (self.pressedKeys.has(keyCode)) return true;
+        if (self.pressedKeys.has(keyCode)) {
+          return true;
+        }
       }
       return false;
     },
@@ -111,7 +115,9 @@
       var self;
       self = this;
       return this.pressedKeys.each(function(key, ts) {
-        if ((now - ts) >= 500) return self.pressedKeys.del(key);
+        if ((now - ts) >= 500) {
+          return self.pressedKeys.del(key);
+        }
       });
     },
     getLastPressedKey: function() {
@@ -146,7 +152,9 @@
           _ref = self.keyTrackers;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             keyTracker = _ref[_i];
-            if (keyTracker.keydown(key, event.timeStamp)) isTracked = true;
+            if (keyTracker.keydown(key, event.timeStamp)) {
+              isTracked = true;
+            }
           }
           if (isTracked) {
             event.preventDefault();
@@ -160,7 +168,9 @@
           _ref = self.keyTrackers;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             keyTracker = _ref[_i];
-            if (keyTracker.keyup(key)) isTracked = true;
+            if (keyTracker.keyup(key)) {
+              isTracked = true;
+            }
           }
           if (isTracked) {
             event.preventDefault();
@@ -194,7 +204,9 @@
       keys = game.util.ensureArray(keys);
       for (_i = 0, _len = keys.length; _i < _len; _i++) {
         key = keys[_i];
-        if (typeof key === 'string') key = KEYS[key];
+        if (typeof key === 'string') {
+          key = KEYS[key];
+        }
         this.trappedKeys[key] = 1;
       }
       return this;
@@ -205,7 +217,9 @@
       keys = game.util.ensureArray(keys);
       for (_i = 0, _len = keys.length; _i < _len; _i++) {
         key = keys[_i];
-        if (typeof key === 'string') key = KEYS[key];
+        if (typeof key === 'string') {
+          key = KEYS[key];
+        }
         delete this.trappedKeys[key];
       }
       return this;
@@ -251,7 +265,9 @@
       var keyCode;
       if (typeof key === 'string') {
         keyCode = KEYS[key];
-        if (!keyCode) throw new Error("'" + arg + "' is not a valid key");
+        if (!keyCode) {
+          throw new Error("'" + arg + "' is not a valid key");
+        }
         return keyCode;
       } else {
         return key;

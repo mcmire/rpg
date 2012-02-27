@@ -1,6 +1,6 @@
 (function() {
   var attachable, game, meta, tickable, viewport, _ref,
-    __slice = Array.prototype.slice;
+    __slice = [].slice;
 
   game = (window.game || (window.game = {}));
 
@@ -37,9 +37,9 @@
       return this.currentMap.detach();
     },
     translate: function() {
-      var args, _ref2;
+      var args, _ref1;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      (_ref2 = this.bounds).translate.apply(_ref2, args);
+      (_ref1 = this.bounds).translate.apply(_ref1, args);
       return this;
     },
     translateBySide: function(side, value) {
@@ -64,9 +64,13 @@
       vwh = Math.round(this.width / 2);
       vhh = Math.round(this.height / 2);
       x1 = pb.x1 + pwh - vwh;
-      if (x1 < 0) x1 = 0;
+      if (x1 < 0) {
+        x1 = 0;
+      }
       y1 = pb.y1 + phh - vhh;
-      if (y1 < 0) y1 = 0;
+      if (y1 < 0) {
+        y1 = 0;
+      }
       return this.bounds.anchor(x1, y1);
     }
   });

@@ -1,7 +1,7 @@
 (function() {
   var Class, baseModule, game, module, _extend, _fnContainsSuper, _wrap,
-    __hasProp = Object.prototype.hasOwnProperty,
-    __slice = Array.prototype.slice;
+    __hasProp = {}.hasOwnProperty,
+    __slice = [].slice;
 
   game = (window.game || (window.game = {}));
 
@@ -21,12 +21,14 @@
   };
 
   _extend = function(target, source, opts) {
-    var includeRoles, k, role, roles, sk, targetClass, tk, translations, _i, _len, _ref, _ref2, _ref3, _super;
-    if (opts == null) opts = {};
+    var includeRoles, k, role, roles, sk, targetClass, tk, translations, _i, _len, _ref, _ref1, _ref2, _super;
+    if (opts == null) {
+      opts = {};
+    }
     _super = (_ref = opts._super) != null ? _ref : target;
-    includeRoles = (_ref2 = opts.includeRoles) != null ? _ref2 : true;
+    includeRoles = (_ref1 = opts.includeRoles) != null ? _ref1 : true;
     translations = target.__translations__ || {};
-    targetClass = (_ref3 = opts.targetClass) != null ? _ref3 : target;
+    targetClass = (_ref2 = opts.targetClass) != null ? _ref2 : target;
     if ((source.__name__ != null) && (target.__roles__ != null) && target.__roles__[source.__name__]) {
       return;
     }
@@ -47,7 +49,9 @@
     }
     if (includeRoles && (targetClass.__roles__ != null)) {
       roles = [];
-      if (source.__name__ != null) roles.push(source.__name__);
+      if (source.__name__ != null) {
+        roles.push(source.__name__);
+      }
       if (source.__roles__ != null) {
         for (k in source.__roles__) {
           roles.push(k);
@@ -84,9 +88,11 @@
   };
 
   Class.extend = function() {
-    var args, childClass, classdef, k, members, mixin, mixins, name, noop, parentClass, parentInstance, parentProto, role, roles, statics, v, _i, _j, _len, _len2, _ref, _ref2;
+    var args, childClass, classdef, k, members, mixin, mixins, name, noop, parentClass, parentInstance, parentProto, role, roles, statics, v, _i, _j, _len, _len1, _ref, _ref1;
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    if (typeof args[0] === 'string') name = args.shift();
+    if (typeof args[0] === 'string') {
+      name = args.shift();
+    }
     classdef = args.pop();
     mixins = args;
     if (typeof classdef === 'function') {
@@ -96,8 +102,10 @@
     }
     if ((classdef.statics != null) || (classdef.members != null) || (classdef.roles != null)) {
       statics = (_ref = classdef.statics) != null ? _ref : {};
-      members = (_ref2 = classdef.members) != null ? _ref2 : {};
-      if (classdef.roles != null) game.util.extend(members, classdef.roles);
+      members = (_ref1 = classdef.members) != null ? _ref1 : {};
+      if (classdef.roles != null) {
+        game.util.extend(members, classdef.roles);
+      }
     } else {
       statics = {};
       members = classdef;
@@ -154,7 +162,7 @@
       }
     }
     childClass.extend = arguments.callee;
-    childClass.static = childClass.statics = function(obj, fn) {
+    childClass["static"] = childClass.statics = function(obj, fn) {
       if (typeof obj === 'string') {
         name = obj;
         obj = {};
@@ -167,7 +175,7 @@
       return this;
     };
     childClass.role = childClass.roles = childClass.does = childClass.member = childClass.members = function() {
-      var fn, obj, objs, _j, _len2;
+      var fn, obj, objs, _j, _len1;
       objs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       if (typeof objs[0] === 'string') {
         name = objs[0], fn = objs[1];
@@ -175,7 +183,7 @@
         obj[name] = fn;
         objs = [obj];
       }
-      for (_j = 0, _len2 = objs.length; _j < _len2; _j++) {
+      for (_j = 0, _len1 = objs.length; _j < _len1; _j++) {
         obj = objs[_j];
         _extend(parentInstance, obj, {
           _super: parentProto,
@@ -185,7 +193,7 @@
       return this;
     };
     childClass.prototype.role = childClass.prototype.roles = childClass.prototype.does = childClass.prototype.method = childClass.prototype.methods = function() {
-      var fn, obj, objs, _j, _len2;
+      var fn, obj, objs, _j, _len1;
       objs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       if (typeof objs[0] === 'string') {
         name = objs[0], fn = objs[1];
@@ -193,7 +201,7 @@
         obj[name] = fn;
         objs = [obj];
       }
-      for (_j = 0, _len2 = objs.length; _j < _len2; _j++) {
+      for (_j = 0, _len1 = objs.length; _j < _len1; _j++) {
         obj = objs[_j];
         _extend(this, obj, {
           _super: parentProto,
@@ -203,25 +211,31 @@
       return this;
     };
     childClass.can = function() {
-      var role, roles, _j, _len2;
+      var roles, _j, _len1;
       roles = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      for (_j = 0, _len2 = roles.length; _j < _len2; _j++) {
+      for (_j = 0, _len1 = roles.length; _j < _len1; _j++) {
         role = roles[_j];
-        if (!this.__roles__[role]) return false;
+        if (!this.__roles__[role]) {
+          return false;
+        }
       }
       return true;
     };
     childClass.prototype.can = function() {
-      var role, roles, _j, _len2;
+      var roles, _j, _len1;
       roles = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      for (_j = 0, _len2 = roles.length; _j < _len2; _j++) {
+      for (_j = 0, _len1 = roles.length; _j < _len1; _j++) {
         role = roles[_j];
-        if (!this.constructor.__roles__[role]) return false;
+        if (!this.constructor.__roles__[role]) {
+          return false;
+        }
       }
       return true;
     };
-    if (statics) childClass.statics(statics);
-    for (_j = 0, _len2 = mixins.length; _j < _len2; _j++) {
+    if (statics) {
+      childClass.statics(statics);
+    }
+    for (_j = 0, _len1 = mixins.length; _j < _len1; _j++) {
       mixin = mixins[_j];
       childClass.members(mixin);
     }
@@ -260,7 +274,9 @@
       roles = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       for (_i = 0, _len = roles.length; _i < _len; _i++) {
         role = roles[_i];
-        if (!this.__roles__[role]) return false;
+        if (!this.__roles__[role]) {
+          return false;
+        }
       }
       return true;
     };
@@ -296,7 +312,9 @@
   module = function() {
     var mixins, mod, name;
     mixins = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    if (typeof mixins[0] === 'string') name = mixins.shift();
+    if (typeof mixins[0] === 'string') {
+      name = mixins.shift();
+    }
     mod = game.util.createFromProto(baseModule);
     mod.__name__ = name;
     Object.defineProperty(mod, '__name__', {

@@ -12,7 +12,9 @@
       this.width = width;
       this.height = height;
       this.path = path;
-      if (!/\.[^.]+$/.test(this.path)) this.path += ".gif";
+      if (!/\.[^.]+$/.test(this.path)) {
+        this.path += ".gif";
+      }
       if (!/^\//.test(this.path)) {
         this.path = game.main.resolveImagePath(this.path);
       }
@@ -27,7 +29,9 @@
       this.element.src = this.path;
       this.element.onload = function() {
         console.log("Loaded " + self.path);
-        if (typeof self.onLoadCallback === "function") self.onLoadCallback();
+        if (typeof self.onLoadCallback === "function") {
+          self.onLoadCallback();
+        }
         return self.isLoaded = true;
       };
       return this.element.onerror = function() {

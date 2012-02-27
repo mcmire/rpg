@@ -23,7 +23,9 @@
       var ret;
       ret = null;
       this.each(function(collidable) {
-        if (ret = collidable.getOuterLeftEdgeBlocking(other)) return false;
+        if (ret = collidable.getOuterLeftEdgeBlocking(other)) {
+          return false;
+        }
       });
       return ret;
     },
@@ -31,7 +33,9 @@
       var ret;
       ret = null;
       this.each(function(collidable) {
-        if (ret = collidable.getOuterRightEdgeBlocking(other)) return false;
+        if (ret = collidable.getOuterRightEdgeBlocking(other)) {
+          return false;
+        }
       });
       return ret;
     },
@@ -39,7 +43,9 @@
       var ret;
       ret = null;
       this.each(function(collidable) {
-        if (ret = collidable.getOuterTopEdgeBlocking(other)) return false;
+        if (ret = collidable.getOuterTopEdgeBlocking(other)) {
+          return false;
+        }
       });
       return ret;
     },
@@ -47,7 +53,9 @@
       var ret;
       ret = null;
       this.each(function(collidable) {
-        if (ret = collidable.getOuterBottomEdgeBlocking(other)) return false;
+        if (ret = collidable.getOuterBottomEdgeBlocking(other)) {
+          return false;
+        }
       });
       return ret;
     }

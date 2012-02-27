@@ -10,7 +10,9 @@
   sprites = {};
 
   add = function(imagePath, width, height, frameIndices, opts) {
-    if (opts == null) opts = {};
+    if (opts == null) {
+      opts = {};
+    }
     return sprites[imagePath] = ImageSequence.create(imageCollection.get(imagePath), width, height, frameIndices, opts);
   };
 

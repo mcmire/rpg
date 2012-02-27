@@ -24,7 +24,9 @@
       _ref = [object.mbounds.y1, object.mbounds.x1], y = _ref[0], x = _ref[1];
       if (row = this.rows.get(y)) {
         row["delete"](x);
-        if (row.isEmpty()) return this.rows["delete"](y);
+        if (row.isEmpty()) {
+          return this.rows["delete"](y);
+        }
       }
     },
     each: function(fn) {
@@ -33,9 +35,13 @@
         ret = row.each(function(object) {
           var ret2;
           ret2 = fn(object);
-          if (ret2 === false) return false;
+          if (ret2 === false) {
+            return false;
+          }
         });
-        if (ret === false) return false;
+        if (ret === false) {
+          return false;
+        }
       });
     },
     getObjects: function() {

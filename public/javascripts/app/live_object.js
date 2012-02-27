@@ -1,6 +1,6 @@
 (function() {
   var LiveObject, StillObject, game, meta,
-    __slice = Array.prototype.slice;
+    __slice = [].slice;
 
   game = (window.game || (window.game = {}));
 
@@ -33,7 +33,9 @@
     },
     addState: function(name, frameIndices, opts) {
       var seq, state;
-      if (opts == null) opts = {};
+      if (opts == null) {
+        opts = {};
+      }
       state = {};
       state.name = name;
       state.handler = opts["do"];
@@ -52,7 +54,9 @@
       this.currentState = this.states[name];
       this.recalculateViewportBounds();
       this.currentState.sequence.reset();
-      if (!this.currentState) throw new Error("Unknown state '" + name + "'!");
+      if (!this.currentState) {
+        throw new Error("Unknown state '" + name + "'!");
+      }
       return this.currentState;
     },
     translate: function() {

@@ -17,7 +17,9 @@
         var ret;
         if (object !== self.exception) {
           ret = fn(object);
-          if (ret === false) return false;
+          if (ret === false) {
+            return false;
+          }
         }
       });
     }

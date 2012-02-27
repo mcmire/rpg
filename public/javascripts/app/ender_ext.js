@@ -28,7 +28,9 @@
         }
       },
       parent: function() {
-        if (this[0].parentNode) return $(this[0].parentNode);
+        if (this[0].parentNode) {
+          return $(this[0].parentNode);
+        }
       },
       computedStyle: function(prop) {
         var computedStyle, elem, _ref;

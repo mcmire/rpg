@@ -27,11 +27,11 @@
       return this.isLoaded = true;
     },
     tick: function() {
-      var collidable, _i, _len, _ref2, _results;
-      _ref2 = this.collidables.getMapBlocks();
+      var collidable, _i, _len, _ref1, _results;
+      _ref1 = this.collidables.getMapBlocks();
       _results = [];
-      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-        collidable = _ref2[_i];
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        collidable = _ref1[_i];
         _results.push(collidable.tick());
       }
       return _results;

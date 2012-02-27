@@ -19,6 +19,7 @@
             <b>Viewport:</b> #{ticker.main.viewport.bounds.inspect()}
           """)
       */
+
       var enemy, player;
       player = this.main.player;
       enemy = this.main.enemy;

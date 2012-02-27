@@ -31,7 +31,9 @@
         if (k != null) {
           v = this.map[k];
           ret = fn(v);
-          if (ret === false) return false;
+          if (ret === false) {
+            return false;
+          }
         }
       }
     },

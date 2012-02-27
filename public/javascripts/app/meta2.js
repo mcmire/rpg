@@ -1,7 +1,7 @@
 (function() {
   var game, proto, _clone, _def, _extend, _fnContainsSuper, _wrap,
-    __hasProp = Object.prototype.hasOwnProperty,
-    __slice = Array.prototype.slice;
+    __hasProp = {}.hasOwnProperty,
+    __slice = [].slice;
 
   game = (window.game || (window.game = {}));
 
@@ -36,7 +36,9 @@
 
   _extend = function(base, mixin, opts) {
     var exclusions, keyTranslations, properBaseName, properMixinName, sk, tk, _super;
-    if (opts == null) opts = {};
+    if (opts == null) {
+      opts = {};
+    }
     exclusions = opts.without ? $.v.reduce($.v.flatten([opts.without]), (function(h, v) {
       h[v] = 1;
       return h;
@@ -50,7 +52,9 @@
     properMixinName = mixin.__name__ || 'A_MIXIN';
     for (sk in mixin) {
       if (!__hasProp.call(mixin, sk)) continue;
-      if (exclusions[sk]) continue;
+      if (exclusions[sk]) {
+        continue;
+      }
       tk = keyTranslations[sk] || sk;
       if (typeof mixin[sk] === 'function' && (mixin[sk].__original__ != null)) {
         base[tk] = _wrap(mixin[sk].__original__, _super[tk]);
@@ -59,7 +63,9 @@
       } else {
         base[tk] = mixin[sk];
       }
-      if (typeof mixin.__extended__ === "function") mixin.__extended__(base);
+      if (typeof mixin.__extended__ === "function") {
+        mixin.__extended__(base);
+      }
     }
     return base;
   };
@@ -109,9 +115,13 @@
   };
 
   proto._includeMixin = function(mixin, opts) {
-    if (opts == null) opts = {};
+    if (opts == null) {
+      opts = {};
+    }
     _extend(this, mixin, opts);
-    if (mixin.__name__) this.__mixins__[mixin.__name__] = 1;
+    if (mixin.__name__) {
+      this.__mixins__[mixin.__name__] = 1;
+    }
     return this;
   };
 
@@ -130,7 +140,9 @@
     self = this;
     $.v.each(map, function(orig, aliases) {
       var alias, _i, _len, _results;
-      if (!$.v.is.arr(aliases)) aliases = [aliases];
+      if (!$.v.is.arr(aliases)) {
+        aliases = [aliases];
+      }
       _results = [];
       for (_i = 0, _len = aliases.length; _i < _len; _i++) {
         alias = aliases[_i];
@@ -152,7 +164,9 @@
   _def = function() {
     var mixins, name, obj;
     mixins = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    if (typeof mixins[0] === 'string') name = mixins.shift();
+    if (typeof mixins[0] === 'string') {
+      name = mixins.shift();
+    }
     obj = _clone(proto);
     if (name) {
       Object.defineProperty(obj, '__name__', {

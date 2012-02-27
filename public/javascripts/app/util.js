@@ -1,7 +1,7 @@
 (function() {
   var game, util,
-    __slice = Array.prototype.slice,
-    __hasProp = Object.prototype.hasOwnProperty;
+    __slice = [].slice,
+    __hasProp = {}.hasOwnProperty;
 
   game = (window.game || (window.game = {}));
 
@@ -70,7 +70,9 @@
       return str[0].toUpperCase() + str.slice(1);
     },
     ensureArray: function(arr) {
-      if (arr.length === 1 && $.is.arr(arr[0])) arr = arr[0];
+      if (arr.length === 1 && $.is.arr(arr[0])) {
+        arr = arr[0];
+      }
       return arr;
     },
     arrayDelete: function(arr, item) {

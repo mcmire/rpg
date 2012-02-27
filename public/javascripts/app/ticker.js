@@ -10,7 +10,9 @@
   ticker = meta.def('game.ticker', runnable, tickable, {
     isRunning: false,
     _includeMixin: function(mixin, opts) {
-      if (opts == null) opts = {};
+      if (opts == null) {
+        opts = {};
+      }
       opts = $.v.extend({}, opts, {
         keyTranslations: {
           start: '_start',
@@ -23,14 +25,18 @@
       return this.stop();
     },
     start: function() {
-      if (this.isRunning) return;
+      if (this.isRunning) {
+        return;
+      }
       this.isRunning = true;
       this._start();
       return this;
     },
     _start: function() {},
     stop: function() {
-      if (!this.isRunning) return;
+      if (!this.isRunning) {
+        return;
+      }
       this.isRunning = false;
       this._stop();
       return this;
@@ -41,7 +47,9 @@
       return this.stop();
     },
     resume: function() {
-      if (this.wasRunning) return this.start();
+      if (this.wasRunning) {
+        return this.start();
+      }
     }
   });
 

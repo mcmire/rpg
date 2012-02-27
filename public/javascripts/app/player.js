@@ -1,5 +1,5 @@
 (function() {
-  var DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, LiveObject, dir, eventable, game, keyCode, keyboard, player, util, _i, _j, _len, _len2, _ref;
+  var DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, LiveObject, dir, eventable, game, keyCode, keyboard, player, util, _i, _j, _len, _len1, _ref;
 
   game = (window.game || (window.game = {}));
 
@@ -25,7 +25,7 @@
   for (_i = 0, _len = DIRECTIONS.length; _i < _len; _i++) {
     dir = DIRECTIONS[_i];
     _ref = DIRECTION_KEYS[dir];
-    for (_j = 0, _len2 = _ref.length; _j < _len2; _j++) {
+    for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
       keyCode = _ref[_j];
       KEY_DIRECTIONS[keyCode] = dir;
     }
@@ -60,7 +60,9 @@
       } else {
         state = this.currentState.name.replace('move', 'idle');
       }
-      if (state !== this.currentState.name) return this.setState(state);
+      if (state !== this.currentState.name) {
+        return this.setState(state);
+      }
     },
     moveLeft: function() {
       var map, nextBoundsOnMap, x, _base;

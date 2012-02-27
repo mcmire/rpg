@@ -1,5 +1,5 @@
 (function() {
-  var __slice = Array.prototype.slice;
+  var __slice = [].slice;
 
   define(function(require) {
     var Class, PluginCollection, isValidRole, meta, module, plug, plugInto, roles, _ref;
@@ -34,7 +34,9 @@
               _results = [];
               for (_i = 0, _len = allObjs.length; _i < _len; _i++) {
                 obj = allObjs[_i];
-                if (obj.inst.can(roleName.long)) _results.push(obj);
+                if (obj.inst.can(roleName.long)) {
+                  _results.push(obj);
+                }
               }
               return _results;
             })();
@@ -54,8 +56,8 @@
           var args, methodName;
           methodName = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
           return this.each(function(obj) {
-            var _ref2;
-            (_ref2 = obj.inst)[methodName].apply(_ref2, args);
+            var _ref1;
+            (_ref1 = obj.inst)[methodName].apply(_ref1, args);
             return true;
           });
         },
@@ -63,16 +65,18 @@
           var ret;
           ret = true;
           this.each(function(obj) {
-            if (!obj.inst[propName]) return (ret = false);
+            if (!obj.inst[propName]) {
+              return (ret = false);
+            }
           });
           return ret;
         },
         each: function(fn) {
-          var obj, ret, _i, _len, _ref2, _results;
-          _ref2 = this.objs;
+          var obj, ret, _i, _len, _ref1, _results;
+          _ref1 = this.objs;
           _results = [];
-          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-            obj = _ref2[_i];
+          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+            obj = _ref1[_i];
             if (!(ret = fn(obj))) {
               break;
             } else {
@@ -92,11 +96,11 @@
         ctor.assignTo(owner);
       }
       uniqRoleNames = $.v.reduce(ctors, function(roleNames, ctor) {
-        var ctorRoleNames, roleName, _j, _len2;
+        var ctorRoleNames, roleName, _j, _len1;
         ctorRoleNames = $.v.filter($.v.keys(ctor.__mixins__), function(k) {
           return isValidRole[k];
         });
-        for (_j = 0, _len2 = ctorRoleNames.length; _j < _len2; _j++) {
+        for (_j = 0, _len1 = ctorRoleNames.length; _j < _len1; _j++) {
           roleName = ctorRoleNames[_j];
           roleNames[roleName] = 1;
         }
@@ -116,8 +120,12 @@
         var mixin;
         mixin = {};
         $.v.each(roles[roleName.short], function(prop, val) {
-          if (/^__/.test(prop)) return;
-          if (!roles[roleName.short].hasOwnProperty(prop)) return;
+          if (/^__/.test(prop)) {
+            return;
+          }
+          if (!roles[roleName.short].hasOwnProperty(prop)) {
+            return;
+          }
           if (typeof val === 'function') {
             return mixin[prop] = function() {
               return this.plugins[roleName.short].run(prop, arguments);

@@ -1,6 +1,6 @@
 (function() {
   var Background, SortedObjectMatrix, assignable, attachable, game, meta, tickable, _ref,
-    __slice = Array.prototype.slice;
+    __slice = [].slice;
 
   game = (window.game || (window.game = {}));
 
@@ -32,7 +32,9 @@
       proto = arguments[0], positions = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       self = this;
       opts = {};
-      if ($.v.is.obj(positions[positions.length - 1])) opts = positions.pop();
+      if ($.v.is.obj(positions[positions.length - 1])) {
+        opts = positions.pop();
+      }
       return $.v.each(positions, function(_arg) {
         var object, tile, x, y;
         x = _arg[0], y = _arg[1];
@@ -46,19 +48,19 @@
       });
     },
     load: function() {
-      var color, ctx, height, tile, width, x1, y1, _i, _j, _len, _len2, _ref2, _ref3, _ref4, _ref5, _ref6, _results;
+      var color, ctx, height, tile, width, x1, y1, _i, _j, _len, _len1, _ref1, _ref2, _ref3, _ref4, _ref5, _results;
       this.$canvas = $('<canvas>').attr('width', this.width).attr('height', this.height).addClass('background');
       ctx = this.$canvas[0].getContext('2d');
-      _ref2 = this.fills;
-      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-        _ref3 = _ref2[_i], color = _ref3[0], (_ref4 = _ref3[1], x1 = _ref4[0], y1 = _ref4[1]), (_ref5 = _ref3[2], width = _ref5[0], height = _ref5[1]);
+      _ref1 = this.fills;
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        _ref2 = _ref1[_i], color = _ref2[0], (_ref3 = _ref2[1], x1 = _ref3[0], y1 = _ref3[1]), (_ref4 = _ref2[2], width = _ref4[0], height = _ref4[1]);
         ctx.fillStyle = color;
         ctx.fillRect(x1, y1, width, height);
       }
-      _ref6 = this.tiles;
+      _ref5 = this.tiles;
       _results = [];
-      for (_j = 0, _len2 = _ref6.length; _j < _len2; _j++) {
-        tile = _ref6[_j];
+      for (_j = 0, _len1 = _ref5.length; _j < _len1; _j++) {
+        tile = _ref5[_j];
         _results.push(tile.draw(ctx));
       }
       return _results;

@@ -1,6 +1,6 @@
 (function() {
   var Bounds, game, meta, _boundsFrom,
-    __slice = Array.prototype.slice;
+    __slice = [].slice;
 
   game = (window.game || (window.game = {}));
 
@@ -118,31 +118,39 @@
       return this;
     },
     intersectWith: function(other) {
-      var x1i, x2i, xo, y1i, y2i, yo, _ref, _ref2, _ref3, _ref4;
+      var x1i, x2i, xo, y1i, y2i, yo, _ref, _ref1, _ref2, _ref3;
       other = _boundsFrom(other);
       x1i = (other.x1 < (_ref = this.x1) && _ref < other.x2);
-      x2i = (other.x1 < (_ref2 = this.x2) && _ref2 < other.x2);
+      x2i = (other.x1 < (_ref1 = this.x2) && _ref1 < other.x2);
       xo = this.x1 <= other.x1 && this.x2 >= other.x2;
-      y1i = (other.y1 < (_ref3 = this.y1) && _ref3 < other.y2);
-      y2i = (other.y1 < (_ref4 = this.y2) && _ref4 < other.y2);
+      y1i = (other.y1 < (_ref2 = this.y1) && _ref2 < other.y2);
+      y2i = (other.y1 < (_ref3 = this.y2) && _ref3 < other.y2);
       yo = this.y1 <= other.y1 && this.y2 >= other.y2;
       return (x1i || x2i || xo) && (y1i || y2i || yo);
     },
     getOuterLeftEdgeBlocking: function(other) {
       other = _boundsFrom(other);
-      if (this.intersectsWith(other)) return this.x1;
+      if (this.intersectsWith(other)) {
+        return this.x1;
+      }
     },
     getOuterRightEdgeBlocking: function(other) {
       other = _boundsFrom(other);
-      if (this.intersectsWith(other)) return this.x2;
+      if (this.intersectsWith(other)) {
+        return this.x2;
+      }
     },
     getOuterTopEdgeBlocking: function(other) {
       other = _boundsFrom(other);
-      if (this.intersectsWith(other)) return this.y1;
+      if (this.intersectsWith(other)) {
+        return this.y1;
+      }
     },
     getOuterBottomEdgeBlocking: function(other) {
       other = _boundsFrom(other);
-      if (this.intersectsWith(other)) return this.y2;
+      if (this.intersectsWith(other)) {
+        return this.y2;
+      }
     },
     doesContain: function(other) {
       other = _boundsFrom(other);
@@ -150,19 +158,27 @@
     },
     getInnerLeftEdgeBlocking: function(other) {
       other = _boundsFrom(other);
-      if (other.x1 < this.x1) return this.x1;
+      if (other.x1 < this.x1) {
+        return this.x1;
+      }
     },
     getInnerRightEdgeBlocking: function(other) {
       other = _boundsFrom(other);
-      if (other.x2 > this.x2) return this.x2;
+      if (other.x2 > this.x2) {
+        return this.x2;
+      }
     },
     getInnerTopEdgeBlocking: function(other) {
       other = _boundsFrom(other);
-      if (other.y1 < this.y1) return this.y1;
+      if (other.y1 < this.y1) {
+        return this.y1;
+      }
     },
     getInnerBottomEdgeBlocking: function(other) {
       other = _boundsFrom(other);
-      if (other.y2 > this.y2) return this.y2;
+      if (other.y2 > this.y2) {
+        return this.y2;
+      }
     },
     draw: function(main) {
       var ctx;

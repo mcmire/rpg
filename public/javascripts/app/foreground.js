@@ -1,6 +1,6 @@
 (function() {
   var Foreground, assignable, attachable, game, meta, tickable, _ref,
-    __slice = Array.prototype.slice;
+    __slice = [].slice;
 
   game = (window.game || (window.game = {}));
 
@@ -50,9 +50,9 @@
       this.onLoadCallback = onLoadCallback;
     },
     load: function() {
-      var _ref2;
+      var _ref1;
       this.$canvas = $('<canvas>').attr('width', this.width).attr('height', this.height).addClass('foreground');
-      return (_ref2 = this.onLoadCallback) != null ? _ref2.call(this) : void 0;
+      return (_ref1 = this.onLoadCallback) != null ? _ref1.call(this) : void 0;
     },
     unload: function() {
       this.$canvas = null;

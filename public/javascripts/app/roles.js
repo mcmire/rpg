@@ -1,6 +1,6 @@
 (function() {
   var ROLES, assignable, attachable, drawable, eventHelpers, eventable, game, loadable, meta, runnable, simpleDrawable, tickable, _getSafeNameFrom,
-    __slice = Array.prototype.slice;
+    __slice = [].slice;
 
   game = (window.game || (window.game = {}));
 
@@ -98,12 +98,16 @@
       return this._super();
     },
     attach: function() {
-      if (this.$element) this.parentElement.append(this.$element);
+      if (this.$element) {
+        this.parentElement.append(this.$element);
+      }
       return this;
     },
     detach: function() {
       var _ref;
-      if ((_ref = this.$element) != null) _ref.detach();
+      if ((_ref = this.$element) != null) {
+        _ref.detach();
+      }
       return this;
     }
   });

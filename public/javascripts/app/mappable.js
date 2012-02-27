@@ -1,6 +1,6 @@
 (function() {
   var Mappable, game, meta,
-    __slice = Array.prototype.slice;
+    __slice = [].slice;
 
   game = (window.game || (window.game = {}));
 

@@ -70,7 +70,9 @@
         core.lastTickTime = t;
         console.log("msDrawTime: " + msDrawTime);
       }
-      if ((core.numTicks % 100) === 0) core.keyboard.clearStuckKeys(t);
+      if ((core.numTicks % 100) === 0) {
+        core.keyboard.clearStuckKeys(t);
+      }
       if (core.animMethod === 'setTimeout') {
         core.timer = window.setTimeout(core.tick, core.tickInterval);
       } else {

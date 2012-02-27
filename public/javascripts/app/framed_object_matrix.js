@@ -17,7 +17,9 @@
         var ret;
         if (self.bounds.doesContain(object)) {
           ret = fn(object);
-          if (ret === false) return false;
+          if (ret === false) {
+            return false;
+          }
         }
       });
     }
