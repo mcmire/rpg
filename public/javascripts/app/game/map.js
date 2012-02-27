@@ -1,11 +1,13 @@
 (function() {
-  var Map, assignable, attachable, game, meta, tickable, _ref;
+  var Map, assignable, attachable, common, game, meta, tickable, _ref;
+
+  common = (window.common || (window.common = {}));
+
+  meta = common.meta;
+
+  _ref = common.roles, assignable = _ref.assignable, attachable = _ref.attachable, tickable = _ref.tickable;
 
   game = (window.game || (window.game = {}));
-
-  meta = game.meta2;
-
-  _ref = game.roles, assignable = _ref.assignable, attachable = _ref.attachable, tickable = _ref.tickable;
 
   Map = meta.def('game.Map', assignable, attachable, tickable, {
     init: function(name, width, height, fn) {

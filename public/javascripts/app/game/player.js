@@ -1,11 +1,13 @@
 (function() {
-  var DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, LiveObject, dir, eventable, game, keyCode, keyboard, player, util, _i, _j, _len, _len2, _ref;
+  var DIRECTIONS, DIRECTION_KEYS, KEYS, KEY_DIRECTIONS, LiveObject, common, dir, eventable, game, keyCode, keyboard, player, util, _i, _j, _len, _len2, _ref;
+
+  common = (window.common || (window.common = {}));
+
+  util = common.util;
+
+  eventable = common.roles.eventable;
 
   game = (window.game || (window.game = {}));
-
-  util = game.util;
-
-  eventable = game.roles.eventable;
 
   keyboard = game.keyboard;
 

@@ -1,12 +1,14 @@
 (function() {
-  var Background, SortedObjectMatrix, assignable, attachable, game, meta, tickable, _ref,
+  var Background, SortedObjectMatrix, assignable, attachable, common, game, meta, tickable, _ref,
     __slice = Array.prototype.slice;
 
+  common = (window.common || (window.common = {}));
+
+  meta = common.meta;
+
+  _ref = common.roles, attachable = _ref.attachable, assignable = _ref.assignable, tickable = _ref.tickable;
+
   game = (window.game || (window.game = {}));
-
-  meta = game.meta2;
-
-  _ref = game.roles, attachable = _ref.attachable, assignable = _ref.assignable, tickable = _ref.tickable;
 
   SortedObjectMatrix = game.SortedObjectMatrix;
 

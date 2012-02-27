@@ -1,2 +1,3 @@
 
-window.app.ready -> window.game.main.init()
+window.game = game =
+  init: -> game.main.init()

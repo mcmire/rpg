@@ -1,7 +1,8 @@
-game = (window.game ||= {})
+common = (window.common ||= {})
+meta = common.meta
+{assignable, simpleDrawable} = common.roles
 
-meta = game.meta2
-{assignable, simpleDrawable} = game.roles
+game = (window.game ||= {})
 
 MapTile = meta.def 'game.MapTile',
   assignable,

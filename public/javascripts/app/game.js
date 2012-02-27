@@ -1,7 +1,10 @@
 (function() {
+  var game;
 
-  window.app.ready(function() {
-    return window.game.main.init();
-  });
+  window.game = game = {
+    init: function() {
+      return game.main.init();
+    }
+  };
 
 }).call(this);

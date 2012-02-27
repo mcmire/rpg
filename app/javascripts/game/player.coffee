@@ -1,7 +1,9 @@
+common = (window.common ||= {})
+util = common.util
+{eventable} = common.roles
+
 game = (window.game ||= {})
 
-util = game.util
-{eventable} = game.roles
 keyboard = game.keyboard
 LiveObject = game.LiveObject
 

@@ -1,7 +1,8 @@
-game = (window.game ||= {})
+common = (window.common ||= {})
+meta = common.meta
+{attachable, assignable, tickable} = common.roles
 
-meta = game.meta2
-{attachable, assignable, tickable} = game.roles
+game = (window.game ||= {})
 
 Foreground = meta.def 'game.Foreground',
   attachable,

@@ -1,11 +1,13 @@
 (function() {
-  var MapTile, assignable, game, meta, simpleDrawable, _ref;
+  var MapTile, assignable, common, game, meta, simpleDrawable, _ref;
+
+  common = (window.common || (window.common = {}));
+
+  meta = common.meta;
+
+  _ref = common.roles, assignable = _ref.assignable, simpleDrawable = _ref.simpleDrawable;
 
   game = (window.game || (window.game = {}));
-
-  meta = game.meta2;
-
-  _ref = game.roles, assignable = _ref.assignable, simpleDrawable = _ref.simpleDrawable;
 
   MapTile = meta.def('game.MapTile', assignable, simpleDrawable, {
     init: function(drawable) {
