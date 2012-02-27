@@ -1,6 +1,7 @@
+common = (window.common ||= {})
 game = (window.game ||= {})
 
-meta = game.meta2
+meta = common.meta
 
 # This assumes assignable
 Mappable = meta.def 'game.Mappable',

@@ -1,8 +1,9 @@
+common = (window.common ||= {})
 game = (window.game ||= {})
 
-meta = game.meta2
+meta = common.meta
 Block = game.Block
-{assignable, drawable} = game.roles
+{assignable, drawable} = common.roles
 Mappable = game.Mappable
 Collidable = game.Collidable
 

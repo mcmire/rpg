@@ -1,6 +1,7 @@
+common = (window.common ||= {})
 game = (window.game ||= {})
 
-meta = game.meta2
+meta = common.meta
 {eventable, attachable, tickable, runnable} = game.roles
 fpsReporter = game.fpsReporter
 
@@ -10,7 +11,6 @@ main = meta.def 'game.main',
   tickable,
   runnable,
 
-  imagesPath: '/images'
   debug: false  # or true
 
   init: ->
@@ -102,8 +102,5 @@ main = meta.def 'game.main',
     @core.resume()
     @fpsReporter.resume()
     return this
-
-  resolveImagePath: (path) ->
-    "#{@imagesPath}/#{path}"
 
 game.main = main

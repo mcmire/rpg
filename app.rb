@@ -31,8 +31,8 @@ helpers do
         Jammit.asset_url(group.to_sym, :js)
       end
     html << javascript_include_tag('/javascripts/vendor/ender.js')
-    html << javascript_include_tag('/javascripts/app/loader.js')
-    html << %!<script>window.app.loadScripts('#{group}', #{JSON.generate(script_paths)})</script>!
+    html << javascript_include_tag('/javascripts/app/common/loader.js')
+    html << %!<script>window.common.loadScripts('#{group}', #{JSON.generate(script_paths)})</script>!
     return html
   end
 

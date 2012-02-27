@@ -1,6 +1,7 @@
+common = (window.common ||= {})
 game = (window.game ||= {})
 
-meta = game.meta2
+meta = common.meta
 Image = game.Image
 
 images = {}
@@ -17,6 +18,10 @@ load = ->
 
 isLoaded = ->
   numLoaded == numImages
+
+each = (fn) ->
+  paths = $.v.keys(images).sort()
+  $.v.each paths, (path) -> fn(images[path])
 
 #---
 

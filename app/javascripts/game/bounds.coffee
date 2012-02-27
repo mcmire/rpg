@@ -1,6 +1,7 @@
+common = (window.common ||= {})
 game = (window.game ||= {})
 
-meta = game.meta2
+meta = common.meta
 
 _boundsFrom = (mappableOrBounds) ->
   mappableOrBounds.mbounds ? mappableOrBounds

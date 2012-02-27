@@ -1,4 +1,4 @@
-game = (window.game ||= {})
+common = (window.common ||= {})
 
 # Notice that the test is for /\b_super\(/ not /\b_super\b/: this is so the
 # function returned by _wrap() below does not get detected as a function
@@ -99,7 +99,7 @@ proto.clone = ->
   # Copy this so if clone adds to mixins then it won't get added to prototype
   # and thus possibly prevent future objects from being able to be mixed in
   Object.defineProperty clone, '__mixins__',
-    value: game.util.dup(@__mixins__)
+    value: common.util.dup(@__mixins__)
     configurable: true
   return clone
 proto.cloneAs = (name) ->
@@ -147,7 +147,7 @@ _def = (mixins...) ->
   obj.extend(mixins...)
   return obj
 
-game.meta2 =
+common.meta =
   def: _def
   extend: _extend
   clone: _clone

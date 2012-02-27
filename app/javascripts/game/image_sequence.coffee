@@ -1,7 +1,8 @@
+common = (window.common ||= {})
 game = (window.game ||= {})
 
-meta = game.meta2
-{assignable, simpleDrawable} = game.roles
+meta = common.meta
+{assignable, simpleDrawable} = common.roles
 
 # An ImageSequence represents slices of frames in an image (i.e. sprite sheet)
 # to facilitate animating between them. A frame lasts for one tick, and then

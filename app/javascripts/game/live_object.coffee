@@ -1,6 +1,7 @@
+common = (window.common ||= {})
 game = (window.game ||= {})
 
-meta = game.meta2
+meta = common.meta
 StillObject = game.StillObject
 
 # A LiveObject represents an object on the map that lives in the foreground
@@ -18,7 +19,7 @@ LiveObject = StillObject.cloneAs('game.LiveObject').extend
   clone: ->
     clone = @_super()
     # Make a copy of the prototype's states so that they don't get shared
-    clone.states = game.util.dup(clone.states)
+    clone.states = common.util.dup(clone.states)
     return clone
 
   predraw: (ctx) ->

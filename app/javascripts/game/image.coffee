@@ -1,7 +1,8 @@
+common = (window.common ||= {})
 game = (window.game ||= {})
 
-meta = game.meta2
-{assignable, simpleDrawable} = game.roles
+meta = common.meta
+{assignable, simpleDrawable} = common.roles
 
 Image = meta.def 'game.Image',
   assignable,
@@ -12,8 +13,10 @@ Image = meta.def 'game.Image',
     unless /\.[^.]+$/.test(@path)
       @path += ".gif"
     unless /^\//.test(@path)
-      @path = game.main.resolveImagePath(@path)
+      @path = common.resolveImagePath(@path)
     @isLoaded = false
+
+  getElement: -> @element
 
   load: ->
     self = this

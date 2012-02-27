@@ -1,5 +1,7 @@
 
-window.app =
+common = (window.common ||= {})
+
+$.v.extend common,
   loadScripts: (group, scripts) ->
     scriptsLoaded = []
 
@@ -29,7 +31,7 @@ window.app =
         console.log "Yup, looks like all scripts are loaded now."
         window.clearTimeout(timer)
         timer = null
-        window.app.onReady()
+        window.app.onReady?()
       else
         timer = window.setTimeout check, 100
     check()

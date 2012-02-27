@@ -1,4 +1,4 @@
-game = (window.game ||= {})
+common = (window.common ||= {})
 
 util =
   # Public: Make modifications to an object by copying properties from other
@@ -89,4 +89,4 @@ util =
   arrayDelete: (arr, item) ->
     arr.splice(item, 1)
 
-game.util = util
+common.util = util
