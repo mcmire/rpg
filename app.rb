@@ -54,7 +54,13 @@ helpers do
 end
 
 get "/?" do
+  @action = 'game'
   erb :game
+end
+
+get "/editor/?" do
+  @action = 'editor'
+  erb :editor
 end
 
 get "/keyboard_test/?" do
