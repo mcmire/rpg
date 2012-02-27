@@ -1,8 +1,20 @@
 
-common = (window.common ||= {})
+definitions = {}
+loadedObjects = {}
 
-$.v.extend common,
-  loadScripts: (group, scripts) ->
+$.v.extend window,
+  define: (name, fn) ->
+    definitions[name] = fn
+
+  require: (name) ->
+    obj = loadedObjects[name]
+    unless obj
+      obj = definitions[name]()
+      obj.__name__ = name
+      loadedObjects[name] = obj
+    return obj
+
+  loadScripts: (scripts, onLoaded) ->
     scriptsLoaded = []
 
     $.v.each scripts, (url) ->
@@ -11,10 +23,11 @@ $.v.extend common,
         .replace(/\.js(.*)$/, ".js")
       script = document.createElement('script')
       script.src = url
+      script.async = true
       script.onload = ->
         console.log ">> Loaded #{name}"
         scriptsLoaded.push(name)
-      $('head').append(script)
+      $('#script-loader').prepend(script)
 
     timer = null
     i = 0
@@ -31,10 +44,7 @@ $.v.extend common,
         console.log "Yup, looks like all scripts are loaded now."
         window.clearTimeout(timer)
         timer = null
-        window.app.onReady?()
+        onLoaded?()
       else
         timer = window.setTimeout check, 100
     check()
-
-  ready: (fn) ->
-    @onReady = fn

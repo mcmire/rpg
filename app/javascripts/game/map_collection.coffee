@@ -1,9 +1,12 @@
-game = (window.game ||= {})
 
-maps = {}
+define 'game.mapCollection', ->
+  maps = {}
 
-game.mapCollection =
-  get: (name) ->
-    maps[name]
-  add: (name, width, height, fn) ->
-    maps[name] = game.Map.create(name, width, height, fn)
+  return {
+    get: (name) ->
+      maps[name]
+    add: (name, width, height, fn) ->
+      map = require('game.Map').create(name, width, height, fn)
+      maps[name] = map
+      return map
+  }

@@ -1,10 +1,11 @@
 (function() {
-  var game;
 
-  window.game = game = {
-    init: function() {
-      return game.main.init();
-    }
-  };
+  define('game', function() {
+    return {
+      init: function() {
+        return require('game.main').init();
+      }
+    };
+  });
 
 }).call(this);

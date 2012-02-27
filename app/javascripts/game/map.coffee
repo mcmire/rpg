@@ -1,76 +1,75 @@
-common = (window.common ||= {})
-meta = common.meta
-{assignable, attachable, tickable} = common.roles
 
-game = (window.game ||= {})
+define 'game.Map', ->
+  meta = require('meta')
+  {assignable, attachable, tickable} = require('roles')
 
-Map = meta.def 'game.Map',
-  assignable,
-  attachable,
-  tickable,
+  Map = meta.def \
+    assignable,
+    attachable,
+    tickable,
 
-  init: (@name, @width, @height, fn) ->
-    fg = game.Foreground.create(this, @width, @height)
-    bg = game.Background.create(this, @width, @height)
-    fn(fg, bg)
-    @foreground = fg
-    @background = bg
-    @up = @down = @left = @right = null
-    @isActive = false
+    init: (@name, @width, @height, fn) ->
+      fg = require('game.Foreground').create(this, @width, @height)
+      bg = require('game.Background').create(this, @width, @height)
+      fn(fg, bg)
+      @foreground = fg
+      @background = bg
+      @up = @down = @left = @right = null
+      @isActive = false
 
-  setParent: (parent) ->
-    @_super(parent)
-    @viewport = viewport
-    @foreground.setParent(viewport)
-    @background.setParent(viewport)
+    setParent: (parent) ->
+      @_super(parent)
+      @viewport = viewport
+      @foreground.setParent(viewport)
+      @background.setParent(viewport)
 
-  addPlayer: (@player) ->
-    @foreground.addPlayer(player)
+    addPlayer: (@player) ->
+      @foreground.addPlayer(player)
 
-  load: ->
-    @foreground.load()
-    @background.load()
+    load: ->
+      @foreground.load()
+      @background.load()
 
-  # This could be a #destroy method, except that it implies that you'd call init
-  # to remove the map completely -- as in, remove it from the map collection --
-  # which I don't see a need for
-  unload: ->
-    @foreground.unload()
-    @background.unload()
+    # This could be a #destroy method, except that it implies that you'd call
+    # init to remove the map completely -- as in, remove it from the map
+    # collection -- which I don't see a need for
+    unload: ->
+      @foreground.unload()
+      @background.unload()
 
-  attach: ->
-    @foreground.attach()
-    @background.attach()
-    return this
+    attach: ->
+      @foreground.attach()
+      @background.attach()
+      return this
 
-  detach: ->
-    @foreground.detach()
-    @background.detach()
-    return this
+    detach: ->
+      @foreground.detach()
+      @background.detach()
+      return this
 
-  activate: ->
-    @isActive = true
-    @foreground.activate()
+    activate: ->
+      @isActive = true
+      @foreground.activate()
 
-  deactivate: ->
-    @isActive = false
-    @player.removeEvents()
+    deactivate: ->
+      @isActive = false
+      @player.removeEvents()
 
-  tick: ->
-    if @isActive
-      @background.tick()
-      @foreground.tick()
+    tick: ->
+      if @isActive
+        @background.tick()
+        @foreground.tick()
 
-  connectsUpTo: (other) ->
-    @up = other
+    connectsUpTo: (other) ->
+      @up = other
 
-  connectsDownTo: (other) ->
-    @down = other
+    connectsDownTo: (other) ->
+      @down = other
 
-  connectsLeftTo: (other) ->
-    @left = other
+    connectsLeftTo: (other) ->
+      @left = other
 
-  connectsRightTo: (other) ->
-    @right = other
+    connectsRightTo: (other) ->
+      @right = other
 
-game.Map = Map
+  return Map

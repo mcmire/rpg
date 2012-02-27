@@ -5,79 +5,68 @@ gzip_assets: true
 javascripts:
   common: &common
     - public/javascripts/app/common.js
-    - public/javascripts/app/common/ender_ext.js
-    - public/javascripts/app/common/ext.js
     - public/javascripts/app/common/util.js
     - public/javascripts/app/common/meta.js
     - public/javascripts/app/common/roles.js
 
   game:
     - *common
-
     - public/javascripts/app/game.js
-
-    # things that don't have an immediate dependency
+    - public/javascripts/app/game/background.js
+    - public/javascripts/app/game/block.js
     - public/javascripts/app/game/bounds.js
     - public/javascripts/app/game/canvas.js
     - public/javascripts/app/game/collidable.js
+    - public/javascripts/app/game/collidable_matrix.js
+    - public/javascripts/app/game/core.js
+    - public/javascripts/app/game/filtered_object_matrix.js
+    - public/javascripts/app/game/foreground.js
+    - public/javascripts/app/game/fps_reporter.js
+    - public/javascripts/app/game/framed_object_matrix.js
+    - public/javascripts/app/game/image.js
+    - public/javascripts/app/game/image_collection.js
     - public/javascripts/app/game/image_sequence.js
     - public/javascripts/app/game/keyboard.js
-    - public/javascripts/app/game/main.js
-    - public/javascripts/app/game/mappable.js
-    - public/javascripts/app/game/ordered_map.js
-    - public/javascripts/app/game/viewport.js
-
-    - public/javascripts/app/game/sorted_object_matrix.js
-    - public/javascripts/app/game/collidable_matrix.js
-    - public/javascripts/app/game/framed_object_matrix.js
-    - public/javascripts/app/game/filtered_object_matrix.js
-
-    - public/javascripts/app/game/ticker.js
-    - public/javascripts/app/game/core.js
-    - public/javascripts/app/game/fps_reporter.js
-
-    - public/javascripts/app/game/block.js
-    - public/javascripts/app/game/still_object.js
     - public/javascripts/app/game/live_object.js
-
-    - public/javascripts/app/game/image.js  # image must be defined after main
-    - public/javascripts/app/game/image_collection.js
-    - public/javascripts/app/game/sprite_collection.js
-    - public/javascripts/app/game/map_collection.js
-    - public/javascripts/app/game/background.js
-    - public/javascripts/app/game/foreground.js
+    - public/javascripts/app/game/main.js
     - public/javascripts/app/game/map.js
+    - public/javascripts/app/game/map_collection.js
     - public/javascripts/app/game/map_tile.js
+    - public/javascripts/app/game/mappable.js
     - public/javascripts/app/game/maps/lw_52.js
-
+    - public/javascripts/app/game/ordered_map.js
     - public/javascripts/app/game/player.js
+    - public/javascripts/app/game/sorted_object_matrix.js
+    - public/javascripts/app/game/sprite_collection.js
+    - public/javascripts/app/game/still_object.js
+    - public/javascripts/app/game/ticker.js
+    - public/javascripts/app/game/viewport.js
 
   editor:
     - *common
 
     - public/javascripts/app/editor.js
+    - public/javascripts/app/editor/core.js
+    - public/javascripts/app/editor/viewport.js
 
+    - public/javascripts/app/game/background.js
+    - public/javascripts/app/game/block.js
     - public/javascripts/app/game/bounds.js
     - public/javascripts/app/game/canvas.js
     - public/javascripts/app/game/collidable.js
-    - public/javascripts/app/game/image_sequence.js
-    - public/javascripts/app/game/mappable.js
-
-    - public/javascripts/app/game/block.js
-    - public/javascripts/app/game/still_object.js
-    - public/javascripts/app/game/live_object.js
-
+    - public/javascripts/app/game/foreground.js
     - public/javascripts/app/game/image.js
     - public/javascripts/app/game/image_collection.js
-    - public/javascripts/app/game/sprite_collection.js
-    - public/javascripts/app/game/map_collection.js
-    - public/javascripts/app/game/background.js
-    - public/javascripts/app/game/foreground.js
+    - public/javascripts/app/game/image_sequence.js
+    - public/javascripts/app/game/live_object.js
     - public/javascripts/app/game/map.js
+    - public/javascripts/app/game/map_collection.js
     - public/javascripts/app/game/map_tile.js
+    - public/javascripts/app/game/mappable.js
     - public/javascripts/app/game/maps/lw_52.js
-
     - public/javascripts/app/game/player.js
+    - public/javascripts/app/game/sprite_collection.js
+    - public/javascripts/app/game/still_object.js
 
 stylesheets:
   game:

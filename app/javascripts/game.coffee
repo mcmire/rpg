@@ -1,3 +1,3 @@
 
-window.game = game =
-  init: -> game.main.init()
+define 'game', ->
+  init: -> require('game.main').init()

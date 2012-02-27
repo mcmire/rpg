@@ -1,16 +1,14 @@
-game = (window.game ||= {})
 
-meta = game.meta2
+define 'game.FramedObjectMatrix', ->
+  meta = require('meta')
 
-FramedObjectMatrix = meta.def 'game.FramedObjectMatrix',
-  frameWithin: (@bounds) ->
-    return this
+  return meta.def
+    frameWithin: (@bounds) ->
+      return this
 
-  each: (fn) ->
-    self = this
-    @_super (object) ->
-      if self.bounds.doesContain(object)
-        ret = fn(object)
-        return false if ret is false
-
-game.FramedObjectMatrix = FramedObjectMatrix
+    each: (fn) ->
+      self = this
+      @_super (object) ->
+        if self.bounds.doesContain(object)
+          ret = fn(object)
+          return false if ret is false

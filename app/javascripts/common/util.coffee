@@ -1,6 +1,6 @@
-common = (window.common ||= {})
 
-util =
+define 'util', ->
+
   # Public: Make modifications to an object by copying properties from other
   # objects, either shallowly or deeply.
   #
@@ -88,5 +88,3 @@ util =
 
   arrayDelete: (arr, item) ->
     arr.splice(item, 1)
-
-common.util = util

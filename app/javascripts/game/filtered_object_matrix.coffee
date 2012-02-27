@@ -1,16 +1,14 @@
-game = (window.game ||= {})
 
-meta = game.meta2
+define 'game.FilteredObjectMatrix', ->
+  meta = require('meta')
 
-FilteredObjectMatrix = meta.def 'game.FilteredObjectMatrix',
-  without: (@exception) ->
-    return this
+  return meta.def
+    without: (@exception) ->
+      return this
 
-  each: (fn) ->
-    self = this
-    @_super (object) ->
-      if object isnt self.exception
-        ret = fn(object)
-        return false if ret is false
-
-game.FilteredObjectMatrix = FilteredObjectMatrix
+    each: (fn) ->
+      self = this
+      @_super (object) ->
+        if object isnt self.exception
+          ret = fn(object)
+          return false if ret is false

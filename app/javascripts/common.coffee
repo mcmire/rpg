@@ -1,6 +1,5 @@
-common = (window.common ||= {})
 
-$.v.extend common,
+define 'common', ->
   imagesPath: '/images'
   resolveImagePath: (path) ->
     "#{@imagesPath}/#{path}"
