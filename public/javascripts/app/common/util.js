@@ -1,9 +1,9 @@
 (function() {
-  var game, util,
+  var common, util,
     __slice = Array.prototype.slice,
     __hasProp = Object.prototype.hasOwnProperty;
 
-  game = (window.game || (window.game = {}));
+  common = (window.common || (window.common = {}));
 
   util = {
     extend: function() {
@@ -78,6 +78,6 @@
     }
   };
 
-  game.util = util;
+  common.util = util;
 
 }).call(this);

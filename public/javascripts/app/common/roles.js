@@ -1,10 +1,10 @@
 (function() {
-  var ROLES, assignable, attachable, drawable, eventHelpers, eventable, game, loadable, meta, runnable, simpleDrawable, tickable, _getSafeNameFrom,
+  var ROLES, assignable, attachable, common, drawable, eventHelpers, eventable, loadable, meta, runnable, simpleDrawable, tickable, _getSafeNameFrom,
     __slice = Array.prototype.slice;
 
-  game = (window.game || (window.game = {}));
+  common = (window.common || (window.common = {}));
 
-  meta = game.meta2;
+  meta = common.meta;
 
   ROLES = ['game.eventable', 'game.attachable', 'game.tickable', 'game.drawable', 'game.simpleDrawable', 'game.loadable', 'game.runnable', 'game.assignable'];
 
@@ -78,25 +78,31 @@
       this.detach();
       return this._super();
     },
-    attachTo: function(parent) {
-      if (typeof parent.doesInclude === "function" ? parent.doesInclude('game.attachable') : void 0) {
-        this.$parentElement = parent.$element;
-      } else {
-        this.$parentElement = $(parent);
-      }
-      return this;
-    },
     getElement: function() {
       return this.$element;
     },
     setElement: function($element) {
       this.$element = $element;
+      return this;
+    },
+    clearElement: function() {
+      return this.$element = null;
     },
     getParentElement: function() {
+      var parent;
+      if (!this.$parentElement) {
+        if (typeof this.getParent === 'function' && (parent = this.getParent())) {
+          this.$parentElement = typeof parent.getElement === 'function' ? parent.getElement() : $(parent);
+        }
+      }
       return this.$parentElement;
     },
+    setParentElement: function(element) {
+      this.$parentElement = $(element);
+      return this;
+    },
     attach: function() {
-      if (this.$element) this.$parentElement.append(this.$element);
+      if (this.$element) this.getParentElement().append(this.$element);
       return this;
     },
     detach: function() {
@@ -106,6 +112,8 @@
       return this;
     }
   });
+
+  attachable.willAttachTo = attachable.setParentElement;
 
   tickable = meta.def('game.tickable', {
     tick: function() {
@@ -166,13 +174,18 @@
   });
 
   assignable = meta.def('game.assignable', {
-    assignTo: function(parent) {
+    getParent: function() {
+      return this.parent;
+    },
+    setParent: function(parent) {
       this.parent = parent;
       return this;
     }
   });
 
-  game.roles = {
+  assignable.assignTo = assignable.setParent;
+
+  common.roles = {
     ROLES: ROLES,
     eventable: eventable,
     attachable: attachable,

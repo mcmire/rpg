@@ -1,13 +1,13 @@
 (function() {
-  var Map, game, meta, tickable;
+  var Map, assignable, attachable, game, meta, tickable, _ref;
 
   game = (window.game || (window.game = {}));
 
   meta = game.meta2;
 
-  tickable = game.roles.tickable;
+  _ref = game.roles, assignable = _ref.assignable, attachable = _ref.attachable, tickable = _ref.tickable;
 
-  Map = meta.def('game.Map', tickable, {
+  Map = meta.def('game.Map', assignable, attachable, tickable, {
     init: function(name, width, height, fn) {
       var bg, fg;
       this.name = name;
@@ -21,10 +21,11 @@
       this.up = this.down = this.left = this.right = null;
       return this.isActive = false;
     },
-    assignTo: function(viewport) {
+    setParent: function(parent) {
+      this._super(parent);
       this.viewport = viewport;
-      this.foreground.assignToViewport(this.viewport);
-      return this.background.assignToViewport(this.viewport);
+      this.foreground.setParent(viewport);
+      return this.background.setParent(viewport);
     },
     addPlayer: function(player) {
       this.player = player;
@@ -38,12 +39,12 @@
       this.foreground.unload();
       return this.background.unload();
     },
-    attachToViewport: function() {
-      this.foreground.attachTo(this.viewport);
-      this.background.attachTo(this.viewport);
+    attach: function() {
+      this.foreground.attach();
+      this.background.attach();
       return this;
     },
-    detachFromViewport: function() {
+    detach: function() {
       this.foreground.detach();
       this.background.detach();
       return this;

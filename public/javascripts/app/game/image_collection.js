@@ -1,9 +1,11 @@
 (function() {
-  var Image, add, game, images, isLoaded, load, meta, numImages, numLoaded;
+  var Image, add, common, each, game, images, isLoaded, load, meta, numImages, numLoaded;
+
+  common = (window.common || (window.common = {}));
 
   game = (window.game || (window.game = {}));
 
-  meta = game.meta2;
+  meta = common.meta;
 
   Image = game.Image;
 
@@ -34,6 +36,14 @@
 
   isLoaded = function() {
     return numLoaded === numImages;
+  };
+
+  each = function(fn) {
+    var paths;
+    paths = $.v.keys(images).sort();
+    return $.v.each(paths, function(path) {
+      return fn(images[path]);
+    });
   };
 
   add('8stone', 32, 32);

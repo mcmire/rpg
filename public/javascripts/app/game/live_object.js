@@ -1,10 +1,12 @@
 (function() {
-  var LiveObject, StillObject, game, meta,
+  var LiveObject, StillObject, common, game, meta,
     __slice = Array.prototype.slice;
+
+  common = (window.common || (window.common = {}));
 
   game = (window.game || (window.game = {}));
 
-  meta = game.meta2;
+  meta = common.meta;
 
   StillObject = game.StillObject;
 
@@ -13,7 +15,7 @@
     clone: function() {
       var clone;
       clone = this._super();
-      clone.states = game.util.dup(clone.states);
+      clone.states = common.util.dup(clone.states);
       return clone;
     },
     predraw: function(ctx) {

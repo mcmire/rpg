@@ -1,16 +1,17 @@
 (function() {
-  var attachable, eventable, fpsReporter, game, main, meta, runnable, tickable, _ref;
+  var attachable, common, eventable, fpsReporter, game, main, meta, runnable, tickable, _ref;
+
+  common = (window.common || (window.common = {}));
 
   game = (window.game || (window.game = {}));
 
-  meta = game.meta2;
+  meta = common.meta;
 
   _ref = game.roles, eventable = _ref.eventable, attachable = _ref.attachable, tickable = _ref.tickable, runnable = _ref.runnable;
 
   fpsReporter = game.fpsReporter;
 
   main = meta.def('game.main', eventable, attachable, tickable, runnable, {
-    imagesPath: '/images',
     debug: false,
     init: function() {
       this.setElement($(document.body));
@@ -115,9 +116,6 @@
       this.core.resume();
       this.fpsReporter.resume();
       return this;
-    },
-    resolveImagePath: function(path) {
-      return "" + this.imagesPath + "/" + path;
     }
   });
 

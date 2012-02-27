@@ -1,11 +1,13 @@
 (function() {
-  var ImageSequence, assignable, game, meta, simpleDrawable, _ref;
+  var ImageSequence, assignable, common, game, meta, simpleDrawable, _ref;
+
+  common = (window.common || (window.common = {}));
 
   game = (window.game || (window.game = {}));
 
-  meta = game.meta2;
+  meta = common.meta;
 
-  _ref = game.roles, assignable = _ref.assignable, simpleDrawable = _ref.simpleDrawable;
+  _ref = common.roles, assignable = _ref.assignable, simpleDrawable = _ref.simpleDrawable;
 
   ImageSequence = meta.def('game.ImageSequence', assignable, simpleDrawable, {
     init: function(image, width, height, frameIndices, opts) {

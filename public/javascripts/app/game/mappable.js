@@ -1,10 +1,12 @@
 (function() {
-  var Mappable, game, meta,
+  var Mappable, common, game, meta,
     __slice = Array.prototype.slice;
+
+  common = (window.common || (window.common = {}));
 
   game = (window.game || (window.game = {}));
 
-  meta = game.meta2;
+  meta = common.meta;
 
   Mappable = meta.def('game.Mappable', {
     init: function(width, height) {

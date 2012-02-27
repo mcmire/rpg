@@ -1,11 +1,13 @@
 (function() {
-  var Image, assignable, game, meta, simpleDrawable, _ref;
+  var Image, assignable, common, game, meta, simpleDrawable, _ref;
+
+  common = (window.common || (window.common = {}));
 
   game = (window.game || (window.game = {}));
 
-  meta = game.meta2;
+  meta = common.meta;
 
-  _ref = game.roles, assignable = _ref.assignable, simpleDrawable = _ref.simpleDrawable;
+  _ref = common.roles, assignable = _ref.assignable, simpleDrawable = _ref.simpleDrawable;
 
   Image = meta.def('game.Image', assignable, simpleDrawable, {
     init: function(path, width, height) {
@@ -13,10 +15,11 @@
       this.height = height;
       this.path = path;
       if (!/\.[^.]+$/.test(this.path)) this.path += ".gif";
-      if (!/^\//.test(this.path)) {
-        this.path = game.main.resolveImagePath(this.path);
-      }
+      if (!/^\//.test(this.path)) this.path = common.resolveImagePath(this.path);
       return this.isLoaded = false;
+    },
+    getElement: function() {
+      return this.element;
     },
     load: function() {
       var self;

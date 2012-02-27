@@ -1,14 +1,14 @@
 (function() {
-  var Foreground, assignable, game, meta, tickable, _ref,
+  var Foreground, assignable, attachable, game, meta, tickable, _ref,
     __slice = Array.prototype.slice;
 
   game = (window.game || (window.game = {}));
 
   meta = game.meta2;
 
-  _ref = game.roles, assignable = _ref.assignable, tickable = _ref.tickable;
+  _ref = game.roles, attachable = _ref.attachable, assignable = _ref.assignable, tickable = _ref.tickable;
 
-  Foreground = meta.def('game.Foreground', assignable, tickable, {
+  Foreground = meta.def('game.Foreground', attachable, assignable, tickable, {
     init: function(map, width, height) {
       this.map = map;
       this.width = width;
@@ -19,9 +19,31 @@
       this.player = null;
       return this.enableCollisions = true;
     },
-    assignToViewport: function(viewport) {
-      this.viewport = viewport;
+    setParent: function(parent) {
+      this._super(parent);
+      this.viewport = parent;
       return this.framedObjects.frameWithin(this.viewport.bounds);
+    },
+    attach: function() {
+      this._super();
+      return this.ctx = this.$canvas[0].getContext('2d');
+    },
+    tick: function() {
+      var self;
+      self = this;
+      this.$canvas.css({
+        top: -this.viewport.bounds.y1,
+        left: -this.viewport.bounds.x1
+      });
+      this.framedObjects.each(function(object) {
+        return typeof object.predraw === "function" ? object.predraw(self.ctx) : void 0;
+      });
+      this.framedObjects.each(function(object) {
+        return typeof object.draw === "function" ? object.draw(self.ctx) : void 0;
+      });
+      return this.framedObjects.each(function(object) {
+        return typeof object.postdraw === "function" ? object.postdraw(self.ctx) : void 0;
+      });
     },
     addObject: function() {
       var positions, proto, self;
@@ -52,10 +74,12 @@
     load: function() {
       var _ref2;
       this.$canvas = $('<canvas>').attr('width', this.width).attr('height', this.height).addClass('foreground');
+      this.setElement(this.$canvas);
       return (_ref2 = this.onLoadCallback) != null ? _ref2.call(this) : void 0;
     },
     unload: function() {
       this.$canvas = null;
+      this.clearElement();
       return this.ctx = null;
     },
     activate: function() {
@@ -66,31 +90,6 @@
     deactivate: function() {
       return this.objects.each(function(object) {
         return typeof object.deactivate === "function" ? object.deactivate() : void 0;
-      });
-    },
-    attachTo: function(viewport) {
-      this.viewport = viewport;
-      this.viewport.getElement().append(this.$canvas);
-      return this.ctx = this.$canvas[0].getContext('2d');
-    },
-    detach: function() {
-      return this.$canvas.detach();
-    },
-    tick: function() {
-      var self;
-      self = this;
-      this.$canvas.css({
-        top: -this.viewport.bounds.y1,
-        left: -this.viewport.bounds.x1
-      });
-      this.framedObjects.each(function(object) {
-        return typeof object.predraw === "function" ? object.predraw(self.ctx) : void 0;
-      });
-      this.framedObjects.each(function(object) {
-        return typeof object.draw === "function" ? object.draw(self.ctx) : void 0;
-      });
-      return this.framedObjects.each(function(object) {
-        return typeof object.postdraw === "function" ? object.postdraw(self.ctx) : void 0;
       });
     },
     getObjectsWithout: function(object) {

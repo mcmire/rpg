@@ -1,9 +1,9 @@
 (function() {
-  var game, proto, _clone, _def, _extend, _fnContainsSuper, _wrap,
+  var common, proto, _clone, _def, _extend, _fnContainsSuper, _wrap,
     __hasProp = Object.prototype.hasOwnProperty,
     __slice = Array.prototype.slice;
 
-  game = (window.game || (window.game = {}));
+  common = (window.common || (window.common = {}));
 
   _fnContainsSuper = function(fn) {
     return /\b_super(?:\.apply)?\(/.test(fn);
@@ -80,7 +80,7 @@
     var clone;
     clone = _clone(this);
     Object.defineProperty(clone, '__mixins__', {
-      value: game.util.dup(this.__mixins__),
+      value: common.util.dup(this.__mixins__),
       configurable: true
     });
     return clone;
@@ -168,7 +168,7 @@
     return obj;
   };
 
-  game.meta2 = {
+  common.meta = {
     def: _def,
     extend: _extend,
     clone: _clone

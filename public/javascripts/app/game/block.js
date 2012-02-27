@@ -1,11 +1,13 @@
 (function() {
-  var Block, Collidable, Mappable, assignable, game, meta;
+  var Block, Collidable, Mappable, assignable, common, game, meta;
+
+  common = (window.common || (window.common = {}));
 
   game = (window.game || (window.game = {}));
 
-  meta = game.meta2;
+  meta = common.meta;
 
-  assignable = game.roles.assignable;
+  assignable = common.roles.assignable;
 
   Mappable = game.Mappable;
 

@@ -1,10 +1,12 @@
 (function() {
-  var Bounds, game, meta, _boundsFrom,
+  var Bounds, common, game, meta, _boundsFrom,
     __slice = Array.prototype.slice;
+
+  common = (window.common || (window.common = {}));
 
   game = (window.game || (window.game = {}));
 
-  meta = game.meta2;
+  meta = common.meta;
 
   _boundsFrom = function(mappableOrBounds) {
     var _ref;

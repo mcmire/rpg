@@ -83,15 +83,15 @@
       self = this;
       if (map = this.currentMap) {
         map.deactivate();
-        map.detachFromViewport();
+        map.detach();
         map.unload();
         map.removePlayer();
       }
       map = game.mapCollection.get(name);
-      map.assignTo(this.viewport);
+      map.setParent(this.viewport);
       map.addPlayer(this.player);
       map.load();
-      map.attachToViewport();
+      map.attach();
       this.viewport.setMap(map);
       map.activate();
       return this.currentMap = map;

@@ -1,10 +1,12 @@
 (function() {
-  var Collidable, game, meta,
+  var Collidable, common, game, meta,
     __slice = Array.prototype.slice;
+
+  common = (window.common || (window.common = {}));
 
   game = (window.game || (window.game = {}));
 
-  meta = game.meta2;
+  meta = common.meta;
 
   Collidable = meta.def('game.Collidable', {
     init: function() {

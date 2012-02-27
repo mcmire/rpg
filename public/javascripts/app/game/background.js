@@ -1,16 +1,16 @@
 (function() {
-  var Background, SortedObjectMatrix, assignable, game, meta, tickable, _ref,
+  var Background, SortedObjectMatrix, assignable, attachable, game, meta, tickable, _ref,
     __slice = Array.prototype.slice;
 
   game = (window.game || (window.game = {}));
 
   meta = game.meta2;
 
-  _ref = game.roles, assignable = _ref.assignable, tickable = _ref.tickable;
+  _ref = game.roles, attachable = _ref.attachable, assignable = _ref.assignable, tickable = _ref.tickable;
 
   SortedObjectMatrix = game.SortedObjectMatrix;
 
-  Background = meta.def('game.Background', assignable, tickable, {
+  Background = meta.def('game.Background', attachable, assignable, tickable, {
     init: function(map, width, height) {
       this.map = map;
       this.width = width;
@@ -20,9 +20,25 @@
       this.sprites = game.SortedObjectMatrix.create();
       return this.framedSprites = this.sprites.clone().extend(game.FramedObjectMatrix);
     },
-    assignToViewport: function(viewport) {
-      this.viewport = viewport;
+    setParent: function(parent) {
+      this._super(parent);
+      this.viewport = parent;
       return this.framedSprites.frameWithin(this.viewport.bounds);
+    },
+    attach: function() {
+      this._super();
+      return this.ctx = this.$canvas[0].getContext('2d');
+    },
+    tick: function() {
+      var self;
+      self = this;
+      this.$canvas.css({
+        top: -this.viewport.bounds.y1,
+        left: -this.viewport.bounds.x1
+      });
+      return this.framedSprites.each(function(sprite) {
+        return sprite.draw(self.ctx);
+      });
     },
     fill: function(color, pos, dims) {
       return this.fills.push([color, pos, dims]);
@@ -48,6 +64,7 @@
     load: function() {
       var color, ctx, height, tile, width, x1, y1, _i, _j, _len, _len2, _ref2, _ref3, _ref4, _ref5, _ref6, _results;
       this.$canvas = $('<canvas>').attr('width', this.width).attr('height', this.height).addClass('background');
+      this.setElement(this.$canvas);
       ctx = this.$canvas[0].getContext('2d');
       _ref2 = this.fills;
       for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
@@ -65,26 +82,8 @@
     },
     unload: function() {
       this.$canvas = null;
+      this.clearElement();
       return this.ctx = null;
-    },
-    attachTo: function(viewport) {
-      this.viewport = viewport;
-      this.viewport.getElement().append(this.$canvas);
-      return this.ctx = this.$canvas[0].getContext('2d');
-    },
-    detach: function() {
-      return this.$canvas.detach();
-    },
-    tick: function() {
-      var self;
-      self = this;
-      this.$canvas.css({
-        top: -this.viewport.bounds.y1,
-        left: -this.viewport.bounds.x1
-      });
-      return this.framedSprites.each(function(sprite) {
-        return sprite.draw(self.ctx);
-      });
     }
   });
 
