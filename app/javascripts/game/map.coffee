@@ -1,9 +1,11 @@
 game = (window.game ||= {})
 
 meta = game.meta2
-{tickable} = game.roles
+{assignable, attachable, tickable} = game.roles
 
 Map = meta.def 'game.Map',
+  assignable,
+  attachable,
   tickable,
 
   init: (@name, @width, @height, fn) ->
@@ -15,9 +17,11 @@ Map = meta.def 'game.Map',
     @up = @down = @left = @right = null
     @isActive = false
 
-  assignTo: (@viewport) ->
-    @foreground.assignToViewport(@viewport)
-    @background.assignToViewport(@viewport)
+  setParent: (parent) ->
+    @_super(parent)
+    @viewport = viewport
+    @foreground.setParent(viewport)
+    @background.setParent(viewport)
 
   addPlayer: (@player) ->
     @foreground.addPlayer(player)
@@ -26,16 +30,19 @@ Map = meta.def 'game.Map',
     @foreground.load()
     @background.load()
 
+  # This could be a #destroy method, except that it implies that you'd call init
+  # to remove the map completely -- as in, remove it from the map collection --
+  # which I don't see a need for
   unload: ->
     @foreground.unload()
     @background.unload()
 
-  attachToViewport: ->
-    @foreground.attachTo(@viewport)
-    @background.attachTo(@viewport)
+  attach: ->
+    @foreground.attach()
+    @background.attach()
     return this
 
-  detachFromViewport: ->
+  detach: ->
     @foreground.detach()
     @background.detach()
     return this

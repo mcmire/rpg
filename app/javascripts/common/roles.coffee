@@ -1,6 +1,6 @@
-game = (window.game ||= {})
+common = (window.common ||= {})
 
-meta = game.meta2
+meta = common.meta
 
 ROLES = [
   'game.eventable'
@@ -55,35 +55,41 @@ eventable = meta.def 'game.eventable',
     @removeEvents()
     @_super()
 
-# TODO: This could probably be cleaned up... setElement() could set anything
-# which we don't necessarily want
 attachable = meta.def 'game.attachable',
   destroy: ->
     @detach()
     @_super()
 
-  attachTo: (parent) ->
-    if parent.doesInclude?('game.attachable')
-      @$parentElement = parent.$element
-    else
-      # assume that parent is a selector or Bonzo element
-      @$parentElement = $(parent)
-    return this
-
   getElement: -> @$element
 
-  setElement: (@$element) ->
+  setElement: (@$element) -> return this
 
-  getParentElement: -> @$parentElement
+  clearElement: -> @$element = null
+
+  getParentElement: ->
+    unless @$parentElement
+      if typeof @getParent is 'function' and (parent = @getParent())
+        @$parentElement =
+          if typeof parent.getElement is 'function'
+            parent.getElement()
+          else
+            $(parent)
+    return @$parentElement
+
+  setParentElement: (element) ->
+    @$parentElement = $(element)
+    return this
 
   attach: ->
     # Don't use appendTo() here, it doesn't work for some reason
-    @$parentElement.append(@$element) if @$element
+    @getParentElement().append(@$element) if @$element
     return this
 
   detach: ->
     @$element.detach() if @$element and @$element[0] != document.body
     return this
+
+attachable.willAttachTo = attachable.setParentElement
 
 tickable = meta.def 'game.tickable',
   tick: ->
@@ -139,13 +145,15 @@ runnable = meta.def 'game.runnable',
     throw new Error 'resume must be overridden'
 
 assignable = meta.def 'game.assignable',
-  assignTo: (parent) ->
-    @parent = parent
-    return this
+  getParent: -> @parent
+
+  setParent: (@parent) -> return this
+
+assignable.assignTo = assignable.setParent
 
 #---
 
-game.roles =
+common.roles =
   ROLES: ROLES
   eventable: eventable
   attachable: attachable

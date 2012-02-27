@@ -1,10 +1,11 @@
 game = (window.game ||= {})
 
 meta = game.meta2
-{assignable, tickable} = game.roles
+{attachable, assignable, tickable} = game.roles
 SortedObjectMatrix = game.SortedObjectMatrix
 
 Background = meta.def 'game.Background',
+  attachable,
   assignable,
   tickable,
 
@@ -14,8 +15,22 @@ Background = meta.def 'game.Background',
     @sprites = game.SortedObjectMatrix.create()
     @framedSprites = @sprites.clone().extend(game.FramedObjectMatrix)
 
-  assignToViewport: (@viewport) ->
+  setParent: (parent) ->
+    @_super(parent)
+    @viewport = parent
     @framedSprites.frameWithin(@viewport.bounds)
+
+  attach: ->
+    @_super()
+    @ctx = @$canvas[0].getContext('2d')
+
+  tick: ->
+    self = this
+    @$canvas.css
+      top: -@viewport.bounds.y1
+      left: -@viewport.bounds.x1
+    # Remember that sprites are animated, so here is where we do that
+    @framedSprites.each (sprite) -> sprite.draw(self.ctx)
 
   fill: (color, pos, dims) ->
     @fills.push([color, pos, dims])
@@ -37,6 +52,7 @@ Background = meta.def 'game.Background',
       .attr('width', @width)
       .attr('height', @height)
       .addClass('background')
+    @setElement(@$canvas)
     ctx = @$canvas[0].getContext('2d')
     # build the map
     # ctx.save()
@@ -47,28 +63,16 @@ Background = meta.def 'game.Background',
 
     tile.draw(ctx) for tile in @tiles
 
+  # This could be a #destroy method, except that it implies that you'd call init
+  # to remove the map completely -- as in, remove it from the map collection --
+  # which I don't see a need for
   unload: ->
     # Free memory. (This may be a pre-optimization, but it kind of seems like
     # a good idea considering the canvas object will very likely be of a
     # substantial size.)
     @$canvas = null
+    @clearElement()
     @ctx = null
-
-  attachTo: (@viewport) ->
-    # don't use appendTo here, that will clear the canvas for some reason
-    @viewport.getElement().append(@$canvas)
-    @ctx = @$canvas[0].getContext('2d')
-
-  detach: ->
-    @$canvas.detach()
-
-  tick: ->
-    self = this
-    @$canvas.css
-      top: -@viewport.bounds.y1
-      left: -@viewport.bounds.x1
-    # Remember that sprites are animated, so here is where we do that
-    @framedSprites.each (sprite) -> sprite.draw(self.ctx)
 
 Background.add = Background.addTile
 

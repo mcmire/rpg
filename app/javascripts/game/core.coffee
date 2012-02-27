@@ -91,16 +91,16 @@ core = ticker.cloneAs('game.core').extend \
 
     if map = @currentMap
       map.deactivate()
-      map.detachFromViewport()
+      map.detach()
       map.unload()
       map.removePlayer()
 
     map = game.mapCollection.get(name)
     # assign this first so grobs have access to the viewport
-    map.assignTo(@viewport)
+    map.setParent(@viewport)
     map.addPlayer(@player)
     map.load()
-    map.attachToViewport()
+    map.attach()
     @viewport.setMap(map)
     # have to put this after setting map b/c by this point viewport bounds are
     # set and so we can calculate viewport bounds for grobs
