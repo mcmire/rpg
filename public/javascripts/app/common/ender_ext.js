@@ -1,6 +1,8 @@
 (function() {
   var enderMembers;
 
+  $._select('<div>');
+
   enderMembers = {
     center: function() {
       var left, top, vp;

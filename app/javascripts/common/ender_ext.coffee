@@ -1,4 +1,13 @@
 
+# Go ahead and populate $._select. If Bonzo is available then Bonzo is required
+# using Ender's require() function and then $._select is set to bonzo.create
+# (basically). This happens the first time $._select is called though, not
+# before, so by the time it gets called normally, we will have overridden the
+# 'require' function, and Bonzo will never get placed as $._select, and
+# basically everything will fall apart (for instance $('<div') will completely
+# fail).
+$._select('<div>')
+
 # Add methods to each ender element
 enderMembers =
   center: ->
