@@ -31,7 +31,7 @@
           return self.isLoaded = true;
         };
         return this.element.onerror = function() {
-          return raise(new Error("Could not load image " + self.path + "!"));
+          throw new Error("Could not load image " + self.path + "!");
         };
       },
       onLoad: function(fn) {

@@ -30,7 +30,8 @@ define 'game.Image', ->
         console.log "Loaded #{self.path}"
         self.onLoadCallback?()
         self.isLoaded = true
-      @element.onerror = -> raise new Error "Could not load image #{self.path}!"
+      @element.onerror = ->
+        throw new Error "Could not load image #{self.path}!"
 
     onLoad: (fn) ->
       @onLoadCallback = fn
