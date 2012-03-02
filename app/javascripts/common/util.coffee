@@ -88,3 +88,11 @@ define 'util', ->
 
   arrayDelete: (arr, item) ->
     arr.splice(item, 1)
+
+  cmp: (a, b) ->
+    if a > b
+      return 1
+    else if a < b
+      return -1
+    else
+      return 0

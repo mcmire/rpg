@@ -27,7 +27,7 @@ define 'game.ImageSequence', ->
     #                                animation begins again from the first
     #                                frame, otherwise it ends. (Default: false)
     #
-    init: (@image, @width, @height, @frameIndices, opts={}) ->
+    init: (@name, @image, @width, @height, @frameIndices, opts={}) ->
       @numFrames = @frameIndices.length
       # @width = @image.width
       # @height = @image.height / @numFrames  # this should be a perfect integer

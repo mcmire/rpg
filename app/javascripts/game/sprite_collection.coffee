@@ -5,8 +5,15 @@ define 'game.spriteCollection', ->
 
   sprites = {}
 
-  add = (imagePath, width, height, frameIndices, opts={}) ->
-    sprites[imagePath] = ImageSequence.create(imageCollection.get(imagePath), width, height, frameIndices, opts)
+  add = (name, width, height, frameIndices, opts={}) ->
+    sprites[name] = ImageSequence.create(name, imageCollection.get(name), width, height, frameIndices, opts)
+
+  get = (name) ->
+    sprites[name] or throw new Error "Couldn't find sprite #{name}!"
+
+  each = (fn) ->
+    names = $.v.keys(sprites).sort()
+    $.v.each names, (name) -> fn(sprites[name])
 
   #---
 
@@ -15,5 +22,6 @@ define 'game.spriteCollection', ->
   #---
 
   return {
-    get: (name) -> sprites[name]
+    get: get
+    each: each
   }

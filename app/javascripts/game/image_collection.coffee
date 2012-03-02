@@ -7,20 +7,23 @@ define 'game.imageCollection', ->
   numImages = 0
   numLoaded = 0
 
-  add = (path, width, height) ->
-    img = images[path] = Image.create(path, width, height)
+  add = (name, width, height) ->
+    img = images[name] = Image.create(name, width, height)
     img.onLoad -> numLoaded++
     numImages++
 
+  get = (name) ->
+    images[name] or throw new Error "Couldn't find image #{name}!"
+
   load = ->
-    img.load() for path, img of images
+    img.load() for name, img of images
 
   isLoaded = ->
     numLoaded == numImages
 
   each = (fn) ->
-    paths = $.v.keys(images).sort()
-    $.v.each paths, (path) -> fn(images[path])
+    names = $.v.keys(images).sort()
+    $.v.each names, (name) -> fn(images[name])
 
   #---
 
@@ -29,7 +32,7 @@ define 'game.imageCollection', ->
   add 'dirt2', 16, 16
   add 'dirt3', 16, 16
   add 'entrance_skull', 32, 16
-  add 'flower', 48, 16
+  add 'flower', 16, 48
   add 'grass_dirt_edge01', 16, 16
   add 'grass_dirt_edge02', 16, 16
   add 'grass_dirt_edge03', 16, 16
@@ -75,8 +78,8 @@ define 'game.imageCollection', ->
   #---
 
   return {
-    get: (name) ->
-      images[name] or throw new Error "Couldn't find image #{name}!"
+    get: get
     load: load
     isLoaded: isLoaded
+    each: each
   }

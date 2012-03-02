@@ -5,7 +5,8 @@
     meta = require('meta');
     _ref = require('roles'), assignable = _ref.assignable, simpleDrawable = _ref.simpleDrawable;
     ImageSequence = meta.def(assignable, simpleDrawable, {
-      init: function(image, width, height, frameIndices, opts) {
+      init: function(name, image, width, height, frameIndices, opts) {
+        this.name = name;
         this.image = image;
         this.width = width;
         this.height = height;

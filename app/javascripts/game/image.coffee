@@ -7,12 +7,13 @@ define 'game.Image', ->
     assignable,
     simpleDrawable,
 
-    init: (path, @width, @height) ->
+    init: (@name, @width, @height) ->
+      path = @name
+      unless /\.[^.]+$/.test(path)
+        path += ".gif"
+      unless /^\//.test(path)
+        path = require('common').resolveImagePath(path)
       @path = path
-      unless /\.[^.]+$/.test(@path)
-        @path += ".gif"
-      unless /^\//.test(@path)
-        @path = require('common').resolveImagePath(@path)
       @isLoaded = false
 
     getElement: -> @element

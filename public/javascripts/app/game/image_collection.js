@@ -1,25 +1,30 @@
 (function() {
 
   define('game.imageCollection', function() {
-    var Image, add, each, images, isLoaded, load, meta, numImages, numLoaded;
+    var Image, add, each, get, images, isLoaded, load, meta, numImages, numLoaded;
     meta = require('meta');
     Image = require('game.Image');
     images = {};
     numImages = 0;
     numLoaded = 0;
-    add = function(path, width, height) {
+    add = function(name, width, height) {
       var img;
-      img = images[path] = Image.create(path, width, height);
+      img = images[name] = Image.create(name, width, height);
       img.onLoad(function() {
         return numLoaded++;
       });
       return numImages++;
     };
+    get = function(name) {
+      return images[name] || (function() {
+        throw new Error("Couldn't find image " + name + "!");
+      })();
+    };
     load = function() {
-      var img, path, _results;
+      var img, name, _results;
       _results = [];
-      for (path in images) {
-        img = images[path];
+      for (name in images) {
+        img = images[name];
         _results.push(img.load());
       }
       return _results;
@@ -28,10 +33,10 @@
       return numLoaded === numImages;
     };
     each = function(fn) {
-      var paths;
-      paths = $.v.keys(images).sort();
-      return $.v.each(paths, function(path) {
-        return fn(images[path]);
+      var names;
+      names = $.v.keys(images).sort();
+      return $.v.each(names, function(name) {
+        return fn(images[name]);
       });
     };
     add('8stone', 32, 32);
@@ -39,7 +44,7 @@
     add('dirt2', 16, 16);
     add('dirt3', 16, 16);
     add('entrance_skull', 32, 16);
-    add('flower', 48, 16);
+    add('flower', 16, 48);
     add('grass_dirt_edge01', 16, 16);
     add('grass_dirt_edge02', 16, 16);
     add('grass_dirt_edge03', 16, 16);
@@ -81,13 +86,10 @@
     add('rock2', 16, 16);
     add('link2x', 34, 1440);
     return {
-      get: function(name) {
-        return images[name] || (function() {
-          throw new Error("Couldn't find image " + name + "!");
-        })();
-      },
+      get: get,
       load: load,
-      isLoaded: isLoaded
+      isLoaded: isLoaded,
+      each: each
     };
   });
 

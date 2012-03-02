@@ -13,6 +13,7 @@ body {
 }
 
 // change box model so that padding and margin do not affect specified dimensions
+// this just makes things a hell of a lot easier
 // http://paulirish.com/2012/box-sizing-border-box-ftw/
 * {
   -moz-box-sizing: border-box;
@@ -37,7 +38,7 @@ body {
 
 $sidebar-width: 300px;
 
-#editor-map {
+#editor-viewport {
   position: absolute;
   top: 0;
   left: 0;
@@ -46,9 +47,19 @@ $sidebar-width: 300px;
   margin-right: $sidebar-width;
   background-color: silver;
   height: 300px;
+  overflow: hidden;
+}
+
+.editor-map {
+  background-color: white;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 #editor-sidebar {
+  $spacing: 10px;
+
   position: absolute;
   width: $sidebar-width;
   // height is determined via JS
@@ -56,4 +67,14 @@ $sidebar-width: 300px;
   right: 0;
   background-color: #999;
   height: 300px;
+  padding: $spacing;
+  overflow-y: scroll;
+
+  div.img {
+    display: inline-block;
+    vertical-align: top;
+    margin-right: $spacing;
+    margin-bottom: $spacing;
+    overflow: hidden;
+  }
 }

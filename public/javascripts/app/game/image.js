@@ -5,14 +5,15 @@
     meta = require('meta');
     _ref = require('roles'), assignable = _ref.assignable, simpleDrawable = _ref.simpleDrawable;
     Image = meta.def(assignable, simpleDrawable, {
-      init: function(path, width, height) {
+      init: function(name, width, height) {
+        var path;
+        this.name = name;
         this.width = width;
         this.height = height;
+        path = this.name;
+        if (!/\.[^.]+$/.test(path)) path += ".gif";
+        if (!/^\//.test(path)) path = require('common').resolveImagePath(path);
         this.path = path;
-        if (!/\.[^.]+$/.test(this.path)) this.path += ".gif";
-        if (!/^\//.test(this.path)) {
-          this.path = require('common').resolveImagePath(this.path);
-        }
         return this.isLoaded = false;
       },
       getElement: function() {
