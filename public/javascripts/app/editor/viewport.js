@@ -77,6 +77,24 @@
           mouse = null;
           evt.stopPropagation();
           return evt.preventDefault();
+        }).bind('dragenter.editor', function(evt) {
+          if (evt.dataTransfer.types.indexOf('application/x-sidebar-object') === -1) {
+            return;
+          }
+          evt.dataTransfer.dropEffect = 'link';
+          evt.dataTransfer.effectAllowed = 'link';
+          _this.$draggedImage = $(_this.core.draggedObject.image.element.cloneNode()).addClass('editor-dragged-image');
+          _this.$viewport.append(_this.$draggedImage);
+          return evt.preventDefault();
+        }).bind('dragover.editor', function(evt) {
+          evt.preventDefault();
+          return _this.$draggedImage.css('top', "" + evt.pageY + "px").css('left', "" + evt.pageX + "px");
+        }).bind('dragleave.editor', function(evt) {
+          _this.$draggedImage.remove();
+          return _this.$draggedImage = null;
+        }).bind('drop.editor', function(evt) {
+          _this.map.addObject(_this.core.draggedObject);
+          return evt.preventDefault();
         });
         return this.$viewport.append($map);
       }

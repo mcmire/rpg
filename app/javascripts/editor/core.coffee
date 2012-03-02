@@ -69,18 +69,18 @@ define 'editor.core', ->
       spriteCollection.each (sprite) ->
         return if names[sprite.name]
         dims = {w: sprite.width, h: sprite.height}
-        objects.push [dims, sprite, sprite.image]
+        objects.push {dims: dims, object: sprite, image: sprite.image}
         names[sprite.name] = 1
       imageCollection.each (image) ->
         return if image.name is 'link2x'
         return if names[image.name]
         dims = {w: image.width, h: image.height}
-        objects.push [dims, image, image]
+        objects.push {dims: dims, object: image, image: image}
         names[image.name] = 1
 
       objects = objects.sort (x1, x2) ->
-        [d1, d2] = [x1[0], x2[0]]
-        # sort by height first
+        [d1, d2] = [x1.dims, x2.dims]
+        # display objects side-by-side, sorted by height ascending
         [w1, h1] = [d1.w, d1.h].reverse()
         [w2, h2] = [d2.w, d2.h].reverse()
         if w1 > w2
@@ -94,13 +94,21 @@ define 'editor.core', ->
         else
           return 0
 
-      $.v.each objects, ([dims, object, image]) =>
+      $.v.each objects, (so) =>
         $div = $("<div/>")
           .addClass('img')
-          .data('name', name)
-          .width(dims.w)
-          .height(dims.h)
-          .append(image.getElement())
+          .data('name', so.object.name)
+          .width(so.dims.w)
+          .height(so.dims.h)
+          .append(so.image.getElement())
+          .attr('draggable', true)
+          .bind 'dragstart.editor', (evt) =>
+            @draggedObject = so
+            evt.dataTransfer.setData('application/x-sidebar-object', 1)
+            evt.dataTransfer.dropEffect = 'link'
+            evt.dataTransfer.effectAllowed = 'link'
+          .bind 'dragend.editor', (evt) =>
+            @draggedObject = null
         @$sidebar.append($div)
 
     _chooseMap: (mapName) ->

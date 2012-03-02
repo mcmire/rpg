@@ -75,7 +75,11 @@
             w: sprite.width,
             h: sprite.height
           };
-          objects.push([dims, sprite, sprite.image]);
+          objects.push({
+            dims: dims,
+            object: sprite,
+            image: sprite.image
+          });
           return names[sprite.name] = 1;
         });
         imageCollection.each(function(image) {
@@ -86,12 +90,16 @@
             w: image.width,
             h: image.height
           };
-          objects.push([dims, image, image]);
+          objects.push({
+            dims: dims,
+            object: image,
+            image: image
+          });
           return names[image.name] = 1;
         });
         objects = objects.sort(function(x1, x2) {
           var d1, d2, h1, h2, w1, w2, _ref, _ref2, _ref3;
-          _ref = [x1[0], x2[0]], d1 = _ref[0], d2 = _ref[1];
+          _ref = [x1.dims, x2.dims], d1 = _ref[0], d2 = _ref[1];
           _ref2 = [d1.w, d1.h].reverse(), w1 = _ref2[0], h1 = _ref2[1];
           _ref3 = [d2.w, d2.h].reverse(), w2 = _ref3[0], h2 = _ref3[1];
           if (w1 > w2) {
@@ -106,10 +114,16 @@
             return 0;
           }
         });
-        return $.v.each(objects, function(_arg) {
-          var $div, dims, image, object;
-          dims = _arg[0], object = _arg[1], image = _arg[2];
-          $div = $("<div/>").addClass('img').data('name', name).width(dims.w).height(dims.h).append(image.getElement());
+        return $.v.each(objects, function(so) {
+          var $div;
+          $div = $("<div/>").addClass('img').data('name', so.object.name).width(so.dims.w).height(so.dims.h).append(so.image.getElement()).attr('draggable', true).bind('dragstart.editor', function(evt) {
+            _this.draggedObject = so;
+            evt.dataTransfer.setData('application/x-sidebar-object', 1);
+            evt.dataTransfer.dropEffect = 'link';
+            return evt.dataTransfer.effectAllowed = 'link';
+          }).bind('dragend.editor', function(evt) {
+            return _this.draggedObject = null;
+          });
           return _this.$sidebar.append($div);
         });
       },

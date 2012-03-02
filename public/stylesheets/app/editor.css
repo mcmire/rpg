@@ -32,6 +32,9 @@ body {
   background-color: silver;
   height: 300px;
   overflow: hidden; }
+  #editor-viewport .editor-dragged-image {
+    position: absolute;
+    z-index: 10; }
 
 .editor-map {
   background-color: white;

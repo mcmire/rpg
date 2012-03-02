@@ -1,5 +1,7 @@
 # TODO
 
+* Use [keymaster](https://github.com/madrobby/keymaster) for detecting keys?
+
 ## Game
 
 * Fix sprites for the player and the enemy

@@ -48,6 +48,11 @@ $sidebar-width: 300px;
   background-color: silver;
   height: 300px;
   overflow: hidden;
+
+  .editor-dragged-image {
+    position: absolute;
+    z-index: 10;
+  }
 }
 
 .editor-map {

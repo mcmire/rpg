@@ -109,4 +109,31 @@ define 'editor.viewport', ->
           evt.stopPropagation()
           evt.preventDefault()
 
+        .bind 'dragenter.editor', (evt) =>
+          return if evt.dataTransfer.types.indexOf('application/x-sidebar-object') is -1
+          evt.dataTransfer.dropEffect = 'link'
+          evt.dataTransfer.effectAllowed = 'link'
+          # clone the image node
+          @$draggedImage = $(@core.draggedObject.image.element.cloneNode())
+            .addClass('editor-dragged-image')
+          @$viewport.append(@$draggedImage)
+          # indicate that a drop *is* allowed
+          evt.preventDefault()
+
+        .bind 'dragover.editor', (evt) =>
+          # indicate that a drop *is* allowed
+          evt.preventDefault()
+          @$draggedImage
+            .css('top', "#{evt.pageY}px")
+            .css('left', "#{evt.pageX}px")
+
+        .bind 'dragleave.editor', (evt) =>
+          @$draggedImage.remove()
+          @$draggedImage = null
+
+        .bind 'drop.editor', (evt) =>
+          @map.addObject(@core.draggedObject)
+          # accept the drop
+          evt.preventDefault()
+
       @$viewport.append($map)
