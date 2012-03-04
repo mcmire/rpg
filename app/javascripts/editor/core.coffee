@@ -158,7 +158,8 @@ define 'editor.core', ->
             console.log 'core mousedragstart'
             # clone the image node
             $elemBeingDragged = $($div[0].cloneNode(true))
-              .attr('id', 'editor-drag-clone')
+              .addClass('editor-map-object')
+              .addClass('drag-helper')
               .removeClass('img')
             @rememberDragObject([$elemBeingDragged, so])
             $(document.body).addClass('editor-drag-active')
@@ -166,7 +167,7 @@ define 'editor.core', ->
 
           .bind 'mousedragend.editor.core', (evt) =>
             console.log 'core mousedragend'
-            # @viewport.unbindDragEvents()
+            @viewport.unbindDragEvents()
             $(document.body).removeClass('editor-drag-active')
             @forgetDragObject() if @$elemBeingDragged
 

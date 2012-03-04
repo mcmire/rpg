@@ -72,5 +72,11 @@ get "/editor/?" do
 end
 
 get "/keyboard_test/?" do
+  @action = 'keyboard_test'
   erb :keyboard_test
+end
+
+get "/mouse_test/?" do
+  @action = 'mouse_test'
+  erb :mouse_test
 end

@@ -68,9 +68,15 @@ javascripts:
     - public/javascripts/app/game/sprite_collection.js
     - public/javascripts/app/game/still_object.js
 
+  mouse_test:
+    - public/javascripts/app/mouse_test.js
+
 stylesheets:
   game:
     - public/stylesheets/app/game.css
 
   editor:
     - public/stylesheets/app/editor.css
+
+  mouse_test:
+    - public/stylesheets/app/mouse_test.css

@@ -30,7 +30,7 @@ define 'editor.viewport', ->
       @_recalculateBounds()
 
     rememberDragObject: ([@$elemBeingDragged, @objectBeingDragged]) ->
-      @$element.append(@$elemBeingDragged)
+      @$map.append(@$elemBeingDragged)
 
     forgetDragObject: (removeElement=true) ->
       [a, b] = [@$elemBeingDragged, @objectBeingDragged]
@@ -79,10 +79,10 @@ define 'editor.viewport', ->
         .bind 'mousedragover.editor.viewport', (evt) =>
           console.log 'viewport mousedragover'
           @rememberDragObject(@core.forgetDragObject())
-          @$elemBeingDragged.addClass('in-viewport')
+          @$elemBeingDragged.removeClass('drag-helper')
 
         .bind 'mousedrag.editor.viewport', (evt) =>
-          console.log 'viewport drag'
+          # console.log 'viewport drag'
           x = Math.round(evt.pageX - (@objectBeingDragged.dims.w/2)) - @bounds.x1
           y = Math.round(evt.pageY - (@objectBeingDragged.dims.h/2)) - @bounds.y1
           x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
@@ -91,7 +91,7 @@ define 'editor.viewport', ->
 
         .bind 'mousedragout.editor.viewport', (evt) =>
           console.log 'viewport mousedragout'
-          @$elemBeingDragged.removeClass('in-viewport')
+          @$elemBeingDragged.addClass('drag-helper')
           @core.rememberDragObject(@forgetDragObject())
           @core.positionDragHelper(evt)
 
@@ -99,8 +99,9 @@ define 'editor.viewport', ->
         # it somehow.... why????
         .one 'mousedrop.editor.viewport', (evt) =>
           console.log 'viewport drop'
-          @$elemBeingDragged.unbind('.editor')
-          @$elemBeingDragged.removeAttr('id')
+          @$elemBeingDragged
+            .unbind('.editor')
+            .removeClass('drag-helper')
           @addObject(@objectBeingDragged)
           @forgetDragObject(false)
 

@@ -89,12 +89,11 @@ $sidebar-width: 300px;
   }
 }
 
-#editor-drag-clone {
+.editor-map-object {
   position: absolute;
   z-index: 10;
-  opacity: 0.7;
 
-  &.in-viewport {
-    opacity: 1;
+  &.drag-helper {
+    opacity: 0.7;
   }
 }

@@ -167,12 +167,13 @@
           }).bind('mousedragstart.editor.core', function(evt) {
             var $elemBeingDragged;
             console.log('core mousedragstart');
-            $elemBeingDragged = $($div[0].cloneNode(true)).attr('id', 'editor-drag-clone').removeClass('img');
+            $elemBeingDragged = $($div[0].cloneNode(true)).addClass('editor-map-object').addClass('drag-helper').removeClass('img');
             _this.rememberDragObject([$elemBeingDragged, so]);
             $(document.body).addClass('editor-drag-active');
             return _this.viewport.bindDragEvents();
           }).bind('mousedragend.editor.core', function(evt) {
             console.log('core mousedragend');
+            _this.viewport.unbindDragEvents();
             $(document.body).removeClass('editor-drag-active');
             if (_this.$elemBeingDragged) return _this.forgetDragObject();
           });

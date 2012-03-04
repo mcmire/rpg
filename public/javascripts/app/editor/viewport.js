@@ -28,7 +28,7 @@
       },
       rememberDragObject: function(_arg) {
         this.$elemBeingDragged = _arg[0], this.objectBeingDragged = _arg[1];
-        return this.$element.append(this.$elemBeingDragged);
+        return this.$map.append(this.$elemBeingDragged);
       },
       forgetDragObject: function(removeElement) {
         var a, b, _ref;
@@ -64,10 +64,9 @@
         }).bind('mousedragover.editor.viewport', function(evt) {
           console.log('viewport mousedragover');
           _this.rememberDragObject(_this.core.forgetDragObject());
-          return _this.$elemBeingDragged.addClass('in-viewport');
+          return _this.$elemBeingDragged.removeClass('drag-helper');
         }).bind('mousedrag.editor.viewport', function(evt) {
           var x, y;
-          console.log('viewport drag');
           x = Math.round(evt.pageX - (_this.objectBeingDragged.dims.w / 2)) - _this.bounds.x1;
           y = Math.round(evt.pageY - (_this.objectBeingDragged.dims.h / 2)) - _this.bounds.y1;
           x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
@@ -75,13 +74,12 @@
           return _this.$elemBeingDragged.css('top', "" + y + "px").css('left', "" + x + "px");
         }).bind('mousedragout.editor.viewport', function(evt) {
           console.log('viewport mousedragout');
-          _this.$elemBeingDragged.removeClass('in-viewport');
+          _this.$elemBeingDragged.addClass('drag-helper');
           _this.core.rememberDragObject(_this.forgetDragObject());
           return _this.core.positionDragHelper(evt);
         }).one('mousedrop.editor.viewport', function(evt) {
           console.log('viewport drop');
-          _this.$elemBeingDragged.unbind('.editor');
-          _this.$elemBeingDragged.removeAttr('id');
+          _this.$elemBeingDragged.unbind('.editor').removeClass('drag-helper');
           _this.addObject(_this.objectBeingDragged);
           return _this.forgetDragObject(false);
         });
