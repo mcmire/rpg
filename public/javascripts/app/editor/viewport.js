@@ -47,37 +47,38 @@
         $(window).bind('mousemove.editor.viewport', function(evt) {
           if (_this._mouseWithinViewport(evt)) {
             if (mouseLocation !== 'inside') {
-              _this.$map.trigger('dragover.editor.viewport', evt);
+              _this.$map.trigger('mousedragover.editor.viewport', evt);
               mouseLocation = 'inside';
             }
-            return _this.$map.trigger('drag.editor.viewport');
+            return _this.$map.trigger('mousedrag.editor.viewport', evt);
           } else if (_this.$elemBeingDragged && mouseLocation !== 'outside') {
-            _this.$map.trigger('dragout.editor.viewport', evt);
+            _this.$map.trigger('mousedragout.editor.viewport', evt);
             return mouseLocation = 'outside';
           }
         });
         return this.$map.one('mouseup.editor.viewport', function(evt) {
           console.log('viewport mouseup');
           if (_this.$elemBeingDragged) {
-            return _this.$map.trigger('drop.editor.viewport', evt);
+            return _this.$map.trigger('mousedrop.editor.viewport', evt);
           }
-        }).bind('dragover.editor.viewport', function(evt) {
-          console.log('viewport dragover');
+        }).bind('mousedragover.editor.viewport', function(evt) {
+          console.log('viewport mousedragover');
           _this.rememberDragObject(_this.core.forgetDragObject());
           return _this.$elemBeingDragged.addClass('in-viewport');
-        }).bind('drag.editor.viewport', function(evt) {
+        }).bind('mousedrag.editor.viewport', function(evt) {
           var x, y;
+          console.log('viewport drag');
           x = Math.round(evt.pageX - (_this.objectBeingDragged.dims.w / 2)) - _this.bounds.x1;
           y = Math.round(evt.pageY - (_this.objectBeingDragged.dims.h / 2)) - _this.bounds.y1;
           x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
           return _this.$elemBeingDragged.css('top', "" + y + "px").css('left', "" + x + "px");
-        }).bind('dragout.editor.viewport', function(evt) {
-          console.log('viewport dragout');
+        }).bind('mousedragout.editor.viewport', function(evt) {
+          console.log('viewport mousedragout');
           _this.$elemBeingDragged.removeClass('in-viewport');
           _this.core.rememberDragObject(_this.forgetDragObject());
           return _this.core.positionDragHelper(evt);
-        }).one('drop.editor.viewport', function(evt) {
+        }).one('mousedrop.editor.viewport', function(evt) {
           console.log('viewport drop');
           _this.$elemBeingDragged.unbind('.editor');
           _this.$elemBeingDragged.removeAttr('id');
@@ -87,9 +88,9 @@
       },
       unbindDragEvents: function() {
         $(window).unbind('mousemove.editor.viewport');
-        this.$map.unbind('dragover.editor.viewport');
-        this.$map.unbind('drag.editor.viewport');
-        return this.$map.unbind('dragout.editor.viewport');
+        this.$map.unbind('mousedragover.editor.viewport');
+        this.$map.unbind('mousedrag.editor.viewport');
+        return this.$map.unbind('mousedragout.editor.viewport');
       },
       newMap: function() {
         var $map, canvas, ctx, dragEntered, height, map, mouse, width,

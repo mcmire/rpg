@@ -46,11 +46,12 @@
         return this.$elemBeingDragged.css('top', "" + y + "px").css('left', "" + x + "px");
       },
       _resizeUI: function() {
-        var h, nh, sw, wh, ww;
-        wh = $(window).height();
-        ww = $(window).width();
-        nh = $('#editor-nav').height();
-        sw = this.$sidebar.width();
+        var h, nh, sw, wh, win, ww;
+        win = $.viewport();
+        wh = win.height;
+        ww = win.width;
+        nh = $('#editor-nav').offset().height;
+        sw = this.$sidebar.offset().width;
         this.viewport.setWidth(ww - sw);
         h = wh - nh;
         this.viewport.setHeight(h);
@@ -147,7 +148,7 @@
             evt.preventDefault();
             $(window).bind('mousemove.editor.core', function(evt) {
               if (!dragOccurred) {
-                $div.trigger('dragstart.editor.core', evt);
+                $div.trigger('mousedragstart.editor.core', evt);
                 dragOccurred = true;
               }
               if (_this.$elemBeingDragged) {
@@ -158,20 +159,20 @@
             });
             return $(window).one('mouseup.editor.core', function(evt) {
               console.log('core mouseup');
-              if (dragOccurred) $div.trigger('dragend.editor.core', evt);
+              if (dragOccurred) $div.trigger('mousedragend.editor.core', evt);
               $(window).unbind('mousemove.editor.core');
               dragOccurred = false;
               return true;
             });
-          }).bind('dragstart.editor.core', function(evt) {
+          }).bind('mousedragstart.editor.core', function(evt) {
             var $elemBeingDragged;
-            console.log('core dragstart');
+            console.log('core mousedragstart');
             $elemBeingDragged = $($div[0].cloneNode(true)).attr('id', 'editor-drag-clone').removeClass('img');
             _this.rememberDragObject([$elemBeingDragged, so]);
             $(document.body).addClass('editor-drag-active');
             return _this.viewport.bindDragEvents();
-          }).bind('dragend.editor.core', function(evt) {
-            console.log('core dragend');
+          }).bind('mousedragend.editor.core', function(evt) {
+            console.log('core mousedragend');
             $(document.body).removeClass('editor-drag-active');
             if (_this.$elemBeingDragged) return _this.forgetDragObject();
           });

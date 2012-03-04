@@ -44,10 +44,11 @@ define 'editor.core', ->
       @$elemBeingDragged.css('top', "#{y}px").css('left', "#{x}px")
 
     _resizeUI: ->
-      wh = $(window).height()
-      ww = $(window).width()
-      nh = $('#editor-nav').height()
-      sw = @$sidebar.width()
+      win = $.viewport()
+      wh  = win.height
+      ww  = win.width
+      nh  = $('#editor-nav').offset().height
+      sw  = @$sidebar.offset().width
       @viewport.setWidth(ww - sw)
       h = wh - nh
       @viewport.setHeight(h)
@@ -137,7 +138,7 @@ define 'editor.core', ->
             $(window).bind 'mousemove.editor.core', (evt) =>
               # console.log 'mousemove while mousedown'
               unless dragOccurred
-                $div.trigger 'dragstart.editor.core', evt
+                $div.trigger 'mousedragstart.editor.core', evt
                 dragOccurred = true
               if @$elemBeingDragged
                 @positionDragHelper(evt)
@@ -148,13 +149,13 @@ define 'editor.core', ->
             $(window).one 'mouseup.editor.core', (evt) =>
               console.log 'core mouseup'
               if dragOccurred
-                $div.trigger 'dragend.editor.core', evt
+                $div.trigger 'mousedragend.editor.core', evt
               $(window).unbind 'mousemove.editor.core'
               dragOccurred = false
               return true
 
-          .bind 'dragstart.editor.core', (evt) =>
-            console.log 'core dragstart'
+          .bind 'mousedragstart.editor.core', (evt) =>
+            console.log 'core mousedragstart'
             # clone the image node
             $elemBeingDragged = $($div[0].cloneNode(true))
               .attr('id', 'editor-drag-clone')
@@ -163,8 +164,8 @@ define 'editor.core', ->
             $(document.body).addClass('editor-drag-active')
             @viewport.bindDragEvents()
 
-          .bind 'dragend.editor.core', (evt) =>
-            console.log 'core dragend'
+          .bind 'mousedragend.editor.core', (evt) =>
+            console.log 'core mousedragend'
             # @viewport.unbindDragEvents()
             $(document.body).removeClass('editor-drag-active')
             @forgetDragObject() if @$elemBeingDragged

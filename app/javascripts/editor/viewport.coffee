@@ -59,12 +59,12 @@ define 'editor.viewport', ->
           if @_mouseWithinViewport(evt)
             if mouseLocation isnt 'inside'
               # fire only the first time
-              @$map.trigger 'dragover.editor.viewport', evt
+              @$map.trigger 'mousedragover.editor.viewport', evt
               mouseLocation = 'inside'
-            @$map.trigger 'drag.editor.viewport'
+            @$map.trigger 'mousedrag.editor.viewport', evt
           else if @$elemBeingDragged and mouseLocation isnt 'outside'
             # fire only the first time
-            @$map.trigger 'dragout.editor.viewport', evt
+            @$map.trigger 'mousedragout.editor.viewport', evt
             mouseLocation = 'outside'
 
       @$map
@@ -73,28 +73,31 @@ define 'editor.viewport', ->
         .one 'mouseup.editor.viewport', (evt) =>
           console.log 'viewport mouseup'
           if @$elemBeingDragged
-            @$map.trigger 'drop.editor.viewport', evt
+            @$map.trigger 'mousedrop.editor.viewport', evt
           # evt.preventDefault()
 
-        .bind 'dragover.editor.viewport', (evt) =>
-          console.log 'viewport dragover'
+        .bind 'mousedragover.editor.viewport', (evt) =>
+          console.log 'viewport mousedragover'
           @rememberDragObject(@core.forgetDragObject())
           @$elemBeingDragged.addClass('in-viewport')
 
-        .bind 'drag.editor.viewport', (evt) =>
+        .bind 'mousedrag.editor.viewport', (evt) =>
+          console.log 'viewport drag'
           x = Math.round(evt.pageX - (@objectBeingDragged.dims.w/2)) - @bounds.x1
           y = Math.round(evt.pageY - (@objectBeingDragged.dims.h/2)) - @bounds.y1
           x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
           @$elemBeingDragged.css('top', "#{y}px").css('left', "#{x}px")
 
-        .bind 'dragout.editor.viewport', (evt) =>
-          console.log 'viewport dragout'
+        .bind 'mousedragout.editor.viewport', (evt) =>
+          console.log 'viewport mousedragout'
           @$elemBeingDragged.removeClass('in-viewport')
           @core.rememberDragObject(@forgetDragObject())
           @core.positionDragHelper(evt)
 
-        .one 'drop.editor.viewport', (evt) =>
+        # XXX: This is never getting fired... seems the drag helper is blocking
+        # it somehow.... why????
+        .one 'mousedrop.editor.viewport', (evt) =>
           console.log 'viewport drop'
           @$elemBeingDragged.unbind('.editor')
           @$elemBeingDragged.removeAttr('id')
@@ -103,9 +106,9 @@ define 'editor.viewport', ->
 
     unbindDragEvents: ->
       $(window).unbind 'mousemove.editor.viewport'
-      @$map.unbind 'dragover.editor.viewport'
-      @$map.unbind 'drag.editor.viewport'
-      @$map.unbind 'dragout.editor.viewport'
+      @$map.unbind 'mousedragover.editor.viewport'
+      @$map.unbind 'mousedrag.editor.viewport'
+      @$map.unbind 'mousedragout.editor.viewport'
 
     newMap: ->
       # create the grid pattern that backgrounds the map
