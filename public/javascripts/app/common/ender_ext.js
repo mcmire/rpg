@@ -1,41 +1,34 @@
 (function() {
-  var enderMembers;
+  var enderMembers, _boundsCollide, _boundsFor;
 
   $._select('<div>');
 
+  _boundsFor = function(offset) {
+    return {
+      x1: offset.left,
+      x2: offset.left + offset.width,
+      y1: offset.top,
+      y2: offset.top + offset.height
+    };
+  };
+
+  _boundsCollide = function(b1, b2) {
+    var x1i, x2i, xo, y1i, y2i, yo, _ref, _ref2, _ref3, _ref4;
+    x1i = (b2.x1 < (_ref = b1.x1) && _ref < b2.x2);
+    x2i = (b2.x1 < (_ref2 = b1.x2) && _ref2 < b2.x2);
+    xo = b1.x1 <= b2.x1 && b1.x2 >= b2.x2;
+    y1i = (b2.y1 < (_ref3 = b1.y1) && _ref3 < b2.y2);
+    y2i = (b2.y1 < (_ref4 = b1.y2) && _ref4 < b2.y2);
+    yo = b1.y1 <= b2.y1 && b1.y2 >= b2.y2;
+    return (x1i || x2i || xo) && (y1i || y2i || yo);
+  };
+
   enderMembers = {
-    center: function() {
-      var left, top, vp;
-      vp = $.viewport();
-      top = (vp.height / 2) - (this.height() / 2);
-      left = (vp.width / 2) - (this.width() / 2);
-      this.css("top", top + "px").css("left", left + "px");
-      return this;
-    },
-    position: function() {
-      var o, p, po;
-      if (p = this.parent()) {
-        po = p.offset();
-        o = this.offset();
-        return {
-          top: o.top - po.top,
-          left: o.left - po.left
-        };
-      } else {
-        return {
-          top: 0,
-          left: 0
-        };
-      }
-    },
-    parent: function() {
-      if (this[0].parentNode) return $(this[0].parentNode);
-    },
-    computedStyle: function(prop) {
-      var computedStyle, elem, _ref;
-      elem = this[0];
-      computedStyle = (_ref = elem.currentStyle) != null ? _ref : document.defaultView.getComputedStyle(elem, null);
-      return prop && computedStyle[prop] || computedStyle;
+    collidesWith: function($element) {
+      var eo, to;
+      to = this.offset();
+      eo = $element.offset();
+      return _boundsCollide(to, eo);
     }
   };
 

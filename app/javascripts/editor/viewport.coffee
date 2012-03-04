@@ -3,21 +3,41 @@ define 'editor.viewport', ->
   meta = require('meta')
   util = require('util')
 
+  DRAG_SNAP_GRID_SIZE = 16
+
   meta.def
     init: (@core) ->
-      @$viewport = $('#editor-viewport')
-      @width = @$viewport.width()
-      @height = @$viewport.height()
-      # @bounds = require('game.Bounds').rect(0, 0, @width, @height)
+      @$element = $('#editor-viewport')
+      @_recalculateBounds()
+      @objects = []
       return this
 
+    _recalculateBounds: ->
+      offset = @$element.offset()
+      @bounds = require('game.Bounds').rect(
+        offset.left,
+        offset.top,
+        offset.width,
+        offset.height
+      )
+
     setHeight: (height) ->
-      @height = height
-      @$viewport.height(height)
+      @$element.height(height)
+      @_recalculateBounds()
 
     setWidth: (width) ->
-      @width = width
-      @$viewport.width(width)
+      @$element.width(width)
+      @_recalculateBounds()
+
+    rememberDragObject: ([@$elemBeingDragged, @objectBeingDragged]) ->
+      @$element.append(@$elemBeingDragged)
+
+    forgetDragObject: (removeElement=true) ->
+      [a, b] = [@$elemBeingDragged, @objectBeingDragged]
+      @$elemBeingDragged.remove() if removeElement
+      delete @$elemBeingDragged
+      delete @objectBeingDragged
+      return [a, b]
 
     # setMap: (currentMap) ->
     #   @currentMap = map
@@ -26,6 +46,66 @@ define 'editor.viewport', ->
 
     # unsetMap: ->
     #   @currentMap.detach()
+
+    bindDragEvents: ->
+      console.log 'binding drag events to viewport'
+
+      mouseLocation = null
+      # we are binding mousemove to the window instead of the viewport - binding
+      # to the viewport won't work as the mouse is already on top of the drag
+      # helper when it is dragged into the viewport
+      $(window)
+        .bind 'mousemove.editor.viewport', (evt) =>
+          if @_mouseWithinViewport(evt)
+            if mouseLocation isnt 'inside'
+              # fire only the first time
+              @$map.trigger 'dragover.editor.viewport', evt
+              mouseLocation = 'inside'
+            @$map.trigger 'drag.editor.viewport'
+          else if @$elemBeingDragged and mouseLocation isnt 'outside'
+            # fire only the first time
+            @$map.trigger 'dragout.editor.viewport', evt
+            mouseLocation = 'outside'
+
+      @$map
+        # XXX: This is never getting fired... seems the drag helper is blocking
+        # it somehow.... why????
+        .one 'mouseup.editor.viewport', (evt) =>
+          console.log 'viewport mouseup'
+          if @$elemBeingDragged
+            @$map.trigger 'drop.editor.viewport', evt
+          # evt.preventDefault()
+
+        .bind 'dragover.editor.viewport', (evt) =>
+          console.log 'viewport dragover'
+          @rememberDragObject(@core.forgetDragObject())
+          @$elemBeingDragged.addClass('in-viewport')
+
+        .bind 'drag.editor.viewport', (evt) =>
+          x = Math.round(evt.pageX - (@objectBeingDragged.dims.w/2)) - @bounds.x1
+          y = Math.round(evt.pageY - (@objectBeingDragged.dims.h/2)) - @bounds.y1
+          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+          @$elemBeingDragged.css('top', "#{y}px").css('left', "#{x}px")
+
+        .bind 'dragout.editor.viewport', (evt) =>
+          console.log 'viewport dragout'
+          @$elemBeingDragged.removeClass('in-viewport')
+          @core.rememberDragObject(@forgetDragObject())
+          @core.positionDragHelper(evt)
+
+        .one 'drop.editor.viewport', (evt) =>
+          console.log 'viewport drop'
+          @$elemBeingDragged.unbind('.editor')
+          @$elemBeingDragged.removeAttr('id')
+          @addObject(@objectBeingDragged)
+          @forgetDragObject(false)
+
+    unbindDragEvents: ->
+      $(window).unbind 'mousemove.editor.viewport'
+      @$map.unbind 'dragover.editor.viewport'
+      @$map.unbind 'drag.editor.viewport'
+      @$map.unbind 'dragout.editor.viewport'
 
     newMap: ->
       # create the grid pattern that backgrounds the map
@@ -42,13 +122,17 @@ define 'editor.viewport', ->
       map = null
       width = 1024
       height = 1024
-      $map = $('<div class="editor-map"/>')
+      dragEntered = null
+      @$elemBeingDragged = null
+      @objectBeingDragged = null
+
+      @$map = $map = $('<div class="editor-map"/>')
         .css('width', width)
         .css('height', height)
         .css('background-image', "url(#{canvas.element.toDataURL()})")
         .css('background-repeat', 'repeat')
 
-        .bind 'mousedown.editor', (evt) =>
+        .bind 'mousedown.editor.viewport', (evt) =>
           # don't pan the map accidentally if it is right-clicked
           return if evt.button is 2
 
@@ -63,10 +147,10 @@ define 'editor.viewport', ->
 
           $map.css('cursor', 'move')
 
-          # bind a new mousemove only on mousedown so that when the user is just
-          # gliding over the map (not dragging), we are not firing mousemove
-          # events unnecessarily
-          $map.bind 'mousemove.editor', (evt) =>
+          # prevent anything that may occur on mousedown
+          evt.preventDefault()
+
+          $(window).bind 'mousemove.editor.viewport', (evt) =>
             x = evt.pageX
             y = evt.pageY
 
@@ -78,12 +162,12 @@ define 'editor.viewport', ->
 
             mapX = map.x + dx
             mapX = 0 if mapX > 0
-            w = -(width - @width)
+            w = -(width - @bounds.width)
             mapX = w if mapX < w
 
             mapY = map.y + dy
             mapY = 0 if mapY > 0
-            h = -(height - @height)
+            h = -(height - @bounds.height)
             mapY = h if mapY < h
 
             $map.css("left", "#{mapX}px")
@@ -95,45 +179,30 @@ define 'editor.viewport', ->
             mouse.py = y
 
             # prevent selection
-            evt.stopPropagation()
             evt.preventDefault()
 
-          # prevent anything that may occur on mousedown
-          evt.stopPropagation()
-          evt.preventDefault()
+          $(window).one 'mouseup.editor.viewport', (evt) =>
+            if mouse
+              $map.css('cursor', 'auto')
+              mouse = null
+            $(window).unbind 'mousemove.editor.viewport'
 
-        .bind 'mouseup.editor', (evt) ->
-          $map.css('cursor', 'auto')
-          $map.unbind('mousemove.editor')
-          mouse = null
-          evt.stopPropagation()
-          evt.preventDefault()
+      @$element.append($map)
 
-        .bind 'dragenter.editor', (evt) =>
-          return if evt.dataTransfer.types.indexOf('application/x-sidebar-object') is -1
-          evt.dataTransfer.dropEffect = 'link'
-          evt.dataTransfer.effectAllowed = 'link'
-          # clone the image node
-          @$draggedImage = $(@core.draggedObject.image.element.cloneNode())
-            .addClass('editor-dragged-image')
-          @$viewport.append(@$draggedImage)
-          # indicate that a drop *is* allowed
-          evt.preventDefault()
+    addObject: (object) ->
+      @objects.push(object)
 
-        .bind 'dragover.editor', (evt) =>
-          # indicate that a drop *is* allowed
-          evt.preventDefault()
-          @$draggedImage
-            .css('top', "#{evt.pageY}px")
-            .css('left', "#{evt.pageX}px")
+    stealFrom: (obj, prop) ->
+      @[prop] = obj.delete(prop)
 
-        .bind 'dragleave.editor', (evt) =>
-          @$draggedImage.remove()
-          @$draggedImage = null
+    giveTo: (obj, prop) ->
+      obj[prop] = @delete(prop)
 
-        .bind 'drop.editor', (evt) =>
-          @map.addObject(@core.draggedObject)
-          # accept the drop
-          evt.preventDefault()
+    delete: (prop) ->
+      val = @[prop]
+      delete @[prop]
+      return val
 
-      @$viewport.append($map)
+    _mouseWithinViewport: (evt) ->
+      @bounds.x1 <= evt.pageX <= @bounds.x2 and
+      @bounds.y1 <= evt.pageY <= @bounds.y2

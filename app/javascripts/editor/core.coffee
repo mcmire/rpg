@@ -22,6 +22,27 @@ define 'editor.core', ->
 
       @viewport.newMap()
 
+    enableDragSnapping: (size) ->
+      @snapDragToGrid = size
+
+    disableDragSnapping: ->
+      @snapDragToGrid = null
+
+    rememberDragObject: ([@$elemBeingDragged, @objectBeingDragged]) ->
+      $(document.body).append(@$elemBeingDragged)
+
+    forgetDragObject: ->
+      [a, b] = [@$elemBeingDragged, @objectBeingDragged]
+      @$elemBeingDragged.remove()
+      delete @$elemBeingDragged
+      delete @objectBeingDragged
+      return [a, b]
+
+    positionDragHelper: (evt) ->
+      x = Math.round(evt.pageX - (@objectBeingDragged.dims.w/2))
+      y = Math.round(evt.pageY - (@objectBeingDragged.dims.h/2))
+      @$elemBeingDragged.css('top', "#{y}px").css('left', "#{x}px")
+
     _resizeUI: ->
       wh = $(window).height()
       ww = $(window).width()
@@ -94,6 +115,10 @@ define 'editor.core', ->
         else
           return 0
 
+      dragOccurred = false
+      @$elemBeingDragged = null
+      @objectBeingDragged = null
+
       $.v.each objects, (so) =>
         $div = $("<div/>")
           .addClass('img')
@@ -101,14 +126,49 @@ define 'editor.core', ->
           .width(so.dims.w)
           .height(so.dims.h)
           .append(so.image.getElement())
-          .attr('draggable', true)
-          .bind 'dragstart.editor', (evt) =>
-            @draggedObject = so
-            evt.dataTransfer.setData('application/x-sidebar-object', 1)
-            evt.dataTransfer.dropEffect = 'link'
-            evt.dataTransfer.effectAllowed = 'link'
-          .bind 'dragend.editor', (evt) =>
-            @draggedObject = null
+
+          .bind 'mousedown.editor.core', (evt) =>
+            # console.log 'img mousedown'
+
+            evt.preventDefault()
+
+            # bind mousemove to the window as we can drag the image around
+            # wherever we want, not just within the sidebar or viewport
+            $(window).bind 'mousemove.editor.core', (evt) =>
+              # console.log 'mousemove while mousedown'
+              unless dragOccurred
+                $div.trigger 'dragstart.editor.core', evt
+                dragOccurred = true
+              if @$elemBeingDragged
+                @positionDragHelper(evt)
+              else
+                # viewport has stolen $elemBeingDragged
+
+            # bind mouseup to the window as it may occur outside of the image
+            $(window).one 'mouseup.editor.core', (evt) =>
+              console.log 'core mouseup'
+              if dragOccurred
+                $div.trigger 'dragend.editor.core', evt
+              $(window).unbind 'mousemove.editor.core'
+              dragOccurred = false
+              return true
+
+          .bind 'dragstart.editor.core', (evt) =>
+            console.log 'core dragstart'
+            # clone the image node
+            $elemBeingDragged = $($div[0].cloneNode(true))
+              .attr('id', 'editor-drag-clone')
+              .removeClass('img')
+            @rememberDragObject([$elemBeingDragged, so])
+            $(document.body).addClass('editor-drag-active')
+            @viewport.bindDragEvents()
+
+          .bind 'dragend.editor.core', (evt) =>
+            console.log 'core dragend'
+            # @viewport.unbindDragEvents()
+            $(document.body).removeClass('editor-drag-active')
+            @forgetDragObject() if @$elemBeingDragged
+
         @$sidebar.append($div)
 
     _chooseMap: (mapName) ->

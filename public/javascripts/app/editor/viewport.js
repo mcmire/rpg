@@ -1,27 +1,98 @@
 (function() {
 
   define('editor.viewport', function() {
-    var meta, util;
+    var DRAG_SNAP_GRID_SIZE, meta, util;
     meta = require('meta');
     util = require('util');
+    DRAG_SNAP_GRID_SIZE = 16;
     return meta.def({
       init: function(core) {
         this.core = core;
-        this.$viewport = $('#editor-viewport');
-        this.width = this.$viewport.width();
-        this.height = this.$viewport.height();
+        this.$element = $('#editor-viewport');
+        this._recalculateBounds();
+        this.objects = [];
         return this;
       },
+      _recalculateBounds: function() {
+        var offset;
+        offset = this.$element.offset();
+        return this.bounds = require('game.Bounds').rect(offset.left, offset.top, offset.width, offset.height);
+      },
       setHeight: function(height) {
-        this.height = height;
-        return this.$viewport.height(height);
+        this.$element.height(height);
+        return this._recalculateBounds();
       },
       setWidth: function(width) {
-        this.width = width;
-        return this.$viewport.width(width);
+        this.$element.width(width);
+        return this._recalculateBounds();
+      },
+      rememberDragObject: function(_arg) {
+        this.$elemBeingDragged = _arg[0], this.objectBeingDragged = _arg[1];
+        return this.$element.append(this.$elemBeingDragged);
+      },
+      forgetDragObject: function(removeElement) {
+        var a, b, _ref;
+        if (removeElement == null) removeElement = true;
+        _ref = [this.$elemBeingDragged, this.objectBeingDragged], a = _ref[0], b = _ref[1];
+        if (removeElement) this.$elemBeingDragged.remove();
+        delete this.$elemBeingDragged;
+        delete this.objectBeingDragged;
+        return [a, b];
+      },
+      bindDragEvents: function() {
+        var mouseLocation,
+          _this = this;
+        console.log('binding drag events to viewport');
+        mouseLocation = null;
+        $(window).bind('mousemove.editor.viewport', function(evt) {
+          if (_this._mouseWithinViewport(evt)) {
+            if (mouseLocation !== 'inside') {
+              _this.$map.trigger('dragover.editor.viewport', evt);
+              mouseLocation = 'inside';
+            }
+            return _this.$map.trigger('drag.editor.viewport');
+          } else if (_this.$elemBeingDragged && mouseLocation !== 'outside') {
+            _this.$map.trigger('dragout.editor.viewport', evt);
+            return mouseLocation = 'outside';
+          }
+        });
+        return this.$map.one('mouseup.editor.viewport', function(evt) {
+          console.log('viewport mouseup');
+          if (_this.$elemBeingDragged) {
+            return _this.$map.trigger('drop.editor.viewport', evt);
+          }
+        }).bind('dragover.editor.viewport', function(evt) {
+          console.log('viewport dragover');
+          _this.rememberDragObject(_this.core.forgetDragObject());
+          return _this.$elemBeingDragged.addClass('in-viewport');
+        }).bind('drag.editor.viewport', function(evt) {
+          var x, y;
+          x = Math.round(evt.pageX - (_this.objectBeingDragged.dims.w / 2)) - _this.bounds.x1;
+          y = Math.round(evt.pageY - (_this.objectBeingDragged.dims.h / 2)) - _this.bounds.y1;
+          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
+          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
+          return _this.$elemBeingDragged.css('top', "" + y + "px").css('left', "" + x + "px");
+        }).bind('dragout.editor.viewport', function(evt) {
+          console.log('viewport dragout');
+          _this.$elemBeingDragged.removeClass('in-viewport');
+          _this.core.rememberDragObject(_this.forgetDragObject());
+          return _this.core.positionDragHelper(evt);
+        }).one('drop.editor.viewport', function(evt) {
+          console.log('viewport drop');
+          _this.$elemBeingDragged.unbind('.editor');
+          _this.$elemBeingDragged.removeAttr('id');
+          _this.addObject(_this.objectBeingDragged);
+          return _this.forgetDragObject(false);
+        });
+      },
+      unbindDragEvents: function() {
+        $(window).unbind('mousemove.editor.viewport');
+        this.$map.unbind('dragover.editor.viewport');
+        this.$map.unbind('drag.editor.viewport');
+        return this.$map.unbind('dragout.editor.viewport');
       },
       newMap: function() {
-        var $map, canvas, ctx, height, map, mouse, width,
+        var $map, canvas, ctx, dragEntered, height, map, mouse, width,
           _this = this;
         canvas = require('game.canvas').create(16, 16);
         ctx = canvas.getContext();
@@ -35,7 +106,10 @@
         map = null;
         width = 1024;
         height = 1024;
-        $map = $('<div class="editor-map"/>').css('width', width).css('height', height).css('background-image', "url(" + (canvas.element.toDataURL()) + ")").css('background-repeat', 'repeat').bind('mousedown.editor', function(evt) {
+        dragEntered = null;
+        this.$elemBeingDragged = null;
+        this.objectBeingDragged = null;
+        this.$map = $map = $('<div class="editor-map"/>').css('width', width).css('height', height).css('background-image', "url(" + (canvas.element.toDataURL()) + ")").css('background-repeat', 'repeat').bind('mousedown.editor.viewport', function(evt) {
           if (evt.button === 2) return;
           mouse = {
             px: evt.pageX,
@@ -46,7 +120,8 @@
             y: parseInt($map.css('top'), 10)
           };
           $map.css('cursor', 'move');
-          $map.bind('mousemove.editor', function(evt) {
+          evt.preventDefault();
+          $(window).bind('mousemove.editor.viewport', function(evt) {
             var dx, dy, h, mapX, mapY, w, x, y;
             x = evt.pageX;
             y = evt.pageY;
@@ -54,11 +129,11 @@
             dy = y - mouse.py;
             mapX = map.x + dx;
             if (mapX > 0) mapX = 0;
-            w = -(width - _this.width);
+            w = -(width - _this.bounds.width);
             if (mapX < w) mapX = w;
             mapY = map.y + dy;
             if (mapY > 0) mapY = 0;
-            h = -(height - _this.height);
+            h = -(height - _this.bounds.height);
             if (mapY < h) mapY = h;
             $map.css("left", "" + mapX + "px");
             $map.css("top", "" + mapY + "px");
@@ -66,37 +141,36 @@
             map.y = mapY;
             mouse.px = x;
             mouse.py = y;
-            evt.stopPropagation();
             return evt.preventDefault();
           });
-          evt.stopPropagation();
-          return evt.preventDefault();
-        }).bind('mouseup.editor', function(evt) {
-          $map.css('cursor', 'auto');
-          $map.unbind('mousemove.editor');
-          mouse = null;
-          evt.stopPropagation();
-          return evt.preventDefault();
-        }).bind('dragenter.editor', function(evt) {
-          if (evt.dataTransfer.types.indexOf('application/x-sidebar-object') === -1) {
-            return;
-          }
-          evt.dataTransfer.dropEffect = 'link';
-          evt.dataTransfer.effectAllowed = 'link';
-          _this.$draggedImage = $(_this.core.draggedObject.image.element.cloneNode()).addClass('editor-dragged-image');
-          _this.$viewport.append(_this.$draggedImage);
-          return evt.preventDefault();
-        }).bind('dragover.editor', function(evt) {
-          evt.preventDefault();
-          return _this.$draggedImage.css('top', "" + evt.pageY + "px").css('left', "" + evt.pageX + "px");
-        }).bind('dragleave.editor', function(evt) {
-          _this.$draggedImage.remove();
-          return _this.$draggedImage = null;
-        }).bind('drop.editor', function(evt) {
-          _this.map.addObject(_this.core.draggedObject);
-          return evt.preventDefault();
+          return $(window).one('mouseup.editor.viewport', function(evt) {
+            if (mouse) {
+              $map.css('cursor', 'auto');
+              mouse = null;
+            }
+            return $(window).unbind('mousemove.editor.viewport');
+          });
         });
-        return this.$viewport.append($map);
+        return this.$element.append($map);
+      },
+      addObject: function(object) {
+        return this.objects.push(object);
+      },
+      stealFrom: function(obj, prop) {
+        return this[prop] = obj["delete"](prop);
+      },
+      giveTo: function(obj, prop) {
+        return obj[prop] = this["delete"](prop);
+      },
+      "delete": function(prop) {
+        var val;
+        val = this[prop];
+        delete this[prop];
+        return val;
+      },
+      _mouseWithinViewport: function(evt) {
+        var _ref, _ref2;
+        return (this.bounds.x1 <= (_ref = evt.pageX) && _ref <= this.bounds.x2) && (this.bounds.y1 <= (_ref2 = evt.pageY) && _ref2 <= this.bounds.y2);
       }
     });
   });

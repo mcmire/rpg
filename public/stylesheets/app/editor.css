@@ -6,6 +6,8 @@ body {
   margin: 0;
   padding: 0;
   font-family: Helvetica Neue, Arial, sans-serif; }
+  body.editor-drag-active {
+    cursor: move; }
 
 * {
   -moz-box-sizing: border-box;
@@ -56,4 +58,12 @@ body {
     vertical-align: top;
     margin-right: 10px;
     margin-bottom: 10px;
-    overflow: hidden; }
+    overflow: hidden;
+    cursor: move; }
+
+#editor-drag-clone {
+  position: absolute;
+  z-index: 10;
+  opacity: 0.7; }
+  #editor-drag-clone.in-viewport {
+    opacity: 1; }

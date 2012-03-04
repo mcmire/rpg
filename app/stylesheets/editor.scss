@@ -10,6 +10,10 @@ body {
   margin: 0;
   padding: 0;
   font-family: Helvetica Neue, Arial, sans-serif;
+
+  &.editor-drag-active {
+    cursor: move
+  }
 }
 
 // change box model so that padding and margin do not affect specified dimensions
@@ -81,5 +85,16 @@ $sidebar-width: 300px;
     margin-right: $spacing;
     margin-bottom: $spacing;
     overflow: hidden;
+    cursor: move;
+  }
+}
+
+#editor-drag-clone {
+  position: absolute;
+  z-index: 10;
+  opacity: 0.7;
+
+  &.in-viewport {
+    opacity: 1;
   }
 }

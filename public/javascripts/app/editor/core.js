@@ -21,6 +21,30 @@
         });
         return this.viewport.newMap();
       },
+      enableDragSnapping: function(size) {
+        return this.snapDragToGrid = size;
+      },
+      disableDragSnapping: function() {
+        return this.snapDragToGrid = null;
+      },
+      rememberDragObject: function(_arg) {
+        this.$elemBeingDragged = _arg[0], this.objectBeingDragged = _arg[1];
+        return $(document.body).append(this.$elemBeingDragged);
+      },
+      forgetDragObject: function() {
+        var a, b, _ref;
+        _ref = [this.$elemBeingDragged, this.objectBeingDragged], a = _ref[0], b = _ref[1];
+        this.$elemBeingDragged.remove();
+        delete this.$elemBeingDragged;
+        delete this.objectBeingDragged;
+        return [a, b];
+      },
+      positionDragHelper: function(evt) {
+        var x, y;
+        x = Math.round(evt.pageX - (this.objectBeingDragged.dims.w / 2));
+        y = Math.round(evt.pageY - (this.objectBeingDragged.dims.h / 2));
+        return this.$elemBeingDragged.css('top', "" + y + "px").css('left', "" + x + "px");
+      },
       _resizeUI: function() {
         var h, nh, sw, wh, ww;
         wh = $(window).height();
@@ -62,7 +86,7 @@
         return check();
       },
       _populateSidebar: function() {
-        var imageCollection, names, objects, spriteCollection,
+        var dragOccurred, imageCollection, names, objects, spriteCollection,
           _this = this;
         imageCollection = require('game.imageCollection');
         spriteCollection = require('game.spriteCollection');
@@ -114,15 +138,42 @@
             return 0;
           }
         });
+        dragOccurred = false;
+        this.$elemBeingDragged = null;
+        this.objectBeingDragged = null;
         return $.v.each(objects, function(so) {
           var $div;
-          $div = $("<div/>").addClass('img').data('name', so.object.name).width(so.dims.w).height(so.dims.h).append(so.image.getElement()).attr('draggable', true).bind('dragstart.editor', function(evt) {
-            _this.draggedObject = so;
-            evt.dataTransfer.setData('application/x-sidebar-object', 1);
-            evt.dataTransfer.dropEffect = 'link';
-            return evt.dataTransfer.effectAllowed = 'link';
-          }).bind('dragend.editor', function(evt) {
-            return _this.draggedObject = null;
+          $div = $("<div/>").addClass('img').data('name', so.object.name).width(so.dims.w).height(so.dims.h).append(so.image.getElement()).bind('mousedown.editor.core', function(evt) {
+            evt.preventDefault();
+            $(window).bind('mousemove.editor.core', function(evt) {
+              if (!dragOccurred) {
+                $div.trigger('dragstart.editor.core', evt);
+                dragOccurred = true;
+              }
+              if (_this.$elemBeingDragged) {
+                return _this.positionDragHelper(evt);
+              } else {
+
+              }
+            });
+            return $(window).one('mouseup.editor.core', function(evt) {
+              console.log('core mouseup');
+              if (dragOccurred) $div.trigger('dragend.editor.core', evt);
+              $(window).unbind('mousemove.editor.core');
+              dragOccurred = false;
+              return true;
+            });
+          }).bind('dragstart.editor.core', function(evt) {
+            var $elemBeingDragged;
+            console.log('core dragstart');
+            $elemBeingDragged = $($div[0].cloneNode(true)).attr('id', 'editor-drag-clone').removeClass('img');
+            _this.rememberDragObject([$elemBeingDragged, so]);
+            $(document.body).addClass('editor-drag-active');
+            return _this.viewport.bindDragEvents();
+          }).bind('dragend.editor.core', function(evt) {
+            console.log('core dragend');
+            $(document.body).removeClass('editor-drag-active');
+            if (_this.$elemBeingDragged) return _this.forgetDragObject();
           });
           return _this.$sidebar.append($div);
         });
