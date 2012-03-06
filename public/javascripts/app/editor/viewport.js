@@ -65,19 +65,26 @@
           _this.rememberDragObject(_this.core.forgetDragObject());
           return _this.$elemBeingDragged.removeClass('drag-helper');
         }).bind('mousedrag.editor.viewport', function(evt) {
-          var x, y;
-          x = (evt.pageX - _this.map.x1 - _this.bounds.x1) - Math.round(_this.objectBeingDragged.dims.w / 2);
-          y = (evt.pageY - _this.map.y1 - _this.bounds.y1) - Math.round(_this.objectBeingDragged.dims.h / 2);
-          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
-          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
-          return _this.$elemBeingDragged.css('top', "" + y + "px").css('left', "" + x + "px");
+          var $elem, obj, x, y;
+          obj = _this.objectBeingDragged;
+          $elem = _this.$elemBeingDragged;
+          x = (evt.pageX - _this.map.x1 - _this.bounds.x1) - Math.round(obj.dims.w / 2);
+          y = (evt.pageY - _this.map.y1 - _this.bounds.y1) - Math.round(obj.dims.h / 2);
+          return $elem.css('top', "" + y + "px").css('left', "" + x + "px");
         }).bind('mousedragout.editor.viewport', function(evt) {
           console.log('viewport mousedragout');
           _this.$elemBeingDragged.addClass('drag-helper');
           _this.core.rememberDragObject(_this.forgetDragObject());
           return _this.core.positionDragHelper(evt);
         }).bind('mousedrop.editor.viewport', function(evt) {
+          var $elem, x, y;
           console.log('viewport drop');
+          $elem = _this.$elemBeingDragged;
+          x = parseInt($elem.css('left'), 10);
+          y = parseInt($elem.css('top'), 10);
+          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
+          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
+          $elem.css('top', "" + y + "px").css('left', "" + x + "px");
           _this.addObject(_this.$elemBeingDragged, _this.objectBeingDragged);
           return _this.forgetDragObject(false);
         });
@@ -167,12 +174,16 @@
             dragOccurred || (dragOccurred = true);
             x = (evt.pageX - _this.map.x1 - _this.bounds.x1) - Math.round(obj.dims.w / 2);
             y = (evt.pageY - _this.map.y1 - _this.bounds.y1) - Math.round(obj.dims.h / 2);
-            x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
-            y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
-            return obj.$elem.css('top', "" + y + "px").css('left', "" + x + "px");
+            return $elem.css('top', "" + y + "px").css('left', "" + x + "px");
           });
           return $(window).one('mouseup.editor.viewport', function(evt) {
+            var x, y;
             console.log('viewport mouseup');
+            x = parseInt($elem.css('left'), 10);
+            y = parseInt($elem.css('top'), 10);
+            x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
+            y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
+            $elem.css('top', "" + y + "px").css('left', "" + x + "px");
             $(window).unbind('mousemove.editor.viewport');
             dragOccurred = false;
             return true;

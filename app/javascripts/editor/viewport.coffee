@@ -77,11 +77,11 @@ define 'editor.viewport', ->
 
         .bind 'mousedrag.editor.viewport', (evt) =>
           # console.log 'viewport drag'
-          x = (evt.pageX - @map.x1 - @bounds.x1) - Math.round(@objectBeingDragged.dims.w/2)
-          y = (evt.pageY - @map.y1 - @bounds.y1) - Math.round(@objectBeingDragged.dims.h/2)
-          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-          @$elemBeingDragged.css('top', "#{y}px").css('left', "#{x}px")
+          obj = @objectBeingDragged
+          $elem = @$elemBeingDragged
+          x = (evt.pageX - @map.x1 - @bounds.x1) - Math.round(obj.dims.w/2)
+          y = (evt.pageY - @map.y1 - @bounds.y1) - Math.round(obj.dims.h/2)
+          $elem.css('top', "#{y}px").css('left', "#{x}px")
 
         .bind 'mousedragout.editor.viewport', (evt) =>
           console.log 'viewport mousedragout'
@@ -93,7 +93,12 @@ define 'editor.viewport', ->
         # it somehow.... why????
         .bind 'mousedrop.editor.viewport', (evt) =>
           console.log 'viewport drop'
-          # dragOccurred = true
+          $elem = @$elemBeingDragged
+          x = parseInt($elem.css('left'), 10)
+          y = parseInt($elem.css('top'), 10)
+          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+          $elem.css('top', "#{y}px").css('left', "#{x}px")
           @addObject(@$elemBeingDragged, @objectBeingDragged)
           @forgetDragObject(false)
 
@@ -194,16 +199,23 @@ define 'editor.viewport', ->
         .bind 'mousedown.editor.viewport', (evt) =>
           evt.stopPropagation()  # so that the map doesn't move
           evt.preventDefault()
+
           $(window).bind 'mousemove.editor.viewport', (evt) =>
             dragOccurred ||= true
+            # remove snapping
             x = (evt.pageX - @map.x1 - @bounds.x1) - Math.round(obj.dims.w/2)
             y = (evt.pageY - @map.y1 - @bounds.y1) - Math.round(obj.dims.h/2)
-            x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-            y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-            obj.$elem.css('top', "#{y}px").css('left', "#{x}px")
+            $elem.css('top', "#{y}px").css('left', "#{x}px")
+
           # bind mouseup to the window as it may occur outside of the image
           $(window).one 'mouseup.editor.viewport', (evt) =>
             console.log 'viewport mouseup'
+            # apply snapping
+            x = parseInt($elem.css('left'), 10)
+            y = parseInt($elem.css('top'), 10)
+            x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+            y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+            $elem.css('top', "#{y}px").css('left', "#{x}px")
             $(window).unbind 'mousemove.editor.viewport'
             dragOccurred = false
             return true
