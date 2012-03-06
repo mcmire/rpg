@@ -190,6 +190,14 @@ define 'game.Bounds', ->
     withAnchor: (x1, y1) ->
       @clone().anchor(x1, y1)
 
+    setWidth: (width) ->
+      @width = width
+      @x2 = @x1 + width
+
+    setHeight: (height) ->
+      @height = height
+      @y2 = @y1 + height
+
     replace: (bounds) ->
       @width = bounds.width
       @height = bounds.height

@@ -2,32 +2,26 @@
 define 'editor.viewport', ->
   meta = require('meta')
   util = require('util')
+  Bounds = require('game.Bounds')
 
   DRAG_SNAP_GRID_SIZE = 16
 
   meta.def
     init: (@core) ->
       @$element = $('#editor-viewport')
-      @_recalculateBounds()
+      offset = @$element.offset()
+      @bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height)
+      @map = null
       @objects = []
       return this
 
-    _recalculateBounds: ->
-      offset = @$element.offset()
-      @bounds = require('game.Bounds').rect(
-        offset.left,
-        offset.top,
-        offset.width,
-        offset.height
-      )
+    setWidth: (width) ->
+      @$element.width(width)
+      @bounds.setWidth(width)
 
     setHeight: (height) ->
       @$element.height(height)
-      @_recalculateBounds()
-
-    setWidth: (width) ->
-      @$element.width(width)
-      @_recalculateBounds()
+      @bounds.setHeight(height)
 
     rememberDragObject: ([@$elemBeingDragged, @objectBeingDragged]) ->
       @$map.append(@$elemBeingDragged)
@@ -83,8 +77,8 @@ define 'editor.viewport', ->
 
         .bind 'mousedrag.editor.viewport', (evt) =>
           # console.log 'viewport drag'
-          x = Math.round(evt.pageX - (@objectBeingDragged.dims.w/2)) - @bounds.x1
-          y = Math.round(evt.pageY - (@objectBeingDragged.dims.h/2)) - @bounds.y1
+          x = (evt.pageX - @map.x1 - @bounds.x1) - Math.round(@objectBeingDragged.dims.w/2)
+          y = (evt.pageY - @map.y1 - @bounds.y1) - Math.round(@objectBeingDragged.dims.h/2)
           x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
           @$elemBeingDragged.css('top', "#{y}px").css('left', "#{x}px")
@@ -120,20 +114,20 @@ define 'editor.viewport', ->
       ctx.lineTo(0.5, 16)
       ctx.stroke()
 
+      @map = Bounds.rect(0, 0, 1024, 1024)
+
       mouse = null
-      map = null
-      width = 1024
-      height = 1024
       dragEntered = null
       @$elemBeingDragged = null
       @objectBeingDragged = null
 
       @$map = $map = $('<div class="editor-map"/>')
-        .css('width', width)
-        .css('height', height)
+        .css('width', @map.width)
+        .css('height', @map.height)
         .css('background-image', "url(#{canvas.element.toDataURL()})")
         .css('background-repeat', 'repeat')
 
+      @$map
         .bind 'mousedown.editor.viewport', (evt) =>
           # don't pan the map accidentally if it is right-clicked
           return if evt.button is 2
@@ -142,10 +136,6 @@ define 'editor.viewport', ->
           mouse =
             px:  evt.pageX
             py:  evt.pageY
-          # current map position
-          map =
-            x: parseInt($map.css('left'), 10)
-            y:  parseInt($map.css('top'), 10)
 
           $map.css('cursor', 'move')
 
@@ -162,20 +152,19 @@ define 'editor.viewport', ->
             dx = x - mouse.px
             dy = y - mouse.py
 
-            mapX = map.x + dx
+            mapX = @map.x1 + dx
             mapX = 0 if mapX > 0
-            w = -(width - @bounds.width)
+            w = -(@map.width - @bounds.width)
             mapX = w if mapX < w
 
-            mapY = map.y + dy
+            mapY = @map.y1 + dy
             mapY = 0 if mapY > 0
-            h = -(height - @bounds.height)
+            h = -(@map.height - @bounds.height)
             mapY = h if mapY < h
 
             $map.css("left", "#{mapX}px")
             $map.css("top", "#{mapY}px")
-            map.x = mapX
-            map.y = mapY
+            @map.anchor(mapX, mapY)
 
             mouse.px = x
             mouse.py = y
@@ -204,8 +193,8 @@ define 'editor.viewport', ->
           evt.preventDefault()
           $(window).bind 'mousemove.editor.viewport', (evt) =>
             dragOccurred ||= true
-            x = Math.round(evt.pageX - (obj.dims.w/2)) - @bounds.x1
-            y = Math.round(evt.pageY - (obj.dims.h/2)) - @bounds.y1
+            x = (evt.pageX - @map.x1 - @bounds.x1) - Math.round(obj.dims.w/2)
+            y = (evt.pageY - @map.y1 - @bounds.y1) - Math.round(obj.dims.h/2)
             x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
             y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
             obj.$elem.css('top', "#{y}px").css('left', "#{x}px")

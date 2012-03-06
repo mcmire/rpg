@@ -1,30 +1,29 @@
 (function() {
 
   define('editor.viewport', function() {
-    var DRAG_SNAP_GRID_SIZE, meta, util;
+    var Bounds, DRAG_SNAP_GRID_SIZE, meta, util;
     meta = require('meta');
     util = require('util');
+    Bounds = require('game.Bounds');
     DRAG_SNAP_GRID_SIZE = 16;
     return meta.def({
       init: function(core) {
+        var offset;
         this.core = core;
         this.$element = $('#editor-viewport');
-        this._recalculateBounds();
+        offset = this.$element.offset();
+        this.bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height);
+        this.map = null;
         this.objects = [];
         return this;
       },
-      _recalculateBounds: function() {
-        var offset;
-        offset = this.$element.offset();
-        return this.bounds = require('game.Bounds').rect(offset.left, offset.top, offset.width, offset.height);
+      setWidth: function(width) {
+        this.$element.width(width);
+        return this.bounds.setWidth(width);
       },
       setHeight: function(height) {
         this.$element.height(height);
-        return this._recalculateBounds();
-      },
-      setWidth: function(width) {
-        this.$element.width(width);
-        return this._recalculateBounds();
+        return this.bounds.setHeight(height);
       },
       rememberDragObject: function(_arg) {
         this.$elemBeingDragged = _arg[0], this.objectBeingDragged = _arg[1];
@@ -67,8 +66,8 @@
           return _this.$elemBeingDragged.removeClass('drag-helper');
         }).bind('mousedrag.editor.viewport', function(evt) {
           var x, y;
-          x = Math.round(evt.pageX - (_this.objectBeingDragged.dims.w / 2)) - _this.bounds.x1;
-          y = Math.round(evt.pageY - (_this.objectBeingDragged.dims.h / 2)) - _this.bounds.y1;
+          x = (evt.pageX - _this.map.x1 - _this.bounds.x1) - Math.round(_this.objectBeingDragged.dims.w / 2);
+          y = (evt.pageY - _this.map.y1 - _this.bounds.y1) - Math.round(_this.objectBeingDragged.dims.h / 2);
           x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
           return _this.$elemBeingDragged.css('top', "" + y + "px").css('left', "" + x + "px");
@@ -90,7 +89,7 @@
         return this.$map.unbind('mousedragout.editor.viewport');
       },
       newMap: function() {
-        var $map, canvas, ctx, dragEntered, height, map, mouse, width,
+        var $map, canvas, ctx, dragEntered, mouse,
           _this = this;
         canvas = require('game.canvas').create(16, 16);
         ctx = canvas.getContext();
@@ -100,22 +99,17 @@
         ctx.moveTo(0.5, 0.5);
         ctx.lineTo(0.5, 16);
         ctx.stroke();
+        this.map = Bounds.rect(0, 0, 1024, 1024);
         mouse = null;
-        map = null;
-        width = 1024;
-        height = 1024;
         dragEntered = null;
         this.$elemBeingDragged = null;
         this.objectBeingDragged = null;
-        this.$map = $map = $('<div class="editor-map"/>').css('width', width).css('height', height).css('background-image', "url(" + (canvas.element.toDataURL()) + ")").css('background-repeat', 'repeat').bind('mousedown.editor.viewport', function(evt) {
+        this.$map = $map = $('<div class="editor-map"/>').css('width', this.map.width).css('height', this.map.height).css('background-image', "url(" + (canvas.element.toDataURL()) + ")").css('background-repeat', 'repeat');
+        this.$map.bind('mousedown.editor.viewport', function(evt) {
           if (evt.button === 2) return;
           mouse = {
             px: evt.pageX,
             py: evt.pageY
-          };
-          map = {
-            x: parseInt($map.css('left'), 10),
-            y: parseInt($map.css('top'), 10)
           };
           $map.css('cursor', 'move');
           evt.preventDefault();
@@ -125,18 +119,17 @@
             y = evt.pageY;
             dx = x - mouse.px;
             dy = y - mouse.py;
-            mapX = map.x + dx;
+            mapX = _this.map.x1 + dx;
             if (mapX > 0) mapX = 0;
-            w = -(width - _this.bounds.width);
+            w = -(_this.map.width - _this.bounds.width);
             if (mapX < w) mapX = w;
-            mapY = map.y + dy;
+            mapY = _this.map.y1 + dy;
             if (mapY > 0) mapY = 0;
-            h = -(height - _this.bounds.height);
+            h = -(_this.map.height - _this.bounds.height);
             if (mapY < h) mapY = h;
             $map.css("left", "" + mapX + "px");
             $map.css("top", "" + mapY + "px");
-            map.x = mapX;
-            map.y = mapY;
+            _this.map.anchor(mapX, mapY);
             mouse.px = x;
             mouse.py = y;
             return evt.preventDefault();
@@ -169,8 +162,8 @@
           $(window).bind('mousemove.editor.viewport', function(evt) {
             var x, y;
             dragOccurred || (dragOccurred = true);
-            x = Math.round(evt.pageX - (obj.dims.w / 2)) - _this.bounds.x1;
-            y = Math.round(evt.pageY - (obj.dims.h / 2)) - _this.bounds.y1;
+            x = (evt.pageX - _this.map.x1 - _this.bounds.x1) - Math.round(obj.dims.w / 2);
+            y = (evt.pageY - _this.map.y1 - _this.bounds.y1) - Math.round(obj.dims.h / 2);
             x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
             y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
             return obj.$elem.css('top', "" + y + "px").css('left', "" + x + "px");

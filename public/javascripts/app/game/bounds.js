@@ -105,6 +105,14 @@
       withAnchor: function(x1, y1) {
         return this.clone().anchor(x1, y1);
       },
+      setWidth: function(width) {
+        this.width = width;
+        return this.x2 = this.x1 + width;
+      },
+      setHeight: function(height) {
+        this.height = height;
+        return this.y2 = this.y1 + height;
+      },
       replace: function(bounds) {
         this.width = bounds.width;
         this.height = bounds.height;
