@@ -16,10 +16,10 @@
           return _this._resizeUI();
         });
         this._loadImages();
-        this._whenImagesLoaded(function() {
-          return _this._populateSidebar();
+        return this._whenImagesLoaded(function() {
+          _this._populateSidebar();
+          return _this.viewport.loadMap();
         });
-        return this.viewport.newMap();
       },
       enableDragSnapping: function(size) {
         return this.snapDragToGrid = size;
@@ -87,42 +87,48 @@
         return check();
       },
       _populateSidebar: function() {
-        var dragStarted, imageCollection, names, objects, spriteCollection,
+        var dragStarted, imageCollection, spriteCollection,
           _this = this;
         imageCollection = require('game.imageCollection');
         spriteCollection = require('game.spriteCollection');
-        objects = [];
-        names = {};
+        this.objects = [];
+        this.objectsByName = {};
         spriteCollection.each(function(sprite) {
-          var dims;
-          if (names[sprite.name]) return;
+          var dims, name, obj;
+          name = sprite.name;
+          if (_this.objectsByName[name]) return;
           dims = {
             w: sprite.width,
             h: sprite.height
           };
-          objects.push({
+          obj = {
+            name: name,
             dims: dims,
             object: sprite,
             image: sprite.image
-          });
-          return names[sprite.name] = 1;
+          };
+          _this.objects.push(obj);
+          return _this.objectsByName[name] = obj;
         });
         imageCollection.each(function(image) {
-          var dims;
-          if (image.name === 'link2x') return;
-          if (names[image.name]) return;
+          var dims, name, obj;
+          name = image.name;
+          if (name === 'link2x') return;
+          if (_this.objectsByName[name]) return;
           dims = {
             w: image.width,
             h: image.height
           };
-          objects.push({
+          obj = {
+            name: name,
             dims: dims,
             object: image,
             image: image
-          });
-          return names[image.name] = 1;
+          };
+          _this.objects.push(obj);
+          return _this.objectsByName[name] = obj;
         });
-        objects = objects.sort(function(x1, x2) {
+        this.objects = this.objects.sort(function(x1, x2) {
           var d1, d2, h1, h2, w1, w2, _ref, _ref2, _ref3;
           _ref = [x1.dims, x2.dims], d1 = _ref[0], d2 = _ref[1];
           _ref2 = [d1.w, d1.h].reverse(), w1 = _ref2[0], h1 = _ref2[1];
@@ -143,9 +149,9 @@
         this.dragOffset = null;
         this.$elemBeingDragged = null;
         this.objectBeingDragged = null;
-        return $.v.each(objects, function(so) {
+        return $.v.each(this.objects, function(so) {
           var $div;
-          $div = $("<div/>").addClass('img').data('name', so.object.name).width(so.dims.w).height(so.dims.h).append(so.image.getElement()).bind('mousedown.editor.core', function(evt) {
+          $div = so.$elem = $("<div/>").addClass('img').data('name', so.object.name).width(so.dims.w).height(so.dims.h).append(so.image.getElement()).bind('mousedown.editor.core', function(evt) {
             evt.preventDefault();
             $(window).bind('mousemove.editor.core', function(evt) {
               if (!dragStarted) {

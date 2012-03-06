@@ -86,11 +86,10 @@ define 'editor.viewport', ->
           console.log 'viewport mousedragout'
           @$elemBeingDragged.addClass('drag-helper')
           @core.rememberDragObject(@forgetDragObject())
-          # prevent a jump when dragging an object back out of the viewport
+          # call this preemptively to prevent a jump when dragging an object
+          # back out of the viewport
           @core.positionDragHelper(evt)
 
-        # XXX: This is never getting fired... seems the drag helper is blocking
-        # it somehow.... why????
         .bind 'mousedrop.editor.viewport', (evt) =>
           console.log 'viewport drop'
           $elem = @$elemBeingDragged
@@ -101,6 +100,7 @@ define 'editor.viewport', ->
           $elem.css('top', "#{y}px").css('left', "#{x}px")
           @addObject(@$elemBeingDragged, @objectBeingDragged)
           @forgetDragObject(false)
+          @saveMap()
 
     unbindDragEvents: ->
       console.log 'removing drag events from viewport'
@@ -110,7 +110,7 @@ define 'editor.viewport', ->
       @$map.unbind 'mousedragout.editor.viewport'
       @$map.unbind 'mousedrop.editor.viewport'
 
-    newMap: ->
+    loadMap: ->
       # create the grid pattern that backgrounds the map
       canvas = require('game.canvas').create(16, 16)
       ctx = canvas.getContext()
@@ -187,11 +187,24 @@ define 'editor.viewport', ->
 
       @$element.append($map)
 
+      # TODO: Refactor
+      if data = localStorage.getItem('editor.map')
+        objects = JSON.parse(data)
+        $.v.each objects, (o) =>
+          object = @core.objectsByName[o.name]
+          # clone the image
+          $elem = $(object.$elem[0].cloneNode(true))
+          $elem.addClass('editor-map-object')
+          $elem.css('left', "#{o.x}px")
+          $elem.css('top', "#{o.y}px")
+          @$map.append($elem)
+          @addObject($elem, object)
+
     addObject: ($elem, object) ->
       console.log 'addObject'
-      obj = {'$elem': $elem}
-      obj[k] = v for k, v of object
-      @objects.push(obj)
+      obj = {}
+      obj[k] = v for own k, v of object
+      obj['$elem'] = $elem
       dragStarted = false
       dragOffset = null
       obj.$elem
@@ -236,7 +249,10 @@ define 'editor.viewport', ->
           x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
           $elem.css('top', "#{y}px").css('left', "#{x}px")
+          @saveMap()
           $(window).unbind 'mousemove.editor.viewport'
+
+      @objects.push(obj)
 
     stealFrom: (obj, prop) ->
       @[prop] = obj.delete(prop)
@@ -248,6 +264,14 @@ define 'editor.viewport', ->
       val = @[prop]
       delete @[prop]
       return val
+
+    saveMap: ->
+      console.log 'saving map...'
+      data = $.v.map @objects, (object) ->
+        name: object.name
+        x: parseInt(object.$elem.css('left'), 10)
+        y: parseInt(object.$elem.css('top'), 10)
+      localStorage.setItem('editor.map', JSON.stringify(data))
 
     _mouseWithinViewport: (evt) ->
       @bounds.x1 <= evt.pageX <= @bounds.x2 and

@@ -20,7 +20,7 @@ define 'editor.core', ->
         # @$mapChooser.change => @_chooseMap(@value)
         # @$layerChooser.change => @_chooseLayer(@value)
 
-      @viewport.newMap()
+        @viewport.loadMap()
 
     enableDragSnapping: (size) ->
       @snapDragToGrid = size
@@ -85,22 +85,34 @@ define 'editor.core', ->
       imageCollection = require('game.imageCollection')
       spriteCollection = require('game.spriteCollection')
 
-      objects = []
-      names = {}
+      @objects = []
+      @objectsByName = {}
 
-      spriteCollection.each (sprite) ->
-        return if names[sprite.name]
+      spriteCollection.each (sprite) =>
+        name = sprite.name
+        return if @objectsByName[name]
         dims = {w: sprite.width, h: sprite.height}
-        objects.push {dims: dims, object: sprite, image: sprite.image}
-        names[sprite.name] = 1
-      imageCollection.each (image) ->
-        return if image.name is 'link2x'
-        return if names[image.name]
+        obj =
+          name: name
+          dims: dims
+          object: sprite
+          image: sprite.image
+        @objects.push(obj)
+        @objectsByName[name] = obj
+      imageCollection.each (image) =>
+        name = image.name
+        return if name is 'link2x'
+        return if @objectsByName[name]
         dims = {w: image.width, h: image.height}
-        objects.push {dims: dims, object: image, image: image}
-        names[image.name] = 1
+        obj =
+          name: name
+          dims: dims
+          object: image
+          image: image
+        @objects.push(obj)
+        @objectsByName[name] = obj
 
-      objects = objects.sort (x1, x2) ->
+      @objects = @objects.sort (x1, x2) ->
         [d1, d2] = [x1.dims, x2.dims]
         # display objects side-by-side, sorted by height ascending
         [w1, h1] = [d1.w, d1.h].reverse()
@@ -121,8 +133,8 @@ define 'editor.core', ->
       @$elemBeingDragged = null
       @objectBeingDragged = null
 
-      $.v.each objects, (so) =>
-        $div = $("<div/>")
+      $.v.each @objects, (so) =>
+        $div = so.$elem = $("<div/>")
           .addClass('img')
           .data('name', so.object.name)
           .width(so.dims.w)

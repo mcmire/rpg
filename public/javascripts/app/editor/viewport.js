@@ -1,4 +1,5 @@
 (function() {
+  var __hasProp = Object.prototype.hasOwnProperty;
 
   define('editor.viewport', function() {
     var Bounds, DRAG_SNAP_GRID_SIZE, meta, util;
@@ -85,7 +86,8 @@
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
           $elem.css('top', "" + y + "px").css('left', "" + x + "px");
           _this.addObject(_this.$elemBeingDragged, _this.objectBeingDragged);
-          return _this.forgetDragObject(false);
+          _this.forgetDragObject(false);
+          return _this.saveMap();
         });
       },
       unbindDragEvents: function() {
@@ -96,8 +98,8 @@
         this.$map.unbind('mousedragout.editor.viewport');
         return this.$map.unbind('mousedrop.editor.viewport');
       },
-      newMap: function() {
-        var $map, canvas, ctx, dragEntered, mouse,
+      loadMap: function() {
+        var $map, canvas, ctx, data, dragEntered, mouse, objects,
           _this = this;
         canvas = require('game.canvas').create(16, 16);
         ctx = canvas.getContext();
@@ -150,23 +152,35 @@
             return $(window).unbind('mousemove.editor.viewport');
           });
         });
-        return this.$element.append($map);
+        this.$element.append($map);
+        if (data = localStorage.getItem('editor.map')) {
+          objects = JSON.parse(data);
+          return $.v.each(objects, function(o) {
+            var $elem, object;
+            object = _this.core.objectsByName[o.name];
+            $elem = $(object.$elem[0].cloneNode(true));
+            $elem.addClass('editor-map-object');
+            $elem.css('left', "" + o.x + "px");
+            $elem.css('top', "" + o.y + "px");
+            _this.$map.append($elem);
+            return _this.addObject($elem, object);
+          });
+        }
       },
       addObject: function($elem, object) {
         var dragOffset, dragStarted, k, obj, v,
           _this = this;
         console.log('addObject');
-        obj = {
-          '$elem': $elem
-        };
+        obj = {};
         for (k in object) {
+          if (!__hasProp.call(object, k)) continue;
           v = object[k];
           obj[k] = v;
         }
-        this.objects.push(obj);
+        obj['$elem'] = $elem;
         dragStarted = false;
         dragOffset = null;
-        return obj.$elem.unbind('.editor').removeClass('drag-helper').bind('mousedown.editor.viewport', function(evt) {
+        obj.$elem.unbind('.editor').removeClass('drag-helper').bind('mousedown.editor.viewport', function(evt) {
           evt.stopPropagation();
           evt.preventDefault();
           $(window).bind('mousemove.editor.viewport', function(evt) {
@@ -202,8 +216,10 @@
           x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
           $elem.css('top', "" + y + "px").css('left', "" + x + "px");
+          _this.saveMap();
           return $(window).unbind('mousemove.editor.viewport');
         });
+        return this.objects.push(obj);
       },
       stealFrom: function(obj, prop) {
         return this[prop] = obj["delete"](prop);
@@ -216,6 +232,18 @@
         val = this[prop];
         delete this[prop];
         return val;
+      },
+      saveMap: function() {
+        var data;
+        console.log('saving map...');
+        data = $.v.map(this.objects, function(object) {
+          return {
+            name: object.name,
+            x: parseInt(object.$elem.css('left'), 10),
+            y: parseInt(object.$elem.css('top'), 10)
+          };
+        });
+        return localStorage.setItem('editor.map', JSON.stringify(data));
       },
       _mouseWithinViewport: function(evt) {
         var _ref, _ref2;
