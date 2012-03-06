@@ -39,8 +39,8 @@ define 'editor.core', ->
       return [a, b]
 
     positionDragHelper: (evt) ->
-      x = Math.round(evt.pageX - (@objectBeingDragged.dims.w/2))
-      y = Math.round(evt.pageY - (@objectBeingDragged.dims.h/2))
+      x = evt.pageX - @dragOffset.x
+      y = evt.pageY - @dragOffset.y
       @$elemBeingDragged.css('top', "#{y}px").css('left', "#{x}px")
 
     _resizeUI: ->
@@ -116,7 +116,8 @@ define 'editor.core', ->
         else
           return 0
 
-      dragOccurred = false
+      dragStarted = false
+      @dragOffset = null
       @$elemBeingDragged = null
       @objectBeingDragged = null
 
@@ -137,9 +138,9 @@ define 'editor.core', ->
             # wherever we want, not just within the sidebar or viewport
             $(window).bind 'mousemove.editor.core', (evt) =>
               # console.log 'mousemove while mousedown'
-              unless dragOccurred
+              unless dragStarted
                 $div.trigger 'mousedragstart.editor.core', evt
-                dragOccurred = true
+                dragStarted = true
               if @$elemBeingDragged
                 @positionDragHelper(evt)
               else
@@ -148,10 +149,11 @@ define 'editor.core', ->
             # bind mouseup to the window as it may occur outside of the image
             $(window).one 'mouseup.editor.core', (evt) =>
               console.log 'core mouseup'
-              if dragOccurred
+              if dragStarted
                 $div.trigger 'mousedragend.editor.core', evt
               $(window).unbind 'mousemove.editor.core'
-              dragOccurred = false
+              dragStarted = false
+              @dragOffset = null
               return true
 
           .bind 'mousedragstart.editor.core', (evt) =>
@@ -163,6 +165,10 @@ define 'editor.core', ->
               .removeClass('img')
             @rememberDragObject([$elemBeingDragged, so])
             $(document.body).addClass('editor-drag-active')
+            offset = $div.offset()
+            @dragOffset =
+              x: evt.pageX - offset.left
+              y: evt.pageY - offset.top
             @viewport.bindDragEvents()
 
           .bind 'mousedragend.editor.core', (evt) =>

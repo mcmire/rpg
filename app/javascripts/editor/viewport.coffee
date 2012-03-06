@@ -77,16 +77,16 @@ define 'editor.viewport', ->
 
         .bind 'mousedrag.editor.viewport', (evt) =>
           # console.log 'viewport drag'
-          obj = @objectBeingDragged
           $elem = @$elemBeingDragged
-          x = (evt.pageX - @map.x1 - @bounds.x1) - Math.round(obj.dims.w/2)
-          y = (evt.pageY - @map.y1 - @bounds.y1) - Math.round(obj.dims.h/2)
+          x = evt.pageX - @core.dragOffset.x - @map.x1 - @bounds.x1
+          y = evt.pageY - @core.dragOffset.y - @map.y1 - @bounds.y1
           $elem.css('top', "#{y}px").css('left', "#{x}px")
 
         .bind 'mousedragout.editor.viewport', (evt) =>
           console.log 'viewport mousedragout'
           @$elemBeingDragged.addClass('drag-helper')
           @core.rememberDragObject(@forgetDragObject())
+          # prevent a jump when dragging an object back out of the viewport
           @core.positionDragHelper(evt)
 
         # XXX: This is never getting fired... seems the drag helper is blocking
@@ -192,33 +192,51 @@ define 'editor.viewport', ->
       obj = {'$elem': $elem}
       obj[k] = v for k, v of object
       @objects.push(obj)
-      dragOccurred = false
+      dragStarted = false
+      dragOffset = null
       obj.$elem
         .unbind('.editor')
         .removeClass('drag-helper')
+
         .bind 'mousedown.editor.viewport', (evt) =>
           evt.stopPropagation()  # so that the map doesn't move
           evt.preventDefault()
 
           $(window).bind 'mousemove.editor.viewport', (evt) =>
-            dragOccurred ||= true
-            # remove snapping
-            x = (evt.pageX - @map.x1 - @bounds.x1) - Math.round(obj.dims.w/2)
-            y = (evt.pageY - @map.y1 - @bounds.y1) - Math.round(obj.dims.h/2)
-            $elem.css('top', "#{y}px").css('left', "#{x}px")
+            unless dragStarted
+              obj.$elem.trigger 'mousedragstart.editor.viewport', evt
+              dragStarted = true
+            $elem.trigger 'mousedrag.editor.viewport', evt
 
           # bind mouseup to the window as it may occur outside of the image
           $(window).one 'mouseup.editor.viewport', (evt) =>
             console.log 'viewport mouseup'
-            # apply snapping
-            x = parseInt($elem.css('left'), 10)
-            y = parseInt($elem.css('top'), 10)
-            x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-            y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-            $elem.css('top', "#{y}px").css('left', "#{x}px")
-            $(window).unbind 'mousemove.editor.viewport'
-            dragOccurred = false
+            if dragStarted
+              $elem.trigger 'mousedragend.editor.viewport', evt
+            dragStarted = false
+            dragOffset = null
             return true
+
+        .bind 'mousedragstart.editor.viewport', (evt) =>
+          offset = $elem.offset()
+          dragOffset =
+            x: evt.pageX - offset.left
+            y: evt.pageY - offset.top
+
+        .bind 'mousedrag.editor.viewport', (evt) =>
+          # remove snapping
+          x = evt.pageX - dragOffset.x - @map.x1 - @bounds.x1
+          y = evt.pageY - dragOffset.y - @map.y1 - @bounds.y1
+          $elem.css('top', "#{y}px").css('left', "#{x}px")
+
+        .bind 'mousedragend.editor.viewport', (evt) =>
+          # apply snapping
+          x = parseInt($elem.css('left'), 10)
+          y = parseInt($elem.css('top'), 10)
+          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+          $elem.css('top', "#{y}px").css('left', "#{x}px")
+          $(window).unbind 'mousemove.editor.viewport'
 
     stealFrom: (obj, prop) ->
       @[prop] = obj.delete(prop)

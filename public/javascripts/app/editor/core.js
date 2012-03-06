@@ -41,8 +41,8 @@
       },
       positionDragHelper: function(evt) {
         var x, y;
-        x = Math.round(evt.pageX - (this.objectBeingDragged.dims.w / 2));
-        y = Math.round(evt.pageY - (this.objectBeingDragged.dims.h / 2));
+        x = evt.pageX - this.dragOffset.x;
+        y = evt.pageY - this.dragOffset.y;
         return this.$elemBeingDragged.css('top', "" + y + "px").css('left', "" + x + "px");
       },
       _resizeUI: function() {
@@ -87,7 +87,7 @@
         return check();
       },
       _populateSidebar: function() {
-        var dragOccurred, imageCollection, names, objects, spriteCollection,
+        var dragStarted, imageCollection, names, objects, spriteCollection,
           _this = this;
         imageCollection = require('game.imageCollection');
         spriteCollection = require('game.spriteCollection');
@@ -139,7 +139,8 @@
             return 0;
           }
         });
-        dragOccurred = false;
+        dragStarted = false;
+        this.dragOffset = null;
         this.$elemBeingDragged = null;
         this.objectBeingDragged = null;
         return $.v.each(objects, function(so) {
@@ -147,9 +148,9 @@
           $div = $("<div/>").addClass('img').data('name', so.object.name).width(so.dims.w).height(so.dims.h).append(so.image.getElement()).bind('mousedown.editor.core', function(evt) {
             evt.preventDefault();
             $(window).bind('mousemove.editor.core', function(evt) {
-              if (!dragOccurred) {
+              if (!dragStarted) {
                 $div.trigger('mousedragstart.editor.core', evt);
-                dragOccurred = true;
+                dragStarted = true;
               }
               if (_this.$elemBeingDragged) {
                 return _this.positionDragHelper(evt);
@@ -159,17 +160,23 @@
             });
             return $(window).one('mouseup.editor.core', function(evt) {
               console.log('core mouseup');
-              if (dragOccurred) $div.trigger('mousedragend.editor.core', evt);
+              if (dragStarted) $div.trigger('mousedragend.editor.core', evt);
               $(window).unbind('mousemove.editor.core');
-              dragOccurred = false;
+              dragStarted = false;
+              _this.dragOffset = null;
               return true;
             });
           }).bind('mousedragstart.editor.core', function(evt) {
-            var $elemBeingDragged;
+            var $elemBeingDragged, offset;
             console.log('core mousedragstart');
             $elemBeingDragged = $($div[0].cloneNode(true)).addClass('editor-map-object').addClass('drag-helper').removeClass('img');
             _this.rememberDragObject([$elemBeingDragged, so]);
             $(document.body).addClass('editor-drag-active');
+            offset = $div.offset();
+            _this.dragOffset = {
+              x: evt.pageX - offset.left,
+              y: evt.pageY - offset.top
+            };
             return _this.viewport.bindDragEvents();
           }).bind('mousedragend.editor.core', function(evt) {
             console.log('core mousedragend');
