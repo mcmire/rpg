@@ -91,17 +91,19 @@ define 'editor.viewport', ->
 
         # XXX: This is never getting fired... seems the drag helper is blocking
         # it somehow.... why????
-        .one 'mousedrop.editor.viewport', (evt) =>
+        .bind 'mousedrop.editor.viewport', (evt) =>
           console.log 'viewport drop'
           # dragOccurred = true
           @addObject(@$elemBeingDragged, @objectBeingDragged)
           @forgetDragObject(false)
 
     unbindDragEvents: ->
+      console.log 'removing drag events from viewport'
       $(window).unbind 'mousemove.editor.viewport'
       @$map.unbind 'mousedragover.editor.viewport'
       @$map.unbind 'mousedrag.editor.viewport'
       @$map.unbind 'mousedragout.editor.viewport'
+      @$map.unbind 'mousedrop.editor.viewport'
 
     newMap: ->
       # create the grid pattern that backgrounds the map
@@ -181,6 +183,7 @@ define 'editor.viewport', ->
       @$element.append($map)
 
     addObject: ($elem, object) ->
+      console.log 'addObject'
       obj = {'$elem': $elem}
       obj[k] = v for k, v of object
       @objects.push(obj)

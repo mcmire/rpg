@@ -76,17 +76,19 @@
           _this.$elemBeingDragged.addClass('drag-helper');
           _this.core.rememberDragObject(_this.forgetDragObject());
           return _this.core.positionDragHelper(evt);
-        }).one('mousedrop.editor.viewport', function(evt) {
+        }).bind('mousedrop.editor.viewport', function(evt) {
           console.log('viewport drop');
           _this.addObject(_this.$elemBeingDragged, _this.objectBeingDragged);
           return _this.forgetDragObject(false);
         });
       },
       unbindDragEvents: function() {
+        console.log('removing drag events from viewport');
         $(window).unbind('mousemove.editor.viewport');
         this.$map.unbind('mousedragover.editor.viewport');
         this.$map.unbind('mousedrag.editor.viewport');
-        return this.$map.unbind('mousedragout.editor.viewport');
+        this.$map.unbind('mousedragout.editor.viewport');
+        return this.$map.unbind('mousedrop.editor.viewport');
       },
       newMap: function() {
         var $map, canvas, ctx, dragEntered, mouse,
@@ -147,6 +149,7 @@
       addObject: function($elem, object) {
         var dragOccurred, k, obj, v,
           _this = this;
+        console.log('addObject');
         obj = {
           '$elem': $elem
         };
