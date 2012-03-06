@@ -92,6 +92,7 @@ $sidebar-width: 300px;
 .editor-map-object {
   position: absolute;
   z-index: 10;
+  cursor: move;
 
   &.drag-helper {
     opacity: 0.7;

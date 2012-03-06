@@ -79,8 +79,7 @@
           return _this.core.positionDragHelper(evt);
         }).one('mousedrop.editor.viewport', function(evt) {
           console.log('viewport drop');
-          _this.$elemBeingDragged.unbind('.editor').removeClass('drag-helper');
-          _this.addObject(_this.objectBeingDragged);
+          _this.addObject(_this.$elemBeingDragged, _this.objectBeingDragged);
           return _this.forgetDragObject(false);
         });
       },
@@ -152,8 +151,37 @@
         });
         return this.$element.append($map);
       },
-      addObject: function(object) {
-        return this.objects.push(object);
+      addObject: function($elem, object) {
+        var dragOccurred, k, obj, v,
+          _this = this;
+        obj = {
+          '$elem': $elem
+        };
+        for (k in object) {
+          v = object[k];
+          obj[k] = v;
+        }
+        this.objects.push(obj);
+        dragOccurred = false;
+        return obj.$elem.unbind('.editor').removeClass('drag-helper').bind('mousedown.editor.viewport', function(evt) {
+          evt.stopPropagation();
+          evt.preventDefault();
+          $(window).bind('mousemove.editor.viewport', function(evt) {
+            var x, y;
+            dragOccurred || (dragOccurred = true);
+            x = Math.round(evt.pageX - (obj.dims.w / 2)) - _this.bounds.x1;
+            y = Math.round(evt.pageY - (obj.dims.h / 2)) - _this.bounds.y1;
+            x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
+            y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
+            return obj.$elem.css('top', "" + y + "px").css('left', "" + x + "px");
+          });
+          return $(window).one('mouseup.editor.viewport', function(evt) {
+            console.log('viewport mouseup');
+            $(window).unbind('mousemove.editor.viewport');
+            dragOccurred = false;
+            return true;
+          });
+        });
       },
       stealFrom: function(obj, prop) {
         return this[prop] = obj["delete"](prop);

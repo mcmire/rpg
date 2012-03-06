@@ -99,10 +99,8 @@ define 'editor.viewport', ->
         # it somehow.... why????
         .one 'mousedrop.editor.viewport', (evt) =>
           console.log 'viewport drop'
-          @$elemBeingDragged
-            .unbind('.editor')
-            .removeClass('drag-helper')
-          @addObject(@objectBeingDragged)
+          # dragOccurred = true
+          @addObject(@$elemBeingDragged, @objectBeingDragged)
           @forgetDragObject(false)
 
     unbindDragEvents: ->
@@ -193,8 +191,30 @@ define 'editor.viewport', ->
 
       @$element.append($map)
 
-    addObject: (object) ->
-      @objects.push(object)
+    addObject: ($elem, object) ->
+      obj = {'$elem': $elem}
+      obj[k] = v for k, v of object
+      @objects.push(obj)
+      dragOccurred = false
+      obj.$elem
+        .unbind('.editor')
+        .removeClass('drag-helper')
+        .bind 'mousedown.editor.viewport', (evt) =>
+          evt.stopPropagation()  # so that the map doesn't move
+          evt.preventDefault()
+          $(window).bind 'mousemove.editor.viewport', (evt) =>
+            dragOccurred ||= true
+            x = Math.round(evt.pageX - (obj.dims.w/2)) - @bounds.x1
+            y = Math.round(evt.pageY - (obj.dims.h/2)) - @bounds.y1
+            x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+            y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+            obj.$elem.css('top', "#{y}px").css('left', "#{x}px")
+          # bind mouseup to the window as it may occur outside of the image
+          $(window).one 'mouseup.editor.viewport', (evt) =>
+            console.log 'viewport mouseup'
+            $(window).unbind 'mousemove.editor.viewport'
+            dragOccurred = false
+            return true
 
     stealFrom: (obj, prop) ->
       @[prop] = obj.delete(prop)
