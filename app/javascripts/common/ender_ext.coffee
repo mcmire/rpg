@@ -44,4 +44,10 @@ enderMembers =
     eo = $element.offset()
     _boundsCollide(to, eo)
 
+  removeClassesLike: (regex) ->
+    classNames = (this[0].className or "").split(" ")
+    classNames = $.v.reject classNames, (name) -> regex.test(name)
+    this[0].className = classNames.join(" ")
+    return this
+
 $.ender(enderMembers, true)

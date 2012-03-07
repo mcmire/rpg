@@ -9,11 +9,6 @@ body {
   body.editor-drag-active {
     cursor: move; }
 
-* {
-  -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box; }
-
 #editor-nav {
   background: #222;
   color: white;
@@ -37,12 +32,47 @@ body {
   #editor-viewport .editor-dragged-image {
     position: absolute;
     z-index: 10; }
+  #editor-viewport.editor-tool-normal {
+    cursor: normal; }
+  #editor-viewport.editor-tool-hand {
+    cursor: url("/images/editor/tool-hand.gif"), auto; }
+  #editor-viewport.editor-tool-select {
+    cursor: url("/images/editor/tool-select.gif"), auto; }
+  #editor-viewport.editor-tool-bucket {
+    cursor: url("/images/editor/tool-bucket.gif"), auto; }
+  #editor-viewport .editor-map-object {
+    position: absolute;
+    z-index: 5; }
+    #editor-viewport .editor-map-object.drag-helper {
+      opacity: 0.7; }
+  #editor-viewport.editor-tool-normal .editor-map-object {
+    cursor: move; }
 
 .editor-map {
   background-color: white;
   position: absolute;
   top: 0;
   left: 0; }
+
+#editor-toolbox {
+  border-radius: 5px;
+  border: 1px solid #666;
+  background-color: rgba(235, 235, 235, 0.8);
+  padding: 10px;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  cursor: auto !important; }
+  #editor-toolbox > img {
+    display: block;
+    margin-bottom: 10px;
+    border: 1px solid transparent;
+    width: 24px;
+    height: 21px;
+    opacity: 0.5; }
+    #editor-toolbox > img:hover, #editor-toolbox > img.editor-active {
+      opacity: 1; }
 
 #editor-sidebar {
   position: absolute;
@@ -60,10 +90,3 @@ body {
     margin-bottom: 10px;
     overflow: hidden;
     cursor: move; }
-
-.editor-map-object {
-  position: absolute;
-  z-index: 10;
-  cursor: move; }
-  .editor-map-object.drag-helper {
-    opacity: 0.7; }

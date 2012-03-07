@@ -133,7 +133,86 @@ define 'editor.viewport', ->
         .css('height', @map.height)
         .css('background-image', "url(#{canvas.element.toDataURL()})")
         .css('background-repeat', 'repeat')
+      @$element.append($map)
 
+      # TODO: Refactor
+      if data = localStorage.getItem('editor.map')
+        objects = JSON.parse(data)
+        $.v.each objects, (o) =>
+          object = @core.objectsByName[o.name]
+          # clone the image
+          $elem = $(object.$elem[0].cloneNode(true))
+          $elem.addClass('editor-map-object')
+          $elem.css('left', "#{o.x}px")
+          $elem.css('top', "#{o.y}px")
+          @$map.append($elem)
+          @addObject($elem, object)
+
+    activateNormalTool: ->
+      $.v.each @objects, (obj) =>
+        dragStarted = false
+        dragOffset = null
+        $elem = obj.$elem
+        obj.$elem
+          .unbind('.editor')
+          .removeClass('drag-helper')
+
+          # TODO: Need to bind this only when the 'normal' tool is activated
+          # and then unbind it when it's deactivated
+          .bind 'mousedown.editor.viewport', (evt) =>
+            # don't move the object accidentally if it is right-clicked
+            return if evt.button is 2
+
+            evt.stopPropagation()  # so that the map doesn't move
+            evt.preventDefault()
+
+            $(window).bind 'mousemove.editor.viewport', (evt) =>
+              unless dragStarted
+                obj.$elem.trigger 'mousedragstart.editor.viewport', evt
+                dragStarted = true
+              $elem.trigger 'mousedrag.editor.viewport', evt
+
+            # bind mouseup to the window as it may occur outside of the image
+            $(window).one 'mouseup.editor.viewport', (evt) =>
+              console.log 'viewport mouseup'
+              if dragStarted
+                $elem.trigger 'mousedragend.editor.viewport', evt
+              dragStarted = false
+              dragOffset = null
+              return true
+
+          .bind 'mousedragstart.editor.viewport', (evt) =>
+            offset = $elem.offset()
+            dragOffset =
+              x: evt.pageX - offset.left
+              y: evt.pageY - offset.top
+
+          .bind 'mousedrag.editor.viewport', (evt) =>
+            # remove snapping
+            x = evt.pageX - dragOffset.x - @map.x1 - @bounds.x1
+            y = evt.pageY - dragOffset.y - @map.y1 - @bounds.y1
+            $elem.css('top', "#{y}px").css('left', "#{x}px")
+
+          .bind 'mousedragend.editor.viewport', (evt) =>
+            # apply snapping
+            x = parseInt($elem.css('left'), 10)
+            y = parseInt($elem.css('top'), 10)
+            x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+            y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+            $elem.css('top', "#{y}px").css('left', "#{x}px")
+            @saveMap()
+            $(window).unbind 'mousemove.editor.viewport'
+
+    deactivateNormalTool: ->
+      $.v.each @objects, (obj) ->
+        obj.$elem
+          .unbind('mousedown.editor.viewport')
+          .unbind('mousedragstart.editor.viewport')
+          .unbind('mousedrag.editor.viewport')
+          .unbind('mousedragend.editor.viewport')
+
+    activateHandTool: ->
+      $map = @$map
       @$map
         .bind 'mousedown.editor.viewport', (evt) =>
           # don't pan the map accidentally if it is right-clicked
@@ -185,73 +264,14 @@ define 'editor.viewport', ->
               mouse = null
             $(window).unbind 'mousemove.editor.viewport'
 
-      @$element.append($map)
-
-      # TODO: Refactor
-      if data = localStorage.getItem('editor.map')
-        objects = JSON.parse(data)
-        $.v.each objects, (o) =>
-          object = @core.objectsByName[o.name]
-          # clone the image
-          $elem = $(object.$elem[0].cloneNode(true))
-          $elem.addClass('editor-map-object')
-          $elem.css('left', "#{o.x}px")
-          $elem.css('top', "#{o.y}px")
-          @$map.append($elem)
-          @addObject($elem, object)
+    deactivateHandTool: ->
+      @$map.unbind 'mousedown.editor.viewport'
 
     addObject: ($elem, object) ->
       console.log 'addObject'
       obj = {}
       obj[k] = v for own k, v of object
       obj['$elem'] = $elem
-      dragStarted = false
-      dragOffset = null
-      obj.$elem
-        .unbind('.editor')
-        .removeClass('drag-helper')
-
-        .bind 'mousedown.editor.viewport', (evt) =>
-          evt.stopPropagation()  # so that the map doesn't move
-          evt.preventDefault()
-
-          $(window).bind 'mousemove.editor.viewport', (evt) =>
-            unless dragStarted
-              obj.$elem.trigger 'mousedragstart.editor.viewport', evt
-              dragStarted = true
-            $elem.trigger 'mousedrag.editor.viewport', evt
-
-          # bind mouseup to the window as it may occur outside of the image
-          $(window).one 'mouseup.editor.viewport', (evt) =>
-            console.log 'viewport mouseup'
-            if dragStarted
-              $elem.trigger 'mousedragend.editor.viewport', evt
-            dragStarted = false
-            dragOffset = null
-            return true
-
-        .bind 'mousedragstart.editor.viewport', (evt) =>
-          offset = $elem.offset()
-          dragOffset =
-            x: evt.pageX - offset.left
-            y: evt.pageY - offset.top
-
-        .bind 'mousedrag.editor.viewport', (evt) =>
-          # remove snapping
-          x = evt.pageX - dragOffset.x - @map.x1 - @bounds.x1
-          y = evt.pageY - dragOffset.y - @map.y1 - @bounds.y1
-          $elem.css('top', "#{y}px").css('left', "#{x}px")
-
-        .bind 'mousedragend.editor.viewport', (evt) =>
-          # apply snapping
-          x = parseInt($elem.css('left'), 10)
-          y = parseInt($elem.css('top'), 10)
-          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-          $elem.css('top', "#{y}px").css('left', "#{x}px")
-          @saveMap()
-          $(window).unbind 'mousemove.editor.viewport'
-
       @objects.push(obj)
 
     stealFrom: (obj, prop) ->

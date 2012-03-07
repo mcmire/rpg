@@ -18,7 +18,8 @@
         this._loadImages();
         return this._whenImagesLoaded(function() {
           _this._populateSidebar();
-          return _this.viewport.loadMap();
+          _this.viewport.loadMap();
+          return _this._initToolbox();
         });
       },
       enableDragSnapping: function(size) {
@@ -152,6 +153,7 @@
         return $.v.each(this.objects, function(so) {
           var $div;
           $div = so.$elem = $("<div/>").addClass('img').data('name', so.object.name).width(so.dims.w).height(so.dims.h).append(so.image.getElement()).bind('mousedown.editor.core', function(evt) {
+            if (evt.button === 2) return;
             evt.preventDefault();
             $(window).bind('mousemove.editor.core', function(evt) {
               if (!dragStarted) {
@@ -211,6 +213,55 @@
       _chooseLayer: function(layerName) {
         this.currentMap[this.currentLayer].deactivate();
         return this.currentMap[layerName].activate();
+      },
+      _initToolbox: function() {
+        var $tools, prevTool, selectTool, that, tools,
+          _this = this;
+        that = this;
+        this.$toolbox = $('<div id="editor-toolbox"/>');
+        this.viewport.$element.append(this.$toolbox);
+        this.currentTool = null;
+        prevTool = null;
+        selectTool = function(tool) {
+          var $tool;
+          $tool = _this.$toolbox.find("> [data-tool='" + tool + "']");
+          $tools.removeClass('editor-active');
+          $tool.addClass('editor-active');
+          _this.viewport.$element.removeClassesLike(/^editor-tool-/).addClass("editor-tool-" + tool);
+          if (_this.currentTool === 'normal') {
+            _this.viewport.deactivateNormalTool();
+          }
+          if (_this.currentTool === 'hand') _this.viewport.deactivateHandTool();
+          _this.currentTool = tool;
+          if (_this.currentTool === 'normal') _this.viewport.activateNormalTool();
+          if (_this.currentTool === 'hand') {
+            return _this.viewport.activateHandTool();
+          }
+        };
+        tools = 'normal hand select bucket'.split(" ");
+        $.v.each(tools, function(tool) {
+          var $tool;
+          $tool = $("<img src=\"/images/editor/tool-" + tool + ".gif\" data-tool=\"" + tool + "\">");
+          return _this.$toolbox.append($tool);
+        });
+        $tools = this.$toolbox.find('> img').bind('click.editor', function() {
+          var tool;
+          tool = $(this).data('tool');
+          return selectTool(tool);
+        });
+        selectTool('normal');
+        return $(window).bind('keydown.editor.core', function(evt) {
+          if (evt.keyCode === 16) {
+            prevTool = _this.currentTool;
+            selectTool('hand');
+            return evt.preventDefault();
+          }
+        }).bind('keyup.editor.core', function(evt) {
+          if (evt.keyCode === 16) {
+            selectTool(prevTool);
+            return prevTool = null;
+          }
+        });
       }
     });
   });

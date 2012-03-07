@@ -29,6 +29,15 @@
       to = this.offset();
       eo = $element.offset();
       return _boundsCollide(to, eo);
+    },
+    removeClassesLike: function(regex) {
+      var classNames;
+      classNames = (this[0].className || "").split(" ");
+      classNames = $.v.reject(classNames, function(name) {
+        return regex.test(name);
+      });
+      this[0].className = classNames.join(" ");
+      return this;
     }
   };
 

@@ -48,3 +48,6 @@
 
 * An open map is saved automatically every minute, and also when closed, when
   another map is opened, or when the browser window/tab closes.
+
+* Add a selection tool -- so if you want to move two tiles as a group (say,
+  Link's house AND the door), you can do that.

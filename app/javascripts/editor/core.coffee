@@ -21,6 +21,7 @@ define 'editor.core', ->
         # @$layerChooser.change => @_chooseLayer(@value)
 
         @viewport.loadMap()
+        @_initToolbox()
 
     enableDragSnapping: (size) ->
       @snapDragToGrid = size
@@ -142,6 +143,9 @@ define 'editor.core', ->
           .append(so.image.getElement())
 
           .bind 'mousedown.editor.core', (evt) =>
+            # don't move the object accidentally if it is right-clicked
+            return if evt.button is 2
+
             # console.log 'img mousedown'
 
             evt.preventDefault()
@@ -210,3 +214,51 @@ define 'editor.core', ->
       # grey out the current layer and prevent interaction with it
       @currentMap[@currentLayer].deactivate()
       @currentMap[layerName].activate()
+
+    _initToolbox: ->
+      that = this
+      @$toolbox = $('<div id="editor-toolbox"/>')
+      @viewport.$element.append(@$toolbox)
+      @currentTool = null
+      prevTool = null
+
+      selectTool = (tool) =>
+        $tool = @$toolbox.find("> [data-tool='#{tool}']")
+        $tools.removeClass('editor-active')
+        $tool.addClass('editor-active')
+        @viewport.$element
+          .removeClassesLike(/^editor-tool-/)
+          .addClass("editor-tool-#{tool}")
+
+        if @currentTool is 'normal'
+          @viewport.deactivateNormalTool()
+        if @currentTool is 'hand'
+          @viewport.deactivateHandTool()
+        @currentTool = tool
+        if @currentTool is 'normal'
+          @viewport.activateNormalTool()
+        if @currentTool is 'hand'
+          @viewport.activateHandTool()
+
+      tools = 'normal hand select bucket'.split(" ")
+      $.v.each tools, (tool) =>
+        $tool = $("""<img src="/images/editor/tool-#{tool}.gif" data-tool="#{tool}">""")
+        @$toolbox.append($tool)
+      $tools = @$toolbox.find('> img')
+        .bind 'click.editor', ->
+          tool = $(this).data('tool')
+          selectTool(tool)
+
+      selectTool('normal')
+
+      $(window)
+        .bind 'keydown.editor.core', (evt) =>
+          if evt.keyCode is 16  # shift
+            prevTool = @currentTool
+            selectTool('hand')
+            evt.preventDefault()
+        .bind 'keyup.editor.core', (evt) =>
+          if evt.keyCode is 16
+            selectTool(prevTool)
+            prevTool = null
+
