@@ -144,6 +144,7 @@ define 'editor.core', ->
 
           .bind 'mousedown.editor.core', (evt) =>
             # don't move the object accidentally if it is right-clicked
+            # FIXME so this handles ctrl-click too
             return if evt.button is 2
 
             # console.log 'img mousedown'
@@ -177,7 +178,7 @@ define 'editor.core', ->
             # clone the image node
             $elemBeingDragged = $($div[0].cloneNode(true))
               .addClass('editor-map-object')
-              .addClass('drag-helper')
+              .addClass('editor-drag-helper')
               .removeClass('img')
             @rememberDragObject([$elemBeingDragged, so])
             $(document.body).addClass('editor-drag-active')
@@ -234,7 +235,9 @@ define 'editor.core', ->
           @viewport.deactivateNormalTool()
         if @currentTool is 'hand'
           @viewport.deactivateHandTool()
+
         @currentTool = tool
+
         if @currentTool is 'normal'
           @viewport.activateNormalTool()
         if @currentTool is 'hand'
@@ -251,14 +254,29 @@ define 'editor.core', ->
 
       selectTool('normal')
 
+      SHIFT_KEY = 16
+      CTRL_KEY = 17
+      mouse = {}
+      # http://stackoverflow.com/questions/3898524/how-to-show-mouse-cursor-in-browser-while-typing
+      # $cursor = null
       $(window)
         .bind 'keydown.editor.core', (evt) =>
-          if evt.keyCode is 16  # shift
+          if evt.keyCode is SHIFT_KEY
             prevTool = @currentTool
             selectTool('hand')
             evt.preventDefault()
+          # unless $cursor
+          #   $cursor = $("""<img id="editor-sticky-cursor" src="/images/editor/tool-#{@currentTool}.gif">""")
+          #   $(document.body).append($cursor)
+          #   $cursor.moveTo(mouse.x, mouse.y)
         .bind 'keyup.editor.core', (evt) =>
-          if evt.keyCode is 16
+          if evt.keyCode is SHIFT_KEY
             selectTool(prevTool)
             prevTool = null
+        .bind 'mousemove.editor.core', (evt) =>
+          mouse.x = evt.pageX
+          mouse.y = evt.pageY
+          # if $cursor
+          #   $cursor.remove()
+          #   $cursor = null
 

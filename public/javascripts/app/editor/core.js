@@ -177,7 +177,7 @@
           }).bind('mousedragstart.editor.core', function(evt) {
             var $elemBeingDragged, offset;
             console.log('core mousedragstart');
-            $elemBeingDragged = $($div[0].cloneNode(true)).addClass('editor-map-object').addClass('drag-helper').removeClass('img');
+            $elemBeingDragged = $($div[0].cloneNode(true)).addClass('editor-map-object').addClass('editor-drag-helper').removeClass('img');
             _this.rememberDragObject([$elemBeingDragged, so]);
             $(document.body).addClass('editor-drag-active');
             offset = $div.offset();
@@ -215,7 +215,7 @@
         return this.currentMap[layerName].activate();
       },
       _initToolbox: function() {
-        var $tools, prevTool, selectTool, that, tools,
+        var $tools, CTRL_KEY, SHIFT_KEY, mouse, prevTool, selectTool, that, tools,
           _this = this;
         that = this;
         this.$toolbox = $('<div id="editor-toolbox"/>');
@@ -250,17 +250,23 @@
           return selectTool(tool);
         });
         selectTool('normal');
+        SHIFT_KEY = 16;
+        CTRL_KEY = 17;
+        mouse = {};
         return $(window).bind('keydown.editor.core', function(evt) {
-          if (evt.keyCode === 16) {
+          if (evt.keyCode === SHIFT_KEY) {
             prevTool = _this.currentTool;
             selectTool('hand');
             return evt.preventDefault();
           }
         }).bind('keyup.editor.core', function(evt) {
-          if (evt.keyCode === 16) {
+          if (evt.keyCode === SHIFT_KEY) {
             selectTool(prevTool);
             return prevTool = null;
           }
+        }).bind('mousemove.editor.core', function(evt) {
+          mouse.x = evt.pageX;
+          return mouse.y = evt.pageY;
         });
       }
     });

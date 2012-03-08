@@ -15,7 +15,8 @@
         offset = this.$element.offset();
         this.bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height);
         this.map = null;
-        this.objects = [];
+        this.objectsById = {};
+        this.objectId = 0;
         return this;
       },
       setWidth: function(width) {
@@ -131,13 +132,16 @@
         }
       },
       activateNormalTool: function() {
-        var _this = this;
-        return $.v.each(this.objects, function(obj) {
+        var BACKSPACE_KEY, DELETE_KEY, selecteds,
+          _this = this;
+        selecteds = [];
+        $.v.each(this.objectsById, function(id, obj) {
           var $elem, dragOffset, dragStarted;
           dragStarted = false;
           dragOffset = null;
           $elem = obj.$elem;
           return obj.$elem.unbind('.editor').removeClass('drag-helper').bind('mousedown.editor.viewport', function(evt) {
+            console.log('map object mousedown');
             if (evt.button === 2) return;
             evt.stopPropagation();
             evt.preventDefault();
@@ -153,10 +157,13 @@
               if (dragStarted) $elem.trigger('mousedragend.editor.viewport', evt);
               dragStarted = false;
               dragOffset = null;
+              $(window).unbind('mousemove.editor.viewport');
               return true;
             });
           }).bind('mousedragstart.editor.viewport', function(evt) {
             var offset;
+            console.log('map object mousedragstart');
+            $(document.body).addClass('editor-drag-active');
             offset = $elem.offset();
             return dragOffset = {
               x: evt.pageX - offset.left,
@@ -169,20 +176,51 @@
             return $elem.css('top', "" + y + "px").css('left', "" + x + "px");
           }).bind('mousedragend.editor.viewport', function(evt) {
             var x, y;
+            console.log('map object mousedragend');
+            $(document.body).removeClass('editor-drag-active');
             x = parseInt($elem.css('left'), 10);
             y = parseInt($elem.css('top'), 10);
             x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
             y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
             $elem.css('top', "" + y + "px").css('left', "" + x + "px");
-            _this.saveMap();
-            return $(window).unbind('mousemove.editor.viewport');
+            return _this.saveMap();
+          }).bind('mouseup.editor.viewport.selection', function(evt) {
+            var newstate, state;
+            console.log('map object mouseup');
+            if (!dragStarted) {
+              state = $elem.attr('data-is-selected');
+              newstate = state === 'no' || !state ? 'yes' : 'no';
+              $elem.attr('data-is-selected', newstate);
+            }
+            return true;
           });
+        });
+        this.$map.bind('mouseup.editor.viewport.selection', function(evt) {
+          console.log('map mouseup');
+          _this.$map.find('.editor-map-object').removeClass('editor-selected');
+          return _this.$map.find('.editor-map-object[data-is-selected=yes]').addClass('editor-selected');
+        });
+        BACKSPACE_KEY = 8;
+        DELETE_KEY = 46;
+        return $(window).bind('keydown.editor.viewport', function(evt) {
+          if (evt.keyCode === DELETE_KEY || evt.keyCode === BACKSPACE_KEY) {
+            evt.preventDefault();
+            _this.$map.find('.editor-map-object.editor-selected').each(function(elem) {
+              var $elem, objectId;
+              $elem = $(elem);
+              objectId = $elem.data('moid');
+              delete _this.objectsById[objectId];
+              return $elem.remove();
+            });
+            return _this.saveMap();
+          }
         });
       },
       deactivateNormalTool: function() {
-        return $.v.each(this.objects, function(obj) {
+        $.v.each(this.objectsById, function(id, obj) {
           return obj.$elem.unbind('mousedown.editor.viewport').unbind('mousedragstart.editor.viewport').unbind('mousedrag.editor.viewport').unbind('mousedragend.editor.viewport');
         });
+        return this.$map.unbind('mouseup.editor.viewport');
       },
       activateHandTool: function() {
         var $map,
@@ -195,7 +233,6 @@
             px: evt.pageX,
             py: evt.pageY
           };
-          $map.css('cursor', 'move');
           evt.preventDefault();
           $(window).bind('mousemove.editor.viewport', function(evt) {
             var dx, dy, h, mapX, mapY, w, x, y;
@@ -219,10 +256,7 @@
             return evt.preventDefault();
           });
           return $(window).one('mouseup.editor.viewport', function(evt) {
-            if (mouse) {
-              $map.css('cursor', 'auto');
-              mouse = null;
-            }
+            if (mouse) mouse = null;
             return $(window).unbind('mousemove.editor.viewport');
           });
         });
@@ -232,15 +266,18 @@
       },
       addObject: function($elem, object) {
         var k, obj, v;
+        this.objectId++;
         console.log('addObject');
         obj = {};
+        obj.moid = this.objectId;
         for (k in object) {
           if (!__hasProp.call(object, k)) continue;
           v = object[k];
           obj[k] = v;
         }
         obj['$elem'] = $elem;
-        return this.objects.push(obj);
+        $elem.data('moid', this.objectId);
+        return this.objectsById[this.objectId] = obj;
       },
       stealFrom: function(obj, prop) {
         return this[prop] = obj["delete"](prop);
@@ -257,7 +294,7 @@
       saveMap: function() {
         var data;
         console.log('saving map...');
-        data = $.v.map(this.objects, function(object) {
+        data = $.v.map(this.objectsById, function(id, object) {
           return {
             name: object.name,
             x: parseInt(object.$elem.css('left'), 10),

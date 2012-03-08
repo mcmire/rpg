@@ -38,6 +38,15 @@
       });
       this[0].className = classNames.join(" ");
       return this;
+    },
+    moveBy: function(args) {
+      var x, y;
+      x = parseInt(this.css('left'), 10) + (args.x || 0);
+      y = parseInt(this.css('top'), 10) + (args.y || 0);
+      return this.css('left', "" + x + "px").css('top', "" + y + "px");
+    },
+    moveTo: function(x, y) {
+      return this.css('left', "" + x + "px").css('top', "" + y + "px");
     }
   };
 

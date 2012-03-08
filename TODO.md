@@ -2,6 +2,11 @@
 
 * Use [keymaster](https://github.com/madrobby/keymaster) for detecting keys?
 
+* Store images at original size, then on loading images, use Canvas to read
+  images pixel by pixel and then encode them in memory as an array of arrays (or
+  Pixel objects). This way we can easily render images at an arbitrary size
+  (this will allow zooming in the editor).
+
 ## Game
 
 * Fix sprites for the player and the enemy
@@ -51,3 +56,5 @@
 
 * Add a selection tool -- so if you want to move two tiles as a group (say,
   Link's house AND the door), you can do that.
+
+* Add a threshold for dragging -- maybe about 3 pixels

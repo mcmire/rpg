@@ -50,4 +50,12 @@ enderMembers =
     this[0].className = classNames.join(" ")
     return this
 
+  moveBy: (args) ->
+    x = parseInt(this.css('left'), 10) + (args.x or 0)
+    y = parseInt(this.css('top'), 10)  + (args.y or 0)
+    this.css('left', "#{x}px").css('top', "#{y}px")
+
+  moveTo: (x, y) ->
+    this.css('left', "#{x}px").css('top', "#{y}px")
+
 $.ender(enderMembers, true)

@@ -12,7 +12,8 @@ define 'editor.viewport', ->
       offset = @$element.offset()
       @bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height)
       @map = null
-      @objects = []
+      @objectsById = {}
+      @objectId = 0
       return this
 
     setWidth: (width) ->
@@ -62,8 +63,6 @@ define 'editor.viewport', ->
             mouseLocation = 'outside'
 
       @$map
-        # XXX: This is never getting fired... seems the drag helper is blocking
-        # it somehow.... why????
         .one 'mouseup.editor.viewport', (evt) =>
           console.log 'viewport mouseup'
           if @$elemBeingDragged
@@ -149,7 +148,8 @@ define 'editor.viewport', ->
           @addObject($elem, object)
 
     activateNormalTool: ->
-      $.v.each @objects, (obj) =>
+      selecteds = []
+      $.v.each @objectsById, (id, obj) =>
         dragStarted = false
         dragOffset = null
         $elem = obj.$elem
@@ -157,10 +157,11 @@ define 'editor.viewport', ->
           .unbind('.editor')
           .removeClass('drag-helper')
 
-          # TODO: Need to bind this only when the 'normal' tool is activated
-          # and then unbind it when it's deactivated
           .bind 'mousedown.editor.viewport', (evt) =>
+            console.log 'map object mousedown'
+
             # don't move the object accidentally if it is right-clicked
+            # FIXME so this handles ctrl-click too
             return if evt.button is 2
 
             evt.stopPropagation()  # so that the map doesn't move
@@ -179,21 +180,25 @@ define 'editor.viewport', ->
                 $elem.trigger 'mousedragend.editor.viewport', evt
               dragStarted = false
               dragOffset = null
+              $(window).unbind 'mousemove.editor.viewport'
               return true
 
           .bind 'mousedragstart.editor.viewport', (evt) =>
+            console.log 'map object mousedragstart'
+            $(document.body).addClass('editor-drag-active')
             offset = $elem.offset()
             dragOffset =
               x: evt.pageX - offset.left
               y: evt.pageY - offset.top
 
           .bind 'mousedrag.editor.viewport', (evt) =>
-            # remove snapping
             x = evt.pageX - dragOffset.x - @map.x1 - @bounds.x1
             y = evt.pageY - dragOffset.y - @map.y1 - @bounds.y1
             $elem.css('top', "#{y}px").css('left', "#{x}px")
 
           .bind 'mousedragend.editor.viewport', (evt) =>
+            console.log 'map object mousedragend'
+            $(document.body).removeClass('editor-drag-active')
             # apply snapping
             x = parseInt($elem.css('left'), 10)
             y = parseInt($elem.css('top'), 10)
@@ -201,21 +206,61 @@ define 'editor.viewport', ->
             y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
             $elem.css('top', "#{y}px").css('left', "#{x}px")
             @saveMap()
-            $(window).unbind 'mousemove.editor.viewport'
+
+          .bind 'mouseup.editor.viewport.selection', (evt) =>
+            console.log 'map object mouseup'
+            unless dragStarted
+              # just a normal click
+              # moid = $elem.data('moid')
+              # if moid in selecteds
+              #   delete selecteds[moid]
+              # else
+              #   selecteds[moid] = 1
+              state = $elem.attr('data-is-selected')
+              newstate = if state is 'no' or !state then 'yes' else 'no'
+              $elem.attr('data-is-selected', newstate)
+            return true
+
+      @$map.bind 'mouseup.editor.viewport.selection', (evt) =>
+        console.log 'map mouseup'
+        @$map.find('.editor-map-object')
+          .removeClass('editor-selected')
+        # $selectedElems = $.v.map $.v.keys(selecteds), (moid) ->
+        #   @objectsById[moid].$elem
+        # $(selectedElems).addClass('editor-selected')
+        @$map.find('.editor-map-object[data-is-selected=yes]')
+          .addClass('editor-selected')
+
+      BACKSPACE_KEY = 8
+      DELETE_KEY    = 46
+      $(window)
+        # this cannot be on keyup b/c backspace will go back to the prev page
+        # immediately on keydown so we have to catch that
+        .bind 'keydown.editor.viewport', (evt) =>
+          if evt.keyCode is DELETE_KEY or evt.keyCode is BACKSPACE_KEY
+            evt.preventDefault()
+            @$map.find('.editor-map-object.editor-selected').each (elem) =>
+              $elem = $(elem)
+              objectId = $elem.data('moid')
+              delete @objectsById[objectId]
+              $elem.remove()
+            @saveMap()
 
     deactivateNormalTool: ->
-      $.v.each @objects, (obj) ->
+      $.v.each @objectsById, (id, obj) ->
         obj.$elem
           .unbind('mousedown.editor.viewport')
           .unbind('mousedragstart.editor.viewport')
           .unbind('mousedrag.editor.viewport')
           .unbind('mousedragend.editor.viewport')
+      @$map.unbind 'mouseup.editor.viewport'
 
     activateHandTool: ->
       $map = @$map
       @$map
         .bind 'mousedown.editor.viewport', (evt) =>
           # don't pan the map accidentally if it is right-clicked
+          # FIXME so this handles ctrl-click too
           return if evt.button is 2
 
           # previous mouse position
@@ -223,7 +268,7 @@ define 'editor.viewport', ->
             px:  evt.pageX
             py:  evt.pageY
 
-          $map.css('cursor', 'move')
+          # $map.css('cursor', 'move')
 
           # prevent anything that may occur on mousedown
           evt.preventDefault()
@@ -260,7 +305,7 @@ define 'editor.viewport', ->
 
           $(window).one 'mouseup.editor.viewport', (evt) =>
             if mouse
-              $map.css('cursor', 'auto')
+              # $map.css('cursor', 'auto')
               mouse = null
             $(window).unbind 'mousemove.editor.viewport'
 
@@ -268,11 +313,14 @@ define 'editor.viewport', ->
       @$map.unbind 'mousedown.editor.viewport'
 
     addObject: ($elem, object) ->
+      @objectId++
       console.log 'addObject'
       obj = {}
+      obj.moid = @objectId
       obj[k] = v for own k, v of object
       obj['$elem'] = $elem
-      @objects.push(obj)
+      $elem.data('moid', @objectId)
+      @objectsById[@objectId] = obj
 
     stealFrom: (obj, prop) ->
       @[prop] = obj.delete(prop)
@@ -287,7 +335,7 @@ define 'editor.viewport', ->
 
     saveMap: ->
       console.log 'saving map...'
-      data = $.v.map @objects, (object) ->
+      data = $.v.map @objectsById, (id, object) ->
         name: object.name
         x: parseInt(object.$elem.css('left'), 10)
         y: parseInt(object.$elem.css('top'), 10)

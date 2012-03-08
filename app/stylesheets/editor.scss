@@ -10,10 +10,26 @@ body {
   margin: 0;
   padding: 0;
   font-family: Helvetica Neue, Arial, sans-serif;
+}
 
-  &.editor-drag-active {
-    cursor: move
+#editor-viewport {
+  &.editor-tool-normal {
+    cursor: normal;
   }
+  &.editor-tool-hand {
+    cursor: url('/images/editor/tool-hand.gif'), auto;
+  }
+  &.editor-tool-select {
+    cursor: url('/images/editor/tool-select.gif'), auto;
+  }
+  &.editor-tool-bucket {
+    cursor: url('/images/editor/tool-bucket.gif'), auto;
+  }
+}
+
+body.editor-drag-active,
+#editor-sidebar div.img {
+  cursor: move
 }
 
 #editor-nav {
@@ -49,30 +65,19 @@ $sidebar-width: 300px;
     z-index: 10;
   }
 
-  &.editor-tool-normal {
-    cursor: normal;
-  }
-  &.editor-tool-hand {
-    cursor: url('/images/editor/tool-hand.gif'), auto;
-  }
-  &.editor-tool-select {
-    cursor: url('/images/editor/tool-select.gif'), auto;
-  }
-  &.editor-tool-bucket {
-    cursor: url('/images/editor/tool-bucket.gif'), auto;
-  }
-
   .editor-map-object {
     position: absolute;
     z-index: 5;
 
-    &.drag-helper {
+    &.editor-drag-helper {
       opacity: 0.7;
     }
-  }
 
-  &.editor-tool-normal .editor-map-object {
-    cursor: move
+    &.editor-selected {
+      border: 1px solid red;
+      -webkit-transform: translate(-1px, -1px);
+      -moz-transform: translate(-1px, -1px);
+    }
   }
 }
 
@@ -127,6 +132,10 @@ $sidebar-width: 300px;
     margin-right: $spacing;
     margin-bottom: $spacing;
     overflow: hidden;
-    cursor: move;
   }
 }
+
+// #editor-sticky-cursor {
+//   position: absolute;
+//   z-index: 100;
+// }
