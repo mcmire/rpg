@@ -65,7 +65,7 @@
         }).bind('mousedragover.editor.viewport', function(evt) {
           console.log('viewport mousedragover');
           _this.rememberDragObject(_this.core.forgetDragObject());
-          return _this.$elemBeingDragged.removeClass('drag-helper');
+          return _this.$elemBeingDragged.removeClass('editor-drag-helper');
         }).bind('mousedrag.editor.viewport', function(evt) {
           var $elem, x, y;
           $elem = _this.$elemBeingDragged;
@@ -74,7 +74,7 @@
           return $elem.css('top', "" + y + "px").css('left', "" + x + "px");
         }).bind('mousedragout.editor.viewport', function(evt) {
           console.log('viewport mousedragout');
-          _this.$elemBeingDragged.addClass('drag-helper');
+          _this.$elemBeingDragged.addClass('editor-drag-helper');
           _this.core.rememberDragObject(_this.forgetDragObject());
           return _this.core.positionDragHelper(evt);
         }).bind('mousedrop.editor.viewport', function(evt) {

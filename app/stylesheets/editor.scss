@@ -65,19 +65,10 @@ $sidebar-width: 300px;
     z-index: 10;
   }
 
-  .editor-map-object {
-    position: absolute;
-    z-index: 5;
-
-    &.editor-drag-helper {
-      opacity: 0.7;
-    }
-
-    &.editor-selected {
-      border: 1px solid red;
-      -webkit-transform: translate(-1px, -1px);
-      -moz-transform: translate(-1px, -1px);
-    }
+  .editor-map-object.editor-selected {
+    border: 1px solid red;
+    -webkit-transform: translate(-1px, -1px);
+    -moz-transform: translate(-1px, -1px);
   }
 }
 
@@ -132,6 +123,15 @@ $sidebar-width: 300px;
     margin-right: $spacing;
     margin-bottom: $spacing;
     overflow: hidden;
+  }
+}
+
+.editor-map-object {
+  position: absolute;
+  z-index: 5;
+
+  &.editor-drag-helper {
+    opacity: 0.7;
   }
 }
 

@@ -43,15 +43,10 @@ body.editor-drag-active,
   #editor-viewport .editor-dragged-image {
     position: absolute;
     z-index: 10; }
-  #editor-viewport .editor-map-object {
-    position: absolute;
-    z-index: 5; }
-    #editor-viewport .editor-map-object.editor-drag-helper {
-      opacity: 0.7; }
-    #editor-viewport .editor-map-object.editor-selected {
-      border: 1px solid red;
-      -webkit-transform: translate(-1px, -1px);
-      -moz-transform: translate(-1px, -1px); }
+  #editor-viewport .editor-map-object.editor-selected {
+    border: 1px solid red;
+    -webkit-transform: translate(-1px, -1px);
+    -moz-transform: translate(-1px, -1px); }
 
 .editor-map {
   background-color: white;
@@ -94,3 +89,9 @@ body.editor-drag-active,
     margin-right: 10px;
     margin-bottom: 10px;
     overflow: hidden; }
+
+.editor-map-object {
+  position: absolute;
+  z-index: 5; }
+  .editor-map-object.editor-drag-helper {
+    opacity: 0.7; }

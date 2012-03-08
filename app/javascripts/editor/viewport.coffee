@@ -72,7 +72,7 @@ define 'editor.viewport', ->
         .bind 'mousedragover.editor.viewport', (evt) =>
           console.log 'viewport mousedragover'
           @rememberDragObject(@core.forgetDragObject())
-          @$elemBeingDragged.removeClass('drag-helper')
+          @$elemBeingDragged.removeClass('editor-drag-helper')
 
         .bind 'mousedrag.editor.viewport', (evt) =>
           # console.log 'viewport drag'
@@ -83,7 +83,7 @@ define 'editor.viewport', ->
 
         .bind 'mousedragout.editor.viewport', (evt) =>
           console.log 'viewport mousedragout'
-          @$elemBeingDragged.addClass('drag-helper')
+          @$elemBeingDragged.addClass('editor-drag-helper')
           @core.rememberDragObject(@forgetDragObject())
           # call this preemptively to prevent a jump when dragging an object
           # back out of the viewport

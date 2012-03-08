@@ -51,10 +51,12 @@
   over an invalid location, it will turn red (a la the icons on the home screen
   in Android); lifting off would then cancel the drag.
 
-* An open map is saved automatically every minute, and also when closed, when
-  another map is opened, or when the browser window/tab closes.
+* An open map is saved automagically, as soon as you make a change.
 
 * Add a selection tool -- so if you want to move two tiles as a group (say,
   Link's house AND the door), you can do that.
 
 * Add a threshold for dragging -- maybe about 3 pixels
+
+* Add undo/redo -- this will require refactoring all the tools into a more
+  object-oriented approach
