@@ -140,7 +140,9 @@ define 'editor.viewport', ->
         $.v.each objects, (o) =>
           object = @core.objectsByName[o.name]
           # clone the image
-          $elem = $(object.$elem[0].cloneNode(true))
+          elem = object.$elem[0].cloneNode(true)
+          elem.removeAttribute('data-node-uid')
+          $elem = $(elem)
           $elem.addClass('editor-map-object')
           $elem.css('left', "#{o.x}px")
           $elem.css('top', "#{o.y}px")
@@ -173,6 +175,7 @@ define 'editor.viewport', ->
             @$map.find('.editor-map-object.editor-selected').each (elem) =>
               $elem = $(elem)
               objectId = $elem.data('moid')
+              console.log "removing object #{objectId}"
               delete @objectsById[objectId]
               $elem.remove()
             @saveMap()
@@ -316,7 +319,6 @@ define 'editor.viewport', ->
       @$map.unbind 'mousedown.editor.viewport'
 
     addObject: ($elem, object) ->
-      @objectId++
       console.log 'addObject'
       obj = {}
       obj.moid = @objectId
@@ -327,6 +329,8 @@ define 'editor.viewport', ->
 
       if @core.currentTool is 'normal'
         @activateNormalToolForObject(obj)
+
+      @objectId++
 
     stealFrom: (obj, prop) ->
       @[prop] = obj.delete(prop)

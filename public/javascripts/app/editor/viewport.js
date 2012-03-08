@@ -120,9 +120,11 @@
         if (data = localStorage.getItem('editor.map')) {
           objects = JSON.parse(data);
           return $.v.each(objects, function(o) {
-            var $elem, object;
+            var $elem, elem, object;
             object = _this.core.objectsByName[o.name];
-            $elem = $(object.$elem[0].cloneNode(true));
+            elem = object.$elem[0].cloneNode(true);
+            elem.removeAttribute('data-node-uid');
+            $elem = $(elem);
             $elem.addClass('editor-map-object');
             $elem.css('left', "" + o.x + "px");
             $elem.css('top', "" + o.y + "px");
@@ -152,6 +154,7 @@
               var $elem, objectId;
               $elem = $(elem);
               objectId = $elem.data('moid');
+              console.log("removing object " + objectId);
               delete _this.objectsById[objectId];
               return $elem.remove();
             });
@@ -270,7 +273,6 @@
       },
       addObject: function($elem, object) {
         var k, obj, v;
-        this.objectId++;
         console.log('addObject');
         obj = {};
         obj.moid = this.objectId;
@@ -283,8 +285,9 @@
         $elem.data('moid', this.objectId);
         this.objectsById[this.objectId] = obj;
         if (this.core.currentTool === 'normal') {
-          return this.activateNormalToolForObject(obj);
+          this.activateNormalToolForObject(obj);
         }
+        return this.objectId++;
       },
       stealFrom: function(obj, prop) {
         return this[prop] = obj["delete"](prop);
