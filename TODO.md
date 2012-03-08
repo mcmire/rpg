@@ -60,3 +60,8 @@
 
 * Add undo/redo -- this will require refactoring all the tools into a more
   object-oriented approach
+
+* BUG: Can't move an object after placing it (have to refresh)
+
+* Add ability to dupe an object without having to drag it again all the way from
+  the sidebar

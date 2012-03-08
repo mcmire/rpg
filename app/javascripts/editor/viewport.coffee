@@ -150,76 +150,7 @@ define 'editor.viewport', ->
     activateNormalTool: ->
       selecteds = []
       $.v.each @objectsById, (id, obj) =>
-        dragStarted = false
-        dragOffset = null
-        $elem = obj.$elem
-        obj.$elem
-          .unbind('.editor')
-          .removeClass('drag-helper')
-
-          .bind 'mousedown.editor.viewport', (evt) =>
-            console.log 'map object mousedown'
-
-            # don't move the object accidentally if it is right-clicked
-            # FIXME so this handles ctrl-click too
-            return if evt.button is 2
-
-            evt.stopPropagation()  # so that the map doesn't move
-            evt.preventDefault()
-
-            $(window).bind 'mousemove.editor.viewport', (evt) =>
-              unless dragStarted
-                obj.$elem.trigger 'mousedragstart.editor.viewport', evt
-                dragStarted = true
-              $elem.trigger 'mousedrag.editor.viewport', evt
-
-            # bind mouseup to the window as it may occur outside of the image
-            $(window).one 'mouseup.editor.viewport', (evt) =>
-              console.log 'viewport mouseup'
-              if dragStarted
-                $elem.trigger 'mousedragend.editor.viewport', evt
-              dragStarted = false
-              dragOffset = null
-              $(window).unbind 'mousemove.editor.viewport'
-              return true
-
-          .bind 'mousedragstart.editor.viewport', (evt) =>
-            console.log 'map object mousedragstart'
-            $(document.body).addClass('editor-drag-active')
-            offset = $elem.offset()
-            dragOffset =
-              x: evt.pageX - offset.left
-              y: evt.pageY - offset.top
-
-          .bind 'mousedrag.editor.viewport', (evt) =>
-            x = evt.pageX - dragOffset.x - @map.x1 - @bounds.x1
-            y = evt.pageY - dragOffset.y - @map.y1 - @bounds.y1
-            $elem.css('top', "#{y}px").css('left', "#{x}px")
-
-          .bind 'mousedragend.editor.viewport', (evt) =>
-            console.log 'map object mousedragend'
-            $(document.body).removeClass('editor-drag-active')
-            # apply snapping
-            x = parseInt($elem.css('left'), 10)
-            y = parseInt($elem.css('top'), 10)
-            x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-            y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-            $elem.css('top', "#{y}px").css('left', "#{x}px")
-            @saveMap()
-
-          .bind 'mouseup.editor.viewport.selection', (evt) =>
-            console.log 'map object mouseup'
-            unless dragStarted
-              # just a normal click
-              # moid = $elem.data('moid')
-              # if moid in selecteds
-              #   delete selecteds[moid]
-              # else
-              #   selecteds[moid] = 1
-              state = $elem.attr('data-is-selected')
-              newstate = if state is 'no' or !state then 'yes' else 'no'
-              $elem.attr('data-is-selected', newstate)
-            return true
+        @activateNormalToolForObject(obj)
 
       @$map.bind 'mouseup.editor.viewport.selection', (evt) =>
         console.log 'map mouseup'
@@ -245,6 +176,78 @@ define 'editor.viewport', ->
               delete @objectsById[objectId]
               $elem.remove()
             @saveMap()
+
+    activateNormalToolForObject: (obj) ->
+      dragStarted = false
+      dragOffset = null
+      $elem = obj.$elem
+      obj.$elem
+        .unbind('.editor')
+        .removeClass('drag-helper')
+
+        .bind 'mousedown.editor.viewport', (evt) =>
+          console.log 'map object mousedown'
+
+          # don't move the object accidentally if it is right-clicked
+          # FIXME so this handles ctrl-click too
+          return if evt.button is 2
+
+          evt.stopPropagation()  # so that the map doesn't move
+          evt.preventDefault()
+
+          $(window).bind 'mousemove.editor.viewport', (evt) =>
+            unless dragStarted
+              obj.$elem.trigger 'mousedragstart.editor.viewport', evt
+              dragStarted = true
+            $elem.trigger 'mousedrag.editor.viewport', evt
+
+          # bind mouseup to the window as it may occur outside of the image
+          $(window).one 'mouseup.editor.viewport', (evt) =>
+            console.log 'viewport mouseup'
+            if dragStarted
+              $elem.trigger 'mousedragend.editor.viewport', evt
+            dragStarted = false
+            dragOffset = null
+            $(window).unbind 'mousemove.editor.viewport'
+            return true
+
+        .bind 'mousedragstart.editor.viewport', (evt) =>
+          console.log 'map object mousedragstart'
+          $(document.body).addClass('editor-drag-active')
+          offset = $elem.offset()
+          dragOffset =
+            x: evt.pageX - offset.left
+            y: evt.pageY - offset.top
+
+        .bind 'mousedrag.editor.viewport', (evt) =>
+          x = evt.pageX - dragOffset.x - @map.x1 - @bounds.x1
+          y = evt.pageY - dragOffset.y - @map.y1 - @bounds.y1
+          $elem.css('top', "#{y}px").css('left', "#{x}px")
+
+        .bind 'mousedragend.editor.viewport', (evt) =>
+          console.log 'map object mousedragend'
+          $(document.body).removeClass('editor-drag-active')
+          # apply snapping
+          x = parseInt($elem.css('left'), 10)
+          y = parseInt($elem.css('top'), 10)
+          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+          $elem.css('top', "#{y}px").css('left', "#{x}px")
+          @saveMap()
+
+        .bind 'mouseup.editor.viewport.selection', (evt) =>
+          console.log 'map object mouseup'
+          unless dragStarted
+            # just a normal click
+            # moid = $elem.data('moid')
+            # if moid in selecteds
+            #   delete selecteds[moid]
+            # else
+            #   selecteds[moid] = 1
+            state = $elem.attr('data-is-selected')
+            newstate = if state is 'no' or !state then 'yes' else 'no'
+            $elem.attr('data-is-selected', newstate)
+          return true
 
     deactivateNormalTool: ->
       $.v.each @objectsById, (id, obj) ->
@@ -321,6 +324,9 @@ define 'editor.viewport', ->
       obj['$elem'] = $elem
       $elem.data('moid', @objectId)
       @objectsById[@objectId] = obj
+
+      if @core.currentTool is 'normal'
+        @activateNormalToolForObject(obj)
 
     stealFrom: (obj, prop) ->
       @[prop] = obj.delete(prop)
