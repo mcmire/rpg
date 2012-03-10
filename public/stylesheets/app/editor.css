@@ -8,13 +8,21 @@ body {
   font-family: Helvetica Neue, Arial, sans-serif; }
 
 #editor-viewport.editor-tool-normal {
-  cursor: normal; }
+  cursor: auto; }
 #editor-viewport.editor-tool-hand {
   cursor: url("/images/editor/tool-hand.gif"), auto; }
 #editor-viewport.editor-tool-select {
   cursor: url("/images/editor/tool-select.gif"), auto; }
 #editor-viewport.editor-tool-bucket {
   cursor: url("/images/editor/tool-bucket.gif"), auto; }
+#editor-viewport .editor-layer, #editor-viewport .editor-layer-content, #editor-viewport .editor-layer-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; }
+#editor-viewport .editor-layer-selected .editor-layer-bg {
+  opacity: 0.5; }
 
 body.editor-drag-active,
 #editor-sidebar div.img {
@@ -26,7 +34,11 @@ body.editor-drag-active,
   padding-left: 60px;
   font-size: 13px;
   height: 40px;
-  line-height: 40px; }
+  line-height: 40px;
+  overflow: hidden; }
+  #editor-nav > div {
+    float: left;
+    margin-right: 40px; }
 
 #editor-main {
   position: relative; }
@@ -48,11 +60,13 @@ body.editor-drag-active,
     -webkit-transform: translate(-1px, -1px);
     -moz-transform: translate(-1px, -1px); }
 
-.editor-map {
+#editor-map {
   background-color: white;
   position: absolute;
   top: 0;
   left: 0; }
+  #editor-map.editor-map-unloaded {
+    display: none; }
 
 #editor-toolbox {
   border-radius: 5px;
@@ -62,7 +76,7 @@ body.editor-drag-active,
   position: absolute;
   top: 20px;
   left: 20px;
-  z-index: 10;
+  z-index: 100;
   cursor: auto !important; }
   #editor-toolbox > img {
     display: block;

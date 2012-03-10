@@ -7,6 +7,9 @@
   Pixel objects). This way we can easily render images at an arbitrary size
   (this will allow zooming in the editor).
 
+* Don't use Valentine so much -- if this is going to only work in newer browsers
+  then we can use ES5 .forEach, .reduce, etc.
+
 ## Game
 
 * Fix sprites for the player and the enemy
@@ -65,3 +68,6 @@
 
 * Add ability to dupe an object without having to drag it again all the way from
   the sidebar
+
+* For map objects, group the $elem and the object together, everywhere, as one
+  MapObject

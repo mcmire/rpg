@@ -9,13 +9,15 @@
     DRAG_SNAP_GRID_SIZE = 16;
     return meta.def({
       init: function(core) {
-        var offset;
         this.core = core;
         this.$element = $('#editor-viewport');
-        offset = this.$element.offset();
-        this.bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height);
+        this._initMapElement();
+        this._initBounds();
         this.map = null;
-        this.objectsById = {};
+        this.objectsByLayer = $.v.reduce(this.core.getLayers(), (function(h, n) {
+          h[n] = {};
+          return h;
+        }), {});
         this.objectId = 0;
         return this;
       },
@@ -29,7 +31,7 @@
       },
       rememberDragObject: function(_arg) {
         this.$elemBeingDragged = _arg[0], this.objectBeingDragged = _arg[1];
-        return this.$map.append(this.$elemBeingDragged);
+        return this.core.getCurrentLayerElem().find('.editor-layer-content').append(this.$elemBeingDragged);
       },
       forgetDragObject: function(removeElement) {
         var a, b, _ref;
@@ -86,7 +88,7 @@
           x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
           $elem.css('top', "" + y + "px").css('left', "" + x + "px");
-          _this.addObject(_this.$elemBeingDragged, _this.objectBeingDragged);
+          _this.addObject(_this.core.getCurrentLayer(), _this.$elemBeingDragged, _this.objectBeingDragged);
           _this.forgetDragObject(false);
           return _this.saveMap();
         });
@@ -100,36 +102,29 @@
         return this.$map.unbind('mousedrop.editor.viewport');
       },
       loadMap: function() {
-        var $map, canvas, ctx, data, dragEntered, mouse, objects,
+        var data, dragEntered, mouse, objectsByLayer,
           _this = this;
-        canvas = require('game.canvas').create(16, 16);
-        ctx = canvas.getContext();
-        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-        ctx.moveTo(0.5, 0.5);
-        ctx.lineTo(16, 0.5);
-        ctx.moveTo(0.5, 0.5);
-        ctx.lineTo(0.5, 16);
-        ctx.stroke();
         this.map = Bounds.rect(0, 0, 1024, 1024);
         mouse = null;
         dragEntered = null;
         this.$elemBeingDragged = null;
         this.objectBeingDragged = null;
-        this.$map = $map = $('<div class="editor-map"/>').css('width', this.map.width).css('height', this.map.height).css('background-image', "url(" + (canvas.element.toDataURL()) + ")").css('background-repeat', 'repeat');
-        this.$element.append($map);
+        this.$map.css('width', this.map.width).css('height', this.map.height).removeClass('editor-map-unloaded');
         if (data = localStorage.getItem('editor.map')) {
-          objects = JSON.parse(data);
-          return $.v.each(objects, function(o) {
-            var $elem, elem, object;
-            object = _this.core.objectsByName[o.name];
-            elem = object.$elem[0].cloneNode(true);
-            elem.removeAttribute('data-node-uid');
-            $elem = $(elem);
-            $elem.addClass('editor-map-object');
-            $elem.css('left', "" + o.x + "px");
-            $elem.css('top', "" + o.y + "px");
-            _this.$map.append($elem);
-            return _this.addObject($elem, object);
+          objectsByLayer = JSON.parse(data);
+          return $.v.each(objectsByLayer, function(layer, objects) {
+            return $.v.each(objects, function(o) {
+              var $elem, elem, object;
+              object = _this.core.objectsByName[o.name];
+              elem = object.$elem[0].cloneNode(true);
+              elem.removeAttribute('data-node-uid');
+              $elem = $(elem);
+              $elem.addClass('editor-map-object');
+              $elem.css('left', "" + o.x + "px");
+              $elem.css('top', "" + o.y + "px");
+              _this.core.getCurrentLayerElem().find('.editor-layer-content').append($elem);
+              return _this.addObject(layer, $elem, object);
+            });
           });
         }
       },
@@ -137,7 +132,7 @@
         var BACKSPACE_KEY, DELETE_KEY, selecteds,
           _this = this;
         selecteds = [];
-        $.v.each(this.objectsById, function(id, obj) {
+        $.v.each(this.objectsByLayer['tiles'], function(id, obj) {
           return _this.activateNormalToolForObject(obj);
         });
         this.$map.bind('mouseup.editor.viewport.selection', function(evt) {
@@ -155,7 +150,7 @@
               $elem = $(elem);
               objectId = $elem.data('moid');
               console.log("removing object " + objectId);
-              delete _this.objectsById[objectId];
+              delete _this.objectsByLayer[_this.core.getCurrentLayer()][objectId];
               return $elem.remove();
             });
             return _this.saveMap();
@@ -224,7 +219,7 @@
         });
       },
       deactivateNormalTool: function() {
-        $.v.each(this.objectsById, function(id, obj) {
+        $.v.each(this.objectsByLayer['tiles'], function(id, obj) {
           return obj.$elem.unbind('mousedown.editor.viewport').unbind('mousedragstart.editor.viewport').unbind('mousedrag.editor.viewport').unbind('mousedragend.editor.viewport');
         });
         return this.$map.unbind('mouseup.editor.viewport');
@@ -271,7 +266,7 @@
       deactivateHandTool: function() {
         return this.$map.unbind('mousedown.editor.viewport');
       },
-      addObject: function($elem, object) {
+      addObject: function(layer, $elem, object) {
         var k, obj, v;
         console.log('addObject');
         obj = {};
@@ -281,9 +276,9 @@
           v = object[k];
           obj[k] = v;
         }
-        obj['$elem'] = $elem;
+        obj.$elem = $elem;
         $elem.data('moid', this.objectId);
-        this.objectsById[this.objectId] = obj;
+        this.objectsByLayer[layer][this.objectId] = obj;
         if (this.core.currentTool === 'normal') {
           this.activateNormalToolForObject(obj);
         }
@@ -302,20 +297,44 @@
         return val;
       },
       saveMap: function() {
-        var data;
+        var data,
+          _this = this;
         console.log('saving map...');
-        data = $.v.map(this.objectsById, function(id, object) {
-          return {
-            name: object.name,
-            x: parseInt(object.$elem.css('left'), 10),
-            y: parseInt(object.$elem.css('top'), 10)
-          };
-        });
+        data = $.v.reduce($.v.keys(this.objectsByLayer), function(hash, layer) {
+          var arr;
+          arr = $.v.map(_this.objectsByLayer[layer], function(id, object) {
+            return {
+              name: object.name,
+              x: parseInt(object.$elem.css('left'), 10),
+              y: parseInt(object.$elem.css('top'), 10)
+            };
+          });
+          hash[layer] = arr;
+          return hash;
+        }, {});
         return localStorage.setItem('editor.map', JSON.stringify(data));
       },
       _mouseWithinViewport: function(evt) {
         var _ref, _ref2;
         return (this.bounds.x1 <= (_ref = evt.pageX) && _ref <= this.bounds.x2) && (this.bounds.y1 <= (_ref2 = evt.pageY) && _ref2 <= this.bounds.y2);
+      },
+      _initMapElement: function() {
+        var $layer, i, layer, _len, _ref, _results;
+        this.$map = $('#editor-map');
+        _ref = this.core.getLayers();
+        _results = [];
+        for (i = 0, _len = _ref.length; i < _len; i++) {
+          layer = _ref[i];
+          $layer = $("<div class=\"editor-layer\" data-layer=\"" + layer + "\">\n  <div class=\"editor-layer-bg\"></div>\n  <div class=\"editor-layer-content\"></div>\n</div>");
+          $layer.css('z-index', (i + 1) * 10);
+          _results.push(this.$map.append($layer));
+        }
+        return _results;
+      },
+      _initBounds: function() {
+        var offset;
+        offset = this.$element.offset();
+        return this.bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height);
       }
     });
   });

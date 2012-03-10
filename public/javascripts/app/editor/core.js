@@ -4,13 +4,84 @@
     var meta, util;
     meta = require('meta');
     util = require('util');
-    return meta.def({
+    meta.def({
+      _createMapGrid: function() {
+        var canvas, ctx;
+        canvas = require('game.canvas').create(16, 16);
+        ctx = canvas.getContext();
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+        ctx.moveTo(0.5, 0.5);
+        ctx.lineTo(16, 0.5);
+        ctx.moveTo(0.5, 0.5);
+        ctx.lineTo(0.5, 16);
+        ctx.stroke();
+        return this.mapGrid = canvas;
+      },
       init: function() {
-        var _this = this;
+        var ONE_KEY, TWO_KEY, layer, that, _i, _j, _len, _len2, _ref, _ref2,
+          _this = this;
+        that = this;
+        ONE_KEY = 49;
+        TWO_KEY = 50;
+        this._createMapGrid();
+        this.layers = {
+          names: ['fill', 'tiles'],
+          keys: [ONE_KEY, TWO_KEY],
+          init: function() {
+            that.$layerChooser[0].selectedIndex = 0;
+            return that.$layerChooser.change();
+          },
+          choose: function(layer) {
+            var $layer, $map;
+            if (this.current) {
+              if (this.current === 'fill') {
+                this.deactivateFillLayer();
+              } else if (this.current === 'tiles') {
+                this.deactivateTilesLayer();
+              }
+            }
+            this.current = layer;
+            $map = that.viewport.$map;
+            $layer = $map.find('.editor-layer').removeClass('editor-layer-selected');
+            $layer.find('.editor-layer-content').css('background', 'none');
+            $layer.find('.editor-layer-bg').css('background', 'none');
+            $layer = $map.find(".editor-layer[data-layer=" + layer + "]").addClass('editor-layer-selected');
+            $layer.find('.editor-layer-content').css('background-image', "url(" + (that.mapGrid.element.toDataURL()) + ")").css('background-repeat', 'repeat');
+            $layer.find('.editor-layer-bg').css('background-color', 'white');
+            that.$sidebar.find('> div').hide();
+            that.$sidebar.find("> div[data-layer=" + layer + "]").show();
+            if (this.current === 'fill') {
+              return this._activateFillLayer();
+            } else if (this.current === 'tiles') {
+              return this._activateTilesLayer();
+            }
+          }
+        };
+        $(window).bind('keyup', function(evt) {
+          var index;
+          index = _this.layers.keys.indexOf(evt.keyCode);
+          if (index !== -1) {
+            _this.$layerChooser[0].selectedIndex = index;
+            return _this.$layerChooser.change();
+          }
+        });
         this.viewport = require('editor.viewport').init(this);
         this.$sidebar = $('#editor-sidebar');
+        _ref = this.layers.names;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          layer = _ref[_i];
+          this.$sidebar.append("<div data-layer=\"" + layer + "\"></div>");
+        }
+        this.$layerChooser = $('#editor-layer-chooser select').change(function() {
+          return that.layers.choose(this.value);
+        });
+        _ref2 = this.layers.names;
+        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+          layer = _ref2[_j];
+          this.$layerChooser.append("<option data-layer=\"" + layer + "\">" + layer + "</option>");
+        }
+        this.layers.init();
         this.$mapChooser = $('#editor-map-chooser select');
-        this.$layerChooser = $('#editor-layer-chooser select').attr('disabled', 'disabled');
         this._resizeUI();
         $(window).resize(function() {
           return _this._resizeUI();
@@ -21,6 +92,15 @@
           _this.viewport.loadMap();
           return _this._initToolbox();
         });
+      },
+      getLayers: function() {
+        return this.layers.names;
+      },
+      getCurrentLayer: function() {
+        return this.layers.current;
+      },
+      getCurrentLayerElem: function() {
+        return this.viewport.$map.find(".editor-layer[data-layer=" + this.layers.current + "]");
       },
       enableDragSnapping: function(size) {
         return this.snapDragToGrid = size;
@@ -192,7 +272,7 @@
             $(document.body).removeClass('editor-drag-active');
             if (_this.$elemBeingDragged) return _this.forgetDragObject();
           });
-          return _this.$sidebar.append($div);
+          return _this.$sidebar.find('> div[data-layer=tiles]').append($div);
         });
       },
       _chooseMap: function(mapName) {
@@ -228,15 +308,11 @@
           $tools.removeClass('editor-active');
           $tool.addClass('editor-active');
           _this.viewport.$element.removeClassesLike(/^editor-tool-/).addClass("editor-tool-" + tool);
-          if (_this.currentTool === 'normal') {
-            _this.viewport.deactivateNormalTool();
-          }
-          if (_this.currentTool === 'hand') _this.viewport.deactivateHandTool();
+          if (_this.currentTool === 'normal') _this._deactivateNormalTool();
+          if (_this.currentTool === 'hand') _this._deactivateHandTool();
           _this.currentTool = tool;
-          if (_this.currentTool === 'normal') _this.viewport.activateNormalTool();
-          if (_this.currentTool === 'hand') {
-            return _this.viewport.activateHandTool();
-          }
+          if (_this.currentTool === 'normal') _this._activateNormalTool();
+          if (_this.currentTool === 'hand') return _this._activateHandTool();
         };
         tools = 'normal hand select bucket'.split(" ");
         $.v.each(tools, function(tool) {
@@ -270,6 +346,22 @@
         });
       }
     });
+    return {
+      _activateNormalTool: function() {
+        return this.viewport.activateNormalTool();
+      },
+      _deactivateNormalTool: function() {
+        return this.viewport.deactivateNormalTool();
+      },
+      _activateHandTool: function() {
+        return this.viewport.activateHandTool();
+      },
+      _deactivateHandTool: function() {
+        return this.viewport.deactivateHandTool();
+      },
+      _activateFillLayer: function() {},
+      _activateTilesLayer: function() {}
+    };
   });
 
 }).call(this);

@@ -9,10 +9,10 @@ define 'editor.viewport', ->
   meta.def
     init: (@core) ->
       @$element = $('#editor-viewport')
-      offset = @$element.offset()
-      @bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height)
+      @_initMapElement()
+      @_initBounds()
       @map = null
-      @objectsById = {}
+      @objectsByLayer = $.v.reduce @core.getLayers(), ((h, n) -> h[n] = {}; h), {}
       @objectId = 0
       return this
 
@@ -25,7 +25,8 @@ define 'editor.viewport', ->
       @bounds.setHeight(height)
 
     rememberDragObject: ([@$elemBeingDragged, @objectBeingDragged]) ->
-      @$map.append(@$elemBeingDragged)
+      @core.getCurrentLayerElem().find('.editor-layer-content')
+        .append(@$elemBeingDragged)
 
     forgetDragObject: (removeElement=true) ->
       [a, b] = [@$elemBeingDragged, @objectBeingDragged]
@@ -97,7 +98,7 @@ define 'editor.viewport', ->
           x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
           $elem.css('top', "#{y}px").css('left', "#{x}px")
-          @addObject(@$elemBeingDragged, @objectBeingDragged)
+          @addObject(@core.getCurrentLayer(), @$elemBeingDragged, @objectBeingDragged)
           @forgetDragObject(false)
           @saveMap()
 
@@ -110,16 +111,6 @@ define 'editor.viewport', ->
       @$map.unbind 'mousedrop.editor.viewport'
 
     loadMap: ->
-      # create the grid pattern that backgrounds the map
-      canvas = require('game.canvas').create(16, 16)
-      ctx = canvas.getContext()
-      ctx.strokeStyle = 'rgba(0,0,0,0.15)'
-      ctx.moveTo(0.5, 0.5)
-      ctx.lineTo(16, 0.5)
-      ctx.moveTo(0.5, 0.5)
-      ctx.lineTo(0.5, 16)
-      ctx.stroke()
-
       @map = Bounds.rect(0, 0, 1024, 1024)
 
       mouse = null
@@ -127,40 +118,36 @@ define 'editor.viewport', ->
       @$elemBeingDragged = null
       @objectBeingDragged = null
 
-      @$map = $map = $('<div class="editor-map"/>')
+      @$map
         .css('width', @map.width)
         .css('height', @map.height)
-        .css('background-image', "url(#{canvas.element.toDataURL()})")
-        .css('background-repeat', 'repeat')
-      @$element.append($map)
+        .removeClass('editor-map-unloaded')
 
       # TODO: Refactor
       if data = localStorage.getItem('editor.map')
-        objects = JSON.parse(data)
-        $.v.each objects, (o) =>
-          object = @core.objectsByName[o.name]
-          # clone the image
-          elem = object.$elem[0].cloneNode(true)
-          elem.removeAttribute('data-node-uid')
-          $elem = $(elem)
-          $elem.addClass('editor-map-object')
-          $elem.css('left', "#{o.x}px")
-          $elem.css('top', "#{o.y}px")
-          @$map.append($elem)
-          @addObject($elem, object)
+        objectsByLayer = JSON.parse(data)
+        $.v.each objectsByLayer, (layer, objects) =>
+          $.v.each objects, (o) =>
+            object = @core.objectsByName[o.name]
+            # clone the image
+            elem = object.$elem[0].cloneNode(true)
+            elem.removeAttribute('data-node-uid')
+            $elem = $(elem)
+            $elem.addClass('editor-map-object')
+            $elem.css('left', "#{o.x}px")
+            $elem.css('top', "#{o.y}px")
+            @core.getCurrentLayerElem().find('.editor-layer-content').append($elem)
+            @addObject(layer, $elem, object)
 
     activateNormalTool: ->
       selecteds = []
-      $.v.each @objectsById, (id, obj) =>
+      $.v.each @objectsByLayer['tiles'], (id, obj) =>
         @activateNormalToolForObject(obj)
 
       @$map.bind 'mouseup.editor.viewport.selection', (evt) =>
         console.log 'map mouseup'
         @$map.find('.editor-map-object')
           .removeClass('editor-selected')
-        # $selectedElems = $.v.map $.v.keys(selecteds), (moid) ->
-        #   @objectsById[moid].$elem
-        # $(selectedElems).addClass('editor-selected')
         @$map.find('.editor-map-object[data-is-selected=yes]')
           .addClass('editor-selected')
 
@@ -176,7 +163,7 @@ define 'editor.viewport', ->
               $elem = $(elem)
               objectId = $elem.data('moid')
               console.log "removing object #{objectId}"
-              delete @objectsById[objectId]
+              delete @objectsByLayer[@core.getCurrentLayer()][objectId]
               $elem.remove()
             @saveMap()
 
@@ -253,7 +240,7 @@ define 'editor.viewport', ->
           return true
 
     deactivateNormalTool: ->
-      $.v.each @objectsById, (id, obj) ->
+      $.v.each @objectsByLayer['tiles'], (id, obj) ->
         obj.$elem
           .unbind('mousedown.editor.viewport')
           .unbind('mousedragstart.editor.viewport')
@@ -318,14 +305,14 @@ define 'editor.viewport', ->
     deactivateHandTool: ->
       @$map.unbind 'mousedown.editor.viewport'
 
-    addObject: ($elem, object) ->
+    addObject: (layer, $elem, object) ->
       console.log 'addObject'
       obj = {}
       obj.moid = @objectId
       obj[k] = v for own k, v of object
-      obj['$elem'] = $elem
+      obj.$elem = $elem
       $elem.data('moid', @objectId)
-      @objectsById[@objectId] = obj
+      @objectsByLayer[layer][@objectId] = obj
 
       if @core.currentTool is 'normal'
         @activateNormalToolForObject(obj)
@@ -345,12 +332,32 @@ define 'editor.viewport', ->
 
     saveMap: ->
       console.log 'saving map...'
-      data = $.v.map @objectsById, (id, object) ->
-        name: object.name
-        x: parseInt(object.$elem.css('left'), 10)
-        y: parseInt(object.$elem.css('top'), 10)
+      data = $.v.reduce $.v.keys(@objectsByLayer), (hash, layer) =>
+        arr = $.v.map @objectsByLayer[layer], (id, object) ->
+          name: object.name
+          x: parseInt(object.$elem.css('left'), 10)
+          y: parseInt(object.$elem.css('top'), 10)
+        hash[layer] = arr
+        return hash
+      , {}
       localStorage.setItem('editor.map', JSON.stringify(data))
 
     _mouseWithinViewport: (evt) ->
       @bounds.x1 <= evt.pageX <= @bounds.x2 and
       @bounds.y1 <= evt.pageY <= @bounds.y2
+
+    _initMapElement: ->
+      @$map = $('#editor-map')
+      for layer, i in @core.getLayers()
+        $layer = $("""
+          <div class="editor-layer" data-layer="#{layer}">
+            <div class="editor-layer-bg"></div>
+            <div class="editor-layer-content"></div>
+          </div>
+        """)
+        $layer.css('z-index', (i + 1) * 10)
+        @$map.append($layer)
+
+    _initBounds: ->
+      offset = @$element.offset()
+      @bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height)

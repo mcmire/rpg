@@ -4,12 +4,82 @@ define 'editor.core', ->
   util = require('util')
 
   meta.def
+    _createMapGrid: ->
+      # create the grid pattern that backgrounds the map
+      canvas = require('game.canvas').create(16, 16)
+      ctx = canvas.getContext()
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)'
+      ctx.moveTo(0.5, 0.5)
+      ctx.lineTo(16, 0.5)
+      ctx.moveTo(0.5, 0.5)
+      ctx.lineTo(0.5, 16)
+      ctx.stroke()
+      @mapGrid = canvas
+
     init: ->
+      that = this
+
+      ONE_KEY = 49
+      TWO_KEY = 50
+
+      @_createMapGrid()
+
+      @layers =
+        names: ['fill', 'tiles']
+        keys: [ONE_KEY, TWO_KEY]
+        init: ->
+          that.$layerChooser[0].selectedIndex = 0
+          that.$layerChooser.change()
+        choose: (layer) ->
+          if @current
+            if @current is 'fill'
+              @deactivateFillLayer()
+            else if @current is 'tiles'
+              @deactivateTilesLayer()
+
+          @current = layer
+          $map = that.viewport.$map
+
+          $layer = $map.find('.editor-layer').removeClass('editor-layer-selected')
+          $layer.find('.editor-layer-content').css('background', 'none')
+          $layer.find('.editor-layer-bg').css('background', 'none')
+
+          $layer = $map.find(".editor-layer[data-layer=#{layer}]")
+            .addClass('editor-layer-selected')
+          $layer.find('.editor-layer-content')
+            .css('background-image', "url(#{that.mapGrid.element.toDataURL()})")
+            .css('background-repeat', 'repeat')
+          $layer.find('.editor-layer-bg')
+            .css('background-color', 'white')
+
+          that.$sidebar.find('> div').hide()
+          that.$sidebar.find("> div[data-layer=#{layer}]").show()
+
+          if @current is 'fill'
+            @_activateFillLayer()
+          else if @current is 'tiles'
+            @_activateTilesLayer()
+
+      $(window).bind 'keyup', (evt) =>
+        index = @layers.keys.indexOf(evt.keyCode)
+        if index isnt -1
+          @$layerChooser[0].selectedIndex = index
+          @$layerChooser.change()
+
       @viewport = require('editor.viewport').init(this)
+
       @$sidebar = $('#editor-sidebar')
-      @$mapChooser = $('#editor-map-chooser select')
+      for layer in @layers.names
+        @$sidebar.append """<div data-layer="#{layer}"></div>"""
+
       @$layerChooser = $('#editor-layer-chooser select')
-        .attr('disabled', 'disabled')
+        .change -> that.layers.choose(@value)
+      for layer in @layers.names
+        @$layerChooser.append """<option data-layer="#{layer}">#{layer}</option>"""
+
+      @layers.init()
+
+      @$mapChooser = $('#editor-map-chooser select')
 
       @_resizeUI()
       $(window).resize => @_resizeUI()
@@ -18,10 +88,15 @@ define 'editor.core', ->
       @_whenImagesLoaded =>
         @_populateSidebar()
         # @$mapChooser.change => @_chooseMap(@value)
-        # @$layerChooser.change => @_chooseLayer(@value)
 
         @viewport.loadMap()
         @_initToolbox()
+
+    getLayers: -> @layers.names
+
+    getCurrentLayer: -> @layers.current
+
+    getCurrentLayerElem: -> @viewport.$map.find(".editor-layer[data-layer=#{@layers.current}]")
 
     enableDragSnapping: (size) ->
       @snapDragToGrid = size
@@ -194,7 +269,7 @@ define 'editor.core', ->
             $(document.body).removeClass('editor-drag-active')
             @forgetDragObject() if @$elemBeingDragged
 
-        @$sidebar.append($div)
+        @$sidebar.find('> div[data-layer=tiles]').append($div)
 
     _chooseMap: (mapName) ->
       if @currentMap
@@ -232,16 +307,16 @@ define 'editor.core', ->
           .addClass("editor-tool-#{tool}")
 
         if @currentTool is 'normal'
-          @viewport.deactivateNormalTool()
+          @_deactivateNormalTool()
         if @currentTool is 'hand'
-          @viewport.deactivateHandTool()
+          @_deactivateHandTool()
 
         @currentTool = tool
 
         if @currentTool is 'normal'
-          @viewport.activateNormalTool()
+          @_activateNormalTool()
         if @currentTool is 'hand'
-          @viewport.activateHandTool()
+          @_activateHandTool()
 
       tools = 'normal hand select bucket'.split(" ")
       $.v.each tools, (tool) =>
@@ -280,3 +355,35 @@ define 'editor.core', ->
           #   $cursor.remove()
           #   $cursor = null
 
+  _activateNormalTool: ->
+    @viewport.activateNormalTool()
+
+  _deactivateNormalTool: ->
+    @viewport.deactivateNormalTool()
+
+  _activateHandTool: ->
+    @viewport.activateHandTool()
+
+  _deactivateHandTool: ->
+    @viewport.deactivateHandTool()
+
+  _activateFillLayer: ->
+    # we want normal, hand, select, and bucket tools
+    # - normal tool will select areas so you can delete them and enable moving
+    #   objects
+    # - hand tool will move the map around
+    # - select tool will let you select an area on the map
+    # - bucket tool will let you fill in that area with a color - filling in an
+    #   area will create it - or you can fill the entire map with a color
+    #
+    # in addition selecting the fill layer will populate the sidebar with a
+    # color picker
+
+  _activateTilesLayer: ->
+    # we want normal and hand tools
+    # - normal tool will select tiles so you can delete them and enable moving
+    #   tiles
+    # - hand tool will move the map around
+    #
+    # in addition selecting the tiles layer will populate the sidebar with the
+    # list of available tiles
