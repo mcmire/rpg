@@ -42,46 +42,47 @@
         delete this.objectBeingDragged;
         return [a, b];
       },
-      bindDragEvents: function() {
-        var mouseLocation,
+      bind_dnd_events: function() {
+        var evtNamespace, mouseLocation,
           _this = this;
-        console.log('binding drag events to viewport');
+        console.log('viewport: binding d-n-d events');
+        evtNamespace = 'editor.viewport.dnd';
         mouseLocation = null;
-        $(window).bind('mousemove.editor.viewport', function(evt) {
+        $(window).bind("mousemove." + evtNamespace, function(evt) {
           if (_this._mouseWithinViewport(evt)) {
             if (mouseLocation !== 'inside') {
-              _this.$map.trigger('mousedragover.editor.viewport', evt);
+              _this.$map.trigger("mousedragover." + evtNamespace, evt);
               mouseLocation = 'inside';
             }
-            return _this.$map.trigger('mousedrag.editor.viewport', evt);
+            return _this.$map.trigger("mousedrag." + evtNamespace, evt);
           } else if (_this.$elemBeingDragged && mouseLocation !== 'outside') {
-            _this.$map.trigger('mousedragout.editor.viewport', evt);
+            _this.$map.trigger("mousedragout." + evtNamespace, evt);
             return mouseLocation = 'outside';
           }
         });
-        return this.$map.one('mouseup.editor.viewport', function(evt) {
-          console.log('viewport mouseup');
+        return this.$map.one("mouseup." + evtNamespace, function(evt) {
+          console.log('viewport: mouseup');
           if (_this.$elemBeingDragged) {
-            return _this.$map.trigger('mousedrop.editor.viewport', evt);
+            return _this.$map.trigger("mousedrop." + evtNamespace, evt);
           }
-        }).bind('mousedragover.editor.viewport', function(evt) {
-          console.log('viewport mousedragover');
+        }).bind("mousedragover." + evtNamespace, function(evt) {
+          console.log('viewport: mousedragover');
           _this.rememberDragObject(_this.core.forgetDragObject());
           return _this.$elemBeingDragged.removeClass('editor-drag-helper');
-        }).bind('mousedrag.editor.viewport', function(evt) {
+        }).bind("mousedrag." + evtNamespace, function(evt) {
           var $elem, x, y;
           $elem = _this.$elemBeingDragged;
           x = evt.pageX - _this.core.dragOffset.x - _this.map.x1 - _this.bounds.x1;
           y = evt.pageY - _this.core.dragOffset.y - _this.map.y1 - _this.bounds.y1;
           return $elem.css('top', "" + y + "px").css('left', "" + x + "px");
-        }).bind('mousedragout.editor.viewport', function(evt) {
-          console.log('viewport mousedragout');
+        }).bind("mousedragout." + evtNamespace, function(evt) {
+          console.log('viewport: mousedragout');
           _this.$elemBeingDragged.addClass('editor-drag-helper');
           _this.core.rememberDragObject(_this.forgetDragObject());
           return _this.core.positionDragHelper(evt);
-        }).bind('mousedrop.editor.viewport', function(evt) {
+        }).bind("mousedrop." + evtNamespace, function(evt) {
           var $elem, x, y;
-          console.log('viewport drop');
+          console.log('viewport: drop');
           $elem = _this.$elemBeingDragged;
           x = parseInt($elem.css('left'), 10);
           y = parseInt($elem.css('top'), 10);
@@ -93,13 +94,12 @@
           return _this.saveMap();
         });
       },
-      unbindDragEvents: function() {
-        console.log('removing drag events from viewport');
-        $(window).unbind('mousemove.editor.viewport');
-        this.$map.unbind('mousedragover.editor.viewport');
-        this.$map.unbind('mousedrag.editor.viewport');
-        this.$map.unbind('mousedragout.editor.viewport');
-        return this.$map.unbind('mousedrop.editor.viewport');
+      unbind_dnd_events: function() {
+        var evtNamespace;
+        console.log('viewport: unbinding d-n-d events');
+        evtNamespace = 'editor.viewport.dnd';
+        $(window).unbind('.' + evtNamespace);
+        return this.$map.unbind('.' + evtNamespace);
       },
       loadMap: function() {
         var data, dragEntered, mouse, objectsByLayer,
@@ -111,45 +111,52 @@
         this.objectBeingDragged = null;
         this.$map.css('width', this.map.width).css('height', this.map.height).removeClass('editor-map-unloaded');
         if (data = localStorage.getItem('editor.map')) {
-          objectsByLayer = JSON.parse(data);
-          return $.v.each(objectsByLayer, function(layer, objects) {
-            return $.v.each(objects, function(o) {
-              var $elem, elem, object;
-              object = _this.core.objectsByName[o.name];
-              elem = object.$elem[0].cloneNode(true);
-              elem.removeAttribute('data-node-uid');
-              $elem = $(elem);
-              $elem.addClass('editor-map-object');
-              $elem.css('left', "" + o.x + "px");
-              $elem.css('top', "" + o.y + "px");
-              _this.core.getCurrentLayerElem().find('.editor-layer-content').append($elem);
-              return _this.addObject(layer, $elem, object);
+          try {
+            objectsByLayer = JSON.parse(data);
+            return $.v.each(objectsByLayer, function(layer, objects) {
+              return $.v.each(objects, function(o) {
+                var $elem, elem, object;
+                object = _this.core.objectsByName[o.name];
+                elem = object.$elem[0].cloneNode(true);
+                elem.removeAttribute('data-node-uid');
+                $elem = $(elem);
+                $elem.addClass('editor-map-object');
+                $elem.css('left', "" + o.x + "px");
+                $elem.css('top', "" + o.y + "px");
+                _this.core.findLayer(layer).find('.editor-layer-content').append($elem);
+                return _this.addObject(layer, $elem, object);
+              });
             });
-          });
+          } catch (e) {
+            console.warn("Had a problem loading the map!");
+            throw e;
+          }
         }
       },
-      activateNormalTool: function() {
-        var BACKSPACE_KEY, DELETE_KEY, selecteds,
+      activate_tiles_normal_tool: function() {
+        var BACKSPACE_KEY, DELETE_KEY, elems, evtNamespace,
           _this = this;
-        selecteds = [];
-        $.v.each(this.objectsByLayer['tiles'], function(id, obj) {
-          return _this.activateNormalToolForObject(obj);
+        console.log('viewport: activating normal tool (layer: tiles)');
+        evtNamespace = 'editor.viewport.layer-tiles.tool-normal';
+        elems = $.v.map(this.objectsByLayer['tiles'], function(id, obj) {
+          return obj.$elem[0];
         });
-        this.$map.bind('mouseup.editor.viewport.selection', function(evt) {
-          console.log('map mouseup');
+        this._activate_tiles_normal_tool_for_objects($(elems));
+        this.$map.bind("mouseup." + evtNamespace, function(evt) {
+          console.log('viewport: map mouseup');
           _this.$map.find('.editor-map-object').removeClass('editor-selected');
-          return _this.$map.find('.editor-map-object[data-is-selected=yes]').addClass('editor-selected');
+          return _this.$map.find('.editor-map-object[data-is-selected=yes]').addClass('editor-selected').removeAttr('data-is-selected');
         });
         BACKSPACE_KEY = 8;
         DELETE_KEY = 46;
-        return $(window).bind('keydown.editor.viewport', function(evt) {
+        return $(window).bind("keydown." + evtNamespace, function(evt) {
           if (evt.keyCode === DELETE_KEY || evt.keyCode === BACKSPACE_KEY) {
             evt.preventDefault();
             _this.$map.find('.editor-map-object.editor-selected').each(function(elem) {
               var $elem, objectId;
               $elem = $(elem);
               objectId = $elem.data('moid');
-              console.log("removing object " + objectId);
+              console.log("viewport: removing object " + objectId);
               delete _this.objectsByLayer[_this.core.getCurrentLayer()][objectId];
               return $elem.remove();
             });
@@ -157,78 +164,91 @@
           }
         });
       },
-      activateNormalToolForObject: function(obj) {
-        var $elem, dragOffset, dragStarted,
-          _this = this;
+      _activate_tiles_normal_tool_for_objects: function($elems) {
+        var dragOffset, dragStarted, evtNamespace, viewport;
+        console.log('viewport: activating normal tool for objects (layer: tiles)');
+        viewport = this;
+        evtNamespace = 'editor.viewport.layer-tiles.tool-normal';
         dragStarted = false;
         dragOffset = null;
-        $elem = obj.$elem;
-        return obj.$elem.unbind('.editor').removeClass('drag-helper').bind('mousedown.editor.viewport', function(evt) {
-          console.log('map object mousedown');
+        return $elems.unbind('.editor').removeClass('drag-helper').bind("mousedown." + evtNamespace, function(evt) {
+          var $this;
+          console.log('viewport: map object mousedown');
+          $this = $(this);
           if (evt.button === 2) return;
           evt.stopPropagation();
           evt.preventDefault();
-          $(window).bind('mousemove.editor.viewport', function(evt) {
+          $(window).bind("mousemove." + evtNamespace, function(evt) {
             if (!dragStarted) {
-              obj.$elem.trigger('mousedragstart.editor.viewport', evt);
+              $this.trigger("mousedragstart." + evtNamespace, evt);
               dragStarted = true;
             }
-            return $elem.trigger('mousedrag.editor.viewport', evt);
+            return $this.trigger("mousedrag." + evtNamespace, evt);
           });
-          return $(window).one('mouseup.editor.viewport', function(evt) {
-            console.log('viewport mouseup');
-            if (dragStarted) $elem.trigger('mousedragend.editor.viewport', evt);
+          return $(window).one("mouseup." + evtNamespace, function(evt) {
+            console.log('viewport: mouseup');
+            if (dragStarted) $this.trigger("mousedragend." + evtNamespace, evt);
             dragStarted = false;
             dragOffset = null;
-            $(window).unbind('mousemove.editor.viewport');
+            $(window).unbind("mousemove." + evtNamespace);
             return true;
           });
-        }).bind('mousedragstart.editor.viewport', function(evt) {
-          var offset;
-          console.log('map object mousedragstart');
-          $(document.body).addClass('editor-drag-active');
-          offset = $elem.offset();
+        }).bind("mousedragstart." + evtNamespace, function(evt) {
+          var $this, offset;
+          console.log('viewport: map object mousedragstart');
+          $this = $(this);
+          viewport.$element.addClass('editor-drag-active');
+          offset = $this.offset();
           return dragOffset = {
             x: evt.pageX - offset.left,
             y: evt.pageY - offset.top
           };
-        }).bind('mousedrag.editor.viewport', function(evt) {
-          var x, y;
-          x = evt.pageX - dragOffset.x - _this.map.x1 - _this.bounds.x1;
-          y = evt.pageY - dragOffset.y - _this.map.y1 - _this.bounds.y1;
-          return $elem.css('top', "" + y + "px").css('left', "" + x + "px");
-        }).bind('mousedragend.editor.viewport', function(evt) {
-          var x, y;
-          console.log('map object mousedragend');
-          $(document.body).removeClass('editor-drag-active');
-          x = parseInt($elem.css('left'), 10);
-          y = parseInt($elem.css('top'), 10);
+        }).bind("mousedrag." + evtNamespace, function(evt) {
+          var $this, x, y;
+          $this = $(this);
+          x = evt.pageX - dragOffset.x - viewport.map.x1 - viewport.bounds.x1;
+          y = evt.pageY - dragOffset.y - viewport.map.y1 - viewport.bounds.y1;
+          return $this.css('top', "" + y + "px").css('left', "" + x + "px");
+        }).bind("mousedragend." + evtNamespace, function(evt) {
+          var $this, x, y;
+          console.log('viewport: map object mousedragend');
+          $this = $(this);
+          viewport.$element.removeClass('editor-drag-active');
+          x = parseInt($this.css('left'), 10);
+          y = parseInt($this.css('top'), 10);
           x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
-          $elem.css('top', "" + y + "px").css('left', "" + x + "px");
-          return _this.saveMap();
-        }).bind('mouseup.editor.viewport.selection', function(evt) {
-          var newstate, state;
-          console.log('map object mouseup');
+          $this.css('top', "" + y + "px").css('left', "" + x + "px");
+          return viewport.saveMap();
+        }).bind("mouseup." + evtNamespace, function(evt) {
+          var $this, newstate, state;
+          console.log('viewport: map object mouseup');
+          $this = $(this);
           if (!dragStarted) {
-            state = $elem.attr('data-is-selected');
+            state = $this.attr('data-is-selected');
             newstate = state === 'no' || !state ? 'yes' : 'no';
-            $elem.attr('data-is-selected', newstate);
+            $this.attr('data-is-selected', newstate);
           }
           return true;
         });
       },
-      deactivateNormalTool: function() {
-        $.v.each(this.objectsByLayer['tiles'], function(id, obj) {
-          return obj.$elem.unbind('mousedown.editor.viewport').unbind('mousedragstart.editor.viewport').unbind('mousedrag.editor.viewport').unbind('mousedragend.editor.viewport');
+      deactivate_tiles_normal_tool: function() {
+        var elems, evtNamespace;
+        console.log('viewport: deactivating normal tool (layer: tiles)');
+        evtNamespace = 'editor.viewport.layer-tiles.tool-normal';
+        elems = $.v.map(this.objectsByLayer['tiles'], function(id, obj) {
+          return obj.$elem[0];
         });
-        return this.$map.unbind('mouseup.editor.viewport');
+        $(elems).unbind('.' + evtNamespace);
+        this.$map.unbind('.' + evtNamespace);
+        return $(window).unbind('.' + evtNamespace);
       },
-      activateHandTool: function() {
-        var $map,
+      activate_hand_tool: function() {
+        var evtNamespace,
           _this = this;
-        $map = this.$map;
-        return this.$map.bind('mousedown.editor.viewport', function(evt) {
+        console.log('viewport: deactivating hand tool');
+        evtNamespace = 'editor.viewport.layer-tiles.tool-normal';
+        return this.$map.bind("mousedown." + evtNamespace, function(evt) {
           var mouse;
           if (evt.button === 2) return;
           mouse = {
@@ -236,7 +256,7 @@
             py: evt.pageY
           };
           evt.preventDefault();
-          $(window).bind('mousemove.editor.viewport', function(evt) {
+          $(window).bind("mousemove." + evtNamespace, function(evt) {
             var dx, dy, h, mapX, mapY, w, x, y;
             x = evt.pageX;
             y = evt.pageY;
@@ -250,25 +270,27 @@
             if (mapY > 0) mapY = 0;
             h = -(_this.map.height - _this.bounds.height);
             if (mapY < h) mapY = h;
-            $map.css("left", "" + mapX + "px");
-            $map.css("top", "" + mapY + "px");
+            _this.$map.css("left", "" + mapX + "px");
+            _this.$map.css("top", "" + mapY + "px");
             _this.map.anchor(mapX, mapY);
             mouse.px = x;
             mouse.py = y;
             return evt.preventDefault();
           });
-          return $(window).one('mouseup.editor.viewport', function(evt) {
+          return $(window).one("mouseup." + evtNamespace, function(evt) {
             if (mouse) mouse = null;
-            return $(window).unbind('mousemove.editor.viewport');
+            return $(window).unbind("mousemove." + evtNamespace);
           });
         });
       },
-      deactivateHandTool: function() {
-        return this.$map.unbind('mousedown.editor.viewport');
+      deactivate_hand_tool: function() {
+        console.log('viewport: deactivating hand tool');
+        this.$map.unbind('.' + evtNamespace);
+        return $(window).unbind('.' + evtNamespace);
       },
       addObject: function(layer, $elem, object) {
-        var k, obj, v;
-        console.log('addObject');
+        var k, obj, v, _name;
+        console.log('viewport: addObject');
         obj = {};
         obj.moid = this.objectId;
         for (k in object) {
@@ -279,27 +301,13 @@
         obj.$elem = $elem;
         $elem.data('moid', this.objectId);
         this.objectsByLayer[layer][this.objectId] = obj;
-        if (this.core.currentTool === 'normal') {
-          this.activateNormalToolForObject(obj);
-        }
-        return this.objectId++;
-      },
-      stealFrom: function(obj, prop) {
-        return this[prop] = obj["delete"](prop);
-      },
-      giveTo: function(obj, prop) {
-        return obj[prop] = this["delete"](prop);
-      },
-      "delete": function(prop) {
-        var val;
-        val = this[prop];
-        delete this[prop];
-        return val;
+        this.objectId++;
+        return typeof this[_name = "_activate_" + layer + "_" + this.core.currentTool + "_tool_for_object"] === "function" ? this[_name](obj) : void 0;
       },
       saveMap: function() {
         var data,
           _this = this;
-        console.log('saving map...');
+        console.log('viewport: saving map...');
         data = $.v.reduce($.v.keys(this.objectsByLayer), function(hash, layer) {
           var arr;
           arr = $.v.map(_this.objectsByLayer[layer], function(id, object) {

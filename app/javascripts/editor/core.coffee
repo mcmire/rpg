@@ -32,10 +32,10 @@ define 'editor.core', ->
           that.$layerChooser.change()
         choose: (layer) ->
           if @current
-            if @current is 'fill'
-              @deactivateFillLayer()
-            else if @current is 'tiles'
-              @deactivateTilesLayer()
+            if that.currentTool
+              # also deactivate the tool since that's a member of the layer
+              that["_deactivate_#{@current}_#{that.currentTool}_tool"]?()
+            that["_deactivate_#{@current}_layer"]?()
 
           @current = layer
           $map = that.viewport.$map
@@ -55,10 +55,9 @@ define 'editor.core', ->
           that.$sidebar.find('> div').hide()
           that.$sidebar.find("> div[data-layer=#{layer}]").show()
 
-          if @current is 'fill'
-            @_activateFillLayer()
-          else if @current is 'tiles'
-            @_activateTilesLayer()
+          that["_activate_#{@current}_layer"]?()
+          # also activate the tool since that's a member of the layer
+          that["_activate_#{@current}_#{that.currentTool}_tool"]?()
 
       $(window).bind 'keyup', (evt) =>
         index = @layers.keys.indexOf(evt.keyCode)
@@ -77,8 +76,6 @@ define 'editor.core', ->
       for layer in @layers.names
         @$layerChooser.append """<option data-layer="#{layer}">#{layer}</option>"""
 
-      @layers.init()
-
       @$mapChooser = $('#editor-map-chooser select')
 
       @_resizeUI()
@@ -91,12 +88,15 @@ define 'editor.core', ->
 
         @viewport.loadMap()
         @_initToolbox()
+        @layers.init()
 
     getLayers: -> @layers.names
 
     getCurrentLayer: -> @layers.current
 
-    getCurrentLayerElem: -> @viewport.$map.find(".editor-layer[data-layer=#{@layers.current}]")
+    getCurrentLayerElem: -> @findLayer @getCurrentLayer()
+
+    findLayer: (layer) -> @viewport.$map.find(".editor-layer[data-layer=#{layer}]")
 
     enableDragSnapping: (size) ->
       @snapDragToGrid = size
@@ -155,6 +155,8 @@ define 'editor.core', ->
       check()
 
     _populateSidebar: ->
+      core = this
+
       # go through all of the possible objects (images, sprites, mobs, etc.)
       # and add them to a list
 
@@ -209,67 +211,74 @@ define 'editor.core', ->
       @$elemBeingDragged = null
       @objectBeingDragged = null
 
+      elems = []
       $.v.each @objects, (so) =>
-        $div = so.$elem = $("<div/>")
+        $elem = so.$elem = $("<div/>")
           .addClass('img')
           .data('name', so.object.name)
           .width(so.dims.w)
           .height(so.dims.h)
           .append(so.image.getElement())
+        $elem.data('so', so)  # TODO: use a real object rather than this
+        @$sidebar.find('> div[data-layer=tiles]').append($elem)
+        elems.push($elem[0])
 
-          .bind 'mousedown.editor.core', (evt) =>
-            # don't move the object accidentally if it is right-clicked
-            # FIXME so this handles ctrl-click too
-            return if evt.button is 2
+      evtNamespace = 'editor.core.sidebar'
+      $(elems)
+        .bind "mousedown.#{evtNamespace}", (evt) ->
+          # don't move the object accidentally if it is right-clicked
+          # FIXME so this handles ctrl-click too
+          return if evt.button is 2
 
-            # console.log 'img mousedown'
+          $this = $(this)
 
-            evt.preventDefault()
+          # console.log 'img mousedown'
 
-            # bind mousemove to the window as we can drag the image around
-            # wherever we want, not just within the sidebar or viewport
-            $(window).bind 'mousemove.editor.core', (evt) =>
-              # console.log 'mousemove while mousedown'
-              unless dragStarted
-                $div.trigger 'mousedragstart.editor.core', evt
-                dragStarted = true
-              if @$elemBeingDragged
-                @positionDragHelper(evt)
-              else
-                # viewport has stolen $elemBeingDragged
+          evt.preventDefault()
 
-            # bind mouseup to the window as it may occur outside of the image
-            $(window).one 'mouseup.editor.core', (evt) =>
-              console.log 'core mouseup'
-              if dragStarted
-                $div.trigger 'mousedragend.editor.core', evt
-              $(window).unbind 'mousemove.editor.core'
-              dragStarted = false
-              @dragOffset = null
-              return true
+          # bind mousemove to the window as we can drag the image around
+          # wherever we want, not just within the sidebar or viewport
+          $(window).bind "mousemove.#{evtNamespace}", (evt) ->
+            # console.log 'mousemove while mousedown'
+            unless dragStarted
+              $this.trigger "mousedragstart.#{evtNamespace}", evt
+              dragStarted = true
+            if core.$elemBeingDragged
+              core.positionDragHelper(evt)
+            else
+              # viewport has stolen $elemBeingDragged
 
-          .bind 'mousedragstart.editor.core', (evt) =>
-            console.log 'core mousedragstart'
-            # clone the image node
-            $elemBeingDragged = $($div[0].cloneNode(true))
-              .addClass('editor-map-object')
-              .addClass('editor-drag-helper')
-              .removeClass('img')
-            @rememberDragObject([$elemBeingDragged, so])
-            $(document.body).addClass('editor-drag-active')
-            offset = $div.offset()
-            @dragOffset =
-              x: evt.pageX - offset.left
-              y: evt.pageY - offset.top
-            @viewport.bindDragEvents()
+          # bind mouseup to the window as it may occur outside of the image
+          $(window).one "mouseup.#{evtNamespace}", (evt) ->
+            console.log 'core: mouseup'
+            if dragStarted
+              $this.trigger "mousedragend.#{evtNamespace}", evt
+            $(window).unbind "mousemove.#{evtNamespace}"
+            dragStarted = false
+            core.dragOffset = null
+            return true
 
-          .bind 'mousedragend.editor.core', (evt) =>
-            console.log 'core mousedragend'
-            @viewport.unbindDragEvents()
-            $(document.body).removeClass('editor-drag-active')
-            @forgetDragObject() if @$elemBeingDragged
+        .bind "mousedragstart.#{evtNamespace}", (evt) ->
+          console.log 'core: mousedragstart'
+          $this = $(this)
+          # clone the image node
+          $elemBeingDragged = $(this.cloneNode(true))
+            .addClass('editor-map-object')
+            .addClass('editor-drag-helper')
+            .removeClass('img')
+          core.rememberDragObject([$elemBeingDragged, $this.data('so')])
+          $(document.body).addClass('editor-drag-active')
+          offset = $this.offset()
+          core.dragOffset =
+            x: evt.pageX - offset.left
+            y: evt.pageY - offset.top
+          core.viewport.bind_dnd_events()
 
-        @$sidebar.find('> div[data-layer=tiles]').append($div)
+        .bind "mousedragend.#{evtNamespace}", (evt) ->
+          console.log 'core: mousedragend'
+          core.viewport.unbind_dnd_events()
+          $(document.body).removeClass('editor-drag-active')
+          core.forgetDragObject() if core.$elemBeingDragged
 
     _chooseMap: (mapName) ->
       if @currentMap
@@ -286,104 +295,111 @@ define 'editor.core', ->
 
       @currentLayer = 'foreground'
 
-    _chooseLayer: (layerName) ->
-      # grey out the current layer and prevent interaction with it
-      @currentMap[@currentLayer].deactivate()
-      @currentMap[layerName].activate()
-
     _initToolbox: ->
       that = this
       @$toolbox = $('<div id="editor-toolbox"/>')
       @viewport.$element.append(@$toolbox)
       @currentTool = null
-      prevTool = null
+      @prevTool = null
 
-      selectTool = (tool) =>
-        $tool = @$toolbox.find("> [data-tool='#{tool}']")
-        $tools.removeClass('editor-active')
-        $tool.addClass('editor-active')
-        @viewport.$element
-          .removeClassesLike(/^editor-tool-/)
-          .addClass("editor-tool-#{tool}")
+    _initTools: (tools) ->
+      evtNamespace = 'editor.core.tools'
 
-        if @currentTool is 'normal'
-          @_deactivateNormalTool()
-        if @currentTool is 'hand'
-          @_deactivateHandTool()
+      @_destroyTools()
 
-        @currentTool = tool
-
-        if @currentTool is 'normal'
-          @_activateNormalTool()
-        if @currentTool is 'hand'
-          @_activateHandTool()
-
-      tools = 'normal hand select bucket'.split(" ")
       $.v.each tools, (tool) =>
         $tool = $("""<img src="/images/editor/tool-#{tool}.gif" data-tool="#{tool}">""")
         @$toolbox.append($tool)
-      $tools = @$toolbox.find('> img')
-        .bind 'click.editor', ->
+      @$toolbox.find('> img')
+        .bind "click.#{evtNamespace}", =>
           tool = $(this).data('tool')
-          selectTool(tool)
+          @_selectTool(tool)
 
-      selectTool('normal')
+      @_selectTool('normal')
 
+      @_initHandTool() if $.includes(tools, 'hand')
+
+    _destroyTools: ->
+      evtNamespace = 'editor.core.tools'
+      @$toolbox.find('> img').unbind('.' + evtNamespace)
+      $(window).unbind('.' + evtNamespace)
+      @$toolbox.html("")
+
+    _initHandTool: ->
+      evtNamespace = 'editor.core.tools'
       SHIFT_KEY = 16
       CTRL_KEY = 17
       mouse = {}
-      # http://stackoverflow.com/questions/3898524/how-to-show-mouse-cursor-in-browser-while-typing
-      # $cursor = null
       $(window)
-        .bind 'keydown.editor.core', (evt) =>
+        .bind "keydown.#{evtNamespace}", (evt) =>
           if evt.keyCode is SHIFT_KEY
-            prevTool = @currentTool
-            selectTool('hand')
+            @prevTool = @currentTool
+            @_selectTool('hand')
             evt.preventDefault()
-          # unless $cursor
-          #   $cursor = $("""<img id="editor-sticky-cursor" src="/images/editor/tool-#{@currentTool}.gif">""")
-          #   $(document.body).append($cursor)
-          #   $cursor.moveTo(mouse.x, mouse.y)
-        .bind 'keyup.editor.core', (evt) =>
+        .bind "keyup.#{evtNamespace}", (evt) =>
           if evt.keyCode is SHIFT_KEY
-            selectTool(prevTool)
-            prevTool = null
-        .bind 'mousemove.editor.core', (evt) =>
+            @_selectTool(@prevTool)
+            @prevTool = null
+        .bind "mousemove.#{evtNamespace}", (evt) =>
           mouse.x = evt.pageX
           mouse.y = evt.pageY
-          # if $cursor
-          #   $cursor.remove()
-          #   $cursor = null
 
-  _activateNormalTool: ->
-    @viewport.activateNormalTool()
+    _selectTool: (tool) ->
+      $tool = @$toolbox.find("> [data-tool='#{tool}']")
+      @$toolbox.find('> img').removeClass('editor-active')
+      $tool.addClass('editor-active')
+      @viewport.$element
+        .removeClassesLike(/^editor-tool-/)
+        .addClass("editor-tool-#{tool}")
 
-  _deactivateNormalTool: ->
-    @viewport.deactivateNormalTool()
+      if @currentTool
+        @["_deactivate_#{@currentLayer}_#{@currentTool}_tool"]?()
+        @["_deactivate_#{@currentTool}_tool"]?()
+      @currentTool = tool
+      @["_activate_#{@currentLayer}_#{@currentTool}_tool"]?()
+      @["_activate_#{@currentTool}_tool"]?()
 
-  _activateHandTool: ->
-    @viewport.activateHandTool()
+    _activate_fill_layer: ->
+      console.log 'core: activating fill layer'
 
-  _deactivateHandTool: ->
-    @viewport.deactivateHandTool()
+      # we want normal, hand, select, and bucket tools
+      # - normal tool will select areas so you can delete them and enable moving
+      #   objects
+      # - hand tool will move the map around
+      # - select tool will let you select an area on the map
+      # - bucket tool will let you fill in that area with a color - filling in an
+      #   area will create it - or you can fill the entire map with a color
+      #
+      # in addition selecting the fill layer will populate the sidebar with a
+      # color picker
 
-  _activateFillLayer: ->
-    # we want normal, hand, select, and bucket tools
-    # - normal tool will select areas so you can delete them and enable moving
-    #   objects
-    # - hand tool will move the map around
-    # - select tool will let you select an area on the map
-    # - bucket tool will let you fill in that area with a color - filling in an
-    #   area will create it - or you can fill the entire map with a color
-    #
-    # in addition selecting the fill layer will populate the sidebar with a
-    # color picker
+      @_initTools ['normal', 'hand', 'select', 'bucket']
 
-  _activateTilesLayer: ->
-    # we want normal and hand tools
-    # - normal tool will select tiles so you can delete them and enable moving
-    #   tiles
-    # - hand tool will move the map around
-    #
-    # in addition selecting the tiles layer will populate the sidebar with the
-    # list of available tiles
+    _activate_tiles_layer: ->
+      console.log 'core: activating tiles layer'
+
+      # we want normal and hand tools
+      # - normal tool will select tiles so you can delete them and enable moving
+      #   tiles
+      # - hand tool will move the map around
+      #
+      # in addition selecting the tiles layer will populate the sidebar with the
+      # list of available tiles
+
+      @_initTools ['normal', 'hand']
+
+    _activate_tiles_normal_tool: ->
+      console.log 'core: activating normal tool (layer: tiles)'
+      @viewport.activate_tiles_normal_tool()
+
+    _deactivate_tiles_normal_tool: ->
+      console.log 'core: deactivating normal tool (layer: tiles)'
+      @viewport.deactivate_tiles_normal_tool()
+
+    _activate_tiles_hand_tool: ->
+      console.log 'core: activating hand tool (layer: tiles)'
+      @viewport.activate_tiles_hand_tool()
+
+    _deactivate_tiles_hand_tool: ->
+      console.log 'core: deactivating hand tool (layer: tiles)'
+      @viewport.deactivate_tiles_hand_tool()

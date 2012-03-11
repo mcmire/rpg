@@ -1,5 +1,5 @@
 (function() {
-  var enderMembers, _boundsCollide, _boundsFor;
+  var enderMembers, enderStatics, _boundsCollide, _boundsFor;
 
   $._select('<div>');
 
@@ -22,6 +22,14 @@
     yo = b1.y1 <= b2.y1 && b1.y2 >= b2.y2;
     return (x1i || x2i || xo) && (y1i || y2i || yo);
   };
+
+  enderStatics = {
+    includes: function(arr, item) {
+      return ~arr.indexOf(item);
+    }
+  };
+
+  $.ender(enderStatics);
 
   enderMembers = {
     collidesWith: function($element) {

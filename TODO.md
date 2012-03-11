@@ -66,6 +66,9 @@
 
 * BUG: Can't move an object after placing it (have to refresh)
 
+* BUG: When dragging another item of the same type, type is not stored in saved
+  data
+
 * Add ability to dupe an object without having to drag it again all the way from
   the sidebar
 

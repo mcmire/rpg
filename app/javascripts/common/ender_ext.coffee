@@ -37,6 +37,16 @@ _boundsCollide = (b1, b2) ->
     (y1i or y2i or yo)
   )
 
+#---
+
+enderStatics =
+  includes: (arr, item) ->
+    ~arr.indexOf(item)
+
+$.ender(enderStatics)
+
+#---
+
 # Add methods to each ender element
 enderMembers =
   collidesWith: ($element) ->

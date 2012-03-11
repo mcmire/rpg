@@ -4,7 +4,7 @@
     var meta, util;
     meta = require('meta');
     util = require('util');
-    meta.def({
+    return meta.def({
       _createMapGrid: function() {
         var canvas, ctx;
         canvas = require('game.canvas').create(16, 16);
@@ -32,12 +32,15 @@
             return that.$layerChooser.change();
           },
           choose: function(layer) {
-            var $layer, $map;
+            var $layer, $map, _name, _name2, _name3, _name4;
             if (this.current) {
-              if (this.current === 'fill') {
-                this.deactivateFillLayer();
-              } else if (this.current === 'tiles') {
-                this.deactivateTilesLayer();
+              if (that.currentTool) {
+                if (typeof that[_name = "_deactivate_" + this.current + "_" + that.currentTool + "_tool"] === "function") {
+                  that[_name]();
+                }
+              }
+              if (typeof that[_name2 = "_deactivate_" + this.current + "_layer"] === "function") {
+                that[_name2]();
               }
             }
             this.current = layer;
@@ -50,11 +53,10 @@
             $layer.find('.editor-layer-bg').css('background-color', 'white');
             that.$sidebar.find('> div').hide();
             that.$sidebar.find("> div[data-layer=" + layer + "]").show();
-            if (this.current === 'fill') {
-              return this._activateFillLayer();
-            } else if (this.current === 'tiles') {
-              return this._activateTilesLayer();
+            if (typeof that[_name3 = "_activate_" + this.current + "_layer"] === "function") {
+              that[_name3]();
             }
+            return typeof that[_name4 = "_activate_" + this.current + "_" + that.currentTool + "_tool"] === "function" ? that[_name4]() : void 0;
           }
         };
         $(window).bind('keyup', function(evt) {
@@ -80,7 +82,6 @@
           layer = _ref2[_j];
           this.$layerChooser.append("<option data-layer=\"" + layer + "\">" + layer + "</option>");
         }
-        this.layers.init();
         this.$mapChooser = $('#editor-map-chooser select');
         this._resizeUI();
         $(window).resize(function() {
@@ -90,7 +91,8 @@
         return this._whenImagesLoaded(function() {
           _this._populateSidebar();
           _this.viewport.loadMap();
-          return _this._initToolbox();
+          _this._initToolbox();
+          return _this.layers.init();
         });
       },
       getLayers: function() {
@@ -100,7 +102,10 @@
         return this.layers.current;
       },
       getCurrentLayerElem: function() {
-        return this.viewport.$map.find(".editor-layer[data-layer=" + this.layers.current + "]");
+        return this.findLayer(this.getCurrentLayer());
+      },
+      findLayer: function(layer) {
+        return this.viewport.$map.find(".editor-layer[data-layer=" + layer + "]");
       },
       enableDragSnapping: function(size) {
         return this.snapDragToGrid = size;
@@ -168,8 +173,9 @@
         return check();
       },
       _populateSidebar: function() {
-        var dragStarted, imageCollection, spriteCollection,
+        var core, dragStarted, elems, evtNamespace, imageCollection, spriteCollection,
           _this = this;
+        core = this;
         imageCollection = require('game.imageCollection');
         spriteCollection = require('game.spriteCollection');
         this.objects = [];
@@ -230,49 +236,57 @@
         this.dragOffset = null;
         this.$elemBeingDragged = null;
         this.objectBeingDragged = null;
-        return $.v.each(this.objects, function(so) {
-          var $div;
-          $div = so.$elem = $("<div/>").addClass('img').data('name', so.object.name).width(so.dims.w).height(so.dims.h).append(so.image.getElement()).bind('mousedown.editor.core', function(evt) {
-            if (evt.button === 2) return;
-            evt.preventDefault();
-            $(window).bind('mousemove.editor.core', function(evt) {
-              if (!dragStarted) {
-                $div.trigger('mousedragstart.editor.core', evt);
-                dragStarted = true;
-              }
-              if (_this.$elemBeingDragged) {
-                return _this.positionDragHelper(evt);
-              } else {
+        elems = [];
+        $.v.each(this.objects, function(so) {
+          var $elem;
+          $elem = so.$elem = $("<div/>").addClass('img').data('name', so.object.name).width(so.dims.w).height(so.dims.h).append(so.image.getElement());
+          $elem.data('so', so);
+          _this.$sidebar.find('> div[data-layer=tiles]').append($elem);
+          return elems.push($elem[0]);
+        });
+        evtNamespace = 'editor.core.sidebar';
+        return $(elems).bind("mousedown." + evtNamespace, function(evt) {
+          var $this;
+          if (evt.button === 2) return;
+          $this = $(this);
+          evt.preventDefault();
+          $(window).bind("mousemove." + evtNamespace, function(evt) {
+            if (!dragStarted) {
+              $this.trigger("mousedragstart." + evtNamespace, evt);
+              dragStarted = true;
+            }
+            if (core.$elemBeingDragged) {
+              return core.positionDragHelper(evt);
+            } else {
 
-              }
-            });
-            return $(window).one('mouseup.editor.core', function(evt) {
-              console.log('core mouseup');
-              if (dragStarted) $div.trigger('mousedragend.editor.core', evt);
-              $(window).unbind('mousemove.editor.core');
-              dragStarted = false;
-              _this.dragOffset = null;
-              return true;
-            });
-          }).bind('mousedragstart.editor.core', function(evt) {
-            var $elemBeingDragged, offset;
-            console.log('core mousedragstart');
-            $elemBeingDragged = $($div[0].cloneNode(true)).addClass('editor-map-object').addClass('editor-drag-helper').removeClass('img');
-            _this.rememberDragObject([$elemBeingDragged, so]);
-            $(document.body).addClass('editor-drag-active');
-            offset = $div.offset();
-            _this.dragOffset = {
-              x: evt.pageX - offset.left,
-              y: evt.pageY - offset.top
-            };
-            return _this.viewport.bindDragEvents();
-          }).bind('mousedragend.editor.core', function(evt) {
-            console.log('core mousedragend');
-            _this.viewport.unbindDragEvents();
-            $(document.body).removeClass('editor-drag-active');
-            if (_this.$elemBeingDragged) return _this.forgetDragObject();
+            }
           });
-          return _this.$sidebar.find('> div[data-layer=tiles]').append($div);
+          return $(window).one("mouseup." + evtNamespace, function(evt) {
+            console.log('core: mouseup');
+            if (dragStarted) $this.trigger("mousedragend." + evtNamespace, evt);
+            $(window).unbind("mousemove." + evtNamespace);
+            dragStarted = false;
+            core.dragOffset = null;
+            return true;
+          });
+        }).bind("mousedragstart." + evtNamespace, function(evt) {
+          var $elemBeingDragged, $this, offset;
+          console.log('core: mousedragstart');
+          $this = $(this);
+          $elemBeingDragged = $(this.cloneNode(true)).addClass('editor-map-object').addClass('editor-drag-helper').removeClass('img');
+          core.rememberDragObject([$elemBeingDragged, $this.data('so')]);
+          $(document.body).addClass('editor-drag-active');
+          offset = $this.offset();
+          core.dragOffset = {
+            x: evt.pageX - offset.left,
+            y: evt.pageY - offset.top
+          };
+          return core.viewport.bind_dnd_events();
+        }).bind("mousedragend." + evtNamespace, function(evt) {
+          console.log('core: mousedragend');
+          core.viewport.unbind_dnd_events();
+          $(document.body).removeClass('editor-drag-active');
+          if (core.$elemBeingDragged) return core.forgetDragObject();
         });
       },
       _chooseMap: function(mapName) {
@@ -290,78 +304,107 @@
         this.viewport.setMap(map);
         return this.currentLayer = 'foreground';
       },
-      _chooseLayer: function(layerName) {
-        this.currentMap[this.currentLayer].deactivate();
-        return this.currentMap[layerName].activate();
-      },
       _initToolbox: function() {
-        var $tools, CTRL_KEY, SHIFT_KEY, mouse, prevTool, selectTool, that, tools,
-          _this = this;
+        var that;
         that = this;
         this.$toolbox = $('<div id="editor-toolbox"/>');
         this.viewport.$element.append(this.$toolbox);
         this.currentTool = null;
-        prevTool = null;
-        selectTool = function(tool) {
-          var $tool;
-          $tool = _this.$toolbox.find("> [data-tool='" + tool + "']");
-          $tools.removeClass('editor-active');
-          $tool.addClass('editor-active');
-          _this.viewport.$element.removeClassesLike(/^editor-tool-/).addClass("editor-tool-" + tool);
-          if (_this.currentTool === 'normal') _this._deactivateNormalTool();
-          if (_this.currentTool === 'hand') _this._deactivateHandTool();
-          _this.currentTool = tool;
-          if (_this.currentTool === 'normal') _this._activateNormalTool();
-          if (_this.currentTool === 'hand') return _this._activateHandTool();
-        };
-        tools = 'normal hand select bucket'.split(" ");
+        return this.prevTool = null;
+      },
+      _initTools: function(tools) {
+        var evtNamespace,
+          _this = this;
+        evtNamespace = 'editor.core.tools';
+        this._destroyTools();
         $.v.each(tools, function(tool) {
           var $tool;
           $tool = $("<img src=\"/images/editor/tool-" + tool + ".gif\" data-tool=\"" + tool + "\">");
           return _this.$toolbox.append($tool);
         });
-        $tools = this.$toolbox.find('> img').bind('click.editor', function() {
+        this.$toolbox.find('> img').bind("click." + evtNamespace, function() {
           var tool;
-          tool = $(this).data('tool');
-          return selectTool(tool);
+          tool = $(_this).data('tool');
+          return _this._selectTool(tool);
         });
-        selectTool('normal');
+        this._selectTool('normal');
+        if ($.includes(tools, 'hand')) return this._initHandTool();
+      },
+      _destroyTools: function() {
+        var evtNamespace;
+        evtNamespace = 'editor.core.tools';
+        this.$toolbox.find('> img').unbind('.' + evtNamespace);
+        $(window).unbind('.' + evtNamespace);
+        return this.$toolbox.html("");
+      },
+      _initHandTool: function() {
+        var CTRL_KEY, SHIFT_KEY, evtNamespace, mouse,
+          _this = this;
+        evtNamespace = 'editor.core.tools';
         SHIFT_KEY = 16;
         CTRL_KEY = 17;
         mouse = {};
-        return $(window).bind('keydown.editor.core', function(evt) {
+        return $(window).bind("keydown." + evtNamespace, function(evt) {
           if (evt.keyCode === SHIFT_KEY) {
-            prevTool = _this.currentTool;
-            selectTool('hand');
+            _this.prevTool = _this.currentTool;
+            _this._selectTool('hand');
             return evt.preventDefault();
           }
-        }).bind('keyup.editor.core', function(evt) {
+        }).bind("keyup." + evtNamespace, function(evt) {
           if (evt.keyCode === SHIFT_KEY) {
-            selectTool(prevTool);
-            return prevTool = null;
+            _this._selectTool(_this.prevTool);
+            return _this.prevTool = null;
           }
-        }).bind('mousemove.editor.core', function(evt) {
+        }).bind("mousemove." + evtNamespace, function(evt) {
           mouse.x = evt.pageX;
           return mouse.y = evt.pageY;
         });
+      },
+      _selectTool: function(tool) {
+        var $tool, _name, _name2, _name3, _name4;
+        $tool = this.$toolbox.find("> [data-tool='" + tool + "']");
+        this.$toolbox.find('> img').removeClass('editor-active');
+        $tool.addClass('editor-active');
+        this.viewport.$element.removeClassesLike(/^editor-tool-/).addClass("editor-tool-" + tool);
+        if (this.currentTool) {
+          if (typeof this[_name = "_deactivate_" + this.currentLayer + "_" + this.currentTool + "_tool"] === "function") {
+            this[_name]();
+          }
+          if (typeof this[_name2 = "_deactivate_" + this.currentTool + "_tool"] === "function") {
+            this[_name2]();
+          }
+        }
+        this.currentTool = tool;
+        if (typeof this[_name3 = "_activate_" + this.currentLayer + "_" + this.currentTool + "_tool"] === "function") {
+          this[_name3]();
+        }
+        return typeof this[_name4 = "_activate_" + this.currentTool + "_tool"] === "function" ? this[_name4]() : void 0;
+      },
+      _activate_fill_layer: function() {
+        console.log('core: activating fill layer');
+        return this._initTools(['normal', 'hand', 'select', 'bucket']);
+      },
+      _activate_tiles_layer: function() {
+        console.log('core: activating tiles layer');
+        return this._initTools(['normal', 'hand']);
+      },
+      _activate_tiles_normal_tool: function() {
+        console.log('core: activating normal tool (layer: tiles)');
+        return this.viewport.activate_tiles_normal_tool();
+      },
+      _deactivate_tiles_normal_tool: function() {
+        console.log('core: deactivating normal tool (layer: tiles)');
+        return this.viewport.deactivate_tiles_normal_tool();
+      },
+      _activate_tiles_hand_tool: function() {
+        console.log('core: activating hand tool (layer: tiles)');
+        return this.viewport.activate_tiles_hand_tool();
+      },
+      _deactivate_tiles_hand_tool: function() {
+        console.log('core: deactivating hand tool (layer: tiles)');
+        return this.viewport.deactivate_tiles_hand_tool();
       }
     });
-    return {
-      _activateNormalTool: function() {
-        return this.viewport.activateNormalTool();
-      },
-      _deactivateNormalTool: function() {
-        return this.viewport.deactivateNormalTool();
-      },
-      _activateHandTool: function() {
-        return this.viewport.activateHandTool();
-      },
-      _deactivateHandTool: function() {
-        return this.viewport.deactivateHandTool();
-      },
-      _activateFillLayer: function() {},
-      _activateTilesLayer: function() {}
-    };
   });
 
 }).call(this);
