@@ -28,7 +28,7 @@ define 'editor.core', ->
         names: ['fill', 'tiles']
         keys: [ONE_KEY, TWO_KEY]
         init: ->
-          that.$layerChooser[0].selectedIndex = 0
+          that.$layerChooser[0].selectedIndex = 1
           that.$layerChooser.change()
         choose: (layer) ->
           if @current
@@ -272,11 +272,11 @@ define 'editor.core', ->
           core.dragOffset =
             x: evt.pageX - offset.left
             y: evt.pageY - offset.top
-          core.viewport.bind_dnd_events()
+          core.viewport.bindDndEvents()
 
         .bind "mousedragend.#{evtNamespace}", (evt) ->
           console.log 'core: mousedragend'
-          core.viewport.unbind_dnd_events()
+          core.viewport.unbindDndEvents()
           $(document.body).removeClass('editor-drag-active')
           core.forgetDragObject() if core.$elemBeingDragged
 

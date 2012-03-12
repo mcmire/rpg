@@ -28,7 +28,7 @@
           names: ['fill', 'tiles'],
           keys: [ONE_KEY, TWO_KEY],
           init: function() {
-            that.$layerChooser[0].selectedIndex = 0;
+            that.$layerChooser[0].selectedIndex = 1;
             return that.$layerChooser.change();
           },
           choose: function(layer) {
@@ -281,10 +281,10 @@
             x: evt.pageX - offset.left,
             y: evt.pageY - offset.top
           };
-          return core.viewport.bind_dnd_events();
+          return core.viewport.bindDndEvents();
         }).bind("mousedragend." + evtNamespace, function(evt) {
           console.log('core: mousedragend');
-          core.viewport.unbind_dnd_events();
+          core.viewport.unbindDndEvents();
           $(document.body).removeClass('editor-drag-active');
           if (core.$elemBeingDragged) return core.forgetDragObject();
         });
