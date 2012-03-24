@@ -45,9 +45,10 @@ javascripts:
   editor:
     - *common
 
-    - public/javascripts/app/editor.js
+    - public/javascripts/app/editor/dnd.js
     - public/javascripts/app/editor/core.js
     - public/javascripts/app/editor/viewport.js
+    - public/javascripts/app/editor.js
 
     - public/javascripts/app/game/background.js
     - public/javascripts/app/game/block.js

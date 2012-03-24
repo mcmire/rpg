@@ -8,8 +8,8 @@ GIT
 
 GIT
   remote: https://github.com/mcmire/jammit
-  revision: 3f0fc42da7315d309492cba400f82f3dd446bcf4
-  ref: 3f0fc42da7315d309492cba400f82f3dd446bcf4
+  revision: 3b8cec81c341c46ae3e2ff434ce9c4a2d8e563b0
+  branch: fix_rails_assumptions
   specs:
     jammit (0.6.5)
       yui-compressor (>= 0.9.3)
