@@ -79,6 +79,9 @@ define 'editor.viewport', ->
           $draggee.moveTo(x, y)
           @addObject('tiles', $draggee, $draggee.data('so'))
           @saveMap()
+          # TODO: Prevent element from being dragged out
+          $draggee.dragObject(dropTarget: @$element)
+          # $draggee.dragObject()
 
       BACKSPACE_KEY = 8
       DELETE_KEY    = 46

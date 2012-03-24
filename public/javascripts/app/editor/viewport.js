@@ -81,7 +81,10 @@
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
           $draggee.moveTo(x, y);
           _this.addObject('tiles', $draggee, $draggee.data('so'));
-          return _this.saveMap();
+          _this.saveMap();
+          return $draggee.dragObject({
+            dropTarget: _this.$element
+          });
         });
         BACKSPACE_KEY = 8;
         DELETE_KEY = 46;

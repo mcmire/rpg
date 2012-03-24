@@ -28,7 +28,8 @@ body {
 #editor-viewport .editor-layer-selected .editor-layer-bg {
   opacity: 0.5; }
 
-#editor-viewport.editor-drag-active,
+.editor-drag-active,
+.editor-tool-normal .editor-map-object,
 #editor-sidebar div.img {
   cursor: move; }
 
