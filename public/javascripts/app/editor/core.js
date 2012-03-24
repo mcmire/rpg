@@ -255,15 +255,6 @@
           dragObject = $draggee.data('dragObject');
           $helper = dragObject.getHelper();
           return $helper.addClass('editor-map-object');
-        }).bind("mousedrop." + evtns, function(evt) {
-          var $draggee, x, y;
-          console.log("" + evtns + ": mousedrop");
-          $draggee = $(_this);
-          x = parseInt($draggee.css('left'), 10);
-          y = parseInt($draggee.css('top'), 10);
-          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
-          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
-          return $draggee.moveTo(x, y);
         });
       },
       _chooseMap: function(mapName) {

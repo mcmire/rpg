@@ -60,7 +60,7 @@ define 'editor.viewport', ->
 
     activate_tiles_normal_tool: ->
       console.log 'viewport: activating normal tool (layer: tiles)'
-      evtNamespace = 'editor.viewport.layer-tiles.tool-normal'
+      evtns = 'editor.viewport.layer-tiles.tool-normal'
       viewport = this
 
       layerSel = '.editor-layer[data-layer=tiles]'
@@ -69,9 +69,15 @@ define 'editor.viewport', ->
         .dropTarget(
           receptor: '.editor-layer[data-layer=tiles] .editor-layer-content'
         )
-        .bind 'mousedropwithin', (evt) =>
+        .bind "mousedropwithin.#{evtns}", (evt) =>
+          console.log "#{evtns}: mousedropwithin"
           $draggee = $(evt.relatedTarget)
-          @addObject('tiles', $draggee)
+          x = parseInt($draggee.css('left'), 10)
+          y = parseInt($draggee.css('top'), 10)
+          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+          $draggee.moveTo(x, y)
+          @addObject('tiles', $draggee, $draggee.data('so'))
           @saveMap()
 
       BACKSPACE_KEY = 8
@@ -79,7 +85,7 @@ define 'editor.viewport', ->
       $(window)
         # this cannot be on keyup b/c backspace will go back to the prev page
         # immediately on keydown so we have to catch that
-        .bind "keydown.#{evtNamespace}", (evt) =>
+        .bind "keydown.#{evtns}", (evt) =>
           if evt.keyCode is DELETE_KEY or evt.keyCode is BACKSPACE_KEY
             evt.preventDefault()
             @$map.find('.editor-map-object.editor-selected').each (elem) =>
@@ -92,18 +98,18 @@ define 'editor.viewport', ->
 
     deactivate_tiles_normal_tool: ->
       console.log 'viewport: deactivating normal tool (layer: tiles)'
-      evtNamespace = 'editor.viewport.layer-tiles.tool-normal'
+      evtns = 'editor.viewport.layer-tiles.tool-normal'
       sel = '.editor-layer[data-layer=tiles] .editor-map-object'
       # XXX: does this work even for the delegate?
-      $(sel).unbind('.' + evtNamespace)
-      @$map.unbind('.' + evtNamespace)
-      $(window).unbind('.' + evtNamespace)
+      $(sel).unbind('.' + evtns)
+      @$map.unbind('.' + evtns)
+      $(window).unbind('.' + evtns)
 
     activate_hand_tool: ->
       console.log 'viewport: deactivating hand tool'
-      evtNamespace = 'editor.viewport.layer-tiles.tool-normal'
+      evtns = 'editor.viewport.layer-tiles.tool-normal'
       @$map
-        .bind "mousedown.#{evtNamespace}", (evt) =>
+        .bind "mousedown.#{evtns}", (evt) =>
           # don't pan the map accidentally if it is right-clicked
           # FIXME so this handles ctrl-click too
           return if evt.button is 2
@@ -116,7 +122,7 @@ define 'editor.viewport', ->
           # prevent anything that may occur on mousedown
           evt.preventDefault()
 
-          $(window).bind "mousemove.#{evtNamespace}", (evt) =>
+          $(window).bind "mousemove.#{evtns}", (evt) =>
             x = evt.pageX
             y = evt.pageY
 
@@ -146,15 +152,15 @@ define 'editor.viewport', ->
             # prevent selection
             evt.preventDefault()
 
-          $(window).one "mouseup.#{evtNamespace}", (evt) =>
+          $(window).one "mouseup.#{evtns}", (evt) =>
             if mouse
               mouse = null
-            $(window).unbind "mousemove.#{evtNamespace}"
+            $(window).unbind "mousemove.#{evtns}"
 
     deactivate_hand_tool: ->
       console.log 'viewport: deactivating hand tool'
-      @$map.unbind('.' + evtNamespace)
-      $(window).unbind('.' + evtNamespace)
+      @$map.unbind('.' + evtns)
+      $(window).unbind('.' + evtns)
 
     addObject: (layer, $elem, object) ->
       console.log 'viewport: addObject'

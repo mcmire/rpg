@@ -139,8 +139,8 @@ define 'editor.dnd', ->
           @_debugEvent 'window mouseup'
           if @dragStarted
             @$elem.trigger 'mousedragend', evt
-            # TODO: This should trigger only outside of the drop target
-            @$elem.trigger 'mousedropcancel', evt
+            unless @isOverDropTarget
+              @$elem.trigger 'mousedropcancel', evt
           @_removeWindowEvents()
 
       _addMousemoveEvent: ->
@@ -166,7 +166,7 @@ define 'editor.dnd', ->
         $(window).unbind ".#{EVT_NS}"
 
       _debugEvent: (name) ->
-        desc = if @options.helper then '(map object)' else '(helper)'
+        desc = if @options.helper then 'map object' else 'helper'
         console.log "#{EVT_NS}: #{name} (#{desc})"
 
   DropTarget = do ->
@@ -226,7 +226,7 @@ define 'editor.dnd', ->
         @$sensor
           .one "mouseup.#{EVT_NS}", (evt) =>
             @_debugEvent 'elem mouseup'
-            evt.relatedTarget = $dragOwner[0]
+            evt.relatedTarget = $dragHelper[0]
             @$sensor.trigger "mousedropwithin", evt
             $dragOwner.trigger "mousedrop", evt
 

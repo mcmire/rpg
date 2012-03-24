@@ -236,14 +236,6 @@ define 'editor.core', ->
           dragObject = $draggee.data('dragObject')
           $helper = dragObject.getHelper()
           $helper.addClass('editor-map-object')
-        .bind "mousedrop.#{evtns}", (evt) =>
-          console.log "#{evtns}: mousedrop"
-          $draggee = $(this)
-          x = parseInt($draggee.css('left'), 10)
-          y = parseInt($draggee.css('top'), 10)
-          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-          $draggee.moveTo(x, y)
 
     _chooseMap: (mapName) ->
       if @currentMap

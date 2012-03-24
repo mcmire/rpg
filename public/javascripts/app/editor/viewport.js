@@ -63,23 +63,29 @@
         }
       },
       activate_tiles_normal_tool: function() {
-        var BACKSPACE_KEY, DELETE_KEY, evtNamespace, layerSel, viewport,
+        var BACKSPACE_KEY, DELETE_KEY, evtns, layerSel, viewport,
           _this = this;
         console.log('viewport: activating normal tool (layer: tiles)');
-        evtNamespace = 'editor.viewport.layer-tiles.tool-normal';
+        evtns = 'editor.viewport.layer-tiles.tool-normal';
         viewport = this;
         layerSel = '.editor-layer[data-layer=tiles]';
         this.$element.dropTarget({
           receptor: '.editor-layer[data-layer=tiles] .editor-layer-content'
-        }).bind('mousedropwithin', function(evt) {
-          var $draggee;
+        }).bind("mousedropwithin." + evtns, function(evt) {
+          var $draggee, x, y;
+          console.log("" + evtns + ": mousedropwithin");
           $draggee = $(evt.relatedTarget);
-          _this.addObject('tiles', $draggee);
+          x = parseInt($draggee.css('left'), 10);
+          y = parseInt($draggee.css('top'), 10);
+          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
+          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
+          $draggee.moveTo(x, y);
+          _this.addObject('tiles', $draggee, $draggee.data('so'));
           return _this.saveMap();
         });
         BACKSPACE_KEY = 8;
         DELETE_KEY = 46;
-        return $(window).bind("keydown." + evtNamespace, function(evt) {
+        return $(window).bind("keydown." + evtns, function(evt) {
           if (evt.keyCode === DELETE_KEY || evt.keyCode === BACKSPACE_KEY) {
             evt.preventDefault();
             _this.$map.find('.editor-map-object.editor-selected').each(function(elem) {
@@ -95,20 +101,20 @@
         });
       },
       deactivate_tiles_normal_tool: function() {
-        var evtNamespace, sel;
+        var evtns, sel;
         console.log('viewport: deactivating normal tool (layer: tiles)');
-        evtNamespace = 'editor.viewport.layer-tiles.tool-normal';
+        evtns = 'editor.viewport.layer-tiles.tool-normal';
         sel = '.editor-layer[data-layer=tiles] .editor-map-object';
-        $(sel).unbind('.' + evtNamespace);
-        this.$map.unbind('.' + evtNamespace);
-        return $(window).unbind('.' + evtNamespace);
+        $(sel).unbind('.' + evtns);
+        this.$map.unbind('.' + evtns);
+        return $(window).unbind('.' + evtns);
       },
       activate_hand_tool: function() {
-        var evtNamespace,
+        var evtns,
           _this = this;
         console.log('viewport: deactivating hand tool');
-        evtNamespace = 'editor.viewport.layer-tiles.tool-normal';
-        return this.$map.bind("mousedown." + evtNamespace, function(evt) {
+        evtns = 'editor.viewport.layer-tiles.tool-normal';
+        return this.$map.bind("mousedown." + evtns, function(evt) {
           var mouse;
           if (evt.button === 2) return;
           mouse = {
@@ -116,7 +122,7 @@
             py: evt.pageY
           };
           evt.preventDefault();
-          $(window).bind("mousemove." + evtNamespace, function(evt) {
+          $(window).bind("mousemove." + evtns, function(evt) {
             var dx, dy, h, mapX, mapY, w, x, y;
             x = evt.pageX;
             y = evt.pageY;
@@ -137,16 +143,16 @@
             mouse.py = y;
             return evt.preventDefault();
           });
-          return $(window).one("mouseup." + evtNamespace, function(evt) {
+          return $(window).one("mouseup." + evtns, function(evt) {
             if (mouse) mouse = null;
-            return $(window).unbind("mousemove." + evtNamespace);
+            return $(window).unbind("mousemove." + evtns);
           });
         });
       },
       deactivate_hand_tool: function() {
         console.log('viewport: deactivating hand tool');
-        this.$map.unbind('.' + evtNamespace);
-        return $(window).unbind('.' + evtNamespace);
+        this.$map.unbind('.' + evtns);
+        return $(window).unbind('.' + evtns);
       },
       addObject: function(layer, $elem, object) {
         var k, obj, v, _name;
