@@ -60,6 +60,8 @@ enderMembers =
     this[0].className = classNames.join(" ")
     return this
 
+  removeAllClasses: -> # ...
+
   moveBy: (args) ->
     x = parseInt(this.css('left'), 10) + (args.x or 0)
     y = parseInt(this.css('top'), 10)  + (args.y or 0)
@@ -67,5 +69,15 @@ enderMembers =
 
   moveTo: (x, y) ->
     this.css('left', "#{x}px").css('top', "#{y}px")
+
+  contains: (elem) ->
+    elem = elem[0] if elem instanceof Array
+    @each -> return true if this is elem
+    return false
+
+  clone: ->
+    clone = this[0].cloneNode(true)
+    clone.removeAttribute('data-node-uid')
+    return $(clone)
 
 $.ender(enderMembers, true)

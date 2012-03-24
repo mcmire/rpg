@@ -47,6 +47,7 @@
       this[0].className = classNames.join(" ");
       return this;
     },
+    removeAllClasses: function() {},
     moveBy: function(args) {
       var x, y;
       x = parseInt(this.css('left'), 10) + (args.x || 0);
@@ -55,6 +56,19 @@
     },
     moveTo: function(x, y) {
       return this.css('left', "" + x + "px").css('top', "" + y + "px");
+    },
+    contains: function(elem) {
+      if (elem instanceof Array) elem = elem[0];
+      this.each(function() {
+        if (this === elem) return true;
+      });
+      return false;
+    },
+    clone: function() {
+      var clone;
+      clone = this[0].cloneNode(true);
+      clone.removeAttribute('data-node-uid');
+      return $(clone);
     }
   };
 

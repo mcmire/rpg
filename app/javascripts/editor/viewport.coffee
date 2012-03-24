@@ -24,25 +24,18 @@ define 'editor.viewport', ->
       @$element.height(height)
       @bounds.setHeight(height)
 
-    rememberDragObject: ([@$elemBeingDragged, @objectBeingDragged]) ->
-      @core.getCurrentLayerElem().find('.editor-layer-content')
-        .append(@$elemBeingDragged)
+    # rememberDragObject: ([@$elemBeingDragged, @objectBeingDragged]) ->
+    #   @core.getCurrentLayerElem().find('.editor-layer-content')
+    #     .append(@$elemBeingDragged)
 
-    forgetDragObject: (removeElement=true) ->
-      [a, b] = [@$elemBeingDragged, @objectBeingDragged]
-      @$elemBeingDragged.remove() if removeElement
-      delete @$elemBeingDragged
-      delete @objectBeingDragged
-      return [a, b]
+    # forgetDragObject: (removeElement=true) ->
+    #   [a, b] = [@$elemBeingDragged, @objectBeingDragged]
+    #   @$elemBeingDragged.remove() if removeElement
+    #   delete @$elemBeingDragged
+    #   delete @objectBeingDragged
+    #   return [a, b]
 
-    # setMap: (currentMap) ->
-    #   @currentMap = map
-    #   map.setParent(this)
-    #   map.attach()
-
-    # unsetMap: ->
-    #   @currentMap.detach()
-
+    ###
     bindDndEvents: ->
       console.log 'viewport: binding dnd events'
       evtNamespace = 'editor.viewport.dnd'
@@ -108,6 +101,7 @@ define 'editor.viewport', ->
       evtNamespace = 'editor.viewport.dnd'
       $(window).unbind('.' + evtNamespace)
       @$map.unbind('.' + evtNamespace)
+    ###
 
     loadMap: ->
       @map = Bounds.rect(0, 0, 1024, 1024)
@@ -148,13 +142,26 @@ define 'editor.viewport', ->
       evtNamespace = 'editor.viewport.layer-tiles.tool-normal'
       viewport = this
 
-      sel = '.editor-layer[data-layer=tiles] .editor-map-object'
+      layerSel = '.editor-layer[data-layer=tiles]'
 
       # TODO: Do we really need this?
-      $(sel)
-        .unbind('.editor')
-        .removeClass('editor-drag-helper')
+      #objSel = "#{layerSel} .editor-map-object"
+      # $(objSel)
+      #   .unbind('.editor')
+      #   .removeClass('editor-drag-helper')
 
+      # NEW CODE
+      @$element
+        .dropTarget(
+          receptor: '.editor-layer[data-layer=tiles] .editor-layer-content'
+        )
+        .bind 'mousedropwithin', (evt) =>
+          $draggee = $(evt.relatedTarget)
+          @addObject('tiles', $draggee)
+          @saveMap()
+
+      # OLD CODE
+      ###
       dragStarted = false
       dragOffset = null
       @$map
@@ -231,6 +238,7 @@ define 'editor.viewport', ->
         @$map.find('.editor-map-object[data-is-selected=yes]')
           .addClass('editor-selected')
           .removeAttr('data-is-selected')
+      ###
 
       BACKSPACE_KEY = 8
       DELETE_KEY    = 46

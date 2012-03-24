@@ -223,7 +223,31 @@ define 'editor.core', ->
         @$sidebar.find('> div[data-layer=tiles]').append($elem)
         elems.push($elem[0])
 
-      evtNamespace = 'editor.core.sidebar'
+      # NEW CODE
+      evtns = 'editor.core.sidebar'
+      $(elems)
+        .dragObject
+          helper: true
+          # TODO: Need to ensure that dropTarget can receive sidebar objects...
+          # what if we switch to a different layer?
+          dropTarget: @viewport.$element
+        .bind "mousedragstart.#{evtns}", (evt) ->
+          console.log "#{evtns}: mousedragstart"
+          $draggee = $(this)
+          dragObject = $draggee.data('dragObject')
+          $helper = dragObject.getHelper()
+          $helper.addClass('editor-map-object')
+        .bind "mousedrop.#{evtns}", (evt) =>
+          console.log "#{evtns}: mousedrop"
+          $draggee = $(this)
+          x = parseInt($draggee.css('left'), 10)
+          y = parseInt($draggee.css('top'), 10)
+          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
+          $draggee.moveTo(x, y)
+
+      # OLD CODE
+      ###
       $(elems)
         .bind "mousedown.#{evtNamespace}", (evt) ->
           # don't move the object accidentally if it is right-clicked
@@ -236,27 +260,28 @@ define 'editor.core', ->
 
           evt.preventDefault()
 
-          # bind mousemove to the window as we can drag the image around
-          # wherever we want, not just within the sidebar or viewport
-          $(window).bind "mousemove.#{evtNamespace}", (evt) ->
-            # console.log 'mousemove while mousedown'
-            unless dragStarted
-              $this.trigger "mousedragstart.#{evtNamespace}", evt
-              dragStarted = true
-            if core.$elemBeingDragged
-              core.positionDragHelper(evt)
-            else
-              # viewport has stolen $elemBeingDragged
+          $(window)
+            # bind mousemove to the window as we can drag the image around
+            # wherever we want, not just within the sidebar or viewport
+            .bind "mousemove.#{evtNamespace}", (evt) ->
+              # console.log 'mousemove while mousedown'
+              unless dragStarted
+                $this.trigger "mousedragstart.#{evtNamespace}", evt
+                dragStarted = true
+              if core.$elemBeingDragged
+                core.positionDragHelper(evt)
+              else
+                # viewport has stolen $elemBeingDragged
 
-          # bind mouseup to the window as it may occur outside of the image
-          $(window).one "mouseup.#{evtNamespace}", (evt) ->
-            console.log 'core: mouseup'
-            if dragStarted
-              $this.trigger "mousedragend.#{evtNamespace}", evt
-            $(window).unbind "mousemove.#{evtNamespace}"
-            dragStarted = false
-            core.dragOffset = null
-            return true
+            # bind mouseup to the window as it may occur outside of the image
+            .one "mouseup.#{evtNamespace}", (evt) ->
+              console.log 'core: mouseup'
+              if dragStarted
+                $this.trigger "mousedragend.#{evtNamespace}", evt
+              $(window).unbind "mousemove.#{evtNamespace}"
+              dragStarted = false
+              core.dragOffset = null
+              return true
 
         .bind "mousedragstart.#{evtNamespace}", (evt) ->
           console.log 'core: mousedragstart'
@@ -279,6 +304,7 @@ define 'editor.core', ->
           core.viewport.unbindDndEvents()
           $(document.body).removeClass('editor-drag-active')
           core.forgetDragObject() if core.$elemBeingDragged
+      ###
 
     _chooseMap: (mapName) ->
       if @currentMap

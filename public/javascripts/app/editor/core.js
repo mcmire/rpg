@@ -173,7 +173,7 @@
         return check();
       },
       _populateSidebar: function() {
-        var core, dragStarted, elems, evtNamespace, imageCollection, spriteCollection,
+        var core, dragStarted, elems, evtns, imageCollection, spriteCollection,
           _this = this;
         core = this;
         imageCollection = require('game.imageCollection');
@@ -244,50 +244,85 @@
           _this.$sidebar.find('> div[data-layer=tiles]').append($elem);
           return elems.push($elem[0]);
         });
-        evtNamespace = 'editor.core.sidebar';
-        return $(elems).bind("mousedown." + evtNamespace, function(evt) {
-          var $this;
-          if (evt.button === 2) return;
-          $this = $(this);
-          evt.preventDefault();
-          $(window).bind("mousemove." + evtNamespace, function(evt) {
-            if (!dragStarted) {
-              $this.trigger("mousedragstart." + evtNamespace, evt);
-              dragStarted = true;
-            }
-            if (core.$elemBeingDragged) {
-              return core.positionDragHelper(evt);
-            } else {
-
-            }
-          });
-          return $(window).one("mouseup." + evtNamespace, function(evt) {
-            console.log('core: mouseup');
-            if (dragStarted) $this.trigger("mousedragend." + evtNamespace, evt);
-            $(window).unbind("mousemove." + evtNamespace);
-            dragStarted = false;
-            core.dragOffset = null;
-            return true;
-          });
-        }).bind("mousedragstart." + evtNamespace, function(evt) {
-          var $elemBeingDragged, $this, offset;
-          console.log('core: mousedragstart');
-          $this = $(this);
-          $elemBeingDragged = $(this.cloneNode(true)).addClass('editor-map-object').addClass('editor-drag-helper').removeClass('img');
-          core.rememberDragObject([$elemBeingDragged, $this.data('so')]);
-          $(document.body).addClass('editor-drag-active');
-          offset = $this.offset();
-          core.dragOffset = {
-            x: evt.pageX - offset.left,
-            y: evt.pageY - offset.top
-          };
-          return core.viewport.bindDndEvents();
-        }).bind("mousedragend." + evtNamespace, function(evt) {
-          console.log('core: mousedragend');
-          core.viewport.unbindDndEvents();
-          $(document.body).removeClass('editor-drag-active');
-          if (core.$elemBeingDragged) return core.forgetDragObject();
+        evtns = 'editor.core.sidebar';
+        return $(elems).dragObject({
+          helper: true,
+          dropTarget: this.viewport.$element
+        }).bind("mousedragstart." + evtns, function(evt) {
+          var $draggee, $helper, dragObject;
+          console.log("" + evtns + ": mousedragstart");
+          $draggee = $(this);
+          dragObject = $draggee.data('dragObject');
+          $helper = dragObject.getHelper();
+          return $helper.addClass('editor-map-object');
+        }).bind("mousedrop." + evtns, function(evt) {
+          var $draggee, x, y;
+          console.log("" + evtns + ": mousedrop");
+          $draggee = $(_this);
+          x = parseInt($draggee.css('left'), 10);
+          y = parseInt($draggee.css('top'), 10);
+          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
+          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
+          return $draggee.moveTo(x, y);
         });
+        /*
+              $(elems)
+                .bind "mousedown.#{evtNamespace}", (evt) ->
+                  # don't move the object accidentally if it is right-clicked
+                  # FIXME so this handles ctrl-click too
+                  return if evt.button is 2
+        
+                  $this = $(this)
+        
+                  # console.log 'img mousedown'
+        
+                  evt.preventDefault()
+        
+                  $(window)
+                    # bind mousemove to the window as we can drag the image around
+                    # wherever we want, not just within the sidebar or viewport
+                    .bind "mousemove.#{evtNamespace}", (evt) ->
+                      # console.log 'mousemove while mousedown'
+                      unless dragStarted
+                        $this.trigger "mousedragstart.#{evtNamespace}", evt
+                        dragStarted = true
+                      if core.$elemBeingDragged
+                        core.positionDragHelper(evt)
+                      else
+                        # viewport has stolen $elemBeingDragged
+        
+                    # bind mouseup to the window as it may occur outside of the image
+                    .one "mouseup.#{evtNamespace}", (evt) ->
+                      console.log 'core: mouseup'
+                      if dragStarted
+                        $this.trigger "mousedragend.#{evtNamespace}", evt
+                      $(window).unbind "mousemove.#{evtNamespace}"
+                      dragStarted = false
+                      core.dragOffset = null
+                      return true
+        
+                .bind "mousedragstart.#{evtNamespace}", (evt) ->
+                  console.log 'core: mousedragstart'
+                  $this = $(this)
+                  # clone the image node
+                  $elemBeingDragged = $(this.cloneNode(true))
+                    .addClass('editor-map-object')
+                    .addClass('editor-drag-helper')
+                    .removeClass('img')
+                  core.rememberDragObject([$elemBeingDragged, $this.data('so')])
+                  $(document.body).addClass('editor-drag-active')
+                  offset = $this.offset()
+                  core.dragOffset =
+                    x: evt.pageX - offset.left
+                    y: evt.pageY - offset.top
+                  core.viewport.bindDndEvents()
+        
+                .bind "mousedragend.#{evtNamespace}", (evt) ->
+                  console.log 'core: mousedragend'
+                  core.viewport.unbindDndEvents()
+                  $(document.body).removeClass('editor-drag-active')
+                  core.forgetDragObject() if core.$elemBeingDragged
+        */
       },
       _chooseMap: function(mapName) {
         var map;
