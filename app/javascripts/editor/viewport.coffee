@@ -24,85 +24,6 @@ define 'editor.viewport', ->
       @$element.height(height)
       @bounds.setHeight(height)
 
-    # rememberDragObject: ([@$elemBeingDragged, @objectBeingDragged]) ->
-    #   @core.getCurrentLayerElem().find('.editor-layer-content')
-    #     .append(@$elemBeingDragged)
-
-    # forgetDragObject: (removeElement=true) ->
-    #   [a, b] = [@$elemBeingDragged, @objectBeingDragged]
-    #   @$elemBeingDragged.remove() if removeElement
-    #   delete @$elemBeingDragged
-    #   delete @objectBeingDragged
-    #   return [a, b]
-
-    ###
-    bindDndEvents: ->
-      console.log 'viewport: binding dnd events'
-      evtNamespace = 'editor.viewport.dnd'
-
-      mouseLocation = null
-      # we are binding mousemove to the window instead of the viewport - binding
-      # to the viewport won't work as the mouse is already on top of the drag
-      # helper when it is dragged into the viewport
-      $(window)
-        .bind "mousemove.#{evtNamespace}", (evt) =>
-          if @_mouseWithinViewport(evt)
-            if mouseLocation isnt 'inside'
-              # fire only the first time
-              @$map.trigger "mousedragover.#{evtNamespace}", evt
-              mouseLocation = 'inside'
-            @$map.trigger "mousedrag.#{evtNamespace}", evt
-          else if @$elemBeingDragged and mouseLocation isnt 'outside'
-            # fire only the first time
-            @$map.trigger "mousedragout.#{evtNamespace}", evt
-            mouseLocation = 'outside'
-
-      @$map
-        .one "mouseup.#{evtNamespace}", (evt) =>
-          console.log 'viewport: map mouseup (dnd)'
-          if @$elemBeingDragged
-            @$map.trigger "mousedrop.#{evtNamespace}", evt
-          # evt.preventDefault()
-
-        .bind "mousedragover.#{evtNamespace}", (evt) =>
-          console.log 'viewport: map mousedragover (dnd)'
-          @rememberDragObject(@core.forgetDragObject())
-          @$elemBeingDragged.removeClass('editor-drag-helper')
-
-        .bind "mousedrag.#{evtNamespace}", (evt) =>
-          # console.log 'viewport: map drag'
-          $elem = @$elemBeingDragged
-          x = evt.pageX - @core.dragOffset.x - @map.x1 - @bounds.x1
-          y = evt.pageY - @core.dragOffset.y - @map.y1 - @bounds.y1
-          $elem.css('top', "#{y}px").css('left', "#{x}px")
-
-        .bind "mousedragout.#{evtNamespace}", (evt) =>
-          console.log 'viewport: map mousedragout (dnd)'
-          @$elemBeingDragged.addClass('editor-drag-helper')
-          @core.rememberDragObject(@forgetDragObject())
-          # call this preemptively to prevent a jump when dragging an object
-          # back out of the viewport
-          @core.positionDragHelper(evt)
-
-        .bind "mousedrop.#{evtNamespace}", (evt) =>
-          console.log 'viewport: map drop (dnd)'
-          $elem = @$elemBeingDragged
-          x = parseInt($elem.css('left'), 10)
-          y = parseInt($elem.css('top'), 10)
-          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-          $elem.css('top', "#{y}px").css('left', "#{x}px")
-          @addObject(@core.getCurrentLayer(), @$elemBeingDragged, @objectBeingDragged)
-          @forgetDragObject(false)
-          @saveMap()
-
-    unbindDndEvents: ->
-      console.log 'viewport: unbinding dnd events'
-      evtNamespace = 'editor.viewport.dnd'
-      $(window).unbind('.' + evtNamespace)
-      @$map.unbind('.' + evtNamespace)
-    ###
-
     loadMap: ->
       @map = Bounds.rect(0, 0, 1024, 1024)
 
@@ -144,13 +65,6 @@ define 'editor.viewport', ->
 
       layerSel = '.editor-layer[data-layer=tiles]'
 
-      # TODO: Do we really need this?
-      #objSel = "#{layerSel} .editor-map-object"
-      # $(objSel)
-      #   .unbind('.editor')
-      #   .removeClass('editor-drag-helper')
-
-      # NEW CODE
       @$element
         .dropTarget(
           receptor: '.editor-layer[data-layer=tiles] .editor-layer-content'
@@ -159,86 +73,6 @@ define 'editor.viewport', ->
           $draggee = $(evt.relatedTarget)
           @addObject('tiles', $draggee)
           @saveMap()
-
-      # OLD CODE
-      ###
-      dragStarted = false
-      dragOffset = null
-      @$map
-        .delegate sel, "mousedown.#{evtNamespace}", (evt) ->
-          console.log 'viewport: map object mousedown (tiles/normal)'
-          $this = $(this)
-
-          # don't move the object accidentally if it is right-clicked
-          # FIXME so this handles ctrl-click too
-          return if evt.button is 2
-
-          evt.stopPropagation()  # so that the map doesn't move
-          evt.preventDefault()
-
-          $(window).bind "mousemove.#{evtNamespace}", (evt) ->
-            unless dragStarted
-              $this.trigger "mousedragstart.#{evtNamespace}", evt
-              dragStarted = true
-            $this.trigger "mousedrag.#{evtNamespace}", evt
-
-          # bind mouseup to the window as it may occur outside of the image
-          $(window).one "mouseup.#{evtNamespace}", (evt) ->
-            console.log 'viewport: map object mouseup'
-            if dragStarted
-              $this.trigger "mousedragend.#{evtNamespace}", evt
-            dragStarted = false
-            dragOffset = null
-            $(window).unbind "mousemove.#{evtNamespace}"
-            return true
-
-        .delegate sel, "mousedragstart.#{evtNamespace}", (evt) ->
-          console.log 'viewport: map object mousedragstart (tiles/normal)'
-          $this = $(this)
-
-          viewport.$element.addClass('editor-drag-active')
-          offset = $this.offset()
-          dragOffset =
-            x: evt.pageX - offset.left
-            y: evt.pageY - offset.top
-
-        .delegate sel, "mousedrag.#{evtNamespace}", (evt) ->
-          # console.log 'viewport: map object drag'
-          $this = $(this)
-          x = evt.pageX - dragOffset.x - viewport.map.x1 - viewport.bounds.x1
-          y = evt.pageY - dragOffset.y - viewport.map.y1 - viewport.bounds.y1
-          $this.css('top', "#{y}px").css('left', "#{x}px")
-
-        .delegate sel, "mousedragend.#{evtNamespace}", (evt) ->
-          console.log 'viewport: map object mousedragend (tiles/normal)'
-          $this = $(this)
-          viewport.$element.removeClass('editor-drag-active')
-          # apply snapping
-          x = parseInt($this.css('left'), 10)
-          y = parseInt($this.css('top'), 10)
-          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-          $this.css('top', "#{y}px").css('left', "#{x}px")
-          viewport.saveMap()
-
-        .delegate sel, "mouseup.#{evtNamespace}", (evt) ->
-          console.log 'viewport: map object mouseup (tiles/normal)'
-          $this = $(this)
-          unless dragStarted
-            # just a normal click
-            state = $this.attr('data-is-selected')
-            newstate = if state is 'no' or !state then 'yes' else 'no'
-            $this.attr('data-is-selected', newstate)
-          return true
-
-      @$map.bind "mouseup.#{evtNamespace}", (evt) =>
-        console.log 'viewport: map mouseup (tiles/normal)'
-        @$map.find('.editor-map-object')
-          .removeClass('editor-selected')
-        @$map.find('.editor-map-object[data-is-selected=yes]')
-          .addClass('editor-selected')
-          .removeAttr('data-is-selected')
-      ###
 
       BACKSPACE_KEY = 8
       DELETE_KEY    = 46

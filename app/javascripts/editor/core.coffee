@@ -223,7 +223,6 @@ define 'editor.core', ->
         @$sidebar.find('> div[data-layer=tiles]').append($elem)
         elems.push($elem[0])
 
-      # NEW CODE
       evtns = 'editor.core.sidebar'
       $(elems)
         .dragObject
@@ -245,66 +244,6 @@ define 'editor.core', ->
           x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
           $draggee.moveTo(x, y)
-
-      # OLD CODE
-      ###
-      $(elems)
-        .bind "mousedown.#{evtNamespace}", (evt) ->
-          # don't move the object accidentally if it is right-clicked
-          # FIXME so this handles ctrl-click too
-          return if evt.button is 2
-
-          $this = $(this)
-
-          # console.log 'img mousedown'
-
-          evt.preventDefault()
-
-          $(window)
-            # bind mousemove to the window as we can drag the image around
-            # wherever we want, not just within the sidebar or viewport
-            .bind "mousemove.#{evtNamespace}", (evt) ->
-              # console.log 'mousemove while mousedown'
-              unless dragStarted
-                $this.trigger "mousedragstart.#{evtNamespace}", evt
-                dragStarted = true
-              if core.$elemBeingDragged
-                core.positionDragHelper(evt)
-              else
-                # viewport has stolen $elemBeingDragged
-
-            # bind mouseup to the window as it may occur outside of the image
-            .one "mouseup.#{evtNamespace}", (evt) ->
-              console.log 'core: mouseup'
-              if dragStarted
-                $this.trigger "mousedragend.#{evtNamespace}", evt
-              $(window).unbind "mousemove.#{evtNamespace}"
-              dragStarted = false
-              core.dragOffset = null
-              return true
-
-        .bind "mousedragstart.#{evtNamespace}", (evt) ->
-          console.log 'core: mousedragstart'
-          $this = $(this)
-          # clone the image node
-          $elemBeingDragged = $(this.cloneNode(true))
-            .addClass('editor-map-object')
-            .addClass('editor-drag-helper')
-            .removeClass('img')
-          core.rememberDragObject([$elemBeingDragged, $this.data('so')])
-          $(document.body).addClass('editor-drag-active')
-          offset = $this.offset()
-          core.dragOffset =
-            x: evt.pageX - offset.left
-            y: evt.pageY - offset.top
-          core.viewport.bindDndEvents()
-
-        .bind "mousedragend.#{evtNamespace}", (evt) ->
-          console.log 'core: mousedragend'
-          core.viewport.unbindDndEvents()
-          $(document.body).removeClass('editor-drag-active')
-          core.forgetDragObject() if core.$elemBeingDragged
-      ###
 
     _chooseMap: (mapName) ->
       if @currentMap

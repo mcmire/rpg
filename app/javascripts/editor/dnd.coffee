@@ -105,8 +105,6 @@ define 'editor.dnd', ->
             @_debugEvent 'helper mousedropover'
             @$helper.removeClass('editor-drag-helper').detach()
             # the dropTarget will now take over this object
-            # in addition, the helper becomes a drag object in its own right
-            # @_removeMousemoveEvent()
 
           # mouse out of drop target
           # TODO: Need to make sure if this fires before dropTarget
@@ -114,7 +112,6 @@ define 'editor.dnd', ->
           .bind "mousedropout.#{EVT_NS}", (evt) =>
             @_debugEvent 'helper mousedropout'
             # the dropTarget should have given up this object
-            # in addition, return control to this drag object
             @$helper.addClass('editor-drag-helper')
             $(document.body).append(@$helper)
 
@@ -225,14 +222,6 @@ define 'editor.dnd', ->
               @$sensor.trigger "mousedragout", evt
               $dragOwner.trigger "mousedropout", evt
               mouseLocation = 'outside'
-
-          # bind this to the window as it doesn't matter whether this occurs
-          # outside of the viewport or out, we need to reset mouseLocation
-          # regardless
-          # .one "mouseup.#{EVT_NS}", (evt) =>
-          #   mouseLocation = null
-          #   $dragOwner = null
-          #   $dragHelper = null
 
         @$sensor
           .one "mouseup.#{EVT_NS}", (evt) =>
