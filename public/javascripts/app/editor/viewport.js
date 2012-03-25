@@ -70,7 +70,7 @@
         viewport = this;
         layerSel = '.editor-layer[data-layer=tiles]';
         this.$element.dropTarget({
-          receptor: '.editor-layer[data-layer=tiles] .editor-layer-content'
+          receptor: "" + layerSel + " .editor-layer-content"
         }).bind("mousedropwithin." + evtns, function(evt) {
           var $draggee, x, y;
           console.log("" + evtns + ": mousedropwithin");
@@ -84,7 +84,18 @@
           _this.saveMap();
           return $draggee.dragObject({
             dropTarget: _this.$element
+          }).bind("mouseupnodrag." + evtns, function(evt) {
+            var newstate, state;
+            console.log("" + evtns + ": map object mouseup");
+            state = $draggee.attr('data-is-selected');
+            newstate = state === 'no' || !state ? 'yes' : 'no';
+            return $draggee.attr('data-is-selected', newstate);
           });
+        });
+        this.$map.bind("mouseup." + evtns, function(evt) {
+          console.log("" + evtns + ": mouseup");
+          _this.$map.find('.editor-map-object').removeClass('editor-selected');
+          return _this.$map.find('.editor-map-object[data-is-selected=yes]').addClass('editor-selected').removeAttr('data-is-selected');
         });
         BACKSPACE_KEY = 8;
         DELETE_KEY = 46;

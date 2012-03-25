@@ -67,7 +67,7 @@ define 'editor.viewport', ->
 
       @$element
         .dropTarget(
-          receptor: '.editor-layer[data-layer=tiles] .editor-layer-content'
+          receptor: "#{layerSel} .editor-layer-content"
         )
         .bind "mousedropwithin.#{evtns}", (evt) =>
           console.log "#{evtns}: mousedropwithin"
@@ -79,9 +79,22 @@ define 'editor.viewport', ->
           $draggee.moveTo(x, y)
           @addObject('tiles', $draggee, $draggee.data('so'))
           @saveMap()
-          # TODO: Prevent element from being dragged out
-          $draggee.dragObject(dropTarget: @$element)
-          # $draggee.dragObject()
+          $draggee
+            # TODO: Prevent element from being dragged out
+            .dragObject(dropTarget: @$element)
+            .bind "mouseupnodrag.#{evtns}", (evt) =>
+              console.log "#{evtns}: map object mouseup"
+              state = $draggee.attr('data-is-selected')
+              newstate = if state is 'no' or !state then 'yes' else 'no'
+              $draggee.attr('data-is-selected', newstate)
+
+      @$map.bind "mouseup.#{evtns}", (evt) =>
+        console.log "#{evtns}: mouseup"
+        @$map.find('.editor-map-object')
+          .removeClass('editor-selected')
+        @$map.find('.editor-map-object[data-is-selected=yes]')
+          .addClass('editor-selected')
+          .removeAttr('data-is-selected')
 
       BACKSPACE_KEY = 8
       DELETE_KEY    = 46

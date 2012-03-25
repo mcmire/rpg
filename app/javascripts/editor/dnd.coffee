@@ -35,6 +35,11 @@ define 'editor.dnd', ->
             evt.preventDefault()
             @_addWindowEvents()
 
+          .bind "mouseup.#{EVT_NS}", (evt) =>
+            @_logEvent @$elem, 'elem mouseup'
+            unless @dragStarted
+              @$elem.trigger 'mouseupnodrag', evt
+
           .bind "mousedragstart.#{EVT_NS}", (evt) =>
             @_logEvent @$elem, 'elem mousedragstart'
             $(document.body).addClass('editor-drag-active')
