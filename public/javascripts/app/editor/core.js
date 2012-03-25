@@ -89,6 +89,7 @@
         });
         this._loadImages();
         return this._whenImagesLoaded(function() {
+          _this._populateMapObjects();
           _this.viewport.loadMap();
           _this._initToolbox();
           return _this.layers.init();
@@ -105,30 +106,6 @@
       },
       findLayer: function(layer) {
         return this.viewport.$map.find(".editor-layer[data-layer=" + layer + "]");
-      },
-      enableDragSnapping: function(size) {
-        return this.snapDragToGrid = size;
-      },
-      disableDragSnapping: function() {
-        return this.snapDragToGrid = null;
-      },
-      rememberDragObject: function(_arg) {
-        this.$elemBeingDragged = _arg[0], this.objectBeingDragged = _arg[1];
-        return $(document.body).append(this.$elemBeingDragged);
-      },
-      forgetDragObject: function() {
-        var a, b, _ref;
-        _ref = [this.$elemBeingDragged, this.objectBeingDragged], a = _ref[0], b = _ref[1];
-        this.$elemBeingDragged.remove();
-        delete this.$elemBeingDragged;
-        delete this.objectBeingDragged;
-        return [a, b];
-      },
-      positionDragHelper: function(evt) {
-        var x, y;
-        x = evt.pageX - this.dragOffset.x;
-        y = evt.pageY - this.dragOffset.y;
-        return this.$elemBeingDragged.css('top', "" + y + "px").css('left', "" + x + "px");
       },
       _resizeUI: function() {
         var h, nh, sw, wh, win, ww;
@@ -171,11 +148,9 @@
         };
         return check();
       },
-      _populateSidebar: function() {
-        var core, dragStarted, elems, evtns, imageCollection, spriteCollection,
+      _populateMapObjects: function() {
+        var imageCollection, spriteCollection,
           _this = this;
-        core = this;
-        if (this.sidebarPopulated) return;
         imageCollection = require('game.imageCollection');
         spriteCollection = require('game.spriteCollection');
         this.objects = [];
@@ -232,17 +207,20 @@
             return 0;
           }
         });
-        dragStarted = false;
-        this.dragOffset = null;
-        this.$elemBeingDragged = null;
-        this.objectBeingDragged = null;
-        elems = [];
-        $.v.each(this.objects, function(so) {
+        return $.v.each(this.objects, function(so) {
           var $elem;
           $elem = so.$elem = $("<div/>").addClass('img').data('name', so.object.name).width(so.dims.w).height(so.dims.h).append(so.image.getElement());
-          $elem.data('so', so);
-          _this.$sidebar.find('> div[data-layer=tiles]').append($elem);
-          return elems.push($elem[0]);
+          return $elem.data('so', so);
+        });
+      },
+      _populateSidebar: function() {
+        var elems, evtns,
+          _this = this;
+        if (this.sidebarPopulated) return;
+        elems = [];
+        $.v.each(this.objects, function(so) {
+          _this.$sidebar.find('> div[data-layer=tiles]').append(so.$elem);
+          return elems.push(so.$elem[0]);
         });
         evtns = 'editor.core.sidebar';
         $(elems).dragObject({

@@ -83,7 +83,7 @@ define 'editor.core', ->
 
       @_loadImages()
       @_whenImagesLoaded =>
-        # @_populateSidebar()
+        @_populateMapObjects()
         # @$mapChooser.change => @_chooseMap(@value)
 
         @viewport.loadMap()
@@ -97,27 +97,6 @@ define 'editor.core', ->
     getCurrentLayerElem: -> @findLayer @getCurrentLayer()
 
     findLayer: (layer) -> @viewport.$map.find(".editor-layer[data-layer=#{layer}]")
-
-    enableDragSnapping: (size) ->
-      @snapDragToGrid = size
-
-    disableDragSnapping: ->
-      @snapDragToGrid = null
-
-    rememberDragObject: ([@$elemBeingDragged, @objectBeingDragged]) ->
-      $(document.body).append(@$elemBeingDragged)
-
-    forgetDragObject: ->
-      [a, b] = [@$elemBeingDragged, @objectBeingDragged]
-      @$elemBeingDragged.remove()
-      delete @$elemBeingDragged
-      delete @objectBeingDragged
-      return [a, b]
-
-    positionDragHelper: (evt) ->
-      x = evt.pageX - @dragOffset.x
-      y = evt.pageY - @dragOffset.y
-      @$elemBeingDragged.css('top', "#{y}px").css('left', "#{x}px")
 
     _resizeUI: ->
       win = $.viewport()
@@ -154,11 +133,7 @@ define 'editor.core', ->
           timer = window.setTimeout check, 300
       check()
 
-    _populateSidebar: ->
-      core = this
-
-      return if @sidebarPopulated
-
+    _populateMapObjects: ->
       # go through all of the possible objects (images, sprites, mobs, etc.)
       # and add them to a list
 
@@ -208,12 +183,6 @@ define 'editor.core', ->
         else
           return 0
 
-      dragStarted = false
-      @dragOffset = null
-      @$elemBeingDragged = null
-      @objectBeingDragged = null
-
-      elems = []
       $.v.each @objects, (so) =>
         $elem = so.$elem = $("<div/>")
           .addClass('img')
@@ -222,8 +191,14 @@ define 'editor.core', ->
           .height(so.dims.h)
           .append(so.image.getElement())
         $elem.data('so', so)  # TODO: use a real object rather than this
-        @$sidebar.find('> div[data-layer=tiles]').append($elem)
-        elems.push($elem[0])
+
+    _populateSidebar: ->
+      return if @sidebarPopulated
+
+      elems = []
+      $.v.each @objects, (so) =>
+        @$sidebar.find('> div[data-layer=tiles]').append(so.$elem)
+        elems.push(so.$elem[0])
 
       evtns = 'editor.core.sidebar'
       $(elems)

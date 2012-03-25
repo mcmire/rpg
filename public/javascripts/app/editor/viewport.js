@@ -38,17 +38,17 @@
         this.$elemBeingDragged = null;
         this.objectBeingDragged = null;
         this.$map.css('width', this.map.width).css('height', this.map.height).removeClass('editor-map-unloaded');
-        localStorage.removeItem('editor.map');
         if (data = localStorage.getItem('editor.map')) {
+          console.log({
+            'map data': data
+          });
           try {
             objectsByLayer = JSON.parse(data);
             return $.v.each(objectsByLayer, function(layer, objects) {
               return $.v.each(objects, function(o) {
-                var $elem, elem, object;
+                var $elem, object;
                 object = _this.core.objectsByName[o.name];
-                elem = object.$elem[0].cloneNode(true);
-                elem.removeAttribute('data-node-uid');
-                $elem = $(elem);
+                $elem = object.$elem.clone();
                 $elem.addClass('editor-map-object');
                 $elem.css('left', "" + o.x + "px");
                 $elem.css('top', "" + o.y + "px");
@@ -73,11 +73,13 @@
         this.$element.dropTarget({
           receptor: "" + layerSel + " .editor-layer-content"
         }).bind("mousedropwithin." + evtns, function(evt) {
-          var $draggee, x, y;
+          var $dragOwner, $draggee, dragObject, x, y;
           console.log("" + evtns + ": mousedropwithin");
-          $draggee = $(evt.relatedTarget);
+          dragObject = evt.relatedObject;
+          $dragOwner = dragObject.getElement();
+          $draggee = dragObject.getDraggee();
           if (!_this.objectExistsIn('tiles', $draggee)) {
-            _this.addObject('tiles', $draggee, $draggee.data('so'));
+            _this.addObject('tiles', $draggee, $dragOwner.data('so'));
             _this._addEventsToMapObjects($draggee);
           }
           x = parseInt($draggee.css('left'), 10);
@@ -185,6 +187,9 @@
         }
         obj.$elem = $elem;
         $elem.data('moid', this.objectId);
+        console.log({
+          adding: obj
+        });
         this.objectsByLayer[layer][this.objectId] = obj;
         this.objectId++;
         return typeof this[_name = "_activate_" + layer + "_" + this.core.currentTool + "_tool_for_object"] === "function" ? this[_name](obj) : void 0;

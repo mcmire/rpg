@@ -245,6 +245,7 @@ define 'editor.dnd', ->
               .one "mouseup.#{EVT_NS}", (evt) =>
                 @_logEvent @$sensor, 'elem mouseup'
                 evt.relatedTarget = $draggee[0]
+                evt.relatedObject = dragObject
                 @$sensor.trigger "mousedropwithin", evt
                 $dragOwner.trigger "mousedrop", evt
 

@@ -38,17 +38,15 @@ define 'editor.viewport', ->
         .removeClass('editor-map-unloaded')
 
       # TODO: Refactor
-      localStorage.removeItem('editor.map')
+      # localStorage.removeItem('editor.map')
       if data = localStorage.getItem('editor.map')
+        console.log 'map data': data
         try
           objectsByLayer = JSON.parse(data)
           $.v.each objectsByLayer, (layer, objects) =>
             $.v.each objects, (o) =>
               object = @core.objectsByName[o.name]
-              # clone the image
-              elem = object.$elem[0].cloneNode(true)
-              elem.removeAttribute('data-node-uid')
-              $elem = $(elem)
+              $elem = object.$elem.clone()
               $elem.addClass('editor-map-object')
               $elem.css('left', "#{o.x}px")
               $elem.css('top', "#{o.y}px")
@@ -72,13 +70,15 @@ define 'editor.viewport', ->
         )
         .bind "mousedropwithin.#{evtns}", (evt) =>
           console.log "#{evtns}: mousedropwithin"
-          $draggee = $(evt.relatedTarget)
+          dragObject = evt.relatedObject
+          $dragOwner = dragObject.getElement()
+          $draggee = dragObject.getDraggee()
 
           # mousedropwithin will get fired even when moving map objects around
           # within the map, so we have to check for the first fire when the
           # object is added
           if not @objectExistsIn('tiles', $draggee)
-            @addObject('tiles', $draggee, $draggee.data('so'))
+            @addObject('tiles', $draggee, $dragOwner.data('so'))
             @_addEventsToMapObjects($draggee)
 
           x = parseInt($draggee.css('left'), 10)
@@ -197,6 +197,7 @@ define 'editor.viewport', ->
       obj[k] = v for own k, v of object
       obj.$elem = $elem
       $elem.data('moid', @objectId)
+      console.log adding: obj
       @objectsByLayer[layer][@objectId] = obj
       @objectId++
 
