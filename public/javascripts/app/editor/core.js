@@ -1,9 +1,13 @@
 (function() {
 
   define('editor.core', function() {
-    var meta, util;
+    var LAYER_KEYS, LAYER_NAMES, ONE_KEY, TWO_KEY, meta, util;
     meta = require('meta');
     util = require('util');
+    ONE_KEY = 49;
+    TWO_KEY = 50;
+    LAYER_NAMES = ['fill', 'tiles'];
+    LAYER_KEYS = [ONE_KEY, TWO_KEY];
     return meta.def({
       _createMapGrid: function() {
         var canvas, ctx;
@@ -18,70 +22,10 @@
         return this.mapGrid = canvas;
       },
       init: function() {
-        var ONE_KEY, TWO_KEY, layer, that, _i, _j, _len, _len2, _ref, _ref2,
-          _this = this;
-        that = this;
-        ONE_KEY = 49;
-        TWO_KEY = 50;
+        var _this = this;
         this._createMapGrid();
-        this.layers = {
-          names: ['fill', 'tiles'],
-          keys: [ONE_KEY, TWO_KEY],
-          init: function() {
-            that.$layerChooser[0].selectedIndex = 1;
-            return that.$layerChooser.change();
-          },
-          choose: function(layer) {
-            var $layer, $map, _name, _name2, _name3, _name4;
-            if (this.current) {
-              if (that.currentTool) {
-                if (typeof that[_name = "deactivate_" + this.current + "_" + that.currentTool + "_tool"] === "function") {
-                  that[_name]();
-                }
-              }
-              if (typeof that[_name2 = "deactivate_" + this.current + "_layer"] === "function") {
-                that[_name2]();
-              }
-            }
-            this.current = layer;
-            $map = that.viewport.$map;
-            $layer = $map.find('.editor-layer').removeClass('editor-layer-selected');
-            $layer.find('.editor-layer-content').css('background', 'none');
-            $layer.find('.editor-layer-bg').css('background', 'none');
-            $layer = $map.find(".editor-layer[data-layer=" + layer + "]").addClass('editor-layer-selected');
-            $layer.find('.editor-layer-content').css('background-image', "url(" + (that.mapGrid.element.toDataURL()) + ")").css('background-repeat', 'repeat');
-            $layer.find('.editor-layer-bg').css('background-color', 'white');
-            that.$sidebar.find('> div').hide();
-            that.$sidebar.find("> div[data-layer=" + layer + "]").show();
-            if (typeof that[_name3 = "activate_" + this.current + "_layer"] === "function") {
-              that[_name3]();
-            }
-            return typeof that[_name4 = "activate_" + this.current + "_" + that.currentTool + "_tool"] === "function" ? that[_name4]() : void 0;
-          }
-        };
-        $(window).bind('keyup', function(evt) {
-          var index;
-          index = _this.layers.keys.indexOf(evt.keyCode);
-          if (index !== -1) {
-            _this.$layerChooser[0].selectedIndex = index;
-            return _this.$layerChooser.change();
-          }
-        });
         this.viewport = require('editor.viewport').init(this);
         this.$sidebar = $('#editor-sidebar');
-        _ref = this.layers.names;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          layer = _ref[_i];
-          this.$sidebar.append("<div data-layer=\"" + layer + "\"></div>");
-        }
-        this.$layerChooser = $('#editor-layer-chooser select').change(function() {
-          return that.layers.choose(this.value);
-        });
-        _ref2 = this.layers.names;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          layer = _ref2[_j];
-          this.$layerChooser.append("<option data-layer=\"" + layer + "\">" + layer + "</option>");
-        }
         this.$mapChooser = $('#editor-map-chooser select');
         this._resizeUI();
         $(window).resize(function() {
@@ -92,14 +36,14 @@
           _this._populateMapObjects();
           _this.viewport.loadMap();
           _this._initToolbox();
-          return _this.layers.init();
+          return _this._initLayers();
         });
       },
       getLayers: function() {
-        return this.layers.names;
+        return LAYER_NAMES;
       },
       getCurrentLayer: function() {
-        return this.layers.current;
+        return this.currentLayer;
       },
       getCurrentLayerElem: function() {
         return this.findLayer(this.getCurrentLayer());
@@ -236,20 +180,58 @@
         });
         return this.sidebarPopulated = true;
       },
-      _chooseMap: function(mapName) {
-        var map;
-        if (this.currentMap) {
-          this.currentMap.detach();
-          this.currentMap.unload();
-        } else {
-          this.$layerChooser.attr('disabled', '');
+      _initLayers: function() {
+        var layer, that, _i, _j, _len, _len2,
+          _this = this;
+        that = this;
+        for (_i = 0, _len = LAYER_NAMES.length; _i < _len; _i++) {
+          layer = LAYER_NAMES[_i];
+          this.$sidebar.append("<div data-layer=\"" + layer + "\"></div>");
         }
-        map = require('game.mapCollection').get(mapName);
-        map.setParent(this.viewport);
-        map.load();
-        map.attach();
-        this.viewport.setMap(map);
-        return this.currentLayer = 'foreground';
+        this.$layerChooser = $('#editor-layer-chooser select').change(function() {
+          return that._chooseLayer(this.value);
+        });
+        for (_j = 0, _len2 = LAYER_NAMES.length; _j < _len2; _j++) {
+          layer = LAYER_NAMES[_j];
+          this.$layerChooser.append("<option data-layer=\"" + layer + "\">" + layer + "</option>");
+        }
+        this._changeLayerTo(1);
+        return $(window).bind('keyup', function(evt) {
+          var index;
+          index = LAYER_KEYS.indexOf(evt.keyCode);
+          if (index !== -1) return _this._changeLayerTo(index);
+        });
+      },
+      _changeLayerTo: function(index) {
+        this.$layerChooser[0].selectedIndex = index;
+        return this.$layerChooser.change();
+      },
+      _chooseLayer: function(layer) {
+        var $layer, $map, _name, _name2, _name3, _name4;
+        if (this.currentLayer) {
+          if (this.currentTool) {
+            if (typeof this[_name = "deactivate_" + this.currentLayer + "_" + this.currentTool + "_tool"] === "function") {
+              this[_name]();
+            }
+          }
+          if (typeof this[_name2 = "deactivate_" + this.currentLayer + "_layer"] === "function") {
+            this[_name2]();
+          }
+        }
+        this.currentLayer = layer;
+        $map = this.viewport.$map;
+        $layer = $map.find('.editor-layer').removeClass('editor-layer-selected');
+        $layer.find('.editor-layer-content').css('background', 'none');
+        $layer.find('.editor-layer-bg').css('background', 'none');
+        $layer = $map.find(".editor-layer[data-layer=" + layer + "]").addClass('editor-layer-selected');
+        $layer.find('.editor-layer-content').css('background-image', "url(" + (this.mapGrid.element.toDataURL()) + ")").css('background-repeat', 'repeat');
+        $layer.find('.editor-layer-bg').css('background-color', 'white');
+        this.$sidebar.find('> div').hide();
+        this.$sidebar.find("> div[data-layer=" + layer + "]").show();
+        if (typeof this[_name3 = "activate_" + this.currentLayer + "_layer"] === "function") {
+          this[_name3]();
+        }
+        return typeof this[_name4 = "activate_" + this.currentLayer + "_" + this.currentTool + "_tool"] === "function" ? this[_name4]() : void 0;
       },
       _initToolbox: function() {
         var that;

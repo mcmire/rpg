@@ -3,6 +3,11 @@ define 'editor.core', ->
   meta = require('meta')
   util = require('util')
 
+  ONE_KEY = 49
+  TWO_KEY = 50
+  LAYER_NAMES = ['fill', 'tiles']
+  LAYER_KEYS = [ONE_KEY, TWO_KEY]
+
   meta.def
     _createMapGrid: ->
       # create the grid pattern that backgrounds the map
@@ -17,65 +22,10 @@ define 'editor.core', ->
       @mapGrid = canvas
 
     init: ->
-      that = this
-
-      ONE_KEY = 49
-      TWO_KEY = 50
-
       @_createMapGrid()
 
-      @layers =
-        names: ['fill', 'tiles']
-        keys: [ONE_KEY, TWO_KEY]
-        init: ->
-          that.$layerChooser[0].selectedIndex = 1
-          that.$layerChooser.change()
-        choose: (layer) ->
-          if @current
-            if that.currentTool
-              # also deactivate the tool since that's a member of the layer
-              that["deactivate_#{@current}_#{that.currentTool}_tool"]?()
-            that["deactivate_#{@current}_layer"]?()
-
-          @current = layer
-          $map = that.viewport.$map
-
-          $layer = $map.find('.editor-layer').removeClass('editor-layer-selected')
-          $layer.find('.editor-layer-content').css('background', 'none')
-          $layer.find('.editor-layer-bg').css('background', 'none')
-
-          $layer = $map.find(".editor-layer[data-layer=#{layer}]")
-            .addClass('editor-layer-selected')
-          $layer.find('.editor-layer-content')
-            .css('background-image', "url(#{that.mapGrid.element.toDataURL()})")
-            .css('background-repeat', 'repeat')
-          $layer.find('.editor-layer-bg')
-            .css('background-color', 'white')
-
-          that.$sidebar.find('> div').hide()
-          that.$sidebar.find("> div[data-layer=#{layer}]").show()
-
-          that["activate_#{@current}_layer"]?()
-          # also activate the tool since that's a member of the layer
-          that["activate_#{@current}_#{that.currentTool}_tool"]?()
-
-      $(window).bind 'keyup', (evt) =>
-        index = @layers.keys.indexOf(evt.keyCode)
-        if index isnt -1
-          @$layerChooser[0].selectedIndex = index
-          @$layerChooser.change()
-
       @viewport = require('editor.viewport').init(this)
-
       @$sidebar = $('#editor-sidebar')
-      for layer in @layers.names
-        @$sidebar.append """<div data-layer="#{layer}"></div>"""
-
-      @$layerChooser = $('#editor-layer-chooser select')
-        .change -> that.layers.choose(@value)
-      for layer in @layers.names
-        @$layerChooser.append """<option data-layer="#{layer}">#{layer}</option>"""
-
       @$mapChooser = $('#editor-map-chooser select')
 
       @_resizeUI()
@@ -84,15 +34,13 @@ define 'editor.core', ->
       @_loadImages()
       @_whenImagesLoaded =>
         @_populateMapObjects()
-        # @$mapChooser.change => @_chooseMap(@value)
-
         @viewport.loadMap()
         @_initToolbox()
-        @layers.init()
+        @_initLayers()
 
-    getLayers: -> @layers.names
+    getLayers: -> LAYER_NAMES
 
-    getCurrentLayer: -> @layers.current
+    getCurrentLayer: -> @currentLayer
 
     getCurrentLayerElem: -> @findLayer @getCurrentLayer()
 
@@ -216,20 +164,54 @@ define 'editor.core', ->
 
       @sidebarPopulated = true
 
-    _chooseMap: (mapName) ->
-      if @currentMap
-        @currentMap.detach()
-        @currentMap.unload()
-      else
-        @$layerChooser.attr('disabled', '')
+    _initLayers: ->
+      that = this
 
-      map = require('game.mapCollection').get(mapName)
-      map.setParent(@viewport)
-      map.load()
-      map.attach()
-      @viewport.setMap(map)
+      for layer in LAYER_NAMES
+        @$sidebar.append """<div data-layer="#{layer}"></div>"""
 
-      @currentLayer = 'foreground'
+      @$layerChooser = $('#editor-layer-chooser select')
+        .change -> that._chooseLayer(@value)
+      for layer in LAYER_NAMES
+        @$layerChooser.append """<option data-layer="#{layer}">#{layer}</option>"""
+      @_changeLayerTo(1)  # tiles
+
+      $(window).bind 'keyup', (evt) =>
+        index = LAYER_KEYS.indexOf(evt.keyCode)
+        @_changeLayerTo(index) unless index is -1
+
+    _changeLayerTo: (index) ->
+      @$layerChooser[0].selectedIndex = index
+      @$layerChooser.change()
+
+    _chooseLayer: (layer) ->
+      if @currentLayer
+        if @currentTool
+          # also deactivate the tool since that's a member of the layer
+          @["deactivate_#{@currentLayer}_#{@currentTool}_tool"]?()
+        @["deactivate_#{@currentLayer}_layer"]?()
+
+      @currentLayer = layer
+      $map = @viewport.$map
+
+      $layer = $map.find('.editor-layer').removeClass('editor-layer-selected')
+      $layer.find('.editor-layer-content').css('background', 'none')
+      $layer.find('.editor-layer-bg').css('background', 'none')
+
+      $layer = $map.find(".editor-layer[data-layer=#{layer}]")
+        .addClass('editor-layer-selected')
+      $layer.find('.editor-layer-content')
+        .css('background-image', "url(#{@mapGrid.element.toDataURL()})")
+        .css('background-repeat', 'repeat')
+      $layer.find('.editor-layer-bg')
+        .css('background-color', 'white')
+
+      @$sidebar.find('> div').hide()
+      @$sidebar.find("> div[data-layer=#{layer}]").show()
+
+      @["activate_#{@currentLayer}_layer"]?()
+      # also activate the tool since this is a member of the layer
+      @["activate_#{@currentLayer}_#{@currentTool}_tool"]?()
 
     _initToolbox: ->
       that = this
