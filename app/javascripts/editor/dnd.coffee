@@ -20,9 +20,15 @@ define 'editor.dnd', ->
 
         @dragOffset = null
 
+        # add these first so mousedragstart gets fired before dropopen
+        if @options.helper
+          @_addEventsWithHelper()
+        else
+          @_addEventsWithoutHelper()
+
         @$elem
           .bind "mousedown.#{EVT_NS}", (evt) =>
-            @_debugEvent 'elem mousedown'
+            @_logEvent @$elem, 'elem mousedown'
             # don't move the object accidentally if it is right-clicked
             # FIXME so this handles ctrl-click too
             return if evt.button is 2
@@ -30,9 +36,10 @@ define 'editor.dnd', ->
             @_addWindowEvents()
 
           .bind "mousedragstart.#{EVT_NS}", (evt) =>
-            @_debugEvent 'elem mousedragstart'
+            @_logEvent @$elem, 'elem mousedragstart'
             $(document.body).addClass('editor-drag-active')
             elemOffset = @$elem.offset()
+            console.log "setting dragOffset on #{@$elem.data('node-uid')}"
             @dragOffset =
               x: evt.pageX - elemOffset.left
               y: evt.pageY - elemOffset.top
@@ -42,7 +49,7 @@ define 'editor.dnd', ->
             dnd.startDraggingWith(this)
 
           .bind "mousedragend.#{EVT_NS}", (evt) =>
-            @_debugEvent 'elem mousedragend'
+            @_logEvent @$elem, 'elem mousedragend'
             $(document.body).removeClass('editor-drag-active')
             @dragOffset = null
             if $tgt = @options.dropTarget
@@ -50,22 +57,12 @@ define 'editor.dnd', ->
               $tgt.trigger('dropclose', evt)
             dnd.stopDragging()
 
-          # XXX: This was moved to core
-          #.bind "mousedrop.#{EVT_NS}", (evt) =>
-          #  @_debugEvent 'elem mousedrop'
-          #  x = parseInt(@$elem.css('left'), 10)
-          #  y = parseInt(@$elem.css('top'), 10)
-          #  x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-          #  y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-          #  @$elem.moveTo(x, y)
-
-        if @options.helper
-          @_addEventsWithHelper()
-        else
-          @_addEventsWithoutHelper()
-
       position: (evt) ->
         $elem = if @options.helper then @$helper else @$elem
+        if not @dragOffset
+          console.log "accessing dragOffset on #{@$elem.data('node-uid')}"
+          debugger
+        # console.log "dragOffset: (#{@dragOffset.x},#{@dragOffset.y})"
         x = evt.pageX - @dragOffset.x
         y = evt.pageY - @dragOffset.y
         if @isOverDropTarget
@@ -89,7 +86,7 @@ define 'editor.dnd', ->
       _addEventsWithHelper: ->
         @$elem
           .bind "mousedragstart.#{EVT_NS}", (evt) =>
-            @_debugEvent 'elem mousedragstart 2'
+            @_logEvent @$elem, 'elem mousedragstart 2'
 
             @$helper = @$elem.clone()
             @$helper.addClass('editor-drag-helper')
@@ -98,7 +95,7 @@ define 'editor.dnd', ->
           # mouse up outside of drop target
           # TODO: Call this somewhere
           .bind "mousedropcancel.#{EVT_NS}", (evt) =>
-            @_debugEvent 'helper mousedropcancel'
+            @_logEvent @$elem, 'helper mousedropcancel'
             @$helper.remove()
             @$helper = null
 
@@ -106,7 +103,7 @@ define 'editor.dnd', ->
           # TODO: Need to make sure if this fires before dropTarget
           # mousedragover or after
           .bind "mousedropover.#{EVT_NS}", (evt) =>
-            @_debugEvent 'helper mousedropover'
+            @_logEvent @$elem, 'helper mousedropover'
             @$helper.removeClass('editor-drag-helper').detach()
             # the dropTarget will now take over this object
 
@@ -114,7 +111,7 @@ define 'editor.dnd', ->
           # TODO: Need to make sure if this fires before dropTarget
           # mousedragout or after
           .bind "mousedropout.#{EVT_NS}", (evt) =>
-            @_debugEvent 'helper mousedropout'
+            @_logEvent @$elem, 'helper mousedropout'
             # the dropTarget should have given up this object
             @$helper.addClass('editor-drag-helper')
             $(document.body).append(@$helper)
@@ -124,7 +121,7 @@ define 'editor.dnd', ->
             @position(evt)
 
           .bind "mousedrag.#{EVT_NS}", (evt) =>
-            # @_debugEvent 'mousedrag'
+            # @_logEvent 'mousedrag'
             @position(evt)
 
       _addEventsWithoutHelper: ->
@@ -140,7 +137,7 @@ define 'editor.dnd', ->
 
         # bind mouseup to the window as it may occur outside of the image
         $(window).one "mouseup.#{EVT_NS}", (evt) =>
-          @_debugEvent 'window mouseup'
+          @_logEvent 'window mouseup'
           if @dragStarted
             @$elem.trigger 'mousedragend', evt
             unless @isOverDropTarget
@@ -151,7 +148,7 @@ define 'editor.dnd', ->
         # bind mousemove to the window as we can drag the image around
         # wherever we want, not just within the sidebar or viewport
         $(window).bind "mousemove.#{EVT_NS}", (evt) =>
-          # @_debugEvent 'window mousemove'
+          # @_logEvent $(window), 'window mousemove'
           if not @dragStarted
             @dragStarted = true
             @$elem.trigger "mousedragstart", evt
@@ -169,9 +166,12 @@ define 'editor.dnd', ->
         @dragStarted = false
         $(window).unbind ".#{EVT_NS}"
 
-      _debugEvent: (name) ->
+      _logEvent: (args...) ->
+        [name, $elem] = args.reverse()
         desc = if @options.helper then 'map object' else 'helper'
-        console.log "#{EVT_NS}: #{name} (#{desc})"
+        msg = "#{EVT_NS}: #{name}"
+        msg += " (##{$elem.data('node-uid')})" if $elem
+        console.log "#{msg} (#{desc})"
 
   DropTarget = do ->
     EVT_NS = 'dnd.dropTarget'
@@ -198,47 +198,47 @@ define 'editor.dnd', ->
 
         @$sensor
           .bind "dropopen", (evt) =>
-            $dragOwner = $(evt.relatedTarget)
-            dragObject = $dragOwner.data('dragObject')
+            @_logEvent @$sensor, 'sensor dropopen'
+            $dragOwner  = $(evt.relatedTarget)
+            dragObject  = $dragOwner.data('dragObject')
+            $draggee    = dragObject.getDraggee()
+            $dragHelper = dragObject.getHelper()
 
             lastMouseLocation = null
             mouseenterFired = false
             mouseleaveFired = false
-            $draggee = null
-            $dragHelper = null
 
             if @_mouseWithinSensor(evt)
               dragObject.setOverDropTarget()
             else
               dragObject.setOutsideDropTarget()
 
-            # you might think we can just bind mouseenter and mouseleave to $sensor
-            # but mouseenter won't actually ever be fired since the mouse is already
-            # on top of the drag helper when it is dragged in/out of the viewport
+            # you might think we can just bind mouseenter and mouseleave to
+            # $sensor but mouseenter won't actually ever be fired since the
+            # mouse is already on top of the drag helper when it is dragged
+            # in/out of the viewport
             $(window)
               .bind "mousemove.#{EVT_NS}", (evt) =>
-                # @_debugEvent 'elem mousemove'
-                $draggee    ||= dragObject.getDraggee()
-                $dragHelper ||= dragObject.getHelper()
+                # @_logEvent 'elem mousemove'
                 if @_mouseWithinSensor(evt)
                   # console.log 'mouse within sensor'
                   if lastMouseLocation is 'outside' and not mouseenterFired
+                    mouseenterFired = true
                     $dragOwner.trigger "mousedropover", evt
                     @$sensor.trigger "mousedragover", evt
-                    mouseenterFired = true
                   lastMouseLocation = 'inside'
                   @$sensor.trigger "mousedragwithin", evt
                 else
                   if lastMouseLocation is 'inside' and
                   mouseenterFired and not mouseleaveFired
+                    mouseleaveFired = true
                     @$sensor.trigger "mousedragout", evt
                     $dragOwner.trigger "mousedropout", evt
-                    mouseleaveFired = true
                   lastMouseLocation = 'outside'
 
             @$sensor
               .one "mouseup.#{EVT_NS}", (evt) =>
-                @_debugEvent 'elem mouseup'
+                @_logEvent @$sensor, 'elem mouseup'
                 evt.relatedTarget = $draggee[0]
                 @$sensor.trigger "mousedropwithin", evt
                 $dragOwner.trigger "mousedrop", evt
@@ -246,7 +246,7 @@ define 'editor.dnd', ->
               # TODO: Need to make sure if this fires before $dragOwner mousedropover
               # or after
               .bind "mousedragover.#{EVT_NS}", (evt) =>
-                @_debugEvent 'elem mousedragover'
+                @_logEvent @$sensor, 'elem mousedragover'
                 @$receptor.append($draggee)
                 dragObject.setOverDropTarget()
                 # call this preemptively to prevent a jump when first dragging an
@@ -256,22 +256,25 @@ define 'editor.dnd', ->
               # TODO: Need to make sure if this fires before $dragOwner mousedropout
               # or after
               .bind "mousedragout.#{EVT_NS}", (evt) =>
-                @_debugEvent 'elem mousedragout'
+                @_logEvent @$sensor, 'elem mousedragout'
                 dragObject.setOutsideDropTarget()
                 $draggee.detach()
 
         .bind "dropclose", (evt) =>
+          @_logEvent @$sensor, 'sensor dropclose'
           $(window).unbind "mousemove.#{EVT_NS}"
-          @$sensor.unbind(
-            "mousedragover.#{EVT_NS}",
-            "mousedragout.#{EVT_NS}"
-          )
+          # bean#remove doesn't accept multiple arguments, you have to provide a
+          # space-separated string
+          @$sensor.unbind "mousedragover.#{EVT_NS} mousedragout.#{EVT_NS}"
 
       _mouseWithinSensor: (evt) ->
         (@x1 <= evt.pageX <= @x2 and @y1 <= evt.pageY <= @y2)
 
-      _debugEvent: (name) ->
-        console.log "#{EVT_NS}: #{name}"
+      _logEvent: (args...) ->
+        [name, $elem] = args.reverse()
+        msg =  "#{EVT_NS}: #{name}"
+        msg += " (##{$elem.data('node-uid')})" if $elem
+        console.log(msg)
 
   enderMethods =
     dragObject: (args...) ->
