@@ -77,7 +77,9 @@
           $draggee = $(evt.relatedTarget);
           if (!_this.objectExistsIn('tiles', $draggee)) {
             _this.addObject('tiles', $draggee, $draggee.data('so'));
-            $draggee.bind("mouseupnodrag." + evtns, function(evt) {
+            $draggee.bind("mousedragout." + evtns, function(evt) {
+              return evt.stopPropagation();
+            }).bind("mouseupnodrag." + evtns, function(evt) {
               var newstate, state;
               console.log("" + evtns + ": map object mouseupnodrag");
               state = $draggee.attr('data-is-selected');
@@ -85,7 +87,8 @@
               return $draggee.attr('data-is-selected', newstate);
             });
             $draggee.dragObject({
-              dropTarget: _this.$element
+              dropTarget: _this.$element,
+              containWithinDropTarget: true
             });
           }
           x = parseInt($draggee.css('left'), 10);

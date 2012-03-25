@@ -83,7 +83,7 @@ define 'editor.core', ->
 
       @_loadImages()
       @_whenImagesLoaded =>
-        @_populateSidebar()
+        # @_populateSidebar()
         # @$mapChooser.change => @_chooseMap(@value)
 
         @viewport.loadMap()
@@ -156,6 +156,8 @@ define 'editor.core', ->
 
     _populateSidebar: ->
       core = this
+
+      return if @sidebarPopulated
 
       # go through all of the possible objects (images, sprites, mobs, etc.)
       # and add them to a list
@@ -236,6 +238,8 @@ define 'editor.core', ->
           dragObject = $draggee.data('dragObject')
           $helper = dragObject.getHelper()
           $helper.addClass('editor-map-object')
+
+      @sidebarPopulated = true
 
     _chooseMap: (mapName) ->
       if @currentMap
@@ -356,6 +360,8 @@ define 'editor.core', ->
       # list of available tiles
 
       @_initTools ['normal', 'hand']
+
+      @_populateSidebar()
 
     # _activate_tiles_normal_tool: ->
     #   console.log 'core: activating normal tool (layer: tiles)'

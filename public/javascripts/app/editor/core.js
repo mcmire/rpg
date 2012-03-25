@@ -89,7 +89,6 @@
         });
         this._loadImages();
         return this._whenImagesLoaded(function() {
-          _this._populateSidebar();
           _this.viewport.loadMap();
           _this._initToolbox();
           return _this.layers.init();
@@ -176,6 +175,7 @@
         var core, dragStarted, elems, evtns, imageCollection, spriteCollection,
           _this = this;
         core = this;
+        if (this.sidebarPopulated) return;
         imageCollection = require('game.imageCollection');
         spriteCollection = require('game.spriteCollection');
         this.objects = [];
@@ -245,7 +245,7 @@
           return elems.push($elem[0]);
         });
         evtns = 'editor.core.sidebar';
-        return $(elems).dragObject({
+        $(elems).dragObject({
           helper: true,
           dropTarget: this.viewport.$element
         }).bind("mousedragstart." + evtns, function(evt) {
@@ -256,6 +256,7 @@
           $helper = dragObject.getHelper();
           return $helper.addClass('editor-map-object');
         });
+        return this.sidebarPopulated = true;
       },
       _chooseMap: function(mapName) {
         var map;
@@ -359,7 +360,8 @@
       },
       activate_tiles_layer: function() {
         console.log('core: activating tiles layer');
-        return this._initTools(['normal', 'hand']);
+        this._initTools(['normal', 'hand']);
+        return this._populateSidebar();
       }
     });
   });

@@ -14,9 +14,14 @@ define 'editor.dnd', ->
         that = this
 
         @$elem = $(elem)
+        @offset = @$elem.offset()
+
         @options = options
-        if @options.dropTarget
-          @dropTargetOffset = @options.dropTarget.offset()
+        if options.dropTarget
+          $dropTarget = $(options.dropTarget)
+          @dropTarget = $dropTarget.data('dropTarget')
+          if not @dropTarget
+            throw new Error "DragObject#init: Drop target does not exist"
 
         @dragOffset = null
 
@@ -49,17 +54,17 @@ define 'editor.dnd', ->
             else
               @_addDragEventsWithoutHelper()
 
-            if $tgt = @options.dropTarget
+            if @dropTarget
               evt.relatedTarget = @$elem[0]
-              $tgt.trigger('dropopen', evt)
+              @dropTarget.getSensor().trigger('dropopen', evt)
 
             @$elem.one "mousedragend.#{EVT_NS}", (evt) =>
               @_logEvent @$elem, 'elem mousedragend'
               $(document.body).removeClass('editor-drag-active')
               @dragOffset = null
-              if $tgt = @options.dropTarget
+              if @dropTarget
                 evt.relatedTarget = @$elem[0]
-                $tgt.trigger('dropclose', evt)
+                @dropTarget.getSensor().trigger('dropclose', evt)
               dnd.stopDragging()
 
               if @options.helper
@@ -71,13 +76,25 @@ define 'editor.dnd', ->
         $elem = if @options.helper then @$helper else @$elem
         if not @dragOffset
           console.log "accessing dragOffset on #{@$elem.data('node-uid')}"
-          debugger
-        # console.log "dragOffset: (#{@dragOffset.x},#{@dragOffset.y})"
+          throw new Error 'dragOffset is not defined'
         x = evt.pageX - @dragOffset.x
         y = evt.pageY - @dragOffset.y
-        if @isOverDropTarget
-          x -= @dropTargetOffset.left
-          y -= @dropTargetOffset.top
+        if @dropTarget
+          # have to recalculate this since it might have changed
+          # TODO: Cache this somewhere...
+          dropTargetOffset = @dropTarget.getReceptor().offset()
+          if @isOverDropTarget
+            x -= dropTargetOffset.left
+            y -= dropTargetOffset.top
+          if @options.containWithinDropTarget
+            if x < 0
+              x = 0
+            else if (x + @offset.width) > dropTargetOffset.width
+              x = (dropTargetOffset.width - @offset.width)
+            if y < 0
+              y = 0
+            else if (y + @offset.height) > dropTargetOffset.height
+              y = (dropTargetOffset.height - @offset.height)
         $elem.moveTo(x, y)
 
       getDraggee: ->
@@ -289,6 +306,10 @@ define 'editor.dnd', ->
                 @_logEvent @$sensor, 'sensor dropclose'
                 $(window).unbind "mousemove.#{EVT_NS}"
                 @$sensor.unbind "mousedragover.#{EVT_NS}"
+
+      getSensor: -> @$sensor
+
+      getReceptor: -> @$receptor
 
       _mouseWithinSensor: (evt) ->
         (@x1 <= evt.pageX <= @x2 and @y1 <= evt.pageY <= @y2)
