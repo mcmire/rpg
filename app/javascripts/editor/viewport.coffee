@@ -122,10 +122,12 @@ define 'editor.viewport', ->
       $(window).unbind('.' + evtns)
 
     activate_hand_tool: ->
-      console.log 'viewport: deactivating hand tool'
+      console.log 'viewport: activating hand tool'
       evtns = 'editor.viewport.layer-tiles.tool-normal'
       @$map
         .bind "mousedown.#{evtns}", (evt) =>
+          console.log 'viewport: mousedown (hand tool)'
+
           # don't pan the map accidentally if it is right-clicked
           # FIXME so this handles ctrl-click too
           return if evt.button is 2

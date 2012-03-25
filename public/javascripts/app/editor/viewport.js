@@ -126,10 +126,11 @@
       activate_hand_tool: function() {
         var evtns,
           _this = this;
-        console.log('viewport: deactivating hand tool');
+        console.log('viewport: activating hand tool');
         evtns = 'editor.viewport.layer-tiles.tool-normal';
         return this.$map.bind("mousedown." + evtns, function(evt) {
           var mouse;
+          console.log('viewport: mousedown (hand tool)');
           if (evt.button === 2) return;
           mouse = {
             px: evt.pageX,

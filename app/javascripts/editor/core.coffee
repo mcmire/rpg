@@ -34,8 +34,8 @@ define 'editor.core', ->
           if @current
             if that.currentTool
               # also deactivate the tool since that's a member of the layer
-              that["_deactivate_#{@current}_#{that.currentTool}_tool"]?()
-            that["_deactivate_#{@current}_layer"]?()
+              that["deactivate_#{@current}_#{that.currentTool}_tool"]?()
+            that["deactivate_#{@current}_layer"]?()
 
           @current = layer
           $map = that.viewport.$map
@@ -55,9 +55,9 @@ define 'editor.core', ->
           that.$sidebar.find('> div').hide()
           that.$sidebar.find("> div[data-layer=#{layer}]").show()
 
-          that["_activate_#{@current}_layer"]?()
+          that["activate_#{@current}_layer"]?()
           # also activate the tool since that's a member of the layer
-          that["_activate_#{@current}_#{that.currentTool}_tool"]?()
+          that["activate_#{@current}_#{that.currentTool}_tool"]?()
 
       $(window).bind 'keyup', (evt) =>
         index = @layers.keys.indexOf(evt.keyCode)
@@ -260,6 +260,7 @@ define 'editor.core', ->
       @prevTool = null
 
     _initTools: (tools) ->
+      that = this
       evtNamespace = 'editor.core.tools'
 
       @_destroyTools()
@@ -268,9 +269,9 @@ define 'editor.core', ->
         $tool = $("""<img src="/images/editor/tool-#{tool}.gif" data-tool="#{tool}">""")
         @$toolbox.append($tool)
       @$toolbox.find('> img')
-        .bind "click.#{evtNamespace}", =>
+        .bind "click.#{evtNamespace}", ->
           tool = $(this).data('tool')
-          @_selectTool(tool)
+          that._selectTool(tool)
 
       @_selectTool('normal')
 
@@ -302,6 +303,8 @@ define 'editor.core', ->
           mouse.y = evt.pageY
 
     _selectTool: (tool) ->
+      console.log "selecting #{tool} tool"
+
       $tool = @$toolbox.find("> [data-tool='#{tool}']")
       @$toolbox.find('> img').removeClass('editor-active')
       $tool.addClass('editor-active')
@@ -309,14 +312,23 @@ define 'editor.core', ->
         .removeClassesLike(/^editor-tool-/)
         .addClass("editor-tool-#{tool}")
 
+      currentLayer = @getCurrentLayer()
+      dm1 = "deactivate_#{currentLayer}_#{@currentTool}_tool"
+      dm2 = "deactivate_#{@currentTool}_tool"
       if @currentTool
-        @["_deactivate_#{@currentLayer}_#{@currentTool}_tool"]?()
-        @["_deactivate_#{@currentTool}_tool"]?()
+        @[dm1]?()
+        @viewport[dm1]?()
+        @[dm2]?()
+        @viewport[dm2]?()
       @currentTool = tool
-      @["_activate_#{@currentLayer}_#{@currentTool}_tool"]?()
-      @["_activate_#{@currentTool}_tool"]?()
+      am1 = "activate_#{currentLayer}_#{@currentTool}_tool"
+      am2 = "activate_#{@currentTool}_tool"
+      @[am1]?()
+      @viewport[am1]?()
+      @[am2]?()
+      @viewport[am2]?()
 
-    _activate_fill_layer: ->
+    activate_fill_layer: ->
       console.log 'core: activating fill layer'
 
       # we want normal, hand, select, and bucket tools
@@ -332,7 +344,7 @@ define 'editor.core', ->
 
       @_initTools ['normal', 'hand', 'select', 'bucket']
 
-    _activate_tiles_layer: ->
+    activate_tiles_layer: ->
       console.log 'core: activating tiles layer'
 
       # we want normal and hand tools
@@ -345,18 +357,14 @@ define 'editor.core', ->
 
       @_initTools ['normal', 'hand']
 
-    _activate_tiles_normal_tool: ->
-      console.log 'core: activating normal tool (layer: tiles)'
-      @viewport.activate_tiles_normal_tool()
+    # _activate_tiles_normal_tool: ->
+    #   console.log 'core: activating normal tool (layer: tiles)'
 
-    _deactivate_tiles_normal_tool: ->
-      console.log 'core: deactivating normal tool (layer: tiles)'
-      @viewport.deactivate_tiles_normal_tool()
+    # _deactivate_tiles_normal_tool: ->
+    #   console.log 'core: deactivating normal tool (layer: tiles)'
 
-    _activate_tiles_hand_tool: ->
-      console.log 'core: activating hand tool (layer: tiles)'
-      @viewport.activate_tiles_hand_tool()
+    # _activate_tiles_hand_tool: ->
+    #   console.log 'core: activating hand tool (layer: tiles)'
 
-    _deactivate_tiles_hand_tool: ->
-      console.log 'core: deactivating hand tool (layer: tiles)'
-      @viewport.deactivate_tiles_hand_tool()
+    # _deactivate_tiles_hand_tool: ->
+    #   console.log 'core: deactivating hand tool (layer: tiles)'
