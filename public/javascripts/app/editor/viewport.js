@@ -82,14 +82,15 @@
           $draggee.moveTo(x, y);
           _this.addObject('tiles', $draggee, $draggee.data('so'));
           _this.saveMap();
-          return $draggee.dragObject({
-            dropTarget: _this.$element
-          }).bind("mouseupnodrag." + evtns, function(evt) {
+          $draggee.bind("mouseupnodrag." + evtns, function(evt) {
             var newstate, state;
-            console.log("" + evtns + ": map object mouseup");
+            console.log("" + evtns + ": map object mouseupnodrag");
             state = $draggee.attr('data-is-selected');
             newstate = state === 'no' || !state ? 'yes' : 'no';
             return $draggee.attr('data-is-selected', newstate);
+          });
+          return $draggee.dragObject({
+            dropTarget: _this.$element
           });
         });
         this.$map.bind("mouseup." + evtns, function(evt) {

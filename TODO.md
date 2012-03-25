@@ -74,3 +74,6 @@
 
 * For map objects, group the $elem and the object together, everywhere, as one
   MapObject
+
+* BUG: When moving an object on the map, an additional mouseup event is added
+  and never removed.

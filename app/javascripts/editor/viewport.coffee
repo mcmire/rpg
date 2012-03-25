@@ -80,13 +80,16 @@ define 'editor.viewport', ->
           @addObject('tiles', $draggee, $draggee.data('so'))
           @saveMap()
           $draggee
-            # TODO: Prevent element from being dragged out
-            .dragObject(dropTarget: @$element)
+            # .bind "mousedragout.#{evtns}", (evt) =>
+            #   evt.stopPropagation()
             .bind "mouseupnodrag.#{evtns}", (evt) =>
-              console.log "#{evtns}: map object mouseup"
+              console.log "#{evtns}: map object mouseupnodrag"
               state = $draggee.attr('data-is-selected')
               newstate = if state is 'no' or !state then 'yes' else 'no'
               $draggee.attr('data-is-selected', newstate)
+          # CS bug #2221 regarding indentation
+          # TODO: Prevent element from being dragged out
+          $draggee.dragObject(dropTarget: @$element)
 
       @$map.bind "mouseup.#{evtns}", (evt) =>
         console.log "#{evtns}: mouseup"
