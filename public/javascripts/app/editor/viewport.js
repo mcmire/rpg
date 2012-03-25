@@ -63,12 +63,13 @@
         }
       },
       activate_tiles_normal_tool: function() {
-        var BACKSPACE_KEY, DELETE_KEY, evtns, layerSel, viewport,
+        var BACKSPACE_KEY, DELETE_KEY, evtns, layerSel, mapObjectsSel, viewport,
           _this = this;
         console.log('viewport: activating normal tool (layer: tiles)');
         evtns = 'editor.viewport.layer-tiles.tool-normal';
         viewport = this;
-        layerSel = '.editor-layer[data-layer=tiles]';
+        layerSel = '#editor-map .editor-layer[data-layer=tiles]';
+        mapObjectsSel = "" + layerSel + " .editor-map-object";
         this.$element.dropTarget({
           receptor: "" + layerSel + " .editor-layer-content"
         }).bind("mousedropwithin." + evtns, function(evt) {
@@ -77,19 +78,7 @@
           $draggee = $(evt.relatedTarget);
           if (!_this.objectExistsIn('tiles', $draggee)) {
             _this.addObject('tiles', $draggee, $draggee.data('so'));
-            $draggee.bind("mousedragout." + evtns, function(evt) {
-              return evt.stopPropagation();
-            }).bind("mouseupnodrag." + evtns, function(evt) {
-              var newstate, state;
-              console.log("" + evtns + ": map object mouseupnodrag");
-              state = $draggee.attr('data-is-selected');
-              newstate = state === 'no' || !state ? 'yes' : 'no';
-              return $draggee.attr('data-is-selected', newstate);
-            });
-            $draggee.dragObject({
-              dropTarget: _this.$element,
-              containWithinDropTarget: true
-            });
+            _this._addEventsToMapObjects($draggee);
           }
           x = parseInt($draggee.css('left'), 10);
           y = parseInt($draggee.css('top'), 10);
@@ -98,6 +87,7 @@
           $draggee.moveTo(x, y);
           return _this.saveMap();
         });
+        this._addEventsToMapObjects($(mapObjectsSel));
         this.$map.bind("mouseup." + evtns, function(evt) {
           console.log("" + evtns + ": mouseup");
           _this.$map.find('.editor-map-object').removeClass('editor-selected');
@@ -125,13 +115,15 @@
         });
       },
       deactivate_tiles_normal_tool: function() {
-        var evtns, sel;
+        var evtns, layerSel, mapObjectsSel;
         console.log('viewport: deactivating normal tool (layer: tiles)');
         evtns = 'editor.viewport.layer-tiles.tool-normal';
-        sel = '.editor-layer[data-layer=tiles] .editor-map-object';
-        $(sel).unbind('.' + evtns);
-        this.$map.unbind('.' + evtns);
-        return $(window).unbind('.' + evtns);
+        layerSel = '#editor-map .editor-layer[data-layer=tiles]';
+        mapObjectsSel = "" + layerSel + " .editor-map-object";
+        this.$element.dropTarget('destroy').unbind("." + evtns);
+        this._removeEventsFromMapObjects($(mapObjectsSel));
+        this.$map.unbind("." + evtns);
+        return $(window).unbind("." + evtns);
       },
       activate_hand_tool: function() {
         var evtns,
@@ -178,8 +170,8 @@
         var evtns;
         console.log('viewport: deactivating hand tool');
         evtns = 'editor.viewport.layer-tiles.tool-normal';
-        this.$map.unbind('.' + evtns);
-        return $(window).unbind('.' + evtns);
+        this.$map.unbind("." + evtns);
+        return $(window).unbind("." + evtns);
       },
       addObject: function(layer, $elem, object) {
         var k, obj, v, _name;
@@ -219,6 +211,27 @@
           return hash;
         }, {});
         return localStorage.setItem('editor.map', JSON.stringify(data));
+      },
+      _addEventsToMapObjects: function($draggees) {
+        var evtns;
+        evtns = 'editor.viewport.layer-tiles.tool-normal';
+        $draggees.bind("mouseupnodrag." + evtns, function(evt) {
+          var $draggee, newstate, state;
+          console.log("" + evtns + ": map object mouseupnodrag");
+          $draggee = $(this);
+          state = $draggee.attr('data-is-selected');
+          newstate = state === 'no' || !state ? 'yes' : 'no';
+          return $draggee.attr('data-is-selected', newstate);
+        });
+        return $draggees.dragObject({
+          dropTarget: this.$element,
+          containWithinDropTarget: true
+        });
+      },
+      _removeEventsFromMapObjects: function($draggees) {
+        var evtns;
+        evtns = 'editor.viewport.layer-tiles.tool-normal';
+        return $draggees.dragObject('destroy').unbind("." + evtns);
       },
       _mouseWithinViewport: function(evt) {
         var _ref, _ref2;

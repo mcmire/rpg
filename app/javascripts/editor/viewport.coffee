@@ -63,7 +63,8 @@ define 'editor.viewport', ->
       evtns = 'editor.viewport.layer-tiles.tool-normal'
       viewport = this
 
-      layerSel = '.editor-layer[data-layer=tiles]'
+      layerSel = '#editor-map .editor-layer[data-layer=tiles]'
+      mapObjectsSel = "#{layerSel} .editor-map-object"
 
       @$element
         .dropTarget(
@@ -73,20 +74,12 @@ define 'editor.viewport', ->
           console.log "#{evtns}: mousedropwithin"
           $draggee = $(evt.relatedTarget)
 
+          # mousedropwithin will get fired even when moving map objects around
+          # within the map, so we have to check for the first fire when the
+          # object is added
           if not @objectExistsIn('tiles', $draggee)
             @addObject('tiles', $draggee, $draggee.data('so'))
-            $draggee
-              .bind "mousedragout.#{evtns}", (evt) =>
-                evt.stopPropagation()
-              .bind "mouseupnodrag.#{evtns}", (evt) =>
-                console.log "#{evtns}: map object mouseupnodrag"
-                state = $draggee.attr('data-is-selected')
-                newstate = if state is 'no' or !state then 'yes' else 'no'
-                $draggee.attr('data-is-selected', newstate)
-            # CS bug #2221 regarding indentation
-            $draggee.dragObject
-              dropTarget: @$element
-              containWithinDropTarget: true
+            @_addEventsToMapObjects($draggee)
 
           x = parseInt($draggee.css('left'), 10)
           y = parseInt($draggee.css('top'), 10)
@@ -94,6 +87,8 @@ define 'editor.viewport', ->
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
           $draggee.moveTo(x, y)
           @saveMap()
+
+      @_addEventsToMapObjects $(mapObjectsSel)
 
       @$map.bind "mouseup.#{evtns}", (evt) =>
         console.log "#{evtns}: mouseup"
@@ -124,11 +119,16 @@ define 'editor.viewport', ->
     deactivate_tiles_normal_tool: ->
       console.log 'viewport: deactivating normal tool (layer: tiles)'
       evtns = 'editor.viewport.layer-tiles.tool-normal'
-      sel = '.editor-layer[data-layer=tiles] .editor-map-object'
-      # XXX: does this work even for the delegate?
-      $(sel).unbind('.' + evtns)
-      @$map.unbind('.' + evtns)
-      $(window).unbind('.' + evtns)
+
+      layerSel = '#editor-map .editor-layer[data-layer=tiles]'
+      mapObjectsSel = "#{layerSel} .editor-map-object"
+
+      @$element
+        .dropTarget('destroy')
+        .unbind(".#{evtns}")
+      @_removeEventsFromMapObjects $(mapObjectsSel)
+      @$map.unbind(".#{evtns}")
+      $(window).unbind(".#{evtns}")
 
     activate_hand_tool: ->
       console.log 'viewport: activating hand tool'
@@ -187,8 +187,8 @@ define 'editor.viewport', ->
     deactivate_hand_tool: ->
       console.log 'viewport: deactivating hand tool'
       evtns = 'editor.viewport.layer-tiles.tool-normal'
-      @$map.unbind('.' + evtns)
-      $(window).unbind('.' + evtns)
+      @$map.unbind(".#{evtns}")
+      $(window).unbind(".#{evtns}")
 
     addObject: (layer, $elem, object) ->
       console.log 'viewport: addObject'
@@ -217,6 +217,25 @@ define 'editor.viewport', ->
         return hash
       , {}
       localStorage.setItem('editor.map', JSON.stringify(data))
+
+    _addEventsToMapObjects: ($draggees) ->
+      evtns = 'editor.viewport.layer-tiles.tool-normal'
+      $draggees.bind "mouseupnodrag.#{evtns}", (evt) ->
+        console.log "#{evtns}: map object mouseupnodrag"
+        $draggee = $(this)
+        state = $draggee.attr('data-is-selected')
+        newstate = if state is 'no' or !state then 'yes' else 'no'
+        $draggee.attr('data-is-selected', newstate)
+      # CS bug #2221 regarding indentation
+      $draggees.dragObject
+        dropTarget: @$element
+        containWithinDropTarget: true
+
+    _removeEventsFromMapObjects: ($draggees) ->
+      evtns = 'editor.viewport.layer-tiles.tool-normal'
+      $draggees
+        .dragObject('destroy')
+        .unbind(".#{evtns}")
 
     _mouseWithinViewport: (evt) ->
       @bounds.x1 <= evt.pageX <= @bounds.x2 and

@@ -72,6 +72,10 @@ define 'editor.dnd', ->
               else
                 @_removeDragEventsWithoutHelper()
 
+      destroy: ->
+        @$elem.unbind(".#{EVT_NS}")
+        $(window).unbind(".#{EVT_NS}")
+
       position: (evt) ->
         $elem = if @options.helper then @$helper else @$elem
         if not @dragOffset
@@ -307,6 +311,10 @@ define 'editor.dnd', ->
                 $(window).unbind "mousemove.#{EVT_NS}"
                 @$sensor.unbind "mousedragover.#{EVT_NS}"
 
+      destroy: ->
+        @$sensor.unbind(".#{EVT_NS}")
+        $(window).unbind(".#{EVT_NS}")
+
       getSensor: -> @$sensor
 
       getReceptor: -> @$receptor
@@ -335,6 +343,8 @@ define 'editor.dnd', ->
           method = args.shift()
           if typeof dragObject[method] is 'function'
             dragObject[method](args...)
+          if method is 'destroy'
+            $this.data('dragObject', null)
 
     dropTarget: (args...) ->
       @each ->
@@ -350,6 +360,8 @@ define 'editor.dnd', ->
           method = args.shift()
           if typeof dropTarget[method] is 'function'
             dropTarget[method](args...)
+          if method is 'destroy'
+            $this.data('dropTarget', null)
 
   $.ender(enderMethods, true)
 
