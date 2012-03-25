@@ -72,24 +72,27 @@ define 'editor.viewport', ->
         .bind "mousedropwithin.#{evtns}", (evt) =>
           console.log "#{evtns}: mousedropwithin"
           $draggee = $(evt.relatedTarget)
+
+          if not @objectExistsIn('tiles', $draggee)
+            @addObject('tiles', $draggee, $draggee.data('so'))
+            $draggee
+              # .bind "mousedragout.#{evtns}", (evt) =>
+              #   evt.stopPropagation()
+              .bind "mouseupnodrag.#{evtns}", (evt) =>
+                console.log "#{evtns}: map object mouseupnodrag"
+                state = $draggee.attr('data-is-selected')
+                newstate = if state is 'no' or !state then 'yes' else 'no'
+                $draggee.attr('data-is-selected', newstate)
+            # CS bug #2221 regarding indentation
+            # TODO: Prevent element from being dragged out
+            $draggee.dragObject(dropTarget: @$element)
+
           x = parseInt($draggee.css('left'), 10)
           y = parseInt($draggee.css('top'), 10)
           x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
           $draggee.moveTo(x, y)
-          @addObject('tiles', $draggee, $draggee.data('so'))
           @saveMap()
-          $draggee
-            # .bind "mousedragout.#{evtns}", (evt) =>
-            #   evt.stopPropagation()
-            .bind "mouseupnodrag.#{evtns}", (evt) =>
-              console.log "#{evtns}: map object mouseupnodrag"
-              state = $draggee.attr('data-is-selected')
-              newstate = if state is 'no' or !state then 'yes' else 'no'
-              $draggee.attr('data-is-selected', newstate)
-          # CS bug #2221 regarding indentation
-          # TODO: Prevent element from being dragged out
-          $draggee.dragObject(dropTarget: @$element)
 
       @$map.bind "mouseup.#{evtns}", (evt) =>
         console.log "#{evtns}: mouseup"
@@ -107,13 +110,15 @@ define 'editor.viewport', ->
         .bind "keydown.#{evtns}", (evt) =>
           if evt.keyCode is DELETE_KEY or evt.keyCode is BACKSPACE_KEY
             evt.preventDefault()
-            @$map.find('.editor-map-object.editor-selected').each (elem) =>
-              $elem = $(elem)
-              objectId = $elem.data('moid')
-              console.log "viewport: removing object #{objectId}"
-              delete @objectsByLayer[@core.getCurrentLayer()][objectId]
-              $elem.remove()
-            @saveMap()
+            $selectedObjects = @$map.find('.editor-map-object.editor-selected')
+            if $selectedObjects.length
+              $selectedObjects.each (elem) =>
+                $elem = $(elem)
+                objectId = $elem.data('moid')
+                console.log "viewport: removing object #{objectId}"
+                delete @objectsByLayer[@core.getCurrentLayer()][objectId]
+                $elem.remove()
+              @saveMap()
 
     deactivate_tiles_normal_tool: ->
       console.log 'viewport: deactivating normal tool (layer: tiles)'
@@ -195,6 +200,10 @@ define 'editor.viewport', ->
       @objectId++
 
       @["_activate_#{layer}_#{@core.currentTool}_tool_for_object"]?(obj)
+
+    objectExistsIn: (layer, $elem) ->
+      moid = $elem.data('moid')
+      !!@objectsByLayer[layer][moid]
 
     saveMap: ->
       console.log 'viewport: saving map...'

@@ -75,23 +75,25 @@
           var $draggee, x, y;
           console.log("" + evtns + ": mousedropwithin");
           $draggee = $(evt.relatedTarget);
+          if (!_this.objectExistsIn('tiles', $draggee)) {
+            _this.addObject('tiles', $draggee, $draggee.data('so'));
+            $draggee.bind("mouseupnodrag." + evtns, function(evt) {
+              var newstate, state;
+              console.log("" + evtns + ": map object mouseupnodrag");
+              state = $draggee.attr('data-is-selected');
+              newstate = state === 'no' || !state ? 'yes' : 'no';
+              return $draggee.attr('data-is-selected', newstate);
+            });
+            $draggee.dragObject({
+              dropTarget: _this.$element
+            });
+          }
           x = parseInt($draggee.css('left'), 10);
           y = parseInt($draggee.css('top'), 10);
           x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
           y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
           $draggee.moveTo(x, y);
-          _this.addObject('tiles', $draggee, $draggee.data('so'));
-          _this.saveMap();
-          $draggee.bind("mouseupnodrag." + evtns, function(evt) {
-            var newstate, state;
-            console.log("" + evtns + ": map object mouseupnodrag");
-            state = $draggee.attr('data-is-selected');
-            newstate = state === 'no' || !state ? 'yes' : 'no';
-            return $draggee.attr('data-is-selected', newstate);
-          });
-          return $draggee.dragObject({
-            dropTarget: _this.$element
-          });
+          return _this.saveMap();
         });
         this.$map.bind("mouseup." + evtns, function(evt) {
           console.log("" + evtns + ": mouseup");
@@ -101,17 +103,21 @@
         BACKSPACE_KEY = 8;
         DELETE_KEY = 46;
         return $(window).bind("keydown." + evtns, function(evt) {
+          var $selectedObjects;
           if (evt.keyCode === DELETE_KEY || evt.keyCode === BACKSPACE_KEY) {
             evt.preventDefault();
-            _this.$map.find('.editor-map-object.editor-selected').each(function(elem) {
-              var $elem, objectId;
-              $elem = $(elem);
-              objectId = $elem.data('moid');
-              console.log("viewport: removing object " + objectId);
-              delete _this.objectsByLayer[_this.core.getCurrentLayer()][objectId];
-              return $elem.remove();
-            });
-            return _this.saveMap();
+            $selectedObjects = _this.$map.find('.editor-map-object.editor-selected');
+            if ($selectedObjects.length) {
+              $selectedObjects.each(function(elem) {
+                var $elem, objectId;
+                $elem = $(elem);
+                objectId = $elem.data('moid');
+                console.log("viewport: removing object " + objectId);
+                delete _this.objectsByLayer[_this.core.getCurrentLayer()][objectId];
+                return $elem.remove();
+              });
+              return _this.saveMap();
+            }
           }
         });
       },
@@ -187,6 +193,11 @@
         this.objectsByLayer[layer][this.objectId] = obj;
         this.objectId++;
         return typeof this[_name = "_activate_" + layer + "_" + this.core.currentTool + "_tool_for_object"] === "function" ? this[_name](obj) : void 0;
+      },
+      objectExistsIn: function(layer, $elem) {
+        var moid;
+        moid = $elem.data('moid');
+        return !!this.objectsByLayer[layer][moid];
       },
       saveMap: function() {
         var data,
