@@ -165,7 +165,9 @@
         });
       },
       deactivate_hand_tool: function() {
+        var evtns;
         console.log('viewport: deactivating hand tool');
+        evtns = 'editor.viewport.layer-tiles.tool-normal';
         this.$map.unbind('.' + evtns);
         return $(window).unbind('.' + evtns);
       },

@@ -261,7 +261,7 @@ define 'editor.core', ->
 
     _initTools: (tools) ->
       that = this
-      evtNamespace = 'editor.core.tools'
+      evtns = 'editor.core.tools'
 
       @_destroyTools()
 
@@ -269,7 +269,7 @@ define 'editor.core', ->
         $tool = $("""<img src="/images/editor/tool-#{tool}.gif" data-tool="#{tool}">""")
         @$toolbox.append($tool)
       @$toolbox.find('> img')
-        .bind "click.#{evtNamespace}", ->
+        .bind "click.#{evtns}", ->
           tool = $(this).data('tool')
           that._selectTool(tool)
 
@@ -278,27 +278,27 @@ define 'editor.core', ->
       @_initHandTool() if $.includes(tools, 'hand')
 
     _destroyTools: ->
-      evtNamespace = 'editor.core.tools'
-      @$toolbox.find('> img').unbind('.' + evtNamespace)
-      $(window).unbind('.' + evtNamespace)
+      evtns = 'editor.core.tools'
+      @$toolbox.find('> img').unbind('.' + evtns)
+      $(window).unbind('.' + evtns)
       @$toolbox.html("")
 
     _initHandTool: ->
-      evtNamespace = 'editor.core.tools'
+      evtns = 'editor.core.tools'
       SHIFT_KEY = 16
       CTRL_KEY = 17
       mouse = {}
       $(window)
-        .bind "keydown.#{evtNamespace}", (evt) =>
+        .bind "keydown.#{evtns}", (evt) =>
           if evt.keyCode is SHIFT_KEY
             @prevTool = @currentTool
             @_selectTool('hand')
             evt.preventDefault()
-        .bind "keyup.#{evtNamespace}", (evt) =>
+        .bind "keyup.#{evtns}", (evt) =>
           if evt.keyCode is SHIFT_KEY
             @_selectTool(@prevTool)
             @prevTool = null
-        .bind "mousemove.#{evtNamespace}", (evt) =>
+        .bind "mousemove.#{evtns}", (evt) =>
           mouse.x = evt.pageX
           mouse.y = evt.pageY
 

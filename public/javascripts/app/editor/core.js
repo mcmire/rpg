@@ -281,17 +281,17 @@
         return this.prevTool = null;
       },
       _initTools: function(tools) {
-        var evtNamespace, that,
+        var evtns, that,
           _this = this;
         that = this;
-        evtNamespace = 'editor.core.tools';
+        evtns = 'editor.core.tools';
         this._destroyTools();
         $.v.each(tools, function(tool) {
           var $tool;
           $tool = $("<img src=\"/images/editor/tool-" + tool + ".gif\" data-tool=\"" + tool + "\">");
           return _this.$toolbox.append($tool);
         });
-        this.$toolbox.find('> img').bind("click." + evtNamespace, function() {
+        this.$toolbox.find('> img').bind("click." + evtns, function() {
           var tool;
           tool = $(this).data('tool');
           return that._selectTool(tool);
@@ -300,31 +300,31 @@
         if ($.includes(tools, 'hand')) return this._initHandTool();
       },
       _destroyTools: function() {
-        var evtNamespace;
-        evtNamespace = 'editor.core.tools';
-        this.$toolbox.find('> img').unbind('.' + evtNamespace);
-        $(window).unbind('.' + evtNamespace);
+        var evtns;
+        evtns = 'editor.core.tools';
+        this.$toolbox.find('> img').unbind('.' + evtns);
+        $(window).unbind('.' + evtns);
         return this.$toolbox.html("");
       },
       _initHandTool: function() {
-        var CTRL_KEY, SHIFT_KEY, evtNamespace, mouse,
+        var CTRL_KEY, SHIFT_KEY, evtns, mouse,
           _this = this;
-        evtNamespace = 'editor.core.tools';
+        evtns = 'editor.core.tools';
         SHIFT_KEY = 16;
         CTRL_KEY = 17;
         mouse = {};
-        return $(window).bind("keydown." + evtNamespace, function(evt) {
+        return $(window).bind("keydown." + evtns, function(evt) {
           if (evt.keyCode === SHIFT_KEY) {
             _this.prevTool = _this.currentTool;
             _this._selectTool('hand');
             return evt.preventDefault();
           }
-        }).bind("keyup." + evtNamespace, function(evt) {
+        }).bind("keyup." + evtns, function(evt) {
           if (evt.keyCode === SHIFT_KEY) {
             _this._selectTool(_this.prevTool);
             return _this.prevTool = null;
           }
-        }).bind("mousemove." + evtNamespace, function(evt) {
+        }).bind("mousemove." + evtns, function(evt) {
           mouse.x = evt.pageX;
           return mouse.y = evt.pageY;
         });

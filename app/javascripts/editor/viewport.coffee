@@ -177,6 +177,7 @@ define 'editor.viewport', ->
 
     deactivate_hand_tool: ->
       console.log 'viewport: deactivating hand tool'
+      evtns = 'editor.viewport.layer-tiles.tool-normal'
       @$map.unbind('.' + evtns)
       $(window).unbind('.' + evtns)
 
