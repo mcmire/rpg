@@ -7,8 +7,7 @@ define 'game.Image', ->
     assignable,
     simpleDrawable,
 
-    init: (@name, @width, @height) ->
-      path = @name
+    init: (@name, path, @width, @height) ->
       unless /\.[^.]+$/.test(path)
         path += ".gif"
       unless /^\//.test(path)
