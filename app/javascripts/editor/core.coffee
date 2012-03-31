@@ -35,16 +35,19 @@ define 'editor.core', ->
       @_whenImagesLoaded =>
         @_populateMapObjects()
         @viewport.loadMap()
-        @_initToolbox()
         @_initLayers()
+        @_initToolbox()
+        @_changeLayerTo(0)   # currentTool is already set
 
     getLayers: -> LAYER_NAMES
 
     getCurrentLayer: -> @currentLayer
 
-    getCurrentLayerElem: -> @findLayer @getCurrentLayer()
+    getCurrentLayerElem: ->
+      @findLayer(@getCurrentLayer())
 
-    findLayer: (layer) -> @viewport.$map.find(".editor-layer[data-layer=#{layer}]")
+    findLayer: (layer) ->
+      @viewport.$map.find(".editor-layer[data-layer=#{layer}]")
 
     _resizeUI: ->
       win = $.viewport()
@@ -171,10 +174,9 @@ define 'editor.core', ->
         @$sidebar.append """<div data-layer="#{layer}"></div>"""
 
       @$layerChooser = $('#editor-layer-chooser select')
-        .change -> that._chooseLayer(@value)
+        .change -> that._selectLayer(@value)
       for layer in LAYER_NAMES
         @$layerChooser.append """<option data-layer="#{layer}">#{layer}</option>"""
-      @_changeLayerTo(1)  # tiles
 
       $(window).bind 'keyup', (evt) =>
         index = LAYER_KEYS.indexOf(evt.keyCode)
@@ -184,15 +186,15 @@ define 'editor.core', ->
       @$layerChooser[0].selectedIndex = index
       @$layerChooser.change()
 
-    _chooseLayer: (layer) ->
-      if @currentLayer
-        if @currentTool
-          # also deactivate the tool since that's a member of the layer
-          @["deactivate_#{@currentLayer}_#{@currentTool}_tool"]?()
-        @["deactivate_#{@currentLayer}_layer"]?()
+    _selectLayer: (layer) ->
+      @_deactivateCurrentLayer()
 
       @currentLayer = layer
       $map = @viewport.$map
+
+      $(document.body)
+        .removeClassesLike(/^editor-layer-/)
+        .addClass("editor-layer-#{layer}")
 
       $layer = $map.find('.editor-layer').removeClass('editor-layer-selected')
       $layer.find('.editor-layer-content').css('background', 'none')
@@ -209,9 +211,24 @@ define 'editor.core', ->
       @$sidebar.find('> div').hide()
       @$sidebar.find("> div[data-layer=#{layer}]").show()
 
-      @["activate_#{@currentLayer}_layer"]?()
-      # also activate the tool since this is a member of the layer
-      @["activate_#{@currentLayer}_#{@currentTool}_tool"]?()
+      @_activateCurrentLayer()
+
+    _activateCurrentLayer: ->
+      m = "activate_#{@currentLayer}_layer"
+      console.log "viewport: activating #{@currentLayer} layer"
+      @viewport[m]?()
+      console.log "core: activating #{@currentLayer} layer"
+      @[m]?()
+      @_activateCurrentTool()
+
+    _deactivateCurrentLayer: ->
+      m = "deactivate_#{@currentLayer}_layer"
+      if @currentLayer
+        if @currentTool then @_deactivateCurrentTool()
+        console.log "core: deactivating #{@currentLayer} layer"
+        @[m]?()
+        console.log "viewport: deactivating #{@currentLayer} layer"
+        @viewport[m]?()
 
     _initToolbox: ->
       that = this
@@ -234,15 +251,16 @@ define 'editor.core', ->
           tool = $(this).data('tool')
           that._selectTool(tool)
 
-      @_selectTool('normal')
+      # @_selectTool('normal')
+      @currentTool = 'normal'
 
       @_initHandTool() if $.includes(tools, 'hand')
 
     _destroyTools: ->
       evtns = 'editor.core.tools'
       @$toolbox.find('> img').unbind('.' + evtns)
-      $(window).unbind('.' + evtns)
       @$toolbox.html("")
+      $(window).unbind('.' + evtns)
 
     _initHandTool: ->
       evtns = 'editor.core.tools'
@@ -264,34 +282,48 @@ define 'editor.core', ->
           mouse.y = evt.pageY
 
     _selectTool: (tool) ->
-      console.log "selecting #{tool} tool"
-
-      $tool = @$toolbox.find("> [data-tool='#{tool}']")
-      @$toolbox.find('> img').removeClass('editor-active')
-      $tool.addClass('editor-active')
-      @viewport.$element
-        .removeClassesLike(/^editor-tool-/)
-        .addClass("editor-tool-#{tool}")
-
-      currentLayer = @getCurrentLayer()
-      dm1 = "deactivate_#{currentLayer}_#{@currentTool}_tool"
-      dm2 = "deactivate_#{@currentTool}_tool"
-      if @currentTool
-        @[dm1]?()
-        @viewport[dm1]?()
-        @[dm2]?()
-        @viewport[dm2]?()
+      @_deactivateCurrentTool()
       @currentTool = tool
-      am1 = "activate_#{currentLayer}_#{@currentTool}_tool"
-      am2 = "activate_#{@currentTool}_tool"
-      @[am1]?()
-      @viewport[am1]?()
-      @[am2]?()
-      @viewport[am2]?()
+      @_activateCurrentTool()
+
+    _activateCurrentTool: ->
+      $tool = @$toolbox.find("> [data-tool='#{@currentTool}']")
+      $tool.addClass('editor-active')
+      $(document.body).addClass("editor-tool-#{@currentTool}")
+
+      m1 = "activate_#{@currentTool}_tool"
+      m2 = "activate_#{@currentLayer}_#{@currentTool}_tool"
+      console.log "viewport: activating #{@currentTool} tool"
+      @viewport[m1]?()
+      console.log "core: activating #{@currentTool} tool"
+      @[m1]?()
+      # it's important the viewport get init'ed first here because the viewport
+      # has to be augmented as a dropTarget first before augmenting the sidebar
+      # elements as dragObjects
+      console.log "viewport: activating #{@currentTool} tool (layer: #{@currentLayer})"
+      @viewport[m2]?()
+      console.log "core: activating #{@currentTool} tool (layer: #{@currentLayer})"
+      @[m2]?()
+
+    _deactivateCurrentTool: ->
+      $tool = @$toolbox.find("> [data-tool='#{@currentTool}']")
+      $tool.removeClass('editor-active')
+      $(document.body).removeClass("editor-tool-#{@currentTool}")
+
+      m1 = "deactivate_#{@currentTool}_tool"
+      m2 = "deactivate_#{@currentLayer}_#{@currentTool}_tool"
+      if @currentTool
+        if @currentLayer
+          console.log "core: deactivating #{@currentTool} tool (layer: #{@currentLayer})"
+          @[m2]?()
+          console.log "viewport: deactivating #{@currentTool} tool (layer: #{@currentLayer})"
+          @viewport[m2]?()
+        console.log "core: deactivating #{@currentTool} tool"
+        @[m1]?()
+        console.log "viewport: deactivating #{@currentTool} tool"
+        @viewport[m1]?()
 
     activate_fill_layer: ->
-      console.log 'core: activating fill layer'
-
       # we want normal, hand, select, and bucket tools
       # - normal tool will select areas so you can delete them and enable moving
       #   objects
@@ -306,8 +338,6 @@ define 'editor.core', ->
       @_initTools ['normal', 'hand', 'select', 'bucket']
 
     activate_tiles_layer: ->
-      console.log 'core: activating tiles layer'
-
       # we want normal and hand tools
       # - normal tool will select tiles so you can delete them and enable moving
       #   tiles
@@ -318,16 +348,5 @@ define 'editor.core', ->
 
       @_initTools ['normal', 'hand']
 
+    activate_tiles_normal_tool: ->
       @_populateSidebar()
-
-    # _activate_tiles_normal_tool: ->
-    #   console.log 'core: activating normal tool (layer: tiles)'
-
-    # _deactivate_tiles_normal_tool: ->
-    #   console.log 'core: deactivating normal tool (layer: tiles)'
-
-    # _activate_tiles_hand_tool: ->
-    #   console.log 'core: activating hand tool (layer: tiles)'
-
-    # _deactivate_tiles_hand_tool: ->
-    #   console.log 'core: deactivating hand tool (layer: tiles)'

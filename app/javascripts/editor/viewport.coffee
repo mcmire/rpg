@@ -57,7 +57,6 @@ define 'editor.viewport', ->
           throw e
 
     activate_tiles_normal_tool: ->
-      console.log 'viewport: activating normal tool (layer: tiles)'
       evtns = 'editor.viewport.layer-tiles.tool-normal'
       viewport = this
 
@@ -117,7 +116,6 @@ define 'editor.viewport', ->
               @saveMap()
 
     deactivate_tiles_normal_tool: ->
-      console.log 'viewport: deactivating normal tool (layer: tiles)'
       evtns = 'editor.viewport.layer-tiles.tool-normal'
 
       layerSel = '#editor-map .editor-layer[data-layer=tiles]'
@@ -131,7 +129,6 @@ define 'editor.viewport', ->
       $(window).unbind(".#{evtns}")
 
     activate_hand_tool: ->
-      console.log 'viewport: activating hand tool'
       evtns = 'editor.viewport.layer-tiles.tool-normal'
       @$map
         .bind "mousedown.#{evtns}", (evt) =>
@@ -185,7 +182,6 @@ define 'editor.viewport', ->
             $(window).unbind "mousemove.#{evtns}"
 
     deactivate_hand_tool: ->
-      console.log 'viewport: deactivating hand tool'
       evtns = 'editor.viewport.layer-tiles.tool-normal'
       @$map.unbind(".#{evtns}")
       $(window).unbind(".#{evtns}")

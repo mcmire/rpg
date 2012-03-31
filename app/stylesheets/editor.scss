@@ -46,7 +46,7 @@ body {
 }
 
 .editor-drag-active,
-.editor-tool-normal .editor-map-object,
+.editor-layer-tiles.editor-tool-normal .editor-map-object,
 #editor-sidebar div.img {
   cursor: move
 }

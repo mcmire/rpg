@@ -65,7 +65,6 @@
       activate_tiles_normal_tool: function() {
         var BACKSPACE_KEY, DELETE_KEY, evtns, layerSel, mapObjectsSel, viewport,
           _this = this;
-        console.log('viewport: activating normal tool (layer: tiles)');
         evtns = 'editor.viewport.layer-tiles.tool-normal';
         viewport = this;
         layerSel = '#editor-map .editor-layer[data-layer=tiles]';
@@ -118,7 +117,6 @@
       },
       deactivate_tiles_normal_tool: function() {
         var evtns, layerSel, mapObjectsSel;
-        console.log('viewport: deactivating normal tool (layer: tiles)');
         evtns = 'editor.viewport.layer-tiles.tool-normal';
         layerSel = '#editor-map .editor-layer[data-layer=tiles]';
         mapObjectsSel = "" + layerSel + " .editor-map-object";
@@ -130,7 +128,6 @@
       activate_hand_tool: function() {
         var evtns,
           _this = this;
-        console.log('viewport: activating hand tool');
         evtns = 'editor.viewport.layer-tiles.tool-normal';
         return this.$map.bind("mousedown." + evtns, function(evt) {
           var mouse;
@@ -170,7 +167,6 @@
       },
       deactivate_hand_tool: function() {
         var evtns;
-        console.log('viewport: deactivating hand tool');
         evtns = 'editor.viewport.layer-tiles.tool-normal';
         this.$map.unbind("." + evtns);
         return $(window).unbind("." + evtns);
