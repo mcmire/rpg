@@ -218,9 +218,10 @@ define 'editor.DragObject', ->
           dragObject = DragObject.create(this, options)
           $this.data('dragObject', dragObject)
         if typeof args[0] is 'string'
-          method = args.shift()
+          method = args[0]
           if typeof dragObject[method] is 'function'
-            dragObject[method](args...)
+            console.log "calling #{method} on ##{$this.data('node-uid')}"
+            dragObject[method](args[1..-1])
           if method is 'destroy'
             $this.data('dragObject', null)
   $.ender(enderMethods, true)

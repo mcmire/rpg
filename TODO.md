@@ -75,5 +75,5 @@
 * For map objects, group the $elem and the object together, everywhere, as one
   MapObject
 
-* BUG: When moving an object on the map, an additional mouseup event is added
-  and never removed.
+* BUG: Switch from fill to tiles and then back, some of the map objects in the
+  tiles layer are still moveable.
