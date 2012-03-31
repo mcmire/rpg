@@ -45,6 +45,8 @@ javascripts:
   editor:
     - *common
 
+    - public/javascripts/app/editor/drag_object.js
+    - public/javascripts/app/editor/drop_target.js
     - public/javascripts/app/editor/dnd.js
     - public/javascripts/app/editor/core.js
     - public/javascripts/app/editor/viewport.js

@@ -2,6 +2,7 @@
 define 'editor.core', ->
   meta = require('meta')
   util = require('util')
+  require('editor.DragObject')
 
   ONE_KEY = 49
   TWO_KEY = 50

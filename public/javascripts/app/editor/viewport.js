@@ -6,6 +6,7 @@
     meta = require('meta');
     util = require('util');
     Bounds = require('game.Bounds');
+    require('editor.DropTarget');
     DRAG_SNAP_GRID_SIZE = 16;
     return meta.def({
       init: function(core) {
