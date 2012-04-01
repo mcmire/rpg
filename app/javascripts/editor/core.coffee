@@ -28,6 +28,12 @@ define 'editor.core', ->
         @_changeLayerTo(0)   # currentTool is already set
         @viewport.loadMap()
 
+      # Block backspace from leaving the page
+      $(window)
+        .bind "keydown.editor.core", (evt) =>
+          if @keyboard.isKeyPressed(evt, 'backspace')
+            evt.preventDefault()
+
     getLayers: -> LAYER_NAMES
 
     getCurrentLayer: -> @currentLayer

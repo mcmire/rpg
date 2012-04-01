@@ -19,12 +19,17 @@
           return _this._resizeUI();
         });
         this._loadImages();
-        return this._whenImagesLoaded(function() {
+        this._whenImagesLoaded(function() {
           _this._populateMapObjects();
           _this._initLayers();
           _this._initToolbox();
           _this._changeLayerTo(0);
           return _this.viewport.loadMap();
+        });
+        return $(window).bind("keydown.editor.core", function(evt) {
+          if (_this.keyboard.isKeyPressed(evt, 'backspace')) {
+            return evt.preventDefault();
+          }
         });
       },
       getLayers: function() {

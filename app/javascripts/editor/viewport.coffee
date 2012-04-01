@@ -110,11 +110,8 @@ define 'editor.viewport', ->
           .removeAttr('data-is-selected')
 
       $(window)
-        # this cannot be on keyup b/c backspace will go back to the prev page
-        # immediately on keydown so we have to catch that
-        .bind "keydown.#{evtns}", (evt) =>
+        .bind "keyup.#{evtns}", (evt) =>
           if @keyboard.isKeyPressed(evt, 'backspace', 'delete')
-            evt.preventDefault()
             $selectedObjects = @$map.find('.editor-map-object.editor-selected')
             if $selectedObjects.length
               $selectedObjects.each (elem) =>
@@ -332,9 +329,9 @@ define 'editor.viewport', ->
           setTimeout selectionEvents.add, 0
 
       $(window)
-        .bind "keydown.#{evtns}", (evt) =>
+        .bind "keyup.#{evtns}", (evt) =>
           Bounds = require('game.Bounds')
-          # if evt.metaKey and @keyboard.isKeyPressed(evt, 'backspace')
+          # TODO: Make this Cmd-Backspace
           if @keyboard.isKeyPressed(evt, 'F')
             # fill all of the selections
             $.v.each activeSelections, (sel) =>

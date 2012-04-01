@@ -112,10 +112,9 @@
           _this.$map.find('.editor-map-object').removeClass('editor-selected');
           return _this.$map.find('.editor-map-object[data-is-selected=yes]').addClass('editor-selected').removeAttr('data-is-selected');
         });
-        return $(window).bind("keydown." + evtns, function(evt) {
+        return $(window).bind("keyup." + evtns, function(evt) {
           var $selectedObjects;
           if (_this.keyboard.isKeyPressed(evt, 'backspace', 'delete')) {
-            evt.preventDefault();
             $selectedObjects = _this.$map.find('.editor-map-object.editor-selected');
             if ($selectedObjects.length) {
               $selectedObjects.each(function(elem) {
@@ -312,7 +311,7 @@
           dragStarted = false;
           return setTimeout(selectionEvents.add, 0);
         });
-        $(window).bind("keydown." + evtns, function(evt) {
+        $(window).bind("keyup." + evtns, function(evt) {
           var Bounds;
           Bounds = require('game.Bounds');
           if (_this.keyboard.isKeyPressed(evt, 'F')) {
