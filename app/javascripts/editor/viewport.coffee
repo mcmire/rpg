@@ -191,31 +191,35 @@ define 'editor.viewport', ->
       evtns = 'editor.viewport.layer-fill.tool-select'
 
       mouseDownAt = null
-      selection = null
+      activeSelections = []
 
       SELECTION_ACTIVATION_OFFSET = 4  # pixels
 
       $layerElem = @core.getCurrentLayerElem().find('.editor-layer-content')
 
-      clearSelection = (evt) =>
-        console.log 'clearing selection'
-        evt.preventDefault()
-        # selection.$box.remove()
-        # the above does not work for some reason
+      clearActiveSelections = ->
+        activeSelections = []
+        # selection.$box.remove() does not work for some reason
         $layerElem.find('.editor-selection-box').remove()
-        selection = null
 
-      mouseupBound = false
-      bindMouseup = =>
-        return if mouseupBound
-        console.log 'binding mouseup'
-        mouseupBound = true
-        @$elem.bind("mouseup.#{evtns}", clearSelection)
-      unbindMouseup = =>
-        return if not mouseupBound
-        console.log 'unbinding mouseup'
+      selectionEvents = do =>
         mouseupBound = false
-        @$elem.unbind(clearSelection)
+        clearSelection = (evt) ->
+          console.log 'clearing selection'
+          evt.preventDefault()
+          clearActiveSelections()
+        ex = {}
+        ex.add = =>
+          return if mouseupBound
+          console.log 'binding mouseup'
+          mouseupBound = true
+          @$elem.bind("mouseup.#{evtns}", clearSelection)
+        ex.remove = =>
+          return if not mouseupBound
+          console.log 'unbinding mouseup'
+          mouseupBound = false
+          @$elem.unbind(clearSelection)
+        return ex
 
       adjustCoords = (p) =>
         x: p.x - @bounds.x1
@@ -228,45 +232,44 @@ define 'editor.viewport', ->
           return if evt.button is 2
 
           evt.preventDefault()
-          mouse = mouseDownAt = {x: evt.pageX, y: evt.pageY}
-          pos = @_roundCoordsToGrid(adjustCoords(mouse))
-          selection = {}
-          selection.pos = pos
+
+          selectionStartedAt = @_roundCoordsToGrid(adjustCoords(x: evt.pageX, y: evt.pageY))
 
           @$elem.bind "mousemove.#{evtns}", (evt) =>
             evt.preventDefault()
-            mouse = {x: evt.pageX, y: evt.pageY}
 
-            # dragOffsetX = Math.abs(evt.pageX - mouseDownAt.x)
-            # dragOffsetY = Math.abs(evt.pageY - mouseDownAt.y)
-            # return unless (
-            #   dragOffsetX > SELECTION_ACTIVATION_OFFSET or
-            #   dragOffsetY > SELECTION_ACTIVATION_OFFSET
-            # )
+            clearActiveSelections()
+            selectionEvents.remove()
 
-            unbindMouseup()
+            selection = {}
+            selection.pos = selectionStartedAt
+            selection.$box = $('<div class="editor-selection-box">')
+              .appendTo($layerElem)
+            activeSelections.push(selection)
 
-            if not selection.isPresent
-              selection.$box = $('<div class="editor-selection-box">')
-                .appendTo($layerElem)
-              selection.isPresent = true
-
-            mouse = @_roundCoordsToGrid(adjustCoords(mouse))
+            mouse = @_roundCoordsToGrid(adjustCoords(x: evt.pageX, y: evt.pageY))
             if mouse.x < selection.pos.x
+              # cursor is left of where the selection started
               x = mouse.x
               w = selection.pos.x - mouse.x
             else
+              # cursor is right of where the selection started
               x = selection.pos.x
               w = mouse.x - selection.pos.x
             if mouse.y < selection.pos.y
+              # cursor is above where the selection started
               y = mouse.y
               h = selection.pos.y - mouse.y
             else
+              # cursor is below where the selection started
               y = selection.pos.y
               h = mouse.y - selection.pos.y
+
             if w is 0 and h is 0
+              # cursor is where the selection started, don't draw the box
               selection.$box.hide()
             else
+              # draw the box
               selection.$box
                 .show()
                 .moveTo({x, y})
@@ -275,14 +278,14 @@ define 'editor.viewport', ->
         .delegate '.editor-selection-box', "mousedown.#{evtns}", (evt) ->
           console.log 'selection box mousedown'
           evt.preventDefault()
-          unbindMouseup()
+          selectionEvents.remove()
 
         .delegate '.editor-selection-box', "mouseup.#{evtns}", (evt) ->
           console.log 'selection box mouseup'
           # delay the re-addition of the mouseup event ever so slightly
           # otherwise it gets fired immediately (since we're in the mouseup
           # event ourselves)
-          setTimeout bindMouseup, 0
+          setTimeout selectionEvents.add, 0
 
         .bind "mouseup.#{evtns}", (evt) =>
           @$elem.unbind "mousemove.#{evtns}"
@@ -290,9 +293,9 @@ define 'editor.viewport', ->
           # delay the re-addition of the mouseup event ever so slightly
           # otherwise it gets fired immediately (since we're in the mouseup
           # event ourselves)
-          setTimeout bindMouseup, 0
+          setTimeout selectionEvents.add, 0
 
-      bindMouseup()
+      selectionEvents.add()
 
     deactivate_fill_select_tool: ->
       evtns = 'editor.viewport.layer-fill.tool-select'

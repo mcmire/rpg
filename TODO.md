@@ -69,3 +69,6 @@
 
 * For map objects, group the $elem and the object together, everywhere, as one
   MapObject
+
+* Snap the selection box to the nearest grid guide, but not by rounding -- if
+  cursor is within 5 pixels of a guide, snap it otherwise do nothing

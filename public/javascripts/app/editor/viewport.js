@@ -180,32 +180,40 @@
         return $(window).unbind("." + evtns);
       },
       activate_fill_select_tool: function() {
-        var $layerElem, SELECTION_ACTIVATION_OFFSET, adjustCoords, bindMouseup, clearSelection, evtns, mouseDownAt, mouseupBound, selection, unbindMouseup,
+        var $layerElem, SELECTION_ACTIVATION_OFFSET, activeSelections, adjustCoords, clearActiveSelections, evtns, mouseDownAt, selectionEvents,
           _this = this;
         evtns = 'editor.viewport.layer-fill.tool-select';
         mouseDownAt = null;
-        selection = null;
+        activeSelections = [];
         SELECTION_ACTIVATION_OFFSET = 4;
         $layerElem = this.core.getCurrentLayerElem().find('.editor-layer-content');
-        clearSelection = function(evt) {
-          console.log('clearing selection');
-          evt.preventDefault();
-          $layerElem.find('.editor-selection-box').remove();
-          return selection = null;
+        clearActiveSelections = function() {
+          activeSelections = [];
+          return $layerElem.find('.editor-selection-box').remove();
         };
-        mouseupBound = false;
-        bindMouseup = function() {
-          if (mouseupBound) return;
-          console.log('binding mouseup');
-          mouseupBound = true;
-          return _this.$elem.bind("mouseup." + evtns, clearSelection);
-        };
-        unbindMouseup = function() {
-          if (!mouseupBound) return;
-          console.log('unbinding mouseup');
+        selectionEvents = (function() {
+          var clearSelection, ex, mouseupBound;
           mouseupBound = false;
-          return _this.$elem.unbind(clearSelection);
-        };
+          clearSelection = function(evt) {
+            console.log('clearing selection');
+            evt.preventDefault();
+            return clearActiveSelections();
+          };
+          ex = {};
+          ex.add = function() {
+            if (mouseupBound) return;
+            console.log('binding mouseup');
+            mouseupBound = true;
+            return _this.$elem.bind("mouseup." + evtns, clearSelection);
+          };
+          ex.remove = function() {
+            if (!mouseupBound) return;
+            console.log('unbinding mouseup');
+            mouseupBound = false;
+            return _this.$elem.unbind(clearSelection);
+          };
+          return ex;
+        })();
         adjustCoords = function(p) {
           return {
             x: p.x - _this.bounds.x1,
@@ -213,29 +221,26 @@
           };
         };
         this.$elem.bind("mousedown." + evtns, function(evt) {
-          var mouse, pos;
+          var selectionStartedAt;
           if (evt.button === 2) return;
           evt.preventDefault();
-          mouse = mouseDownAt = {
+          selectionStartedAt = _this._roundCoordsToGrid(adjustCoords({
             x: evt.pageX,
             y: evt.pageY
-          };
-          pos = _this._roundCoordsToGrid(adjustCoords(mouse));
-          selection = {};
-          selection.pos = pos;
+          }));
           return _this.$elem.bind("mousemove." + evtns, function(evt) {
-            var h, w, x, y;
+            var h, mouse, selection, w, x, y;
             evt.preventDefault();
-            mouse = {
+            clearActiveSelections();
+            selectionEvents.remove();
+            selection = {};
+            selection.pos = selectionStartedAt;
+            selection.$box = $('<div class="editor-selection-box">').appendTo($layerElem);
+            activeSelections.push(selection);
+            mouse = _this._roundCoordsToGrid(adjustCoords({
               x: evt.pageX,
               y: evt.pageY
-            };
-            unbindMouseup();
-            if (!selection.isPresent) {
-              selection.$box = $('<div class="editor-selection-box">').appendTo($layerElem);
-              selection.isPresent = true;
-            }
-            mouse = _this._roundCoordsToGrid(adjustCoords(mouse));
+            }));
             if (mouse.x < selection.pos.x) {
               x = mouse.x;
               w = selection.pos.x - mouse.x;
@@ -265,16 +270,16 @@
         }).delegate('.editor-selection-box', "mousedown." + evtns, function(evt) {
           console.log('selection box mousedown');
           evt.preventDefault();
-          return unbindMouseup();
+          return selectionEvents.remove();
         }).delegate('.editor-selection-box', "mouseup." + evtns, function(evt) {
           console.log('selection box mouseup');
-          return setTimeout(bindMouseup, 0);
+          return setTimeout(selectionEvents.add, 0);
         }).bind("mouseup." + evtns, function(evt) {
           _this.$elem.unbind("mousemove." + evtns);
           mouseDownAt = null;
-          return setTimeout(bindMouseup, 0);
+          return setTimeout(selectionEvents.add, 0);
         });
-        return bindMouseup();
+        return selectionEvents.add();
       },
       deactivate_fill_select_tool: function() {
         var evtns;
