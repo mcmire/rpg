@@ -10,21 +10,8 @@
     LAYER_NAMES = ['fill', 'tiles'];
     LAYER_KEYS = [ONE_KEY, TWO_KEY];
     return meta.def({
-      _createMapGrid: function() {
-        var canvas, ctx;
-        canvas = require('game.canvas').create(16, 16);
-        ctx = canvas.getContext();
-        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-        ctx.moveTo(0.5, 0.5);
-        ctx.lineTo(16, 0.5);
-        ctx.moveTo(0.5, 0.5);
-        ctx.lineTo(0.5, 16);
-        ctx.stroke();
-        return this.mapGrid = canvas;
-      },
       init: function() {
         var _this = this;
-        this._createMapGrid();
         this.viewport = require('editor.viewport').init(this);
         this.$sidebar = $('#editor-sidebar');
         this.$mapChooser = $('#editor-map-chooser select');
@@ -208,38 +195,36 @@
         return this.$layerChooser.change();
       },
       _selectLayer: function(layer) {
-        var $layer, $map;
         this._deactivateCurrentLayer();
         this.currentLayer = layer;
-        $map = this.viewport.$map;
-        $(document.body).removeClassesLike(/^editor-layer-/).addClass("editor-layer-" + layer);
-        $layer = $map.find('.editor-layer').removeClass('editor-layer-selected');
-        $layer.find('.editor-layer-content').css('background', 'none');
-        $layer.find('.editor-layer-bg').css('background', 'none');
-        $layer = $map.find(".editor-layer[data-layer=" + layer + "]").addClass('editor-layer-selected');
-        $layer.find('.editor-layer-content').css('background-image', "url(" + (this.mapGrid.element.toDataURL()) + ")").css('background-repeat', 'repeat');
-        $layer.find('.editor-layer-bg').css('background-color', 'white');
-        this.$sidebar.find('> div').hide();
-        this.$sidebar.find("> div[data-layer=" + layer + "]").show();
         return this._activateCurrentLayer();
       },
       _activateCurrentLayer: function() {
-        var m, _base;
-        m = "activate_" + this.currentLayer + "_layer";
-        console.log("viewport: activating " + this.currentLayer + " layer");
+        var $layer, layer, m, _base;
+        layer = this.currentLayer;
+        $layer = this.viewport.$map.find(".editor-layer[data-layer=" + layer + "]").addClass('editor-layer-selected').detach();
+        this.viewport.$map.append($layer);
+        $(document.body).addClass("editor-layer-" + layer);
+        this.$sidebar.find("> div[data-layer=" + layer).show();
+        m = "activate_" + layer + "_layer";
+        console.log("viewport: activating " + layer + " layer");
         if (typeof (_base = this.viewport)[m] === "function") _base[m]();
-        console.log("core: activating " + this.currentLayer + " layer");
+        console.log("core: activating " + layer + " layer");
         if (typeof this[m] === "function") this[m]();
         return this._activateCurrentTool();
       },
       _deactivateCurrentLayer: function() {
-        var m, _base;
-        m = "deactivate_" + this.currentLayer + "_layer";
-        if (this.currentLayer) {
+        var layer, m, _base;
+        layer = this.currentLayer;
+        this.viewport.$map.find(".editor-layer[data-layer=" + layer).removeClass('editor-layer-selected');
+        $(document.body).removeClass("editor-layer-" + layer);
+        this.$sidebar.find("> div[data-layer=" + layer).hide();
+        m = "deactivate_" + layer + "_layer";
+        if (layer) {
           if (this.currentTool) this._deactivateCurrentTool();
-          console.log("core: deactivating " + this.currentLayer + " layer");
+          console.log("core: deactivating " + layer + " layer");
           if (typeof this[m] === "function") this[m]();
-          console.log("viewport: deactivating " + this.currentLayer + " layer");
+          console.log("viewport: deactivating " + layer + " layer");
           return typeof (_base = this.viewport)[m] === "function" ? _base[m]() : void 0;
         }
       },

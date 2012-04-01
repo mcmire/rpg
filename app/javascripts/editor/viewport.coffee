@@ -10,6 +10,7 @@ define 'editor.viewport', ->
   meta.def
     init: (@core) ->
       @$elem = $('#editor-viewport')
+      @_initMapGrid()
       @_initMapElement()
       @_initBounds()
       @map = null
@@ -36,12 +37,13 @@ define 'editor.viewport', ->
       @objectBeingDragged = null
 
       @$map
-        .css('width', @map.width)
-        .css('height', @map.height)
+        .size(w: @map.width, h: @map.height)
         .removeClass('editor-map-unloaded')
+      @$mapGrid
+        .size(w: @map.width, h: @map.height)
 
       # TODO: Refactor
-      localStorage.removeItem('editor.map')
+      # localStorage.removeItem('editor.map')
       if data = localStorage.getItem('editor.map')
         console.log 'map data': data
         try
@@ -308,13 +310,48 @@ define 'editor.viewport', ->
       console.log 'viewport: saving map...'
       data = $.v.reduce $.v.keys(@objectsByLayer), (hash, layer) =>
         arr = $.v.map @objectsByLayer[layer], (id, object) ->
-          name: object.name
-          x: parseInt(object.$elem.css('left'), 10)
-          y: parseInt(object.$elem.css('top'), 10)
+          pos = object.$elem.position()
+          return {
+            name: object.name
+            x: pos.x
+            y: pos.y
+          }
         hash[layer] = arr
         return hash
       , {}
       localStorage.setItem('editor.map', JSON.stringify(data))
+
+    _initMapGrid: ->
+      # create the grid pattern that backgrounds the map
+      canvas = require('game.canvas').create(16, 16)
+      ctx = canvas.getContext()
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)'
+      ctx.moveTo(0.5, 0.5)
+      ctx.lineTo(16, 0.5)
+      ctx.moveTo(0.5, 0.5)
+      ctx.lineTo(0.5, 16)
+      ctx.stroke()
+      mapGrid = canvas
+
+      @$mapGrid = $('#editor-map-grid')
+        .css('background-image', "url(#{mapGrid.element.toDataURL()})")
+        .css('background-repeat', 'repeat')
+
+    _initMapElement: ->
+      @$map = $('#editor-map')
+      for layer, i in @core.getLayers()
+        $layer = $("""
+          <div class="editor-layer" data-layer="#{layer}">
+            <div class="editor-layer-bg"></div>
+            <div class="editor-layer-content"></div>
+          </div>
+        """)
+        # $layer.css('z-index', (i + 1) * 10)
+        @$map.append($layer)
+
+    _initBounds: ->
+      offset = @$elem.offset()
+      @bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height)
 
     _addEventsToMapObjects: ($draggees) ->
       evtns = 'editor.viewport.layer-tiles.tool-normal'
@@ -342,19 +379,3 @@ define 'editor.viewport', ->
     _mouseWithinViewport: (evt) ->
       @bounds.x1 <= evt.pageX <= @bounds.x2 and
       @bounds.y1 <= evt.pageY <= @bounds.y2
-
-    _initMapElement: ->
-      @$map = $('#editor-map')
-      for layer, i in @core.getLayers()
-        $layer = $("""
-          <div class="editor-layer" data-layer="#{layer}">
-            <div class="editor-layer-bg"></div>
-            <div class="editor-layer-content"></div>
-          </div>
-        """)
-        $layer.css('z-index', (i + 1) * 10)
-        @$map.append($layer)
-
-    _initBounds: ->
-      offset = @$elem.offset()
-      @bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height)

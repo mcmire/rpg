@@ -12,6 +12,7 @@
       init: function(core) {
         this.core = core;
         this.$elem = $('#editor-viewport');
+        this._initMapGrid();
         this._initMapElement();
         this._initBounds();
         this.map = null;
@@ -41,8 +42,14 @@
         dragEntered = null;
         this.$elemBeingDragged = null;
         this.objectBeingDragged = null;
-        this.$map.css('width', this.map.width).css('height', this.map.height).removeClass('editor-map-unloaded');
-        localStorage.removeItem('editor.map');
+        this.$map.size({
+          w: this.map.width,
+          h: this.map.height
+        }).removeClass('editor-map-unloaded');
+        this.$mapGrid.size({
+          w: this.map.width,
+          h: this.map.height
+        });
         if (data = localStorage.getItem('editor.map')) {
           console.log({
             'map data': data
@@ -305,16 +312,48 @@
         data = $.v.reduce($.v.keys(this.objectsByLayer), function(hash, layer) {
           var arr;
           arr = $.v.map(_this.objectsByLayer[layer], function(id, object) {
+            var pos;
+            pos = object.$elem.position();
             return {
               name: object.name,
-              x: parseInt(object.$elem.css('left'), 10),
-              y: parseInt(object.$elem.css('top'), 10)
+              x: pos.x,
+              y: pos.y
             };
           });
           hash[layer] = arr;
           return hash;
         }, {});
         return localStorage.setItem('editor.map', JSON.stringify(data));
+      },
+      _initMapGrid: function() {
+        var canvas, ctx, mapGrid;
+        canvas = require('game.canvas').create(16, 16);
+        ctx = canvas.getContext();
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+        ctx.moveTo(0.5, 0.5);
+        ctx.lineTo(16, 0.5);
+        ctx.moveTo(0.5, 0.5);
+        ctx.lineTo(0.5, 16);
+        ctx.stroke();
+        mapGrid = canvas;
+        return this.$mapGrid = $('#editor-map-grid').css('background-image', "url(" + (mapGrid.element.toDataURL()) + ")").css('background-repeat', 'repeat');
+      },
+      _initMapElement: function() {
+        var $layer, i, layer, _len, _ref, _results;
+        this.$map = $('#editor-map');
+        _ref = this.core.getLayers();
+        _results = [];
+        for (i = 0, _len = _ref.length; i < _len; i++) {
+          layer = _ref[i];
+          $layer = $("<div class=\"editor-layer\" data-layer=\"" + layer + "\">\n  <div class=\"editor-layer-bg\"></div>\n  <div class=\"editor-layer-content\"></div>\n</div>");
+          _results.push(this.$map.append($layer));
+        }
+        return _results;
+      },
+      _initBounds: function() {
+        var offset;
+        offset = this.$elem.offset();
+        return this.bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height);
       },
       _addEventsToMapObjects: function($draggees) {
         var evtns;
@@ -346,24 +385,6 @@
       _mouseWithinViewport: function(evt) {
         var _ref, _ref2;
         return (this.bounds.x1 <= (_ref = evt.pageX) && _ref <= this.bounds.x2) && (this.bounds.y1 <= (_ref2 = evt.pageY) && _ref2 <= this.bounds.y2);
-      },
-      _initMapElement: function() {
-        var $layer, i, layer, _len, _ref, _results;
-        this.$map = $('#editor-map');
-        _ref = this.core.getLayers();
-        _results = [];
-        for (i = 0, _len = _ref.length; i < _len; i++) {
-          layer = _ref[i];
-          $layer = $("<div class=\"editor-layer\" data-layer=\"" + layer + "\">\n  <div class=\"editor-layer-bg\"></div>\n  <div class=\"editor-layer-content\"></div>\n</div>");
-          $layer.css('z-index', (i + 1) * 10);
-          _results.push(this.$map.append($layer));
-        }
-        return _results;
-      },
-      _initBounds: function() {
-        var offset;
-        offset = this.$elem.offset();
-        return this.bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height);
       }
     });
   });

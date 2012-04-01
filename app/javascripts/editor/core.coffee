@@ -10,21 +10,8 @@ define 'editor.core', ->
   LAYER_KEYS = [ONE_KEY, TWO_KEY]
 
   meta.def
-    _createMapGrid: ->
-      # create the grid pattern that backgrounds the map
-      canvas = require('game.canvas').create(16, 16)
-      ctx = canvas.getContext()
-      ctx.strokeStyle = 'rgba(0,0,0,0.15)'
-      ctx.moveTo(0.5, 0.5)
-      ctx.lineTo(16, 0.5)
-      ctx.moveTo(0.5, 0.5)
-      ctx.lineTo(0.5, 16)
-      ctx.stroke()
-      @mapGrid = canvas
 
     init: ->
-      @_createMapGrid()
-
       @viewport = require('editor.viewport').init(this)
       @$sidebar = $('#editor-sidebar')
       @$mapChooser = $('#editor-map-chooser select')
@@ -189,46 +176,45 @@ define 'editor.core', ->
 
     _selectLayer: (layer) ->
       @_deactivateCurrentLayer()
-
       @currentLayer = layer
-      $map = @viewport.$map
-
-      $(document.body)
-        .removeClassesLike(/^editor-layer-/)
-        .addClass("editor-layer-#{layer}")
-
-      $layer = $map.find('.editor-layer').removeClass('editor-layer-selected')
-      $layer.find('.editor-layer-content').css('background', 'none')
-      $layer.find('.editor-layer-bg').css('background', 'none')
-
-      $layer = $map.find(".editor-layer[data-layer=#{layer}]")
-        .addClass('editor-layer-selected')
-      $layer.find('.editor-layer-content')
-        .css('background-image', "url(#{@mapGrid.element.toDataURL()})")
-        .css('background-repeat', 'repeat')
-      $layer.find('.editor-layer-bg')
-        .css('background-color', 'white')
-
-      @$sidebar.find('> div').hide()
-      @$sidebar.find("> div[data-layer=#{layer}]").show()
-
       @_activateCurrentLayer()
 
     _activateCurrentLayer: ->
-      m = "activate_#{@currentLayer}_layer"
-      console.log "viewport: activating #{@currentLayer} layer"
+      layer = @currentLayer
+
+      # TODO: Move to viewport
+      $layer = @viewport.$map.find(".editor-layer[data-layer=#{layer}]")
+        .addClass('editor-layer-selected')
+        .detach()
+      # put on top of all other elements
+      @viewport.$map.append($layer)
+      $(document.body).addClass("editor-layer-#{layer}")
+
+      @$sidebar.find("> div[data-layer=#{layer}").show()
+
+      m = "activate_#{layer}_layer"
+      console.log "viewport: activating #{layer} layer"
       @viewport[m]?()
-      console.log "core: activating #{@currentLayer} layer"
+      console.log "core: activating #{layer} layer"
       @[m]?()
       @_activateCurrentTool()
 
     _deactivateCurrentLayer: ->
-      m = "deactivate_#{@currentLayer}_layer"
-      if @currentLayer
+      layer = @currentLayer
+
+      # TODO: Move to viewport
+      @viewport.$map.find(".editor-layer[data-layer=#{layer}")
+        .removeClass('editor-layer-selected')
+      $(document.body).removeClass("editor-layer-#{layer}")
+
+      @$sidebar.find("> div[data-layer=#{layer}").hide()
+
+      m = "deactivate_#{layer}_layer"
+      if layer
         if @currentTool then @_deactivateCurrentTool()
-        console.log "core: deactivating #{@currentLayer} layer"
+        console.log "core: deactivating #{layer} layer"
         @[m]?()
-        console.log "viewport: deactivating #{@currentLayer} layer"
+        console.log "viewport: deactivating #{layer} layer"
         @viewport[m]?()
 
     _initToolbox: ->
