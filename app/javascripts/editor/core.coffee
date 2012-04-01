@@ -1,17 +1,18 @@
 
 define 'editor.core', ->
   meta = require('meta')
-  util = require('util')
+  keyboard = require('game.keyboard')
   require('editor.DragObject')
 
-  ONE_KEY = 49
-  TWO_KEY = 50
   LAYER_NAMES = ['fill', 'tiles']
-  LAYER_KEYS = [ONE_KEY, TWO_KEY]
+  LAYER_KEYS = [
+    keyboard.keys.KEY_1,
+    keyboard.keys.KEY_2
+  ]
 
   meta.def
-
     init: ->
+      @keyboard = keyboard.init()
       @viewport = require('editor.viewport').init(this)
       @$sidebar = $('#editor-sidebar')
       @$mapChooser = $('#editor-map-chooser select')
@@ -256,12 +257,12 @@ define 'editor.core', ->
       mouse = {}
       $(window)
         .bind "keydown.#{evtns}", (evt) =>
-          if evt.keyCode is SHIFT_KEY
+          if @keyboard.isKeyPressed(evt, 'shift')
             @prevTool = @currentTool
             @_selectTool('hand')
             evt.preventDefault()
         .bind "keyup.#{evtns}", (evt) =>
-          if evt.keyCode is SHIFT_KEY
+          if @keyboard.isKeyUnpressed(evt, 'shift')
             @_selectTool(@prevTool)
             @prevTool = null
         .bind "mousemove.#{evtns}", (evt) =>

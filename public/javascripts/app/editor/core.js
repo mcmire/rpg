@@ -1,17 +1,16 @@
 (function() {
 
   define('editor.core', function() {
-    var LAYER_KEYS, LAYER_NAMES, ONE_KEY, TWO_KEY, meta, util;
+    var LAYER_KEYS, LAYER_NAMES, keyboard, meta;
     meta = require('meta');
-    util = require('util');
+    keyboard = require('game.keyboard');
     require('editor.DragObject');
-    ONE_KEY = 49;
-    TWO_KEY = 50;
     LAYER_NAMES = ['fill', 'tiles'];
-    LAYER_KEYS = [ONE_KEY, TWO_KEY];
+    LAYER_KEYS = [keyboard.keys.KEY_1, keyboard.keys.KEY_2];
     return meta.def({
       init: function() {
         var _this = this;
+        this.keyboard = keyboard.init();
         this.viewport = require('editor.viewport').init(this);
         this.$sidebar = $('#editor-sidebar');
         this.$mapChooser = $('#editor-map-chooser select');
@@ -270,13 +269,13 @@
         CTRL_KEY = 17;
         mouse = {};
         return $(window).bind("keydown." + evtns, function(evt) {
-          if (evt.keyCode === SHIFT_KEY) {
+          if (_this.keyboard.isKeyPressed(evt, 'shift')) {
             _this.prevTool = _this.currentTool;
             _this._selectTool('hand');
             return evt.preventDefault();
           }
         }).bind("keyup." + evtns, function(evt) {
-          if (evt.keyCode === SHIFT_KEY) {
+          if (_this.keyboard.isKeyUnpressed(evt, 'shift')) {
             _this._selectTool(_this.prevTool);
             return _this.prevTool = null;
           }

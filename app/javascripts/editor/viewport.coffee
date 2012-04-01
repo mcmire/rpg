@@ -1,14 +1,14 @@
 
 define 'editor.viewport', ->
   meta = require('meta')
-  util = require('util')
-  Bounds = require('game.Bounds')
   require('editor.DropTarget')
 
   GRID_SIZE = 16
 
   meta.def
     init: (@core) ->
+      @keyboard = @core.keyboard
+
       @$elem = $('#editor-viewport')
       @_initMapGrid()
       @_initMapElement()
@@ -17,6 +17,8 @@ define 'editor.viewport', ->
       @objectsByLayer = $.v.reduce @core.getLayers(), ((h, n) -> h[n] = {}; h), {}
       @objectId = 0
       return this
+
+    addEvents: ->
 
     getElement: -> @$elem
 
@@ -29,7 +31,7 @@ define 'editor.viewport', ->
       @bounds.setHeight(height)
 
     loadMap: ->
-      @map = Bounds.rect(0, 0, 1024, 1024)
+      @map = require('game.Bounds').rect(0, 0, 1024, 1024)
 
       mouse = null
       dragEntered = null
@@ -98,13 +100,11 @@ define 'editor.viewport', ->
           .addClass('editor-selected')
           .removeAttr('data-is-selected')
 
-      BACKSPACE_KEY = 8
-      DELETE_KEY    = 46
       $(window)
         # this cannot be on keyup b/c backspace will go back to the prev page
         # immediately on keydown so we have to catch that
         .bind "keydown.#{evtns}", (evt) =>
-          if evt.keyCode is DELETE_KEY or evt.keyCode is BACKSPACE_KEY
+          if @keyboard.isKeyPressed(evt, 'backspace', 'delete')
             evt.preventDefault()
             $selectedObjects = @$map.find('.editor-map-object.editor-selected')
             if $selectedObjects.length
@@ -221,6 +221,7 @@ define 'editor.viewport', ->
           @$elem.unbind(clearSelection)
         return ex
 
+      # TODO: Extract to a method of viewport
       adjustCoords = (p) =>
         x: p.x - @bounds.x1
         y: p.y - @bounds.y1
@@ -233,7 +234,9 @@ define 'editor.viewport', ->
 
           evt.preventDefault()
 
-          selectionStartedAt = @_roundCoordsToGrid(adjustCoords(x: evt.pageX, y: evt.pageY))
+          selectionStartedAt = @_roundCoordsToGrid(
+            adjustCoords(x: evt.pageX, y: evt.pageY)
+          )
 
           @$elem.bind "mousemove.#{evtns}", (evt) =>
             evt.preventDefault()
@@ -247,7 +250,9 @@ define 'editor.viewport', ->
               .appendTo($layerElem)
             activeSelections.push(selection)
 
-            mouse = @_roundCoordsToGrid(adjustCoords(x: evt.pageX, y: evt.pageY))
+            mouse = @_roundCoordsToGrid(
+              adjustCoords(x: evt.pageX, y: evt.pageY)
+            )
             if mouse.x < selection.pos.x
               # cursor is left of where the selection started
               x = mouse.x
@@ -363,7 +368,12 @@ define 'editor.viewport', ->
 
     _initBounds: ->
       offset = @$elem.offset()
-      @bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height)
+      @bounds = require('game.Bounds').rect(
+        offset.left,
+        offset.top,
+        offset.width,
+        offset.height
+      )
 
     _addEventsToMapObjects: ($draggees) ->
       evtns = 'editor.viewport.layer-tiles.tool-normal'

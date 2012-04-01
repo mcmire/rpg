@@ -6,8 +6,10 @@
     meta = require('meta');
     eventable = require('roles').eventable;
     KEYS = {
+      KEY_BACKSPACE: 8,
       KEY_TAB: 9,
       KEY_ESC: 27,
+      KEY_DELETE: 46,
       KEY_SHIFT: 16,
       KEY_CTRL: 17,
       KEY_ALT: 18,
@@ -16,14 +18,12 @@
       KEY_DOWN: 40,
       KEY_LEFT: 37,
       KEY_RIGHT: 39,
+      KEY_1: 49,
+      KEY_2: 50,
       KEY_W: 87,
       KEY_A: 65,
       KEY_S: 83,
-      KEY_D: 68,
-      KEY_H: 72,
-      KEY_J: 74,
-      KEY_K: 75,
-      KEY_L: 76
+      KEY_D: 68
     };
     MODIFIER_KEYS = [KEYS.KEY_SHIFT, KEYS.KEY_CTRL, KEYS.KEY_ALT, KEYS.KEY_META];
     PressedKeys = meta.def({
@@ -36,6 +36,9 @@
       },
       get: function(key) {
         return this.tsByKey[key];
+      },
+      getMostRecent: function() {
+        return this.keys[0];
       },
       put: function(key, ts) {
         if (this.has(key)) this.del(key);
@@ -65,6 +68,7 @@
       }
     });
     KeyTracker = meta.def({
+      KEY_TIMEOUT: 500,
       init: function(keyCodes) {
         this.trackedKeys = $.v.reduce(keyCodes, (function(o, c) {
           o[c] = 1;
@@ -91,25 +95,21 @@
         return false;
       },
       isKeyPressed: function() {
-        var key, keyCode, keys, _i, _len, _ref;
-        keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-        _ref = $.flatten(keys);
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          key = _ref[_i];
-          keyCode = keyboard.keyCodeFor(key);
-          if (self.pressedKeys.has(keyCode)) return true;
-        }
-        return false;
+        var keyCodes,
+          _this = this;
+        keyCodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return !!$.v.find(keyCodes, function(keyCode) {
+          return _this.pressedKeys.has(keyCode);
+        });
       },
       clearStuckKeys: function(now) {
-        var self;
-        self = this;
+        var _this = this;
         return this.pressedKeys.each(function(key, ts) {
-          if ((now - ts) >= 500) return self.pressedKeys.del(key);
+          if ((now - ts) >= KEY_TIMEOUT) return _this.pressedKeys.del(key);
         });
       },
       getLastPressedKey: function() {
-        return this.pressedKeys.keys[0];
+        return this.pressedKeys.getMostRecent();
       }
     });
     keyboard = meta.def(eventable, {
@@ -181,44 +181,18 @@
         this.keyTrackers.splice(this.keyTrackers.indexOf(tracker), 1);
         return this;
       },
-      trapKeys: function() {
-        var key, keys, _i, _len;
-        keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-        keys = game.util.ensureArray(keys);
-        for (_i = 0, _len = keys.length; _i < _len; _i++) {
-          key = keys[_i];
-          if (typeof key === 'string') key = KEYS[key];
-          this.trappedKeys[key] = 1;
-        }
-        return this;
-      },
-      releaseKeys: function() {
-        var key, keys, _i, _len;
-        keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-        keys = game.util.ensureArray(keys);
-        for (_i = 0, _len = keys.length; _i < _len; _i++) {
-          key = keys[_i];
-          if (typeof key === 'string') key = KEYS[key];
-          delete this.trappedKeys[key];
-        }
-        return this;
-      },
       isKeyPressed: function() {
-        var keys, tracker;
+        var evt, keys;
+        evt = arguments[0], keys = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return $.includes(this.keyCodesFor(keys), evt.keyCode);
+      },
+      isTrackedKeyPressed: function() {
+        var keys,
+          _this = this;
         keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-        if ((function() {
-          var _i, _len, _ref, _results;
-          _ref = this.keyTrackers;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            tracker = _ref[_i];
-            _results.push(tracker.isKeyPressed(keys));
-          }
-          return _results;
-        }).call(this)) {
-          return true;
-        }
-        return false;
+        return !!$.v.find(this.keyTrackers, function(tracker) {
+          return tracker.isKeyPressed(_this.keyCodesFor(keyCodes));
+        });
       },
       clearStuckKeys: function(now) {
         var tracker, _i, _len, _ref;
@@ -232,25 +206,32 @@
       modifierKeyPressed: function(event) {
         return event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
       },
-      keyCodesFor: function() {
-        var keys;
-        keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-        keys = game.util.ensureArray(keys);
-        return $.map(keys, function(key) {
-          return keyboard.keyCodeFor(key);
-        });
+      keyCodesFor: function(keys) {
+        var key, _i, _len, _ref, _results;
+        _ref = $.flatten(keys);
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          key = _ref[_i];
+          _results.push(this.keyCodeFor(key));
+        }
+        return _results;
       },
       keyCodeFor: function(key) {
-        var keyCode;
+        var givenKey, keyCode;
+        givenKey = key;
         if (typeof key === 'string') {
+          if (!/^KEY_/.test(key)) key = "KEY_" + (key.toUpperCase());
           keyCode = KEYS[key];
-          if (!keyCode) throw new Error("'" + arg + "' is not a valid key");
+          if (!keyCode) {
+            throw new Error("'" + givenKey + "' is not a known key. Known keys are: " + ($.v.keys(KEYS).join(", ")));
+          }
           return keyCode;
         } else {
           return key;
         }
       }
     });
+    keyboard.isKeyUnpressed = keyboard.isKeyPressed;
     return keyboard;
   });
 

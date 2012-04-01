@@ -2,15 +2,14 @@
   var __hasProp = Object.prototype.hasOwnProperty;
 
   define('editor.viewport', function() {
-    var Bounds, GRID_SIZE, meta, util;
+    var GRID_SIZE, meta;
     meta = require('meta');
-    util = require('util');
-    Bounds = require('game.Bounds');
     require('editor.DropTarget');
     GRID_SIZE = 16;
     return meta.def({
       init: function(core) {
         this.core = core;
+        this.keyboard = this.core.keyboard;
         this.$elem = $('#editor-viewport');
         this._initMapGrid();
         this._initMapElement();
@@ -23,6 +22,7 @@
         this.objectId = 0;
         return this;
       },
+      addEvents: function() {},
       getElement: function() {
         return this.$elem;
       },
@@ -37,7 +37,7 @@
       loadMap: function() {
         var data, dragEntered, mouse, objectsByLayer,
           _this = this;
-        this.map = Bounds.rect(0, 0, 1024, 1024);
+        this.map = require('game.Bounds').rect(0, 0, 1024, 1024);
         mouse = null;
         dragEntered = null;
         this.$elemBeingDragged = null;
@@ -75,7 +75,7 @@
         }
       },
       activate_tiles_normal_tool: function() {
-        var BACKSPACE_KEY, DELETE_KEY, evtns, layerSel, mapObjectsSel, viewport,
+        var evtns, layerSel, mapObjectsSel, viewport,
           _this = this;
         evtns = 'editor.viewport.layer-tiles.tool-normal';
         viewport = this;
@@ -102,11 +102,9 @@
           _this.$map.find('.editor-map-object').removeClass('editor-selected');
           return _this.$map.find('.editor-map-object[data-is-selected=yes]').addClass('editor-selected').removeAttr('data-is-selected');
         });
-        BACKSPACE_KEY = 8;
-        DELETE_KEY = 46;
         return $(window).bind("keydown." + evtns, function(evt) {
           var $selectedObjects;
-          if (evt.keyCode === DELETE_KEY || evt.keyCode === BACKSPACE_KEY) {
+          if (_this.keyboard.isKeyPressed(evt, 'backspace', 'delete')) {
             evt.preventDefault();
             $selectedObjects = _this.$map.find('.editor-map-object.editor-selected');
             if ($selectedObjects.length) {
@@ -358,7 +356,7 @@
       _initBounds: function() {
         var offset;
         offset = this.$elem.offset();
-        return this.bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height);
+        return this.bounds = require('game.Bounds').rect(offset.left, offset.top, offset.width, offset.height);
       },
       _addEventsToMapObjects: function($draggees) {
         var evtns;
