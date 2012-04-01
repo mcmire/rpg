@@ -324,7 +324,7 @@
         }
       },
       activate_fill_layer: function() {
-        return this._initTools(['normal', 'hand', 'select', 'bucket']);
+        return this._initTools(['normal', 'hand', 'select']);
       },
       activate_tiles_layer: function() {
         return this._initTools(['normal', 'hand']);

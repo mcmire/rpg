@@ -314,18 +314,16 @@ define 'editor.core', ->
         @viewport[m1]?()
 
     activate_fill_layer: ->
-      # we want normal, hand, select, and bucket tools
+      # we want normal, hand, select tools
       # - normal tool will select areas so you can delete them and enable moving
       #   objects
       # - hand tool will move the map around
       # - select tool will let you select an area on the map
-      # - bucket tool will let you fill in that area with a color - filling in an
-      #   area will create it - or you can fill the entire map with a color
       #
       # in addition selecting the fill layer will populate the sidebar with a
       # color picker
 
-      @_initTools ['normal', 'hand', 'select', 'bucket']
+      @_initTools ['normal', 'hand', 'select']
 
     activate_tiles_layer: ->
       # we want normal and hand tools
