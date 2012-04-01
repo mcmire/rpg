@@ -7,11 +7,11 @@
 
 /*!
   * Ender: open module JavaScript framework (client-lib)
-  * copyright Dustin Diaz & Jacob Thornton 2011 (@ded @fat)
+  * copyright Dustin Diaz & Jacob Thornton 2011-2012 (@ded @fat)
   * http://ender.no.de
   * License MIT
   */
-!function (context) {
+(function (context) {
 
   // a global object for node.js module compatiblity
   // ============================================
@@ -24,16 +24,18 @@
 
   var modules = {}
     , old = context.$
+    , oldRequire = context['require']
+    , oldProvide = context['provide']
 
   function require (identifier) {
     // modules can be required from ender's build system, or found on the window
-    var module = modules[identifier] || window[identifier]
-    if (!module) throw new Error("Requested module '" + identifier + "' has not been defined.")
+    var module = modules['$' + identifier] || window[identifier]
+    if (!module) throw new Error("Ender Error: Requested module '" + identifier + "' has not been defined.")
     return module
   }
 
   function provide (name, what) {
-    return (modules[name] = what)
+    return (modules['$' + name] = what)
   }
 
   context['provide'] = provide
@@ -44,12 +46,22 @@
     return o
   }
 
+  /**
+    * main Ender return object
+    * @param s a CSS selector or DOM node(s)
+    * @param r a root node(s)
+    * @return {array} an Ender chainable collection
+    */
   function boosh(s, r, els) {
     // string || node || nodelist || window
-    if (typeof s == 'string' || s.nodeName || (s.length && 'item' in s) || s == window) {
+    if (typeof s == 'undefined') {
+      els = []
+    } else if (typeof s == 'string' || s.nodeName || (s.length && 'item' in s) || s == window) {
       els = ender._select(s, r)
       els.selector = s
-    } else els = isFinite(s.length) ? s : [s]
+    } else {
+      els = isFinite(s.length) ? s : [s]
+    }
     return aug(els, boosh)
   }
 
@@ -57,30 +69,39 @@
     return boosh(s, r)
   }
 
+  ender._VERSION = '0.3.8'
+
   aug(ender, {
-      _VERSION: '0.3.6'
-    , fn: boosh // for easy compat to jQuery plugins
+      fn: boosh // for easy compat to jQuery plugins
     , ender: function (o, chain) {
         aug(chain ? boosh : ender, o)
       }
     , _select: function (s, r) {
-        return (r || document).querySelectorAll(s)
+        if (typeof s == 'string') return (r || document).querySelectorAll(s)
+        if (s.nodeName) return [ s ]
+        return s
       }
   })
 
   aug(boosh, {
-    forEach: function (fn, scope, i) {
-      // opt out of native forEach so we can intentionally call our own scope
-      // defaulting to the current item and be able to return self
-      for (i = 0, l = this.length; i < l; ++i) i in this && fn.call(scope || this[i], this[i], i, this)
-      // return self for chaining
-      return this
-    },
-    $: ender // handy reference to self
+      forEach: function (fn, scope, i, l) {
+        // opt out of native forEach so we can intentionally call our own scope
+        // defaulting to the current item and be able to return self
+        for (i = 0, l = this.length; i < l; ++i) i in this && fn.call(scope || this[i], this[i], i, this)
+        // return self for chaining
+        return this
+      }
+    , $: ender // handy reference to self
   })
 
-  ender.noConflict = function () {
+  // use callback to receive Ender's require & provide
+  ender.noConflict = function (callback) {
     context.$ = old
+    if (callback) {
+      context['provide'] = oldProvide
+      context['require'] = oldRequire
+      callback(require, provide, this)
+    }
     return this
   }
 
@@ -88,7 +109,8 @@
   // use subscript notation as extern for Closure compilation
   context['ender'] = context['$'] = context['ender'] || ender
 
-}(this);
+}(this));
+
 
 !function () {
 
@@ -175,11 +197,11 @@
     * MIT License
     */
 
-  !function (name, definition) {
+  (function (name, definition) {
     if (typeof module != 'undefined') module.exports = definition()
     else if (typeof define == 'function' && typeof define.amd == 'object') define(definition)
     else this[name] = definition()
-  }('qwery', function () {
+  })('qwery', function () {
     var doc = document
       , html = doc.documentElement
       , byClass = 'getElementsByClassName'
@@ -535,12 +557,12 @@
     qwery.pseudos = {}
 
     return qwery
-  })
+  });
 
 
   provide("qwery", module.exports);
 
-  !function (doc, $) {
+  (function (doc, $) {
     var q = require('qwery')
 
     $.pseudos = q.pseudos
@@ -550,7 +572,7 @@
       // rather than load-time since technically it's not a dependency and
       // can be loaded in any order
       // hence the lazy function re-definition
-      return ($._select = (function(b) {
+      return ($._select = (function (b) {
         try {
           b = require('bonzo')
           return function (s, r) {
@@ -587,7 +609,7 @@
           return false
         }
     }, true)
-  }(document, ender);
+  }(document, ender));
 
 
 }();
@@ -748,7 +770,7 @@
             if (isNative) { // we only need basic augmentation on custom events, the rest is too expensive
               if (type.indexOf('key') !== -1) {
                 props = keyProps
-                result.keyCode = event.which || event.keyCode
+                result.keyCode = event.keyCode || event.which
               } else if (mouseTypeRegex.test(type)) {
                 props = mouseProps
                 result.rightClick = event.which === 3 || event.button === 2
@@ -797,8 +819,8 @@
           }
 
           entry.prototype = {
-              // given a list of namespaces, does our entry have all of them?
-              hasNamespaces: function(checkNamespaces) {
+              // given a list of namespaces, is our entry have all of them?
+              hasNamespaces: function (checkNamespaces) {
                 var i, j, isFound
                 if (!checkNamespaces)
                   return true
@@ -816,7 +838,6 @@
                 }
                 return true
               }
-
 
               // match by element, original fn (opt), handler fn (opt)
             , matches: function (checkElement, checkOriginal, checkHandler) {
@@ -1227,11 +1248,11 @@
     * https://github.com/ded/bonzo
     * License MIT
     */
-  !function (name, definition) {
+  (function (name, definition) {
     if (typeof module != 'undefined') module.exports = definition()
     else if (typeof define == 'function' && define.amd) define(name, definition)
     else this[name] = definition()
-  }('bonzo', function() {
+  })('bonzo', function() {
     var context = this
       , win = window
       , doc = win.document
@@ -1285,7 +1306,7 @@
       , trimReplace = /(^\s*|\s*$)/g
       , whitespaceRegex = /\s+/
       , toString = String.prototype.toString
-      , unitless = { lineHeight: 1, zoom: 1, zIndex: 1, opacity: 1 }
+      , unitless = { lineHeight: 1, zoom: 1, zIndex: 1, opacity: 1, boxFlex: 1, WebkitBoxFlex: 1, MozBoxFlex: 1 }
       , trim = String.prototype.trim ?
           function (s) {
             return s.trim()
@@ -1544,10 +1565,10 @@
               this.empty().each(function (el) {
                 !text && specialTags.test(el.tagName) ?
                   append(el) :
-                  !function() {
+                  (function () {
                     try { (el[method] = h) }
                     catch(e) { append(el) }
-                  }();
+                  }())
               }) :
             this[0] ? this[0][method] : ''
         }
@@ -2049,7 +2070,7 @@
 
   provide("bonzo", module.exports);
 
-  !function ($) {
+  (function ($) {
 
     var b = require('bonzo')
     b.setQueryEngine($)
@@ -2175,8 +2196,7 @@
         ? b(this).dim()[type]
         : this.css(type, v)
     }
-  }(ender);
-
+  }(ender));
 
 }();
 
@@ -2191,16 +2211,16 @@
     * License MIT
     */
 
-  !function (name, definition) {
+  (function (name, definition) {
     if (typeof module != 'undefined') module.exports = definition()
     else if (typeof define == 'function') define(definition)
     else this[name] = this['v'] = definition()
-  }('valentine', function () {
+  })('valentine', function () {
 
     var context = this
       , old = context.v
       , ap = []
-      , op = {}
+      , hasOwn = Object.prototype.hasOwnProperty
       , n = null
       , slice = ap.slice
       , nativ = 'map' in ap
@@ -2454,7 +2474,7 @@
       }
 
     , args: function (a) {
-        return !!(a && op.hasOwnProperty.call(a, 'callee'))
+        return !!(a && hasOwn.call(a, 'callee'))
       }
 
     , emp: function (o) {
@@ -2504,7 +2524,7 @@
         is.arrLike(a) ?
           iters.each(a, fn, scope) : (function () {
             for (var k in a) {
-              op.hasOwnProperty.call(a, k) && fn.call(scope, k, a[k], a)
+              hasOwn.call(a, k) && fn.call(scope, k, a[k], a)
             }
           }())
       }
@@ -2514,7 +2534,7 @@
         return is.arrLike(a) ?
           iters.map(a, fn, scope) : !function () {
             for (var k in a) {
-              op.hasOwnProperty.call(a, k) && (r[i++] = fn.call(scope, k, a[k], a))
+              hasOwn.call(a, k) && (r[i++] = fn.call(scope, k, a[k], a))
             }
           }() && r
       }
@@ -2557,7 +2577,7 @@
         } :
         function (obj) {
           var keys = [], key
-          for (key in obj) if (op.hasOwnProperty.call(obj, key)) keys[keys.length] = key
+          for (key in obj) if (hasOwn.call(obj, key)) keys[keys.length] = key
           return keys
         }
 
@@ -2729,8 +2749,7 @@
     }
 
     return v
-  })
-
+  });
 
   provide("valentine", module.exports);
 
