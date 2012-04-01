@@ -72,3 +72,5 @@
 
 * Snap the selection box to the nearest grid guide, but not by rounding -- if
   cursor is within 5 pixels of a guide, snap it otherwise do nothing
+
+* Bind viewport events to viewport.$elem rather than viewport.$map

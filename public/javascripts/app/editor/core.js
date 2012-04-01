@@ -21,10 +21,10 @@
         this._loadImages();
         return this._whenImagesLoaded(function() {
           _this._populateMapObjects();
-          _this.viewport.loadMap();
           _this._initLayers();
           _this._initToolbox();
-          return _this._changeLayerTo(0);
+          _this._changeLayerTo(0);
+          return _this.viewport.loadMap();
         });
       },
       getLayers: function() {
@@ -37,7 +37,7 @@
         return this.findLayer(this.getCurrentLayer());
       },
       findLayer: function(layer) {
-        return this.viewport.$map.find(".editor-layer[data-layer=" + layer + "]");
+        return this.viewport.getMapLayers().find(".editor-layer[data-layer=" + layer + "]");
       },
       _resizeUI: function() {
         var h, nh, sw, wh, win, ww;
@@ -169,19 +169,17 @@
         return this.sidebarPopulated = true;
       },
       _initLayers: function() {
-        var layer, that, _i, _j, _len, _len2,
+        var layer, that, _i, _len,
           _this = this;
         that = this;
-        for (_i = 0, _len = LAYER_NAMES.length; _i < _len; _i++) {
-          layer = LAYER_NAMES[_i];
-          this.$sidebar.append("<div data-layer=\"" + layer + "\"></div>");
-        }
         this.$layerChooser = $('#editor-layer-chooser select').change(function() {
           return that._selectLayer(this.value);
         });
-        for (_j = 0, _len2 = LAYER_NAMES.length; _j < _len2; _j++) {
-          layer = LAYER_NAMES[_j];
+        for (_i = 0, _len = LAYER_NAMES.length; _i < _len; _i++) {
+          layer = LAYER_NAMES[_i];
+          this.$sidebar.append("<div data-layer=\"" + layer + "\"></div>");
           this.$layerChooser.append("<option data-layer=\"" + layer + "\">" + layer + "</option>");
+          this.viewport.addLayer(layer);
         }
         return $(window).bind('keyup', function(evt) {
           var index;
@@ -202,7 +200,7 @@
         var $layer, layer, m, _base;
         layer = this.currentLayer;
         $layer = this.viewport.$map.find(".editor-layer[data-layer=" + layer + "]").addClass('editor-layer-selected').detach();
-        this.viewport.$map.append($layer);
+        this.viewport.getMapLayers().append($layer);
         $(document.body).addClass("editor-layer-" + layer);
         this.$sidebar.find("> div[data-layer=" + layer).show();
         m = "activate_" + layer + "_layer";
@@ -262,26 +260,21 @@
         return $(window).unbind('.' + evtns);
       },
       _initHandTool: function() {
-        var CTRL_KEY, SHIFT_KEY, evtns, mouse,
+        var evtns, prevTool,
           _this = this;
         evtns = 'editor.core.tools';
-        SHIFT_KEY = 16;
-        CTRL_KEY = 17;
-        mouse = {};
+        prevTool = null;
         return $(window).bind("keydown." + evtns, function(evt) {
           if (_this.keyboard.isKeyPressed(evt, 'shift')) {
-            _this.prevTool = _this.currentTool;
-            _this._selectTool('hand');
-            return evt.preventDefault();
+            evt.preventDefault();
+            prevTool = _this.currentTool;
+            return _this._selectTool('hand');
           }
         }).bind("keyup." + evtns, function(evt) {
           if (_this.keyboard.isKeyUnpressed(evt, 'shift')) {
-            _this._selectTool(_this.prevTool);
-            return _this.prevTool = null;
+            _this._selectTool(prevTool);
+            return prevTool = null;
           }
-        }).bind("mousemove." + evtns, function(evt) {
-          mouse.x = evt.pageX;
-          return mouse.y = evt.pageY;
         });
       },
       _selectTool: function(tool) {

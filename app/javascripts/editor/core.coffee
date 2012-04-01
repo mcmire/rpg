@@ -23,10 +23,10 @@ define 'editor.core', ->
       @_loadImages()
       @_whenImagesLoaded =>
         @_populateMapObjects()
-        @viewport.loadMap()
         @_initLayers()
         @_initToolbox()
         @_changeLayerTo(0)   # currentTool is already set
+        @viewport.loadMap()
 
     getLayers: -> LAYER_NAMES
 
@@ -35,8 +35,9 @@ define 'editor.core', ->
     getCurrentLayerElem: ->
       @findLayer(@getCurrentLayer())
 
+    # TODO: Move to viewport
     findLayer: (layer) ->
-      @viewport.$map.find(".editor-layer[data-layer=#{layer}]")
+      @viewport.getMapLayers().find(".editor-layer[data-layer=#{layer}]")
 
     _resizeUI: ->
       win = $.viewport()
@@ -159,13 +160,13 @@ define 'editor.core', ->
     _initLayers: ->
       that = this
 
-      for layer in LAYER_NAMES
-        @$sidebar.append """<div data-layer="#{layer}"></div>"""
-
       @$layerChooser = $('#editor-layer-chooser select')
         .change -> that._selectLayer(@value)
+
       for layer in LAYER_NAMES
+        @$sidebar.append """<div data-layer="#{layer}"></div>"""
         @$layerChooser.append """<option data-layer="#{layer}">#{layer}</option>"""
+        @viewport.addLayer(layer)
 
       $(window).bind 'keyup', (evt) =>
         index = LAYER_KEYS.indexOf(evt.keyCode)
@@ -188,7 +189,7 @@ define 'editor.core', ->
         .addClass('editor-layer-selected')
         .detach()
       # put on top of all other elements
-      @viewport.$map.append($layer)
+      @viewport.getMapLayers().append($layer)
       $(document.body).addClass("editor-layer-#{layer}")
 
       @$sidebar.find("> div[data-layer=#{layer}").show()
@@ -252,22 +253,17 @@ define 'editor.core', ->
 
     _initHandTool: ->
       evtns = 'editor.core.tools'
-      SHIFT_KEY = 16
-      CTRL_KEY = 17
-      mouse = {}
+      prevTool = null
       $(window)
         .bind "keydown.#{evtns}", (evt) =>
           if @keyboard.isKeyPressed(evt, 'shift')
-            @prevTool = @currentTool
-            @_selectTool('hand')
             evt.preventDefault()
+            prevTool = @currentTool
+            @_selectTool('hand')
         .bind "keyup.#{evtns}", (evt) =>
           if @keyboard.isKeyUnpressed(evt, 'shift')
-            @_selectTool(@prevTool)
-            @prevTool = null
-        .bind "mousemove.#{evtns}", (evt) =>
-          mouse.x = evt.pageX
-          mouse.y = evt.pageY
+            @_selectTool(prevTool)
+            prevTool = null
 
     _selectTool: (tool) ->
       @_deactivateCurrentTool()

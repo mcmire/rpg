@@ -10,17 +10,18 @@ define 'editor.viewport', ->
       @keyboard = @core.keyboard
 
       @$elem = $('#editor-viewport')
+      @$map = $('#editor-map')
       @_initMapGrid()
-      @_initMapElement()
+      @$mapLayers = $('#editor-map-layers')
       @_initBounds()
       @map = null
       @objectsByLayer = $.v.reduce @core.getLayers(), ((h, n) -> h[n] = {}; h), {}
       @objectId = 0
       return this
 
-    addEvents: ->
-
     getElement: -> @$elem
+
+    getMapLayers: -> @$mapLayers
 
     setWidth: (width) ->
       @$elem.width(width)
@@ -30,26 +31,29 @@ define 'editor.viewport', ->
       @$elem.height(height)
       @bounds.setHeight(height)
 
+    addLayer: (layer) ->
+      $layer = $("""
+        <div class="editor-layer" data-layer="#{layer}">
+          <div class="editor-layer-bg"></div>
+          <div class="editor-layer-content"></div>
+        </div>
+      """)
+      # $layer.css('z-index', (i + 1) * 10)
+      @$mapLayers.append($layer)
+
     loadMap: ->
       @map = require('game.Bounds').rect(0, 0, 1024, 1024)
 
-      mouse = null
-      dragEntered = null
-      @$elemBeingDragged = null
-      @objectBeingDragged = null
-
       @$map
-        .size(w: @map.width, h: @map.height)
         .removeClass('editor-map-unloaded')
-      @$mapGrid
         .size(w: @map.width, h: @map.height)
 
       # TODO: Refactor
       # localStorage.removeItem('editor.map')
       if data = localStorage.getItem('editor.map')
-        console.log 'map data': data
         try
           objectsByLayer = JSON.parse(data)
+          console.log 'map data': data
           $.v.each objectsByLayer, (layer, objects) =>
             $.v.each objects, (o) =>
               object = @core.objectsByName[o.name]
@@ -131,7 +135,8 @@ define 'editor.viewport', ->
 
     activate_hand_tool: ->
       evtns = 'editor.viewport.tool-hand'
-      @$map
+      dragActive = false
+      @$elem
         .bind "mousedown.#{evtns}", (evt) =>
           console.log 'viewport: mousedown (hand tool)'
 
@@ -148,6 +153,11 @@ define 'editor.viewport', ->
           evt.preventDefault()
 
           $(window).bind "mousemove.#{evtns}", (evt) =>
+            unless dragActive
+              # do only when the drag starts
+              $(document.body).addClass('editor-drag-active')
+              dragActive = true
+
             x = evt.pageX
             y = evt.pageY
 
@@ -178,13 +188,14 @@ define 'editor.viewport', ->
             evt.preventDefault()
 
           $(window).one "mouseup.#{evtns}", (evt) =>
-            if mouse
-              mouse = null
+            $(document.body).removeClass('editor-drag-active')
+            dragActive = false
+            mouse = null
             $(window).unbind "mousemove.#{evtns}"
 
     deactivate_hand_tool: ->
       evtns = 'editor.viewport.tool-hand'
-      @$map.unbind(".#{evtns}")
+      @$elem.unbind(".#{evtns}")
       $(window).unbind(".#{evtns}")
 
     activate_fill_select_tool: ->
@@ -353,18 +364,6 @@ define 'editor.viewport', ->
       @$mapGrid = $('#editor-map-grid')
         .css('background-image', "url(#{mapGrid.element.toDataURL()})")
         .css('background-repeat', 'repeat')
-
-    _initMapElement: ->
-      @$map = $('#editor-map')
-      for layer, i in @core.getLayers()
-        $layer = $("""
-          <div class="editor-layer" data-layer="#{layer}">
-            <div class="editor-layer-bg"></div>
-            <div class="editor-layer-content"></div>
-          </div>
-        """)
-        # $layer.css('z-index', (i + 1) * 10)
-        @$map.append($layer)
 
     _initBounds: ->
       offset = @$elem.offset()

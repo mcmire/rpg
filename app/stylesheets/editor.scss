@@ -1,4 +1,12 @@
 
+@mixin absfill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
 // prevent rubber-band effect in webkit browsers when scrolling
 // http://mir.aculo.us/2011/07/29/prevent-rubber-band-scrolling-for-single-page-apps-in-safari-5-1/
 html, body {
@@ -12,46 +20,19 @@ body {
   font-family: Helvetica Neue, Arial, sans-serif;
 }
 
-.editor-drag-active,
+.editor-tool-normal .editor-drag-active,
 .editor-tool-normal .editor-map-object,
 #editor-sidebar div.img {
   cursor: move
 }
 
+.editor-tool-hand #editor-viewport,
+.editor-tool-hand .editor-drag-active {
+  cursor: url(/images/editor/tool-hand.gif), auto;
+}
+
 .editor-tool-select #editor-viewport {
   cursor: crosshair;
-}
-
-@mixin absfill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-#editor-viewport {
-  .editor-layer, .editor-layer-content, .editor-layer-bg {
-    @include absfill();
-  }
-  .editor-layer-content {
-    opacity: 0.5;
-  }
-  .editor-layer-bg {
-    background: white;
-  }
-  .editor-layer-selected {
-    .editor-layer-content {
-      opacity: 1
-    }
-    .editor-layer-bg {
-      opacity: 0.5;
-    }
-  }
-}
-
-#editor-map-grid {
-  @include absfill();
 }
 
 #editor-nav {
@@ -77,6 +58,28 @@ body {
 
 $sidebar-width: 300px;
 
+#editor-sidebar {
+  $spacing: 10px;
+
+  position: absolute;
+  width: $sidebar-width;
+  // height is determined via JS
+  top: 0;
+  right: 0;
+  background-color: #999;
+  height: 300px;
+  padding: $spacing;
+  overflow-y: scroll;
+
+  div.img {
+    display: inline-block;
+    vertical-align: top;
+    margin-right: $spacing;
+    margin-bottom: $spacing;
+    overflow: hidden;
+  }
+}
+
 #editor-viewport {
   position: absolute;
   top: 0;
@@ -87,6 +90,24 @@ $sidebar-width: 300px;
   background-color: silver;
   height: 300px;
   overflow: hidden;
+
+  .editor-layer, .editor-layer-content, .editor-layer-bg {
+    @include absfill();
+  }
+  .editor-layer-content {
+    opacity: 0.5;
+  }
+  .editor-layer-bg {
+    background: white;
+  }
+  .editor-layer-selected {
+    .editor-layer-content {
+      opacity: 1
+    }
+    .editor-layer-bg {
+      opacity: 0.5;
+    }
+  }
 
   .editor-dragged-image {
     position: absolute;
@@ -109,6 +130,10 @@ $sidebar-width: 300px;
   &.editor-map-unloaded {
     display: none
   }
+}
+
+#editor-map-content, #editor-map-grid {
+  @include absfill();
 }
 
 #editor-toolbox {
@@ -136,28 +161,6 @@ $sidebar-width: 300px;
   }
 }
 
-#editor-sidebar {
-  $spacing: 10px;
-
-  position: absolute;
-  width: $sidebar-width;
-  // height is determined via JS
-  top: 0;
-  right: 0;
-  background-color: #999;
-  height: 300px;
-  padding: $spacing;
-  overflow-y: scroll;
-
-  div.img {
-    display: inline-block;
-    vertical-align: top;
-    margin-right: $spacing;
-    margin-bottom: $spacing;
-    overflow: hidden;
-  }
-}
-
 .editor-map-object {
   position: absolute;
   z-index: 5;
@@ -167,7 +170,7 @@ $sidebar-width: 300px;
   }
 }
 
-// marching ants like it's 1995
+// marching ants like it's 1991
 // http://sunpig.com/martin/archives/2010/02/10/marching-ants-in-css.html
 .editor-selection-box {
   position: absolute;

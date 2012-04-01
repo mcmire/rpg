@@ -7,35 +7,17 @@ body {
   padding: 0;
   font-family: Helvetica Neue, Arial, sans-serif; }
 
-.editor-drag-active,
+.editor-tool-normal .editor-drag-active,
 .editor-tool-normal .editor-map-object,
 #editor-sidebar div.img {
   cursor: move; }
 
+.editor-tool-hand #editor-viewport,
+.editor-tool-hand .editor-drag-active {
+  cursor: url(/images/editor/tool-hand.gif), auto; }
+
 .editor-tool-select #editor-viewport {
   cursor: crosshair; }
-
-#editor-viewport .editor-layer, #editor-viewport .editor-layer-content, #editor-viewport .editor-layer-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%; }
-#editor-viewport .editor-layer-content {
-  opacity: 0.5; }
-#editor-viewport .editor-layer-bg {
-  background: white; }
-#editor-viewport .editor-layer-selected .editor-layer-content {
-  opacity: 1; }
-#editor-viewport .editor-layer-selected .editor-layer-bg {
-  opacity: 0.5; }
-
-#editor-map-grid {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%; }
 
 #editor-nav {
   background: #222;
@@ -52,6 +34,22 @@ body {
 #editor-main {
   position: relative; }
 
+#editor-sidebar {
+  position: absolute;
+  width: 300px;
+  top: 0;
+  right: 0;
+  background-color: #999;
+  height: 300px;
+  padding: 10px;
+  overflow-y: scroll; }
+  #editor-sidebar div.img {
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    overflow: hidden; }
+
 #editor-viewport {
   position: absolute;
   top: 0;
@@ -61,6 +59,20 @@ body {
   background-color: silver;
   height: 300px;
   overflow: hidden; }
+  #editor-viewport .editor-layer, #editor-viewport .editor-layer-content, #editor-viewport .editor-layer-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; }
+  #editor-viewport .editor-layer-content {
+    opacity: 0.5; }
+  #editor-viewport .editor-layer-bg {
+    background: white; }
+  #editor-viewport .editor-layer-selected .editor-layer-content {
+    opacity: 1; }
+  #editor-viewport .editor-layer-selected .editor-layer-bg {
+    opacity: 0.5; }
   #editor-viewport .editor-dragged-image {
     position: absolute;
     z-index: 10; }
@@ -76,6 +88,13 @@ body {
   left: 0; }
   #editor-map.editor-map-unloaded {
     display: none; }
+
+#editor-map-content, #editor-map-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; }
 
 #editor-toolbox {
   border-radius: 5px;
@@ -96,22 +115,6 @@ body {
     opacity: 0.5; }
     #editor-toolbox > img:hover, #editor-toolbox > img.editor-active {
       opacity: 1; }
-
-#editor-sidebar {
-  position: absolute;
-  width: 300px;
-  top: 0;
-  right: 0;
-  background-color: #999;
-  height: 300px;
-  padding: 10px;
-  overflow-y: scroll; }
-  #editor-sidebar div.img {
-    display: inline-block;
-    vertical-align: top;
-    margin-right: 10px;
-    margin-bottom: 10px;
-    overflow: hidden; }
 
 .editor-map-object {
   position: absolute;
