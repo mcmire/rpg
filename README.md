@@ -92,5 +92,9 @@ feel free to contact me through these channels:
 
 ## License
 
-All code here is free to use for commercial and personal purposes. An attached
-courtesy is not required, but appreciated. Use your powers wisely. Be nice!
+All code here is free to use for personal and commercial purposes. If you learn
+something from it, awesome. If it powers your multi-million dollar enterprise,
+even better. If it gets put in a computer on a rocket to Mars, fantastic. I'm
+not going to sue you, I really don't care. You don't even have to attach a
+courtesy if you don't want (though it's the neighborly thing to do). Basically,
+use your powers wisely. Be nice!
