@@ -185,12 +185,13 @@
         return $(window).unbind("." + evtns);
       },
       activate_fill_select_tool: function() {
-        var $layerElem, SELECTION_ACTIVATION_OFFSET, activeSelections, adjustCoords, clearActiveSelections, evtns, mouseDownAt, selectionEvents,
+        var $layerElem, activeSelections, adjustCoords, clearActiveSelections, currentSelection, dragStarted, evtns, mouseDownAt, selectionEvents,
           _this = this;
         evtns = 'editor.viewport.layer-fill.tool-select';
+        dragStarted = false;
         mouseDownAt = null;
         activeSelections = [];
-        SELECTION_ACTIVATION_OFFSET = 4;
+        currentSelection = null;
         $layerElem = this.core.getCurrentLayerElem().find('.editor-layer-content');
         clearActiveSelections = function() {
           activeSelections = [];
@@ -225,45 +226,51 @@
             y: p.y - _this.bounds.y1
           };
         };
-        this.$elem.bind("mousedown." + evtns, function(evt) {
-          var selectionStartedAt;
-          if (evt.button === 2) return;
+        this.$elem.bind("contextmenu." + evtns, function(evt) {
+          return evt.preventDefault();
+        }).bind("mousedown." + evtns, function(evt) {
+          var addNewSelection, selectionStartedAt;
+          if (evt.button === 2 || (evt.ctrlKey && evt.button === 0)) return;
           evt.preventDefault();
+          addNewSelection = evt.altKey;
           selectionStartedAt = _this._roundCoordsToGrid(adjustCoords({
             x: evt.pageX,
             y: evt.pageY
           }));
           return _this.$elem.bind("mousemove." + evtns, function(evt) {
-            var h, mouse, selection, w, x, y;
+            var h, mouse, w, x, y;
             evt.preventDefault();
-            clearActiveSelections();
-            selectionEvents.remove();
-            selection = {};
-            selection.pos = selectionStartedAt;
-            selection.$box = $('<div class="editor-selection-box">').appendTo($layerElem);
-            activeSelections.push(selection);
+            if (!dragStarted) {
+              if (!addNewSelection) clearActiveSelections();
+              selectionEvents.remove();
+              currentSelection = {};
+              currentSelection.pos = selectionStartedAt;
+              currentSelection.$box = $('<div class="editor-selection-box">').appendTo($layerElem);
+              activeSelections.push(currentSelection);
+              dragStarted = true;
+            }
             mouse = _this._roundCoordsToGrid(adjustCoords({
               x: evt.pageX,
               y: evt.pageY
             }));
-            if (mouse.x < selection.pos.x) {
+            if (mouse.x < currentSelection.pos.x) {
               x = mouse.x;
-              w = selection.pos.x - mouse.x;
+              w = currentSelection.pos.x - mouse.x;
             } else {
-              x = selection.pos.x;
-              w = mouse.x - selection.pos.x;
+              x = currentSelection.pos.x;
+              w = mouse.x - currentSelection.pos.x;
             }
-            if (mouse.y < selection.pos.y) {
+            if (mouse.y < currentSelection.pos.y) {
               y = mouse.y;
-              h = selection.pos.y - mouse.y;
+              h = currentSelection.pos.y - mouse.y;
             } else {
-              y = selection.pos.y;
-              h = mouse.y - selection.pos.y;
+              y = currentSelection.pos.y;
+              h = mouse.y - currentSelection.pos.y;
             }
             if (w === 0 && h === 0) {
-              return selection.$box.hide();
+              return currentSelection.$box.hide();
             } else {
-              return selection.$box.show().moveTo({
+              return currentSelection.$box.show().moveTo({
                 x: x,
                 y: y
               }).size({
@@ -278,10 +285,13 @@
           return selectionEvents.remove();
         }).delegate('.editor-selection-box', "mouseup." + evtns, function(evt) {
           console.log('selection box mouseup');
+          evt.preventDefault();
           return setTimeout(selectionEvents.add, 0);
         }).bind("mouseup." + evtns, function(evt) {
           _this.$elem.unbind("mousemove." + evtns);
           mouseDownAt = null;
+          currentSelection = null;
+          dragStarted = false;
           return setTimeout(selectionEvents.add, 0);
         });
         return selectionEvents.add();

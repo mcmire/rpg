@@ -201,10 +201,10 @@ define 'editor.viewport', ->
     activate_fill_select_tool: ->
       evtns = 'editor.viewport.layer-fill.tool-select'
 
+      dragStarted = false
       mouseDownAt = null
       activeSelections = []
-
-      SELECTION_ACTIVATION_OFFSET = 4  # pixels
+      currentSelection = null
 
       $layerElem = @core.getCurrentLayerElem().find('.editor-layer-content')
 
@@ -238,13 +238,19 @@ define 'editor.viewport', ->
         y: p.y - @bounds.y1
 
       @$elem
+        .bind "contextmenu.#{evtns}", (evt) =>
+          # prevent the context menu from coming up
+          evt.preventDefault()
+
         .bind "mousedown.#{evtns}", (evt) =>
           # don't open a selection box accidentally if the map is right-clicked
-          # FIXME so this handles ctrl-click too
-          return if evt.button is 2
+          # or ctrl-clicked
+          if evt.button is 2 or (evt.ctrlKey and evt.button is 0)
+            return
 
           evt.preventDefault()
 
+          addNewSelection = evt.altKey
           selectionStartedAt = @_roundCoordsToGrid(
             adjustCoords(x: evt.pageX, y: evt.pageY)
           )
@@ -252,41 +258,44 @@ define 'editor.viewport', ->
           @$elem.bind "mousemove.#{evtns}", (evt) =>
             evt.preventDefault()
 
-            clearActiveSelections()
-            selectionEvents.remove()
-
-            selection = {}
-            selection.pos = selectionStartedAt
-            selection.$box = $('<div class="editor-selection-box">')
-              .appendTo($layerElem)
-            activeSelections.push(selection)
+            # TODO: Can we use our dnd code to detect this?
+            # Maybe define a 'dragSurface' plugin?
+            unless dragStarted
+              clearActiveSelections() unless addNewSelection
+              selectionEvents.remove()
+              currentSelection = {}
+              currentSelection.pos = selectionStartedAt
+              currentSelection.$box = $('<div class="editor-selection-box">')
+                .appendTo($layerElem)
+              activeSelections.push(currentSelection)
+              dragStarted = true
 
             mouse = @_roundCoordsToGrid(
               adjustCoords(x: evt.pageX, y: evt.pageY)
             )
-            if mouse.x < selection.pos.x
-              # cursor is left of where the selection started
+            if mouse.x < currentSelection.pos.x
+              # cursor is left of where the currentSelection started
               x = mouse.x
-              w = selection.pos.x - mouse.x
+              w = currentSelection.pos.x - mouse.x
             else
-              # cursor is right of where the selection started
-              x = selection.pos.x
-              w = mouse.x - selection.pos.x
-            if mouse.y < selection.pos.y
-              # cursor is above where the selection started
+              # cursor is right of where the currentSelection started
+              x = currentSelection.pos.x
+              w = mouse.x - currentSelection.pos.x
+            if mouse.y < currentSelection.pos.y
+              # cursor is above where the currentSelection started
               y = mouse.y
-              h = selection.pos.y - mouse.y
+              h = currentSelection.pos.y - mouse.y
             else
-              # cursor is below where the selection started
-              y = selection.pos.y
-              h = mouse.y - selection.pos.y
+              # cursor is below where the currentSelection started
+              y = currentSelection.pos.y
+              h = mouse.y - currentSelection.pos.y
 
             if w is 0 and h is 0
-              # cursor is where the selection started, don't draw the box
-              selection.$box.hide()
+              # cursor is where the currentSelection started, don't draw the box
+              currentSelection.$box.hide()
             else
               # draw the box
-              selection.$box
+              currentSelection.$box
                 .show()
                 .moveTo({x, y})
                 .size(w: w-1, h: h-1)
@@ -298,6 +307,7 @@ define 'editor.viewport', ->
 
         .delegate '.editor-selection-box', "mouseup.#{evtns}", (evt) ->
           console.log 'selection box mouseup'
+          evt.preventDefault()
           # delay the re-addition of the mouseup event ever so slightly
           # otherwise it gets fired immediately (since we're in the mouseup
           # event ourselves)
@@ -306,6 +316,8 @@ define 'editor.viewport', ->
         .bind "mouseup.#{evtns}", (evt) =>
           @$elem.unbind "mousemove.#{evtns}"
           mouseDownAt = null
+          currentSelection = null
+          dragStarted = false
           # delay the re-addition of the mouseup event ever so slightly
           # otherwise it gets fired immediately (since we're in the mouseup
           # event ourselves)
