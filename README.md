@@ -1,20 +1,18 @@
 # Link to the Past
 
-## What is this?
-
-It's a clone of one of the Zelda games, specifically *Link to the Past*, written
+This is a clone of *Legend of Zelda: Link to the Past* for the SNES, written
 entirely in JavaScript.
 
 Current progress on Heroku here: <http://zelda-lttp.herokuapp.com>
 
-## Before you do anything
+## Pre-flight
 
 Bundler is being used to load the few dependencies this app has at runtime, so
 you'll want to make sure you have that installed. Then run:
 
     bundle install --binstubs
 
-## Running
+## Running the game
 
 The game runs inside a Sinatra app, because it just ends up being easier. To
 boot the app all you have to say is:
@@ -75,4 +73,24 @@ to read up on each one. Here's the full list of modules in our package:
 
 ## Roadmap
 
-Read TODO.md, I tend to update that as I go along.
+See TODO.md. I tend to update that as I go along.
+
+## How are you creating the game? You *do* know there's an SNES emulator in Javascript, right?
+
+Yup, but I prefer to do it manually. Basically, I load the game in ZSNES or
+SNES9x and copy it that way. Thanks to various sources on the interwebs for
+images of tiles and sprites.
+
+## Author/Contact
+
+This project is (c) 2011-2012 Elliot Winkler. If you have any questions, please
+feel free to contact me through these channels:
+
+* **Twitter**: [@mcmire](http://twitter.com/mcmire)
+* **Email**: <elliot.winkler@gmail.com>
+* (And, of course, on the githubs)
+
+## License
+
+All code here is free to use for commercial and personal purposes. An attached
+courtesy is not required, but appreciated. Use your powers wisely. Be nice!
