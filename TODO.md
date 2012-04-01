@@ -74,3 +74,10 @@
   cursor is within 5 pixels of a guide, snap it otherwise do nothing
 
 * Bind viewport events to viewport.$elem rather than viewport.$map
+
+* Remember the last tool used in a layer
+
+* When switching layers sidebar never gets hidden
+
+* Trap backspace key everywhere
+

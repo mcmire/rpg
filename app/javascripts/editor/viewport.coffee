@@ -11,17 +11,21 @@ define 'editor.viewport', ->
 
       @$elem = $('#editor-viewport')
       @$map = $('#editor-map')
-      @_initMapGrid()
+      @_initMapOverlay()
       @$mapLayers = $('#editor-map-layers')
       @_initBounds()
       @map = null
       @objectsByLayer = $.v.reduce @core.getLayers(), ((h, n) -> h[n] = {}; h), {}
       @objectId = 0
+      @fills = []
       return this
 
     getElement: -> @$elem
 
     getMapLayers: -> @$mapLayers
+
+    getContentForLayer: (layer) ->
+      @$mapLayers.find(".editor-layer[data-layer=#{layer}] .editor-layer-content")
 
     setWidth: (width) ->
       @$elem.width(width)
@@ -52,10 +56,9 @@ define 'editor.viewport', ->
       # localStorage.removeItem('editor.map')
       if data = localStorage.getItem('editor.map')
         try
-          objectsByLayer = JSON.parse(data)
-          console.log 'map data': data
-          $.v.each objectsByLayer, (layer, objects) =>
-            $.v.each objects, (o) =>
+          layers = JSON.parse(data)
+          for layer in ['tiles']
+            $.v.each layers[layer], (o) =>
               object = @core.objectsByName[o.name]
               $elem = object.$elem.clone()
               $elem.addClass('editor-map-object')
@@ -63,6 +66,8 @@ define 'editor.viewport', ->
               $elem.css('top', "#{o.y}px")
               @core.findLayer(layer).find('.editor-layer-content').append($elem)
               @addObject(layer, $elem, object)
+          for fill in layers['fill']
+            @_loadFill(fill)
         catch e
           console.warn "Had a problem loading the map!"
           throw e
@@ -206,12 +211,10 @@ define 'editor.viewport', ->
       activeSelections = []
       currentSelection = null
 
-      $layerElem = @core.getCurrentLayerElem().find('.editor-layer-content')
-
-      clearActiveSelections = ->
+      clearActiveSelections = =>
         activeSelections = []
         # selection.$box.remove() does not work for some reason
-        $layerElem.find('.editor-selection-box').remove()
+        @$mapOverlay.find('.editor-selection-box').remove()
 
       selectionEvents = do =>
         mouseupBound = false
@@ -266,8 +269,7 @@ define 'editor.viewport', ->
               currentSelection = {}
               currentSelection.pos = selectionStartedAt
               currentSelection.$box = $('<div class="editor-selection-box">')
-                .appendTo($layerElem)
-              activeSelections.push(currentSelection)
+              @$mapOverlay.append(currentSelection.$box)
               dragStarted = true
 
             mouse = @_roundCoordsToGrid(
@@ -289,6 +291,8 @@ define 'editor.viewport', ->
               # cursor is below where the currentSelection started
               y = currentSelection.pos.y
               h = mouse.y - currentSelection.pos.y
+
+            $.extend(currentSelection, {x, y, w, h})
 
             if w is 0 and h is 0
               # cursor is where the currentSelection started, don't draw the box
@@ -316,6 +320,10 @@ define 'editor.viewport', ->
         .bind "mouseup.#{evtns}", (evt) =>
           @$elem.unbind "mousemove.#{evtns}"
           mouseDownAt = null
+          activeSelections.push(currentSelection) if (
+            currentSelection and
+            currentSelection.w > 0 and currentSelection.h > 0
+          )
           currentSelection = null
           dragStarted = false
           # delay the re-addition of the mouseup event ever so slightly
@@ -323,11 +331,23 @@ define 'editor.viewport', ->
           # event ourselves)
           setTimeout selectionEvents.add, 0
 
+      $(window)
+        .bind "keydown.#{evtns}", (evt) =>
+          Bounds = require('game.Bounds')
+          # if evt.metaKey and @keyboard.isKeyPressed(evt, 'backspace')
+          if @keyboard.isKeyPressed(evt, 'F')
+            # fill all of the selections
+            $.v.each activeSelections, (sel) =>
+              fill = {x: sel.x, y: sel.y, w: sel.w, h: sel.h, color: '#800000'}
+              @_loadFill(fill)
+            @saveMap()
+
       selectionEvents.add()
 
     deactivate_fill_select_tool: ->
       evtns = 'editor.viewport.layer-fill.tool-select'
       @$elem.unbind(".#{evtns}")
+      $(window).unbind(".#{evtns}")
 
     addObject: (layer, $elem, object) ->
       console.log 'viewport: addObject'
@@ -346,35 +366,51 @@ define 'editor.viewport', ->
       moid = $elem.data('moid')
       !!@objectsByLayer[layer][moid]
 
+    _createFill: (fill) ->
+      $fill = $('<div class="editor-fill"></div>')
+        .position(fill)
+        .size(fill)
+        .css('background-color', fill.color)
+
+    _addFill: (fill) ->
+      @fills.push(fill)
+
+    _loadFill: (fill) ->
+      $fill = @_createFill(fill)
+      @getContentForLayer('fill').append($fill)
+      @_addFill(fill)
+
     saveMap: ->
       console.log 'viewport: saving map...'
-      data = $.v.reduce $.v.keys(@objectsByLayer), (hash, layer) =>
-        arr = $.v.map @objectsByLayer[layer], (id, object) ->
+      layers = {}
+      for layer in ['tiles']
+        layers[layer] = []
+        for id, object of @objectsByLayer[layer]
           pos = object.$elem.position()
-          return {
+          layers[layer].push({
             name: object.name
             x: pos.x
             y: pos.y
-          }
-        hash[layer] = arr
-        return hash
-      , {}
-      localStorage.setItem('editor.map', JSON.stringify(data))
+          })
+      layers['fill'] = []
+      for fill in @fills
+        layers['fill'].push(fill)
+      localStorage.setItem('editor.map', JSON.stringify(layers))
 
-    _initMapGrid: ->
+    _initMapOverlay: ->
       # create the grid pattern that backgrounds the map
-      canvas = require('game.canvas').create(16, 16)
+      canvas = require('game.canvas').create(GRID_SIZE, GRID_SIZE)
       ctx = canvas.getContext()
       ctx.strokeStyle = 'rgba(0,0,0,0.15)'
       ctx.moveTo(0.5, 0.5)
-      ctx.lineTo(16, 0.5)
+      ctx.lineTo(GRID_SIZE, 0.5)
       ctx.moveTo(0.5, 0.5)
-      ctx.lineTo(0.5, 16)
+      ctx.lineTo(0.5, GRID_SIZE)
       ctx.stroke()
-      mapGrid = canvas
+      mapOverlay = canvas
 
-      @$mapGrid = $('#editor-map-grid')
-        .css('background-image', "url(#{mapGrid.element.toDataURL()})")
+      @$mapOverlay = $('#editor-map-overlay')
+        .css('background-image', "url(#{mapOverlay.element.toDataURL()})")
         .css('background-repeat', 'repeat')
 
     _initBounds: ->

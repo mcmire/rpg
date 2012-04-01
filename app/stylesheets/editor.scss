@@ -132,7 +132,7 @@ $sidebar-width: 300px;
   }
 }
 
-#editor-map-content, #editor-map-grid {
+#editor-map-content, #editor-map-overlay {
   @include absfill();
 }
 
@@ -168,6 +168,11 @@ $sidebar-width: 300px;
   &.editor-drag-helper {
     opacity: 0.7;
   }
+}
+
+.editor-fill {
+  position: absolute;
+  z-index: 5;
 }
 
 // marching ants like it's 1991

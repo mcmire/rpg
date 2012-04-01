@@ -23,7 +23,8 @@
       KEY_W: 87,
       KEY_A: 65,
       KEY_S: 83,
-      KEY_D: 68
+      KEY_D: 68,
+      KEY_F: 70
     };
     MODIFIER_KEYS = [KEYS.KEY_SHIFT, KEYS.KEY_CTRL, KEYS.KEY_ALT, KEYS.KEY_META];
     PressedKeys = meta.def({

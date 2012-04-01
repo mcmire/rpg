@@ -12,7 +12,7 @@
         this.keyboard = this.core.keyboard;
         this.$elem = $('#editor-viewport');
         this.$map = $('#editor-map');
-        this._initMapGrid();
+        this._initMapOverlay();
         this.$mapLayers = $('#editor-map-layers');
         this._initBounds();
         this.map = null;
@@ -21,6 +21,7 @@
           return h;
         }), {});
         this.objectId = 0;
+        this.fills = [];
         return this;
       },
       getElement: function() {
@@ -28,6 +29,9 @@
       },
       getMapLayers: function() {
         return this.$mapLayers;
+      },
+      getContentForLayer: function(layer) {
+        return this.$mapLayers.find(".editor-layer[data-layer=" + layer + "] .editor-layer-content");
       },
       setWidth: function(width) {
         this.$elem.width(width);
@@ -43,7 +47,7 @@
         return this.$mapLayers.append($layer);
       },
       loadMap: function() {
-        var data, objectsByLayer,
+        var data, fill, layer, layers, _i, _j, _len, _len2, _ref, _ref2, _results,
           _this = this;
         this.map = require('game.Bounds').rect(0, 0, 1024, 1024);
         this.$map.removeClass('editor-map-unloaded').size({
@@ -52,12 +56,11 @@
         });
         if (data = localStorage.getItem('editor.map')) {
           try {
-            objectsByLayer = JSON.parse(data);
-            console.log({
-              'map data': data
-            });
-            return $.v.each(objectsByLayer, function(layer, objects) {
-              return $.v.each(objects, function(o) {
+            layers = JSON.parse(data);
+            _ref = ['tiles'];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              layer = _ref[_i];
+              $.v.each(layers[layer], function(o) {
                 var $elem, object;
                 object = _this.core.objectsByName[o.name];
                 $elem = object.$elem.clone();
@@ -67,7 +70,14 @@
                 _this.core.findLayer(layer).find('.editor-layer-content').append($elem);
                 return _this.addObject(layer, $elem, object);
               });
-            });
+            }
+            _ref2 = layers['fill'];
+            _results = [];
+            for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+              fill = _ref2[_j];
+              _results.push(this._loadFill(fill));
+            }
+            return _results;
           } catch (e) {
             console.warn("Had a problem loading the map!");
             throw e;
@@ -185,17 +195,16 @@
         return $(window).unbind("." + evtns);
       },
       activate_fill_select_tool: function() {
-        var $layerElem, activeSelections, adjustCoords, clearActiveSelections, currentSelection, dragStarted, evtns, mouseDownAt, selectionEvents,
+        var activeSelections, adjustCoords, clearActiveSelections, currentSelection, dragStarted, evtns, mouseDownAt, selectionEvents,
           _this = this;
         evtns = 'editor.viewport.layer-fill.tool-select';
         dragStarted = false;
         mouseDownAt = null;
         activeSelections = [];
         currentSelection = null;
-        $layerElem = this.core.getCurrentLayerElem().find('.editor-layer-content');
         clearActiveSelections = function() {
           activeSelections = [];
-          return $layerElem.find('.editor-selection-box').remove();
+          return _this.$mapOverlay.find('.editor-selection-box').remove();
         };
         selectionEvents = (function() {
           var clearSelection, ex, mouseupBound;
@@ -245,8 +254,8 @@
               selectionEvents.remove();
               currentSelection = {};
               currentSelection.pos = selectionStartedAt;
-              currentSelection.$box = $('<div class="editor-selection-box">').appendTo($layerElem);
-              activeSelections.push(currentSelection);
+              currentSelection.$box = $('<div class="editor-selection-box">');
+              _this.$mapOverlay.append(currentSelection.$box);
               dragStarted = true;
             }
             mouse = _this._roundCoordsToGrid(adjustCoords({
@@ -267,6 +276,12 @@
               y = currentSelection.pos.y;
               h = mouse.y - currentSelection.pos.y;
             }
+            $.extend(currentSelection, {
+              x: x,
+              y: y,
+              w: w,
+              h: h
+            });
             if (w === 0 && h === 0) {
               return currentSelection.$box.hide();
             } else {
@@ -290,16 +305,38 @@
         }).bind("mouseup." + evtns, function(evt) {
           _this.$elem.unbind("mousemove." + evtns);
           mouseDownAt = null;
+          if (currentSelection && currentSelection.w > 0 && currentSelection.h > 0) {
+            activeSelections.push(currentSelection);
+          }
           currentSelection = null;
           dragStarted = false;
           return setTimeout(selectionEvents.add, 0);
+        });
+        $(window).bind("keydown." + evtns, function(evt) {
+          var Bounds;
+          Bounds = require('game.Bounds');
+          if (_this.keyboard.isKeyPressed(evt, 'F')) {
+            $.v.each(activeSelections, function(sel) {
+              var fill;
+              fill = {
+                x: sel.x,
+                y: sel.y,
+                w: sel.w,
+                h: sel.h,
+                color: '#800000'
+              };
+              return _this._loadFill(fill);
+            });
+            return _this.saveMap();
+          }
         });
         return selectionEvents.add();
       },
       deactivate_fill_select_tool: function() {
         var evtns;
         evtns = 'editor.viewport.layer-fill.tool-select';
-        return this.$elem.unbind("." + evtns);
+        this.$elem.unbind("." + evtns);
+        return $(window).unbind("." + evtns);
       },
       addObject: function(layer, $elem, object) {
         var k, obj, v, _name;
@@ -325,38 +362,58 @@
         moid = $elem.data('moid');
         return !!this.objectsByLayer[layer][moid];
       },
+      _createFill: function(fill) {
+        var $fill;
+        return $fill = $('<div class="editor-fill"></div>').position(fill).size(fill).css('background-color', fill.color);
+      },
+      _addFill: function(fill) {
+        return this.fills.push(fill);
+      },
+      _loadFill: function(fill) {
+        var $fill;
+        $fill = this._createFill(fill);
+        this.getContentForLayer('fill').append($fill);
+        return this._addFill(fill);
+      },
       saveMap: function() {
-        var data,
-          _this = this;
+        var fill, id, layer, layers, object, pos, _i, _j, _len, _len2, _ref, _ref2, _ref3;
         console.log('viewport: saving map...');
-        data = $.v.reduce($.v.keys(this.objectsByLayer), function(hash, layer) {
-          var arr;
-          arr = $.v.map(_this.objectsByLayer[layer], function(id, object) {
-            var pos;
+        layers = {};
+        _ref = ['tiles'];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          layer = _ref[_i];
+          layers[layer] = [];
+          _ref2 = this.objectsByLayer[layer];
+          for (id in _ref2) {
+            object = _ref2[id];
             pos = object.$elem.position();
-            return {
+            layers[layer].push({
               name: object.name,
               x: pos.x,
               y: pos.y
-            };
-          });
-          hash[layer] = arr;
-          return hash;
-        }, {});
-        return localStorage.setItem('editor.map', JSON.stringify(data));
+            });
+          }
+        }
+        layers['fill'] = [];
+        _ref3 = this.fills;
+        for (_j = 0, _len2 = _ref3.length; _j < _len2; _j++) {
+          fill = _ref3[_j];
+          layers['fill'].push(fill);
+        }
+        return localStorage.setItem('editor.map', JSON.stringify(layers));
       },
-      _initMapGrid: function() {
-        var canvas, ctx, mapGrid;
-        canvas = require('game.canvas').create(16, 16);
+      _initMapOverlay: function() {
+        var canvas, ctx, mapOverlay;
+        canvas = require('game.canvas').create(GRID_SIZE, GRID_SIZE);
         ctx = canvas.getContext();
         ctx.strokeStyle = 'rgba(0,0,0,0.15)';
         ctx.moveTo(0.5, 0.5);
-        ctx.lineTo(16, 0.5);
+        ctx.lineTo(GRID_SIZE, 0.5);
         ctx.moveTo(0.5, 0.5);
-        ctx.lineTo(0.5, 16);
+        ctx.lineTo(0.5, GRID_SIZE);
         ctx.stroke();
-        mapGrid = canvas;
-        return this.$mapGrid = $('#editor-map-grid').css('background-image', "url(" + (mapGrid.element.toDataURL()) + ")").css('background-repeat', 'repeat');
+        mapOverlay = canvas;
+        return this.$mapOverlay = $('#editor-map-overlay').css('background-image', "url(" + (mapOverlay.element.toDataURL()) + ")").css('background-repeat', 'repeat');
       },
       _initBounds: function() {
         var offset;
