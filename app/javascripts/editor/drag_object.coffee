@@ -95,7 +95,7 @@ define 'editor.DragObject', ->
             y = 0
           else if (y + @offset.height) > dropTargetOffset.height
             y = (dropTargetOffset.height - @offset.height)
-      $elem.moveTo(x, y)
+      $elem.moveTo({x, y})
 
     getDraggee: ->
       if @options.helper then @$helper else @$elem

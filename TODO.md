@@ -64,16 +64,8 @@
 * Add undo/redo -- this will require refactoring all the tools into a more
   object-oriented approach
 
-* BUG: Can't move an object after placing it (have to refresh)
-
-* BUG: When dragging another item of the same type, type is not stored in saved
-  data
-
 * Add ability to dupe an object without having to drag it again all the way from
   the sidebar
 
 * For map objects, group the $elem and the object together, everywhere, as one
   MapObject
-
-* BUG: Switch from fill to tiles and then back, some of the map objects in the
-  tiles layer are still moveable.

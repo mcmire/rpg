@@ -171,7 +171,7 @@
         evtns = 'editor.core.sidebar';
         $(elems).dragObject({
           helper: true,
-          dropTarget: this.viewport.$element
+          dropTarget: this.viewport.getElement()
         }).bind("mousedragstart." + evtns, function(evt) {
           var $draggee, $helper, dragObject;
           console.log("" + evtns + ": mousedragstart");
@@ -247,7 +247,7 @@
         var that;
         that = this;
         this.$toolbox = $('<div id="editor-toolbox"/>');
-        this.viewport.$element.append(this.$toolbox);
+        this.viewport.getElement().append(this.$toolbox);
         this.currentTool = null;
         return this.prevTool = null;
       },

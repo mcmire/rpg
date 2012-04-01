@@ -158,7 +158,7 @@ define 'editor.core', ->
           helper: true
           # TODO: Need to ensure that dropTarget can receive sidebar objects...
           # what if we switch to a different layer?
-          dropTarget: @viewport.$element
+          dropTarget: @viewport.getElement()
         .bind "mousedragstart.#{evtns}", (evt) ->
           console.log "#{evtns}: mousedragstart"
           $draggee = $(this)
@@ -234,7 +234,7 @@ define 'editor.core', ->
     _initToolbox: ->
       that = this
       @$toolbox = $('<div id="editor-toolbox"/>')
-      @viewport.$element.append(@$toolbox)
+      @viewport.getElement().append(@$toolbox)
       @currentTool = null
       @prevTool = null
 

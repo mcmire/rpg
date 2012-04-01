@@ -5,11 +5,11 @@ define 'editor.viewport', ->
   Bounds = require('game.Bounds')
   require('editor.DropTarget')
 
-  DRAG_SNAP_GRID_SIZE = 16
+  GRID_SIZE = 16
 
   meta.def
     init: (@core) ->
-      @$element = $('#editor-viewport')
+      @$elem = $('#editor-viewport')
       @_initMapElement()
       @_initBounds()
       @map = null
@@ -17,12 +17,14 @@ define 'editor.viewport', ->
       @objectId = 0
       return this
 
+    getElement: -> @$elem
+
     setWidth: (width) ->
-      @$element.width(width)
+      @$elem.width(width)
       @bounds.setWidth(width)
 
     setHeight: (height) ->
-      @$element.height(height)
+      @$elem.height(height)
       @bounds.setHeight(height)
 
     loadMap: ->
@@ -39,7 +41,7 @@ define 'editor.viewport', ->
         .removeClass('editor-map-unloaded')
 
       # TODO: Refactor
-      # localStorage.removeItem('editor.map')
+      localStorage.removeItem('editor.map')
       if data = localStorage.getItem('editor.map')
         console.log 'map data': data
         try
@@ -64,7 +66,7 @@ define 'editor.viewport', ->
       layerSel = '#editor-map .editor-layer[data-layer=tiles]'
       mapObjectsSel = "#{layerSel} .editor-map-object"
 
-      @$element
+      @$elem
         .dropTarget(
           receptor: "#{layerSel} .editor-layer-content"
         )
@@ -81,11 +83,7 @@ define 'editor.viewport', ->
             @addObject('tiles', $draggee, $dragOwner.data('so'))
             @_addEventsToMapObjects($draggee)
 
-          x = parseInt($draggee.css('left'), 10)
-          y = parseInt($draggee.css('top'), 10)
-          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE
-          $draggee.moveTo(x, y)
+          $draggee.position(@_roundCoordsToGrid($draggee.position()))
           @saveMap()
 
       @_addEventsToMapObjects $(mapObjectsSel)
@@ -122,7 +120,7 @@ define 'editor.viewport', ->
       layerSel = '#editor-map .editor-layer[data-layer=tiles]'
       mapObjectsSel = "#{layerSel} .editor-map-object"
 
-      @$element
+      @$elem
         .dropTarget('destroy')
         .unbind(".#{evtns}")
       @_removeEventsFromMapObjects $(mapObjectsSel)
@@ -130,7 +128,7 @@ define 'editor.viewport', ->
       $(window).unbind(".#{evtns}")
 
     activate_hand_tool: ->
-      evtns = 'editor.viewport.layer-tiles.tool-normal'
+      evtns = 'editor.viewport.tool-hand'
       @$map
         .bind "mousedown.#{evtns}", (evt) =>
           console.log 'viewport: mousedown (hand tool)'
@@ -183,9 +181,111 @@ define 'editor.viewport', ->
             $(window).unbind "mousemove.#{evtns}"
 
     deactivate_hand_tool: ->
-      evtns = 'editor.viewport.layer-tiles.tool-normal'
+      evtns = 'editor.viewport.tool-hand'
       @$map.unbind(".#{evtns}")
       $(window).unbind(".#{evtns}")
+
+    activate_fill_select_tool: ->
+      evtns = 'editor.viewport.layer-fill.tool-select'
+
+      mouseDownAt = null
+      selection = null
+
+      SELECTION_ACTIVATION_OFFSET = 4  # pixels
+
+      $layerElem = @core.getCurrentLayerElem().find('.editor-layer-content')
+
+      clearSelection = (evt) =>
+        console.log 'clearing selection'
+        evt.preventDefault()
+        # selection.$box.remove()
+        # the above does not work for some reason
+        $layerElem.find('.editor-selection-box').remove()
+        selection = null
+
+      mouseupBound = false
+      bindMouseup = =>
+        return if mouseupBound
+        console.log 'binding mouseup'
+        mouseupBound = true
+        # @$elem.bind("mouseup.#{evtns}", clearSelection)
+      unbindMouseup = =>
+        return if not mouseupBound
+        console.log 'unbinding mouseup'
+        mouseupBound = false
+        # @$elem.unbind(clearSelection)
+
+      adjustCoords = (p) =>
+        x: p.x - @bounds.x1
+        y: p.y - @bounds.y1
+
+      @$elem
+        .bind "mousedown.#{evtns}", (evt) =>
+          # don't open a selection box accidentally if the map is right-clicked
+          # FIXME so this handles ctrl-click too
+          return if evt.button is 2
+
+          evt.preventDefault()
+          mouse = mouseDownAt = {x: evt.pageX, y: evt.pageY}
+          pos = @_roundCoordsToGrid(adjustCoords(mouse))
+          selection = {}
+          selection.pos = pos
+
+          @$elem.bind "mousemove.#{evtns}", (evt) =>
+            evt.preventDefault()
+            mouse = {x: evt.pageX, y: evt.pageY}
+
+            dragOffsetX = Math.abs(evt.pageX - mouseDownAt.x)
+            dragOffsetY = Math.abs(evt.pageY - mouseDownAt.y)
+            return unless (
+              dragOffsetX > SELECTION_ACTIVATION_OFFSET or
+              dragOffsetY > SELECTION_ACTIVATION_OFFSET
+            )
+
+            unbindMouseup()
+
+            if not selection.isPresent
+              selection.$box = $('<div class="editor-selection-box">')
+                .appendTo($layerElem)
+              selection.isPresent = true
+
+            mouse = @_roundCoordsToGrid(adjustCoords(mouse))
+            if mouse.x < selection.pos.x
+              x = mouse.x
+              w = selection.pos.x - mouse.x
+            else
+              x = selection.pos.x
+              w = mouse.x - selection.pos.x
+            if mouse.y < selection.pos.y
+              y = mouse.y
+              h = selection.pos.y - mouse.y
+            else
+              y = selection.pos.y
+              h = mouse.y - selection.pos.y
+            if w is 0 and h is 0
+              selection.$box.hide()
+            else
+              selection.$box.show().moveTo({x, y}).size({w, h})
+
+        .delegate '.editor-selection-box', "mouseup.#{evtns}", (evt) ->
+          console.log 'selection box mouseup'
+          # because otherwise the selection will be cleared
+          evt.stopPropagation()
+          evt.preventDefault()
+
+        .bind "mouseup.#{evtns}", (evt) =>
+          @$elem.unbind "mousemove.#{evtns}"
+          mouseDownAt = null
+          # delay the re-addition of the mouseup event ever so slightly
+          # otherwise it gets fired immediately (since we're in the mouseup
+          # event ourselves)
+          setTimeout bindMouseup, 0
+
+      bindMouseup()
+
+    deactivate_fill_select_tool: ->
+      evtns = 'editor.viewport.layer-fill.tool-select'
+      @$elem.unbind(".#{evtns}")
 
     addObject: (layer, $elem, object) ->
       console.log 'viewport: addObject'
@@ -226,7 +326,7 @@ define 'editor.viewport', ->
         $draggee.attr('data-is-selected', newstate)
       # CS bug #2221 regarding indentation
       $draggees.dragObject
-        dropTarget: @$element
+        dropTarget: @$elem
         containWithinDropTarget: true
 
     _removeEventsFromMapObjects: ($draggees) ->
@@ -234,6 +334,10 @@ define 'editor.viewport', ->
       $draggees
         .dragObject('destroy')
         .unbind(".#{evtns}")
+
+    _roundCoordsToGrid: (p) ->
+      x: Math.round(p.x / GRID_SIZE) * GRID_SIZE,
+      y: Math.round(p.y / GRID_SIZE) * GRID_SIZE
 
     _mouseWithinViewport: (evt) ->
       @bounds.x1 <= evt.pageX <= @bounds.x2 and
@@ -252,5 +356,5 @@ define 'editor.viewport', ->
         @$map.append($layer)
 
     _initBounds: ->
-      offset = @$element.offset()
+      offset = @$elem.offset()
       @bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height)

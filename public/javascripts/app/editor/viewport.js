@@ -2,16 +2,16 @@
   var __hasProp = Object.prototype.hasOwnProperty;
 
   define('editor.viewport', function() {
-    var Bounds, DRAG_SNAP_GRID_SIZE, meta, util;
+    var Bounds, GRID_SIZE, meta, util;
     meta = require('meta');
     util = require('util');
     Bounds = require('game.Bounds');
     require('editor.DropTarget');
-    DRAG_SNAP_GRID_SIZE = 16;
+    GRID_SIZE = 16;
     return meta.def({
       init: function(core) {
         this.core = core;
-        this.$element = $('#editor-viewport');
+        this.$elem = $('#editor-viewport');
         this._initMapElement();
         this._initBounds();
         this.map = null;
@@ -22,12 +22,15 @@
         this.objectId = 0;
         return this;
       },
+      getElement: function() {
+        return this.$elem;
+      },
       setWidth: function(width) {
-        this.$element.width(width);
+        this.$elem.width(width);
         return this.bounds.setWidth(width);
       },
       setHeight: function(height) {
-        this.$element.height(height);
+        this.$elem.height(height);
         return this.bounds.setHeight(height);
       },
       loadMap: function() {
@@ -39,6 +42,7 @@
         this.$elemBeingDragged = null;
         this.objectBeingDragged = null;
         this.$map.css('width', this.map.width).css('height', this.map.height).removeClass('editor-map-unloaded');
+        localStorage.removeItem('editor.map');
         if (data = localStorage.getItem('editor.map')) {
           console.log({
             'map data': data
@@ -70,10 +74,10 @@
         viewport = this;
         layerSel = '#editor-map .editor-layer[data-layer=tiles]';
         mapObjectsSel = "" + layerSel + " .editor-map-object";
-        this.$element.dropTarget({
+        this.$elem.dropTarget({
           receptor: "" + layerSel + " .editor-layer-content"
         }).bind("mousedropwithin." + evtns, function(evt) {
-          var $dragOwner, $draggee, dragObject, x, y;
+          var $dragOwner, $draggee, dragObject;
           console.log("" + evtns + ": mousedropwithin");
           dragObject = evt.relatedObject;
           $dragOwner = dragObject.getElement();
@@ -82,11 +86,7 @@
             _this.addObject('tiles', $draggee, $dragOwner.data('so'));
             _this._addEventsToMapObjects($draggee);
           }
-          x = parseInt($draggee.css('left'), 10);
-          y = parseInt($draggee.css('top'), 10);
-          x = Math.round(x / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
-          y = Math.round(y / DRAG_SNAP_GRID_SIZE) * DRAG_SNAP_GRID_SIZE;
-          $draggee.moveTo(x, y);
+          $draggee.position(_this._roundCoordsToGrid($draggee.position()));
           return _this.saveMap();
         });
         this._addEventsToMapObjects($(mapObjectsSel));
@@ -121,7 +121,7 @@
         evtns = 'editor.viewport.layer-tiles.tool-normal';
         layerSel = '#editor-map .editor-layer[data-layer=tiles]';
         mapObjectsSel = "" + layerSel + " .editor-map-object";
-        this.$element.dropTarget('destroy').unbind("." + evtns);
+        this.$elem.dropTarget('destroy').unbind("." + evtns);
         this._removeEventsFromMapObjects($(mapObjectsSel));
         this.$map.unbind("." + evtns);
         return $(window).unbind("." + evtns);
@@ -129,7 +129,7 @@
       activate_hand_tool: function() {
         var evtns,
           _this = this;
-        evtns = 'editor.viewport.layer-tiles.tool-normal';
+        evtns = 'editor.viewport.tool-hand';
         return this.$map.bind("mousedown." + evtns, function(evt) {
           var mouse;
           console.log('viewport: mousedown (hand tool)');
@@ -168,9 +168,111 @@
       },
       deactivate_hand_tool: function() {
         var evtns;
-        evtns = 'editor.viewport.layer-tiles.tool-normal';
+        evtns = 'editor.viewport.tool-hand';
         this.$map.unbind("." + evtns);
         return $(window).unbind("." + evtns);
+      },
+      activate_fill_select_tool: function() {
+        var $layerElem, SELECTION_ACTIVATION_OFFSET, adjustCoords, bindMouseup, clearSelection, evtns, mouseDownAt, mouseupBound, selection, unbindMouseup,
+          _this = this;
+        evtns = 'editor.viewport.layer-fill.tool-select';
+        mouseDownAt = null;
+        selection = null;
+        SELECTION_ACTIVATION_OFFSET = 4;
+        $layerElem = this.core.getCurrentLayerElem().find('.editor-layer-content');
+        clearSelection = function(evt) {
+          console.log('clearing selection');
+          evt.preventDefault();
+          $layerElem.find('.editor-selection-box').remove();
+          return selection = null;
+        };
+        mouseupBound = false;
+        bindMouseup = function() {
+          if (mouseupBound) return;
+          console.log('binding mouseup');
+          return mouseupBound = true;
+        };
+        unbindMouseup = function() {
+          if (!mouseupBound) return;
+          console.log('unbinding mouseup');
+          return mouseupBound = false;
+        };
+        adjustCoords = function(p) {
+          return {
+            x: p.x - _this.bounds.x1,
+            y: p.y - _this.bounds.y1
+          };
+        };
+        this.$elem.bind("mousedown." + evtns, function(evt) {
+          var mouse, pos;
+          if (evt.button === 2) return;
+          evt.preventDefault();
+          mouse = mouseDownAt = {
+            x: evt.pageX,
+            y: evt.pageY
+          };
+          pos = _this._roundCoordsToGrid(adjustCoords(mouse));
+          selection = {};
+          selection.pos = pos;
+          return _this.$elem.bind("mousemove." + evtns, function(evt) {
+            var dragOffsetX, dragOffsetY, h, w, x, y;
+            evt.preventDefault();
+            mouse = {
+              x: evt.pageX,
+              y: evt.pageY
+            };
+            dragOffsetX = Math.abs(evt.pageX - mouseDownAt.x);
+            dragOffsetY = Math.abs(evt.pageY - mouseDownAt.y);
+            if (!(dragOffsetX > SELECTION_ACTIVATION_OFFSET || dragOffsetY > SELECTION_ACTIVATION_OFFSET)) {
+              return;
+            }
+            unbindMouseup();
+            if (!selection.isPresent) {
+              selection.$box = $('<div class="editor-selection-box">').appendTo($layerElem);
+              selection.isPresent = true;
+            }
+            mouse = _this._roundCoordsToGrid(adjustCoords(mouse));
+            if (mouse.x < selection.pos.x) {
+              x = mouse.x;
+              w = selection.pos.x - mouse.x;
+            } else {
+              x = selection.pos.x;
+              w = mouse.x - selection.pos.x;
+            }
+            if (mouse.y < selection.pos.y) {
+              y = mouse.y;
+              h = selection.pos.y - mouse.y;
+            } else {
+              y = selection.pos.y;
+              h = mouse.y - selection.pos.y;
+            }
+            if (w === 0 && h === 0) {
+              return selection.$box.hide();
+            } else {
+              return selection.$box.show().moveTo({
+                x: x,
+                y: y
+              }).size({
+                w: w,
+                h: h
+              });
+            }
+          });
+        }).delegate('.editor-selection-box', "mouseup." + evtns, function(evt) {
+          console.log('selection box mouseup');
+          evt.stopPropagation();
+          return evt.preventDefault();
+        }).bind("mouseup." + evtns, function(evt) {
+          _this.$elem.unbind("mousemove." + evtns);
+          mouseDownAt = null;
+          return setTimeout(bindMouseup, 0);
+        });
+        return bindMouseup();
+      },
+      deactivate_fill_select_tool: function() {
+        var evtns;
+        evtns = 'editor.viewport.layer-fill.tool-select';
+        return this.$elem.unbind("." + evtns);
       },
       addObject: function(layer, $elem, object) {
         var k, obj, v, _name;
@@ -226,7 +328,7 @@
           return $draggee.attr('data-is-selected', newstate);
         });
         return $draggees.dragObject({
-          dropTarget: this.$element,
+          dropTarget: this.$elem,
           containWithinDropTarget: true
         });
       },
@@ -234,6 +336,12 @@
         var evtns;
         evtns = 'editor.viewport.layer-tiles.tool-normal';
         return $draggees.dragObject('destroy').unbind("." + evtns);
+      },
+      _roundCoordsToGrid: function(p) {
+        return {
+          x: Math.round(p.x / GRID_SIZE) * GRID_SIZE,
+          y: Math.round(p.y / GRID_SIZE) * GRID_SIZE
+        };
       },
       _mouseWithinViewport: function(evt) {
         var _ref, _ref2;
@@ -254,7 +362,7 @@
       },
       _initBounds: function() {
         var offset;
-        offset = this.$element.offset();
+        offset = this.$elem.offset();
         return this.bounds = Bounds.rect(offset.left, offset.top, offset.width, offset.height);
       }
     });

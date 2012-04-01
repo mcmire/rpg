@@ -63,12 +63,34 @@ enderMembers =
   removeAllClasses: -> # ...
 
   moveBy: (args) ->
-    x = parseInt(this.css('left'), 10) + (args.x or 0)
-    y = parseInt(this.css('top'), 10)  + (args.y or 0)
-    this.css('left', "#{x}px").css('top', "#{y}px")
+    pos = @position()
+    x = pos.x + (args.x or 0)
+    y = pos.y + (args.y or 0)
+    @css('left', "#{x}px")
+    @css('top', "#{y}px")
 
-  moveTo: (x, y) ->
-    this.css('left', "#{x}px").css('top', "#{y}px")
+  moveTo: (pos) ->
+    @position(pos)
+
+  position: (pos) ->
+    if pos
+      @css('left', "#{pos.x}px")
+      @css('top', "#{pos.y}px")
+      return this
+    else
+      x = parseInt(@css('left'), 10)
+      y = parseInt(@css('top'), 10)
+      {x, y}
+
+  size: (dim) ->
+    if dim
+      @css('width', "#{dim.w}px")
+      @css('height', "#{dim.h}px")
+      return this
+    else
+      w = parseInt(@css('width'), 10)
+      h = parseInt(@css('height'), 10)
+      {w, h}
 
   contains: (elem) ->
     elem = elem[0] if elem instanceof Array

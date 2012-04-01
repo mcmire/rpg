@@ -49,13 +49,45 @@
     },
     removeAllClasses: function() {},
     moveBy: function(args) {
-      var x, y;
-      x = parseInt(this.css('left'), 10) + (args.x || 0);
-      y = parseInt(this.css('top'), 10) + (args.y || 0);
-      return this.css('left', "" + x + "px").css('top', "" + y + "px");
+      var pos, x, y;
+      pos = this.position();
+      x = pos.x + (args.x || 0);
+      y = pos.y + (args.y || 0);
+      this.css('left', "" + x + "px");
+      return this.css('top', "" + y + "px");
     },
-    moveTo: function(x, y) {
-      return this.css('left', "" + x + "px").css('top', "" + y + "px");
+    moveTo: function(pos) {
+      return this.position(pos);
+    },
+    position: function(pos) {
+      var x, y;
+      if (pos) {
+        this.css('left', "" + pos.x + "px");
+        this.css('top', "" + pos.y + "px");
+        return this;
+      } else {
+        x = parseInt(this.css('left'), 10);
+        y = parseInt(this.css('top'), 10);
+        return {
+          x: x,
+          y: y
+        };
+      }
+    },
+    size: function(dim) {
+      var h, w;
+      if (dim) {
+        this.css('width', "" + dim.w + "px");
+        this.css('height', "" + dim.h + "px");
+        return this;
+      } else {
+        w = parseInt(this.css('width'), 10);
+        h = parseInt(this.css('height'), 10);
+        return {
+          w: w,
+          h: h
+        };
+      }
     },
     contains: function(elem) {
       if (elem instanceof Array) elem = elem[0];
