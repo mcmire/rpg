@@ -197,12 +197,14 @@
         bindMouseup = function() {
           if (mouseupBound) return;
           console.log('binding mouseup');
-          return mouseupBound = true;
+          mouseupBound = true;
+          return _this.$elem.bind("mouseup." + evtns, clearSelection);
         };
         unbindMouseup = function() {
           if (!mouseupBound) return;
           console.log('unbinding mouseup');
-          return mouseupBound = false;
+          mouseupBound = false;
+          return _this.$elem.unbind(clearSelection);
         };
         adjustCoords = function(p) {
           return {
@@ -222,17 +224,12 @@
           selection = {};
           selection.pos = pos;
           return _this.$elem.bind("mousemove." + evtns, function(evt) {
-            var dragOffsetX, dragOffsetY, h, w, x, y;
+            var h, w, x, y;
             evt.preventDefault();
             mouse = {
               x: evt.pageX,
               y: evt.pageY
             };
-            dragOffsetX = Math.abs(evt.pageX - mouseDownAt.x);
-            dragOffsetY = Math.abs(evt.pageY - mouseDownAt.y);
-            if (!(dragOffsetX > SELECTION_ACTIVATION_OFFSET || dragOffsetY > SELECTION_ACTIVATION_OFFSET)) {
-              return;
-            }
             unbindMouseup();
             if (!selection.isPresent) {
               selection.$box = $('<div class="editor-selection-box">').appendTo($layerElem);
@@ -260,15 +257,18 @@
                 x: x,
                 y: y
               }).size({
-                w: w,
-                h: h
+                w: w - 1,
+                h: h - 1
               });
             }
           });
+        }).delegate('.editor-selection-box', "mousedown." + evtns, function(evt) {
+          console.log('selection box mousedown');
+          evt.preventDefault();
+          return unbindMouseup();
         }).delegate('.editor-selection-box', "mouseup." + evtns, function(evt) {
           console.log('selection box mouseup');
-          evt.stopPropagation();
-          return evt.preventDefault();
+          return setTimeout(bindMouseup, 0);
         }).bind("mouseup." + evtns, function(evt) {
           _this.$elem.unbind("mousemove." + evtns);
           mouseDownAt = null;

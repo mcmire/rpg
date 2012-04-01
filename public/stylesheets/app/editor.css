@@ -122,7 +122,6 @@ body {
 .editor-selection-box {
   position: absolute;
   z-index: 10;
-  background-color: white;
   border: 1px dashed black;
   -moz-border-image: url(/images/editor/selection-border.gif) 1 repeat;
   -webkit-border-image: url(/images/editor/selection-border.gif) 1 repeat;

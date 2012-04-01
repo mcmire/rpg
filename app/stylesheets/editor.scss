@@ -31,19 +31,6 @@ body {
 }
 
 #editor-viewport {
-  // &.editor-tool-normal {
-  //   cursor: auto;
-  // }
-  // &.editor-tool-hand {
-  //   cursor: url('/images/editor/tool-hand.gif'), auto;
-  // }
-  // &.editor-tool-select {
-  //   cursor: url('/images/editor/tool-select.gif'), auto;
-  // }
-  // &.editor-tool-bucket {
-  //   cursor: url('/images/editor/tool-bucket.gif'), auto;
-  // }
-
   .editor-layer, .editor-layer-content, .editor-layer-bg {
     @include absfill();
   }
@@ -58,7 +45,6 @@ body {
       opacity: 1
     }
     .editor-layer-bg {
-      // background: white;
       opacity: 0.5;
     }
   }
@@ -181,17 +167,12 @@ $sidebar-width: 300px;
   }
 }
 
-// #editor-sticky-cursor {
-//   position: absolute;
-//   z-index: 100;
-// }
-
 // marching ants like it's 1995
 // http://sunpig.com/martin/archives/2010/02/10/marching-ants-in-css.html
 .editor-selection-box {
   position: absolute;
   z-index: 10;
-  background-color: white;
+  // background-color: rgba(255,255,255,0.15);
   border: 1px dashed black;
   -moz-border-image: url(/images/editor/selection-border.gif) 1 repeat;
   -webkit-border-image: url(/images/editor/selection-border.gif) 1 repeat;

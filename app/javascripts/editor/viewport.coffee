@@ -210,12 +210,12 @@ define 'editor.viewport', ->
         return if mouseupBound
         console.log 'binding mouseup'
         mouseupBound = true
-        # @$elem.bind("mouseup.#{evtns}", clearSelection)
+        @$elem.bind("mouseup.#{evtns}", clearSelection)
       unbindMouseup = =>
         return if not mouseupBound
         console.log 'unbinding mouseup'
         mouseupBound = false
-        # @$elem.unbind(clearSelection)
+        @$elem.unbind(clearSelection)
 
       adjustCoords = (p) =>
         x: p.x - @bounds.x1
@@ -237,12 +237,12 @@ define 'editor.viewport', ->
             evt.preventDefault()
             mouse = {x: evt.pageX, y: evt.pageY}
 
-            dragOffsetX = Math.abs(evt.pageX - mouseDownAt.x)
-            dragOffsetY = Math.abs(evt.pageY - mouseDownAt.y)
-            return unless (
-              dragOffsetX > SELECTION_ACTIVATION_OFFSET or
-              dragOffsetY > SELECTION_ACTIVATION_OFFSET
-            )
+            # dragOffsetX = Math.abs(evt.pageX - mouseDownAt.x)
+            # dragOffsetY = Math.abs(evt.pageY - mouseDownAt.y)
+            # return unless (
+            #   dragOffsetX > SELECTION_ACTIVATION_OFFSET or
+            #   dragOffsetY > SELECTION_ACTIVATION_OFFSET
+            # )
 
             unbindMouseup()
 
@@ -267,13 +267,22 @@ define 'editor.viewport', ->
             if w is 0 and h is 0
               selection.$box.hide()
             else
-              selection.$box.show().moveTo({x, y}).size({w, h})
+              selection.$box
+                .show()
+                .moveTo({x, y})
+                .size(w: w-1, h: h-1)
+
+        .delegate '.editor-selection-box', "mousedown.#{evtns}", (evt) ->
+          console.log 'selection box mousedown'
+          evt.preventDefault()
+          unbindMouseup()
 
         .delegate '.editor-selection-box', "mouseup.#{evtns}", (evt) ->
           console.log 'selection box mouseup'
-          # because otherwise the selection will be cleared
-          evt.stopPropagation()
-          evt.preventDefault()
+          # delay the re-addition of the mouseup event ever so slightly
+          # otherwise it gets fired immediately (since we're in the mouseup
+          # event ourselves)
+          setTimeout bindMouseup, 0
 
         .bind "mouseup.#{evtns}", (evt) =>
           @$elem.unbind "mousemove.#{evtns}"
