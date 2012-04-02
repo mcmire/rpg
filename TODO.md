@@ -29,36 +29,40 @@
 
 ## Editor
 
+* BUG: When switching layers sidebar never gets hidden
+
+* FEATURE: Add ability to click on a fill object and delete it just like you can
+  do with tiles -- or extract this into a common place
+
+* INTERNAL: Use editor-map-object for all objects not just tiles
+
+* FEATURE: Add ability to set the background color of a map
+
+* FEATURE: Add ability to select multiple objects so you can move them as a
+  group
+
+* FEATURE: Remember the last tool used in a layer
+
+* INTERNAL: For map objects, group the $elem and the object together,
+  everywhere, as one MapObject, and clean up stuff just like fills
+
+* INTERNAL: Bind viewport events to viewport.$elem rather than viewport.$map
+
+* FEATURE: Add entities layer
+
 * FEATURE: Add ability to add a new map. To do this, double-click on "Add new
   map" in the sidebar. A modal will appear with textboxes for the desired
   dimensions of the map, and when the modal is submitted a new canvas is created
   and loaded into the viewport.
 
-* FEATURE: Add entities layer
+#---
 
-* FEATURE: Add a selection tool -- so if you want to move two tiles as a group
-  (say, Link's house AND the door), you can do that.
+* NICE-TO-HAVE: Snap the selection box to the nearest grid guide, but not by
+  rounding -- if cursor is within 5 pixels of a guide, snap it otherwise do
+  nothing
 
-* FEATURE: Add undo/redo -- this will require refactoring all the tools into a
-  more object-oriented approach
+* NICE-TO-HAVE: Add undo/redo -- this will require refactoring all the tools
+  into a more object-oriented approach
 
-* FEATURE: Add ability to dupe an object without having to drag it again all the
-  way from the sidebar
-
-* INTERNAL: For map objects, group the $elem and the object together,
-  everywhere, as one MapObject
-
-* FEATURE: Snap the selection box to the nearest grid guide, but not by rounding
-  -- if cursor is within 5 pixels of a guide, snap it otherwise do nothing
-
-* INTERNAL: Bind viewport events to viewport.$elem rather than viewport.$map
-
-* FEATURE: Remember the last tool used in a layer
-
-* BUG: When switching layers sidebar never gets hidden
-
-* FEATURE: Add ability to select a fill object and delete it just like you can
-  do with map objects -- or extract this into a common place
-
-* FEATURE: Add ability to set the background color of a map
-
+* NICE-TO-HAVE: Add ability to dupe an object without having to drag it again
+  all the way from the sidebar

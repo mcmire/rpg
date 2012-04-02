@@ -89,7 +89,7 @@ body {
   #editor-map.editor-map-unloaded {
     display: none; }
 
-#editor-map-content, #editor-map-overlay {
+#editor-map-content, #editor-map-grid, #editor-viewport-overlay {
   position: absolute;
   top: 0;
   left: 0;

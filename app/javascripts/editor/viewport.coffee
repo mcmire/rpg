@@ -11,7 +11,8 @@ define 'editor.viewport', ->
 
       @$elem = $('#editor-viewport')
       @$map = $('#editor-map')
-      @_initMapOverlay()
+      @$overlay = $('#editor-viewport-overlay')
+      @_initMapGrid()
       @$mapLayers = $('#editor-map-layers')
       @_initBounds()
       @map = null
@@ -211,7 +212,7 @@ define 'editor.viewport', ->
       clearActiveSelections = =>
         activeSelections = []
         # selection.$box.remove() does not work for some reason
-        @$mapOverlay.find('.editor-selection-box').remove()
+        @$overlay.find('.editor-selection-box').remove()
 
       selectionEvents = do =>
         mouseupBound = false
@@ -266,7 +267,7 @@ define 'editor.viewport', ->
               currentSelection = {}
               currentSelection.pos = selectionStartedAt
               currentSelection.$box = $('<div class="editor-selection-box">')
-              @$mapOverlay.append(currentSelection.$box)
+              @$overlay.append(currentSelection.$box)
               dragStarted = true
 
             mouse = @_roundCoordsToGrid(
@@ -314,6 +315,8 @@ define 'editor.viewport', ->
           # event ourselves)
           setTimeout selectionEvents.add, 0
 
+      $(window)
+        # bind mouseup to window in case it occurs outside of the viewport
         .bind "mouseup.#{evtns}", (evt) =>
           @$elem.unbind "mousemove.#{evtns}"
           mouseDownAt = null
@@ -328,7 +331,6 @@ define 'editor.viewport', ->
           # event ourselves)
           setTimeout selectionEvents.add, 0
 
-      $(window)
         .bind "keyup.#{evtns}", (evt) =>
           Bounds = require('game.Bounds')
           # TODO: Make this Cmd-Backspace
@@ -394,7 +396,7 @@ define 'editor.viewport', ->
         layers['fill'].push(fill)
       localStorage.setItem('editor.map', JSON.stringify(layers))
 
-    _initMapOverlay: ->
+    _initMapGrid: ->
       # create the grid pattern that backgrounds the map
       canvas = require('game.canvas').create(GRID_SIZE, GRID_SIZE)
       ctx = canvas.getContext()
@@ -404,10 +406,10 @@ define 'editor.viewport', ->
       ctx.moveTo(0.5, 0.5)
       ctx.lineTo(0.5, GRID_SIZE)
       ctx.stroke()
-      mapOverlay = canvas
+      mapGrid = canvas
 
-      @$mapOverlay = $('#editor-map-overlay')
-        .css('background-image', "url(#{mapOverlay.element.toDataURL()})")
+      @$mapGrid = $('#editor-map-grid')
+        .css('background-image', "url(#{mapGrid.element.toDataURL()})")
         .css('background-repeat', 'repeat')
 
     _initBounds: ->

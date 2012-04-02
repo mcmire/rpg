@@ -12,7 +12,8 @@
         this.keyboard = this.core.keyboard;
         this.$elem = $('#editor-viewport');
         this.$map = $('#editor-map');
-        this._initMapOverlay();
+        this.$overlay = $('#editor-viewport-overlay');
+        this._initMapGrid();
         this.$mapLayers = $('#editor-map-layers');
         this._initBounds();
         this.map = null;
@@ -203,7 +204,7 @@
         currentSelection = null;
         clearActiveSelections = function() {
           activeSelections = [];
-          return _this.$mapOverlay.find('.editor-selection-box').remove();
+          return _this.$overlay.find('.editor-selection-box').remove();
         };
         selectionEvents = (function() {
           var clearSelection, ex, mouseupBound;
@@ -254,7 +255,7 @@
               currentSelection = {};
               currentSelection.pos = selectionStartedAt;
               currentSelection.$box = $('<div class="editor-selection-box">');
-              _this.$mapOverlay.append(currentSelection.$box);
+              _this.$overlay.append(currentSelection.$box);
               dragStarted = true;
             }
             mouse = _this._roundCoordsToGrid(adjustCoords({
@@ -301,7 +302,8 @@
           console.log('selection box mouseup');
           evt.preventDefault();
           return setTimeout(selectionEvents.add, 0);
-        }).bind("mouseup." + evtns, function(evt) {
+        });
+        $(window).bind("mouseup." + evtns, function(evt) {
           _this.$elem.unbind("mousemove." + evtns);
           mouseDownAt = null;
           if (currentSelection && currentSelection.w > 0 && currentSelection.h > 0) {
@@ -310,8 +312,7 @@
           currentSelection = null;
           dragStarted = false;
           return setTimeout(selectionEvents.add, 0);
-        });
-        $(window).bind("keyup." + evtns, function(evt) {
+        }).bind("keyup." + evtns, function(evt) {
           var Bounds;
           Bounds = require('game.Bounds');
           if (_this.keyboard.isKeyPressed(evt, 'F')) {
@@ -401,8 +402,8 @@
         }
         return localStorage.setItem('editor.map', JSON.stringify(layers));
       },
-      _initMapOverlay: function() {
-        var canvas, ctx, mapOverlay;
+      _initMapGrid: function() {
+        var canvas, ctx, mapGrid;
         canvas = require('game.canvas').create(GRID_SIZE, GRID_SIZE);
         ctx = canvas.getContext();
         ctx.strokeStyle = 'rgba(0,0,0,0.15)';
@@ -411,8 +412,8 @@
         ctx.moveTo(0.5, 0.5);
         ctx.lineTo(0.5, GRID_SIZE);
         ctx.stroke();
-        mapOverlay = canvas;
-        return this.$mapOverlay = $('#editor-map-overlay').css('background-image', "url(" + (mapOverlay.element.toDataURL()) + ")").css('background-repeat', 'repeat');
+        mapGrid = canvas;
+        return this.$mapGrid = $('#editor-map-grid').css('background-image', "url(" + (mapGrid.element.toDataURL()) + ")").css('background-repeat', 'repeat');
       },
       _initBounds: function() {
         var offset;
