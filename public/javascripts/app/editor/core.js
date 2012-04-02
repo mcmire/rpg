@@ -207,7 +207,7 @@
         $layer = this.viewport.$map.find(".editor-layer[data-layer=" + layer + "]").addClass('editor-layer-selected').detach();
         this.viewport.getMapLayers().append($layer);
         $(document.body).addClass("editor-layer-" + layer);
-        this.$sidebar.find("> div[data-layer=" + layer).show();
+        this.$sidebar.find("> div[data-layer=" + layer + "]").show();
         m = "activate_" + layer + "_layer";
         console.log("viewport: activating " + layer + " layer");
         if (typeof (_base = this.viewport)[m] === "function") _base[m]();
@@ -220,7 +220,7 @@
         layer = this.currentLayer;
         this.viewport.$map.find(".editor-layer[data-layer=" + layer).removeClass('editor-layer-selected');
         $(document.body).removeClass("editor-layer-" + layer);
-        this.$sidebar.find("> div[data-layer=" + layer).hide();
+        this.$sidebar.find("> div[data-layer=" + layer + "]").hide();
         m = "deactivate_" + layer + "_layer";
         if (layer) {
           if (this.currentTool) this._deactivateCurrentTool();

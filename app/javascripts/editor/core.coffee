@@ -198,7 +198,7 @@ define 'editor.core', ->
       @viewport.getMapLayers().append($layer)
       $(document.body).addClass("editor-layer-#{layer}")
 
-      @$sidebar.find("> div[data-layer=#{layer}").show()
+      @$sidebar.find("> div[data-layer=#{layer}]").show()
 
       m = "activate_#{layer}_layer"
       console.log "viewport: activating #{layer} layer"
@@ -215,7 +215,7 @@ define 'editor.core', ->
         .removeClass('editor-layer-selected')
       $(document.body).removeClass("editor-layer-#{layer}")
 
-      @$sidebar.find("> div[data-layer=#{layer}").hide()
+      @$sidebar.find("> div[data-layer=#{layer}]").hide()
 
       m = "deactivate_#{layer}_layer"
       if layer
