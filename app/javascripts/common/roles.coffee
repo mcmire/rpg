@@ -21,6 +21,7 @@ define 'roles', ->
 
   # Separate this from eventable because we don't want plug methods
   # to be created for these methods (e.g. @plugins.eventable.bindHelpers)
+  # XXX: This isn't necessary anymore
   eventHelpers =
     bindEvents: (obj, events) ->
       # @__name__ is set when the module is created, see metaobj.coffee

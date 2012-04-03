@@ -273,7 +273,10 @@ define 'game.player', ->
 
     # override
     _initFence: ->
-      @fence = game.Bounds.rect(0, 0, game.viewport.width, game.viewport.height)
+      # have to require this b/c we haven't assigned @viewport yet
+      viewport = require('game.viewport')
+      @fence = require('game.Bounds')
+        .rect(0, 0, viewport.width, viewport.height)
         .withScale(@viewportPadding)
 
   # Go ahead and init the player, after all we will only have one instance

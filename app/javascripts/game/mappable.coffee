@@ -49,9 +49,9 @@ define 'game.Mappable', ->
       @prev.vbounds = @vbounds
 
     _initBoundsOnMap: ->
-      @mbounds = game.Bounds.rect(0, 0, @width, @height)
+      @mbounds = require('game.Bounds').rect(0, 0, @width, @height)
 
     _initBoundsInViewport: ->
-      @vbounds = game.Bounds.rect(0, 0, @width, @height)
+      @vbounds = require('game.Bounds').rect(0, 0, @width, @height)
 
   return Mappable

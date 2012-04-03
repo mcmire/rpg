@@ -10,7 +10,7 @@
         var self;
         this.main = main;
         self = this;
-        this.attachTo(this.main.core.viewport);
+        this.setParentElement(this.main.core.viewport.getElement());
         this.setElement($('<div class="fps-reporter">00.0 FPS</div>'));
         this._initCheckbox();
         this.$playerDebug = $('<p/>');

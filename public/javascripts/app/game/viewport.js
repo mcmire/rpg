@@ -11,7 +11,7 @@
       init: function(core, player) {
         this.core = core;
         this.player = player;
-        this.attachTo(this.core);
+        this.setParentElement(this.core.getElement());
         this.setElement($('<div id="viewport" />').css({
           width: this.width,
           height: this.height

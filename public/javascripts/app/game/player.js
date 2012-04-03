@@ -161,7 +161,9 @@
         }
       },
       _initFence: function() {
-        return this.fence = game.Bounds.rect(0, 0, game.viewport.width, game.viewport.height).withScale(this.viewportPadding);
+        var viewport;
+        viewport = require('game.viewport');
+        return this.fence = require('game.Bounds').rect(0, 0, viewport.width, viewport.height).withScale(this.viewportPadding);
       }
     });
     player.init('link2x', 34, 48);

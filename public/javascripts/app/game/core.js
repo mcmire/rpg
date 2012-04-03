@@ -10,7 +10,6 @@
       init: function(main) {
         var draw;
         this.main = main;
-        this.attachTo(this.main);
         this.setElement(this.main.getElement());
         this.player = require('game.player').assignTo(this);
         this.keyboard = this.main.keyboard;

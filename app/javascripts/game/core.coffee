@@ -11,8 +11,7 @@ define 'game.core', ->
     animMethod: 'setTimeout'  # or 'requestAnimFrame'
 
     init: (@main) ->
-      @attachTo(@main)
-      @setElement(@main.getElement())
+      @setElement @main.getElement()
       @player = require('game.player').assignTo(this)
       @keyboard = @main.keyboard
       @viewport = require('game.viewport').init(this, @player)

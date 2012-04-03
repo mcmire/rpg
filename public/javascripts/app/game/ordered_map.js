@@ -1,7 +1,8 @@
 (function() {
 
   define('game.OrderedMap', function() {
-    var OrderedMap;
+    var OrderedMap, meta;
+    meta = require('meta');
     OrderedMap = meta.def({
       init: function() {
         this.keys = [];

@@ -18,7 +18,7 @@ define 'game.LiveObject', ->
     clone: ->
       clone = @_super()
       # Make a copy of the prototype's states so that they don't get shared
-      clone.states = common.util.dup(clone.states)
+      clone.states = require('util').dup(clone.states)
       return clone
 
     predraw: (ctx) ->
@@ -60,7 +60,7 @@ define 'game.LiveObject', ->
       state.name = name
       state.handler = opts.do
       state.onEnd = opts.then or name
-      seq = game.ImageSequence.create @image, @width, @height, frameIndices,
+      seq = require('game.ImageSequence').create name, @image, @width, @height, frameIndices,
         frameDelay: opts.frameDelay
         frameDuration: opts.frameDuration
         doesRepeat: opts.doesRepeat
@@ -127,6 +127,6 @@ define 'game.LiveObject', ->
       @_super()
 
     _initFence: ->
-      @fence = game.Bounds.rect(0, 0, @map.width, @map.height)
+      @fence = require('game.Bounds').rect(0, 0, @map.width, @map.height)
 
   return LiveObject

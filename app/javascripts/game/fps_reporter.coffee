@@ -9,7 +9,7 @@ define 'game.fpsReporter', ->
 
     init: (@main) ->
       self = this
-      @attachTo(@main.core.viewport)
+      @setParentElement @main.core.viewport.getElement()
       @setElement $('<div class="fps-reporter">00.0 FPS</div>')
       @_initCheckbox()
       @$playerDebug = $('<p/>')

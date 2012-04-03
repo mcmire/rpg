@@ -20,9 +20,9 @@
       },
       setParent: function(parent) {
         this._super(parent);
-        this.viewport = viewport;
-        this.foreground.setParent(viewport);
-        return this.background.setParent(viewport);
+        this.viewport = parent;
+        this.foreground.setParent(parent);
+        return this.background.setParent(parent);
       },
       addPlayer: function(player) {
         this.player = player;

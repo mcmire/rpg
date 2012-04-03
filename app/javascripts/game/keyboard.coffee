@@ -93,39 +93,40 @@ define 'game.keyboard', ->
   # you want to know whether a key is being pressed, then you can simply use
   # keyboard.isKeyPressed(evt).
   #
-  KeyTracker = meta.def
-    KEY_TIMEOUT: 500
+  KeyTracker = do ->
+    KEY_TIMEOUT = 500
 
-    init: (keyCodes) ->
-      @trackedKeys = $.v.reduce(keyCodes, ((o, c) -> o[c] = 1; o), {})
-      @pressedKeys = PressedKeys.create()
+    meta.def
+      init: (keyCodes) ->
+        @trackedKeys = $.v.reduce(keyCodes, ((o, c) -> o[c] = 1; o), {})
+        @pressedKeys = PressedKeys.create()
 
-    reset: ->
-      @pressedKeys.reset()
-      return this
+      reset: ->
+        @pressedKeys.reset()
+        return this
 
-    keydown: (keyCode, ts) ->
-      if @trackedKeys.hasOwnProperty(keyCode)
-        @pressedKeys.put(keyCode, ts)
-        return true
-      return false
+      keydown: (keyCode, ts) ->
+        if @trackedKeys.hasOwnProperty(keyCode)
+          @pressedKeys.put(keyCode, ts)
+          return true
+        return false
 
-    keyup: (keyCode) ->
-      if @trackedKeys.hasOwnProperty(keyCode)
-        @pressedKeys.del(keyCode)
-        return true
-      return false
+      keyup: (keyCode) ->
+        if @trackedKeys.hasOwnProperty(keyCode)
+          @pressedKeys.del(keyCode)
+          return true
+        return false
 
-    isKeyPressed: (keyCodes...) ->
-      !!$.v.find(keyCodes, (keyCode) => @pressedKeys.has(keyCode))
+      isKeyPressed: (keyCodes...) ->
+        !!$.v.find(keyCodes, (keyCode) => @pressedKeys.has(keyCode))
 
-    clearStuckKeys: (now) ->
-      @pressedKeys.each (key, ts) =>
-        if (now - ts) >= KEY_TIMEOUT
-          @pressedKeys.del(key)
+      clearStuckKeys: (now) ->
+        @pressedKeys.each (key, ts) =>
+          if (now - ts) >= KEY_TIMEOUT
+            @pressedKeys.del(key)
 
-    getLastPressedKey: ->
-      @pressedKeys.getMostRecent()
+      getLastPressedKey: ->
+        @pressedKeys.getMostRecent()
 
   keyboard = meta.def \
     eventable,
@@ -235,7 +236,7 @@ define 'game.keyboard', ->
     modifierKeyPressed: (event) ->
       event.shiftKey or event.ctrlKey or event.altKey or event.metaKey
 
-    keyCodesFor: (keys) ->
+    keyCodesFor: (keys...) ->
       (@keyCodeFor(key) for key in $.flatten(keys))
 
     # Public: Convert the given value into a key code (the same thing that

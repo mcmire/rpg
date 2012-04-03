@@ -68,51 +68,54 @@
         return _results;
       }
     });
-    KeyTracker = meta.def({
-      KEY_TIMEOUT: 500,
-      init: function(keyCodes) {
-        this.trackedKeys = $.v.reduce(keyCodes, (function(o, c) {
-          o[c] = 1;
-          return o;
-        }), {});
-        return this.pressedKeys = PressedKeys.create();
-      },
-      reset: function() {
-        this.pressedKeys.reset();
-        return this;
-      },
-      keydown: function(keyCode, ts) {
-        if (this.trackedKeys.hasOwnProperty(keyCode)) {
-          this.pressedKeys.put(keyCode, ts);
-          return true;
+    KeyTracker = (function() {
+      var KEY_TIMEOUT;
+      KEY_TIMEOUT = 500;
+      return meta.def({
+        init: function(keyCodes) {
+          this.trackedKeys = $.v.reduce(keyCodes, (function(o, c) {
+            o[c] = 1;
+            return o;
+          }), {});
+          return this.pressedKeys = PressedKeys.create();
+        },
+        reset: function() {
+          this.pressedKeys.reset();
+          return this;
+        },
+        keydown: function(keyCode, ts) {
+          if (this.trackedKeys.hasOwnProperty(keyCode)) {
+            this.pressedKeys.put(keyCode, ts);
+            return true;
+          }
+          return false;
+        },
+        keyup: function(keyCode) {
+          if (this.trackedKeys.hasOwnProperty(keyCode)) {
+            this.pressedKeys.del(keyCode);
+            return true;
+          }
+          return false;
+        },
+        isKeyPressed: function() {
+          var keyCodes,
+            _this = this;
+          keyCodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+          return !!$.v.find(keyCodes, function(keyCode) {
+            return _this.pressedKeys.has(keyCode);
+          });
+        },
+        clearStuckKeys: function(now) {
+          var _this = this;
+          return this.pressedKeys.each(function(key, ts) {
+            if ((now - ts) >= KEY_TIMEOUT) return _this.pressedKeys.del(key);
+          });
+        },
+        getLastPressedKey: function() {
+          return this.pressedKeys.getMostRecent();
         }
-        return false;
-      },
-      keyup: function(keyCode) {
-        if (this.trackedKeys.hasOwnProperty(keyCode)) {
-          this.pressedKeys.del(keyCode);
-          return true;
-        }
-        return false;
-      },
-      isKeyPressed: function() {
-        var keyCodes,
-          _this = this;
-        keyCodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-        return !!$.v.find(keyCodes, function(keyCode) {
-          return _this.pressedKeys.has(keyCode);
-        });
-      },
-      clearStuckKeys: function(now) {
-        var _this = this;
-        return this.pressedKeys.each(function(key, ts) {
-          if ((now - ts) >= KEY_TIMEOUT) return _this.pressedKeys.del(key);
-        });
-      },
-      getLastPressedKey: function() {
-        return this.pressedKeys.getMostRecent();
-      }
-    });
+      });
+    })();
     keyboard = meta.def(eventable, {
       KeyTracker: KeyTracker,
       keys: KEYS,
@@ -207,8 +210,9 @@
       modifierKeyPressed: function(event) {
         return event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
       },
-      keyCodesFor: function(keys) {
-        var key, _i, _len, _ref, _results;
+      keyCodesFor: function() {
+        var key, keys, _i, _len, _ref, _results;
+        keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
         _ref = $.flatten(keys);
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {

@@ -1,5 +1,7 @@
 
 define 'game.OrderedMap', ->
+  meta = require('meta')
+
   OrderedMap = meta.def
     init: ->
       @keys = []

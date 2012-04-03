@@ -1,13 +1,7 @@
 
 define 'game/maps/lw_52', ->
-  mapCollection = require('game.mapCollection')
-  imageCollection = require('game.imageCollection')
-  spriteCollection = require('game.spriteCollection')
-
-  spr = spriteCollection.get
-  img = imageCollection.get
-
-  map = mapCollection.add 'lw_52', 1024, 1024, (fg, bg) ->
+  (map, img, spr) ->
+    map 'lw_52', 1024, 1024, (fg, bg) ->
                          # (x1, y1), (width, height)
       bg.fill '#48a048', [0, 0], [1024, 1024]
       bg.fill '#3860b0', [944, 0], [80, 688]
@@ -144,9 +138,9 @@ define 'game/maps/lw_52', ->
       #bg.add sprites['waves'], [whatever, whatever], frameDelay: 2
 
       # Guard = game.Guard
-      eightStone = game.StillObject.create('8stone', 32, 32)
+      eightStone = require('game.StillObject').create('8stone', 32, 32)
 
-      fg.add Block.create(192, 176), [288, 352]
+      fg.add require('game.Block').create(192, 176), [288, 352]
 
       fg.add eightStone,
         [256, 640]
@@ -160,5 +154,3 @@ define 'game/maps/lw_52', ->
 
       fg.onLoad ->
         @player.setMapPosition(368, 592)
-
-  return map

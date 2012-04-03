@@ -13,7 +13,7 @@ define 'game.viewport', ->
     height: 448  # pixels
 
     init: (@core, @player) ->
-      @attachTo(@core)
+      @setParentElement @core.getElement()
       @setElement $('<div id="viewport" />').css(width: @width, height: @height)
       @bounds = require('game.Bounds').rect(0, 0, @width, @height)
       return this

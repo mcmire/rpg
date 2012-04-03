@@ -10,7 +10,7 @@
       clone: function() {
         var clone;
         clone = this._super();
-        clone.states = common.util.dup(clone.states);
+        clone.states = require('util').dup(clone.states);
         return clone;
       },
       predraw: function(ctx) {
@@ -35,7 +35,7 @@
         state.name = name;
         state.handler = opts["do"];
         state.onEnd = opts.then || name;
-        seq = game.ImageSequence.create(this.image, this.width, this.height, frameIndices, {
+        seq = require('game.ImageSequence').create(name, this.image, this.width, this.height, frameIndices, {
           frameDelay: opts.frameDelay,
           frameDuration: opts.frameDuration,
           doesRepeat: opts.doesRepeat
@@ -70,7 +70,7 @@
         return this._super();
       },
       _initFence: function() {
-        return this.fence = game.Bounds.rect(0, 0, this.map.width, this.map.height);
+        return this.fence = require('game.Bounds').rect(0, 0, this.map.width, this.map.height);
       }
     });
     return LiveObject;

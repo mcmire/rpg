@@ -52,10 +52,10 @@
         return this.prev.vbounds = this.vbounds;
       },
       _initBoundsOnMap: function() {
-        return this.mbounds = game.Bounds.rect(0, 0, this.width, this.height);
+        return this.mbounds = require('game.Bounds').rect(0, 0, this.width, this.height);
       },
       _initBoundsInViewport: function() {
-        return this.vbounds = game.Bounds.rect(0, 0, this.width, this.height);
+        return this.vbounds = require('game.Bounds').rect(0, 0, this.width, this.height);
       }
     });
     return Mappable;

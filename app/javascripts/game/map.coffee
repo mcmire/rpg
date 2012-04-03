@@ -19,9 +19,9 @@ define 'game.Map', ->
 
     setParent: (parent) ->
       @_super(parent)
-      @viewport = viewport
-      @foreground.setParent(viewport)
-      @background.setParent(viewport)
+      @viewport = parent
+      @foreground.setParent(parent)
+      @background.setParent(parent)
 
     addPlayer: (@player) ->
       @foreground.addPlayer(player)
