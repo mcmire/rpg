@@ -1,0 +1,139 @@
+html, body {
+  height: 100%;
+  overflow: hidden; }
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Helvetica Neue, Arial, sans-serif; }
+
+.editor-drag-object,
+.editor-drag-object-dragged,
+#editor-sidebar div.img {
+  cursor: move; }
+
+.editor-tool-hand #editor-viewport,
+.editor-tool-hand .editor-drag-active {
+  cursor: url(/images/editor/tool-hand.gif?1331100093), auto; }
+
+.editor-tool-select #editor-viewport {
+  cursor: crosshair; }
+
+#editor-nav {
+  background: #222;
+  color: white;
+  padding-left: 60px;
+  font-size: 13px;
+  height: 40px;
+  line-height: 40px;
+  overflow: hidden; }
+  #editor-nav > div {
+    float: left;
+    margin-right: 40px; }
+
+#editor-main {
+  position: relative; }
+
+#editor-sidebar {
+  position: absolute;
+  width: 300px;
+  top: 0;
+  right: 0;
+  background-color: #999;
+  height: 300px;
+  padding: 10px;
+  overflow-y: scroll; }
+  #editor-sidebar div.img {
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    overflow: hidden; }
+
+#editor-viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  margin-right: 300px;
+  background-color: silver;
+  height: 300px;
+  overflow: hidden; }
+  #editor-viewport .editor-layer, #editor-viewport .editor-layer-content, #editor-viewport .editor-layer-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; }
+  #editor-viewport .editor-layer-content {
+    opacity: 0.5; }
+  #editor-viewport .editor-layer-bg {
+    background: white; }
+  #editor-viewport .editor-layer-selected .editor-layer-content {
+    opacity: 1; }
+  #editor-viewport .editor-layer-selected .editor-layer-bg {
+    opacity: 0.5; }
+  #editor-viewport .editor-dragged-image {
+    position: absolute;
+    z-index: 10; }
+
+.editor-selected {
+  border: 1px dashed black;
+  -moz-border-image: url(/images/editor/selection-border-static2.gif?1333419504) 1 repeat;
+  -webkit-border-image: url(/images/editor/selection-border-static2.gif?1333419504) 1 repeat;
+  border-image: url(/images/editor/selection-border-static2.gif?1333419504) 1 repeat;
+  -webkit-transform: translate(-1px, -1px);
+  -moz-transform: translate(-1px, -1px); }
+
+#editor-map {
+  background-color: white;
+  position: absolute;
+  top: 0;
+  left: 0; }
+  #editor-map.editor-map-unloaded {
+    display: none; }
+
+#editor-map-content, #editor-map-grid, #editor-viewport-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; }
+
+#editor-toolbox {
+  border-radius: 5px;
+  border: 1px solid #666;
+  background-color: rgba(235, 235, 235, 0.8);
+  padding: 10px;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 100;
+  cursor: auto !important; }
+  #editor-toolbox > img {
+    display: block;
+    margin-bottom: 10px;
+    border: 1px solid transparent;
+    width: 24px;
+    height: 21px;
+    opacity: 0.5; }
+    #editor-toolbox > img:hover, #editor-toolbox > img.editor-active {
+      opacity: 1; }
+
+.editor-map-object {
+  position: absolute;
+  z-index: 5; }
+  .editor-map-object.editor-drag-helper {
+    opacity: 0.7; }
+
+.editor-fill {
+  position: absolute;
+  z-index: 5; }
+
+.editor-selection-box {
+  position: absolute;
+  z-index: 10;
+  border: 1px dashed black;
+  -moz-border-image: url(/images/editor/selection-border.gif?1333257793) 1 repeat;
+  -webkit-border-image: url(/images/editor/selection-border.gif?1333257793) 1 repeat;
+  border-image: url(/images/editor/selection-border.gif?1333257793) 1 repeat; }
