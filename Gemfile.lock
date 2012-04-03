@@ -14,6 +14,14 @@ GIT
     jammit (0.6.5)
       yui-compressor (>= 0.9.3)
 
+GIT
+  remote: https://github.com/mcmire/jammit-sinatra
+  revision: 2805e62e2a24cb6e795661fae06326b0dff84d93
+  branch: middleware_only_dev
+  specs:
+    jammit-sinatra (0.6.0.1)
+      jammit (>= 0.6.0)
+
 GEM
   remote: http://rubygems.org/
   specs:
@@ -43,8 +51,6 @@ GEM
       rest-client (~> 1.6.1)
       rubyzip
       term-ansicolor (~> 1.0.5)
-    jammit-sinatra (0.6.0.1)
-      jammit (>= 0.6.0)
     launchy (2.0.5)
       addressable (~> 2.2.6)
     mime-types (1.17.2)
@@ -87,7 +93,7 @@ DEPENDENCIES
   guard-sass
   heroku
   jammit!
-  jammit-sinatra
+  jammit-sinatra!
   rake
   rb-fsevent
   shotgun

@@ -5,7 +5,7 @@ gem 'sinatra', '1.3.2'
 gem 'thin'
 gem 'yajl-ruby', :require => 'yajl/json_gem'
 gem 'jammit', :git => 'https://github.com/mcmire/jammit', :branch => 'fix_rails_assumptions'
-gem 'jammit-sinatra'
+gem 'jammit-sinatra', :git => 'https://github.com/mcmire/jammit-sinatra', :branch => 'middleware_only_dev'
 
 group :development do
   gem 'shotgun'
