@@ -17,26 +17,27 @@ define 'editor.viewport', ->
       @$mapLayers = $('#editor-map-layers')
       @_initBounds()
       @map = null
-      @objectsByLayer = $.v.reduce @core.getLayers(), ((h, n) -> h[n] = {}; h), {}
       @objectId = 0
-      @fills = []
+      @objectsByLayer = $.v.reduce @core.getLayers(), ((h, n) -> h[n] = {}; h), {}
       return this
 
     getElement: -> @$elem
 
     getMapLayers: -> @$mapLayers
 
+    getCurrentLayer: -> @core.getCurrentLayer()
+
     getElementForLayer: (layer) ->
       @$mapLayers.find(".editor-layer[data-layer=#{layer}]")
 
     getElementForCurrentLayer: ->
-      @getElementForLayer(@core.getCurrentLayer())
+      @getElementForLayer(@getCurrentLayer())
 
     getContentForLayer: (layer) ->
       @getElementForLayer(layer).find('.editor-layer-content')
 
     getContentForCurrentLayer: ->
-      @getContentForLayer(@core.getCurrentLayer())
+      @getContentForLayer(@getCurrentLayer())
 
     setWidth: (width) ->
       @$elem.width(width)
@@ -129,6 +130,7 @@ define 'editor.viewport', ->
                 $elem = $(elem)
                 objectId = $elem.data('moid')
                 console.log "viewport: removing object #{objectId}"
+                # TODO: This should be a method
                 delete @objectsByLayer[@core.getCurrentLayer()][objectId]
                 $elem.remove()
               @saveMap()
@@ -221,15 +223,27 @@ define 'editor.viewport', ->
           fill.position @_roundCoordsToGrid($draggee.position())
           @saveMap()
       $boxes = @getContentForCurrentLayer().find('.editor-fill')
+
       @_addEventsToSelectionBoxes($boxes)
+
       # TODO: This is the same as tiles
       @$elem.bind "mousedown.#{evtns}", (evt) =>
         console.log "#{evtns}: mousedown"
-        @$map.find('.editor-fill')
+        $layer = @getContentForCurrentLayer()
+        $layer.find('.editor-fill')
           .removeClass('editor-selected')
-        @$map.find('.editor-fill[data-is-selected=yes]')
+        $layer.find('.editor-fill[data-is-selected=yes]')
           .addClass('editor-selected')
           .removeAttr('data-is-selected')
+
+      $(window)
+        .bind "keyup.#{evtns}", (evt) =>
+          if @keyboard.isKeyPressed(evt, 'backspace', 'delete')
+            $layerContent = @getContentForCurrentLayer()
+            $selectedObjects = $layerContent.find('.editor-fill.editor-selected')
+            if $selectedObjects.length
+              $selectedObjects.each (elem) => @_removeFill(elem)
+              @saveMap()
 
     deactivate_fill_normal_tool: ->
       evtns = 'editor.viewport.layer-fill.tool-normal'
@@ -401,7 +415,9 @@ define 'editor.viewport', ->
       evtns = 'editor.viewport.selection-box'
       $boxes
         .dragObject('destroy')
-        .unbind "mouseupnodrag.#{evtns}"
+        .unbind("mouseupnodrag.#{evtns}")
+        .removeAttr('data-is-selected')
+        .removeClass('editor-selected')
 
     deactivate_fill_select_tool: ->
       evtns = 'editor.viewport.layer-fill.tool-select'
@@ -425,15 +441,35 @@ define 'editor.viewport', ->
       moid = $elem.data('moid')
       !!@objectsByLayer[layer][moid]
 
-    _createFill: (fill) ->
-      $fill = $('<div class="editor-fill"></div>')
-        .position(fill)
-        .size(fill)
-        .css('background-color', fill.color)
-        .data('fill', fill)
+    _createFillElement: (fill) ->
+      $elem = $('<div class="editor-fill"></div>')
+      $elem.position(fill.store)
+      $elem.size(fill.store)
+      $elem.css('background-color', fill.store.color)
+      $elem.data('fill', fill)
+      return $elem
+
+    _createFill: (store) ->
+      fill = { store: util.dup(store) }
+      fill.position = (pos) ->
+        if pos
+          @$elem.position(pos)
+          @store.x = pos.x
+          @store.y = pos.y
+          return this
+        else
+          return {x: @store.x, y: @store.y}
+
+      $elem = @_createFillElement(fill)
+      fill.$elem = $elem
+
+      fill.moid = @objectId
+      @objectId++
+
+      return fill
 
     _addFill: (fill) ->
-      @fills.push(fill)
+      @objectsByLayer['fill'][fill.moid] = fill
 
     # fill is a Hash:
     # x     - x coord of top-left corner
@@ -443,34 +479,23 @@ define 'editor.viewport', ->
     # color - rgb hex string
     #
     _loadFill: (fill) ->
-      fill = util.dup(fill)
-      fill.position = (pos) ->
-        if pos
-          @$elem.position(pos)
-          @x = pos.x
-          @y = pos.y
-          return this
-        else
-          return {@x, @y}
-      fill.size = (dim) ->
-        if dim
-          @$elem.size(dim)
-          @w = dim.w
-          @h = dim.h
-          return this
-        else
-          return {@w, @h}
+      fill = @_createFill(fill)
 
-      $fill = @_createFill(fill)
       $content = @getContentForLayer('fill')
       if not $content.length
         throw new Error "Can't add fill, couldn't find layer content element"
-      $content.append($fill)
-      fill.$elem = $fill
+      $content.append(fill.$elem)
 
       @_addFill(fill)
 
       return fill
+
+    _removeFill: (elem) ->
+      $elem = $(elem)
+      fill = $elem.data('fill')
+      console.log "viewport: removing fill #{fill.moid}"
+      delete @objectsByLayer['fill'][fill.moid]
+      $elem.remove()
 
     saveMap: ->
       console.log 'viewport: saving map...'
@@ -484,10 +509,8 @@ define 'editor.viewport', ->
             x: pos.x
             y: pos.y
           })
-      layers['fill'] = []
-      $.v.each @fills, (fill) ->
-        fill = util.hash.without(fill, '$elem')
-        layers['fill'].push(fill)
+      layers['fill'] =
+        $.v.map @objectsByLayer['fill'], (moid, fill) -> fill.store
       localStorage.setItem('editor.map', JSON.stringify(layers))
 
     _initMapGrid: ->

@@ -18,12 +18,11 @@
         this.$mapLayers = $('#editor-map-layers');
         this._initBounds();
         this.map = null;
+        this.objectId = 0;
         this.objectsByLayer = $.v.reduce(this.core.getLayers(), (function(h, n) {
           h[n] = {};
           return h;
         }), {});
-        this.objectId = 0;
-        this.fills = [];
         return this;
       },
       getElement: function() {
@@ -32,17 +31,20 @@
       getMapLayers: function() {
         return this.$mapLayers;
       },
+      getCurrentLayer: function() {
+        return this.core.getCurrentLayer();
+      },
       getElementForLayer: function(layer) {
         return this.$mapLayers.find(".editor-layer[data-layer=" + layer + "]");
       },
       getElementForCurrentLayer: function() {
-        return this.getElementForLayer(this.core.getCurrentLayer());
+        return this.getElementForLayer(this.getCurrentLayer());
       },
       getContentForLayer: function(layer) {
         return this.getElementForLayer(layer).find('.editor-layer-content');
       },
       getContentForCurrentLayer: function() {
-        return this.getContentForLayer(this.core.getCurrentLayer());
+        return this.getContentForLayer(this.getCurrentLayer());
       },
       setWidth: function(width) {
         this.$elem.width(width);
@@ -222,10 +224,25 @@
         });
         $boxes = this.getContentForCurrentLayer().find('.editor-fill');
         this._addEventsToSelectionBoxes($boxes);
-        return this.$elem.bind("mousedown." + evtns, function(evt) {
+        this.$elem.bind("mousedown." + evtns, function(evt) {
+          var $layer;
           console.log("" + evtns + ": mousedown");
-          _this.$map.find('.editor-fill').removeClass('editor-selected');
-          return _this.$map.find('.editor-fill[data-is-selected=yes]').addClass('editor-selected').removeAttr('data-is-selected');
+          $layer = _this.getContentForCurrentLayer();
+          $layer.find('.editor-fill').removeClass('editor-selected');
+          return $layer.find('.editor-fill[data-is-selected=yes]').addClass('editor-selected').removeAttr('data-is-selected');
+        });
+        return $(window).bind("keyup." + evtns, function(evt) {
+          var $layerContent, $selectedObjects;
+          if (_this.keyboard.isKeyPressed(evt, 'backspace', 'delete')) {
+            $layerContent = _this.getContentForCurrentLayer();
+            $selectedObjects = $layerContent.find('.editor-fill.editor-selected');
+            if ($selectedObjects.length) {
+              $selectedObjects.each(function(elem) {
+                return _this._removeFill(elem);
+              });
+              return _this.saveMap();
+            }
+          }
         });
       },
       deactivate_fill_normal_tool: function() {
@@ -392,7 +409,7 @@
       _removeEventsFromSelectionBoxes: function($boxes) {
         var evtns;
         evtns = 'editor.viewport.selection-box';
-        return $boxes.dragObject('destroy').unbind("mouseupnodrag." + evtns);
+        return $boxes.dragObject('destroy').unbind("mouseupnodrag." + evtns).removeAttr('data-is-selected').removeClass('editor-selected');
       },
       deactivate_fill_select_tool: function() {
         var evtns;
@@ -424,51 +441,60 @@
         moid = $elem.data('moid');
         return !!this.objectsByLayer[layer][moid];
       },
-      _createFill: function(fill) {
-        var $fill;
-        return $fill = $('<div class="editor-fill"></div>').position(fill).size(fill).css('background-color', fill.color).data('fill', fill);
+      _createFillElement: function(fill) {
+        var $elem;
+        $elem = $('<div class="editor-fill"></div>');
+        $elem.position(fill.store);
+        $elem.size(fill.store);
+        $elem.css('background-color', fill.store.color);
+        $elem.data('fill', fill);
+        return $elem;
       },
-      _addFill: function(fill) {
-        return this.fills.push(fill);
-      },
-      _loadFill: function(fill) {
-        var $content, $fill;
-        fill = util.dup(fill);
+      _createFill: function(store) {
+        var $elem, fill;
+        fill = {
+          store: util.dup(store)
+        };
         fill.position = function(pos) {
           if (pos) {
             this.$elem.position(pos);
-            this.x = pos.x;
-            this.y = pos.y;
+            this.store.x = pos.x;
+            this.store.y = pos.y;
             return this;
           } else {
             return {
-              x: this.x,
-              y: this.y
+              x: this.store.x,
+              y: this.store.y
             };
           }
         };
-        fill.size = function(dim) {
-          if (dim) {
-            this.$elem.size(dim);
-            this.w = dim.w;
-            this.h = dim.h;
-            return this;
-          } else {
-            return {
-              w: this.w,
-              h: this.h
-            };
-          }
-        };
-        $fill = this._createFill(fill);
+        $elem = this._createFillElement(fill);
+        fill.$elem = $elem;
+        fill.moid = this.objectId;
+        this.objectId++;
+        return fill;
+      },
+      _addFill: function(fill) {
+        return this.objectsByLayer['fill'][fill.moid] = fill;
+      },
+      _loadFill: function(fill) {
+        var $content;
+        fill = this._createFill(fill);
         $content = this.getContentForLayer('fill');
         if (!$content.length) {
           throw new Error("Can't add fill, couldn't find layer content element");
         }
-        $content.append($fill);
-        fill.$elem = $fill;
+        $content.append(fill.$elem);
         this._addFill(fill);
         return fill;
+      },
+      _removeFill: function(elem) {
+        var $elem, fill;
+        $elem = $(elem);
+        fill = $elem.data('fill');
+        console.log("viewport: removing fill " + fill.moid);
+        delete this.objectsByLayer['fill'][fill.moid];
+        return $elem.remove();
       },
       saveMap: function() {
         var id, layer, layers, object, pos, _i, _len, _ref, _ref2;
@@ -489,10 +515,8 @@
             });
           }
         }
-        layers['fill'] = [];
-        $.v.each(this.fills, function(fill) {
-          fill = util.hash.without(fill, '$elem');
-          return layers['fill'].push(fill);
+        layers['fill'] = $.v.map(this.objectsByLayer['fill'], function(moid, fill) {
+          return fill.store;
         });
         return localStorage.setItem('editor.map', JSON.stringify(layers));
       },
