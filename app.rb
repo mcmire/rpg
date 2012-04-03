@@ -28,7 +28,7 @@ helpers do
       if APP_ENV == 'development'
         Jammit.packager.individual_urls(group.to_sym, :js)
       else
-        Jammit.asset_url(group.to_sym, :js)
+        [Jammit.asset_url(group.to_sym, :js)]
       end
     html << javascript_include_tag('/javascripts/vendor/ender.js')
     html << javascript_include_tag('/javascripts/app/common/ender_ext.js')
