@@ -23,8 +23,8 @@
           _this._populateMapObjects();
           _this._initLayers();
           _this._initToolbox();
-          _this._changeLayerTo(0);
-          return _this.viewport.loadMap();
+          _this.viewport.loadMap();
+          return _this._changeLayerTo(0);
         });
         return $(window).bind("keydown.editor.core", function(evt) {
           if (_this.keyboard.isKeyPressed(evt, 'backspace')) {

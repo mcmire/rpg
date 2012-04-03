@@ -1,5 +1,6 @@
 
 define 'editor.viewport', ->
+  util = require('util')
   meta = require('meta')
   require('editor.DropTarget')
 
@@ -25,8 +26,17 @@ define 'editor.viewport', ->
 
     getMapLayers: -> @$mapLayers
 
+    getElementForLayer: (layer) ->
+      @$mapLayers.find(".editor-layer[data-layer=#{layer}]")
+
+    getElementForCurrentLayer: ->
+      @getElementForLayer(@core.getCurrentLayer())
+
     getContentForLayer: (layer) ->
-      @$mapLayers.find(".editor-layer[data-layer=#{layer}] .editor-layer-content")
+      @getElementForLayer(layer).find('.editor-layer-content')
+
+    getContentForCurrentLayer: ->
+      @getContentForLayer(@core.getCurrentLayer())
 
     setWidth: (width) ->
       @$elem.width(width)
@@ -56,6 +66,7 @@ define 'editor.viewport', ->
       # TODO: Refactor
       # localStorage.removeItem('editor.map')
       if data = localStorage.getItem('editor.map')
+        console.log 'map data': data
         try
           layers = JSON.parse(data)
           for layer in ['tiles']
@@ -81,9 +92,7 @@ define 'editor.viewport', ->
       mapObjectsSel = "#{layerSel} .editor-map-object"
 
       @$elem
-        .dropTarget(
-          receptor: "#{layerSel} .editor-layer-content"
-        )
+        .dropTarget(receptor: "#{layerSel} .editor-layer-content")
         .bind "mousedropwithin.#{evtns}", (evt) =>
           console.log "#{evtns}: mousedropwithin"
           dragObject = evt.relatedObject
@@ -102,6 +111,7 @@ define 'editor.viewport', ->
 
       @_addEventsToMapObjects $(mapObjectsSel)
 
+      # TODO: This is the same as fill
       @$map.bind "mouseup.#{evtns}", (evt) =>
         console.log "#{evtns}: mouseup"
         @$map.find('.editor-map-object')
@@ -201,6 +211,33 @@ define 'editor.viewport', ->
       @$elem.unbind(".#{evtns}")
       $(window).unbind(".#{evtns}")
 
+    activate_fill_normal_tool: ->
+      evtns = 'editor.viewport.layer-fill.tool-normal'
+      @$elem
+        .dropTarget(receptor: @getElementForCurrentLayer())
+        .bind "mousedropwithin.#{evtns}", (evt) =>
+          $draggee = $(evt.relatedTarget)
+          fill = $draggee.data('fill')
+          fill.position @_roundCoordsToGrid($draggee.position())
+          @saveMap()
+      $boxes = @getContentForCurrentLayer().find('.editor-fill')
+      @_addEventsToSelectionBoxes($boxes)
+      # TODO: This is the same as tiles
+      @$elem.bind "mousedown.#{evtns}", (evt) =>
+        console.log "#{evtns}: mousedown"
+        @$map.find('.editor-fill')
+          .removeClass('editor-selected')
+        @$map.find('.editor-fill[data-is-selected=yes]')
+          .addClass('editor-selected')
+          .removeAttr('data-is-selected')
+
+    deactivate_fill_normal_tool: ->
+      evtns = 'editor.viewport.layer-fill.tool-normal'
+      @$elem.unbind ".#{evtns}"
+      @$elem.dropTarget('destroy')
+      $boxes = @getContentForCurrentLayer().find('.editor-fill')
+      @_removeEventsFromSelectionBoxes($boxes)
+
     activate_fill_select_tool: ->
       evtns = 'editor.viewport.layer-fill.tool-select'
 
@@ -251,7 +288,7 @@ define 'editor.viewport', ->
 
           evt.preventDefault()
 
-          addNewSelection = evt.altKey
+          appendingNewSelection = evt.altKey
           selectionStartedAt = @_roundCoordsToGrid(
             adjustCoords(x: evt.pageX, y: evt.pageY)
           )
@@ -262,13 +299,13 @@ define 'editor.viewport', ->
             # TODO: Can we use our dnd code to detect this?
             # Maybe define a 'dragSurface' plugin?
             unless dragStarted
-              clearActiveSelections() unless addNewSelection
+              dragStarted = true
+              clearActiveSelections() unless appendingNewSelection
               selectionEvents.remove()
               currentSelection = {}
               currentSelection.pos = selectionStartedAt
-              currentSelection.$box = $('<div class="editor-selection-box">')
+              currentSelection.$box = $box = $('<div class="editor-selection-box">')
               @$overlay.append(currentSelection.$box)
-              dragStarted = true
 
             mouse = @_roundCoordsToGrid(
               adjustCoords(x: evt.pageX, y: evt.pageY)
@@ -337,11 +374,34 @@ define 'editor.viewport', ->
           if @keyboard.isKeyPressed(evt, 'F')
             # fill all of the selections
             $.v.each activeSelections, (sel) =>
-              fill = {x: sel.x, y: sel.y, w: sel.w, h: sel.h, color: '#800000'}
+              fill =
+                x: sel.x, y: sel.y
+                w: sel.w, h: sel.h
+                color: '#800000'
               @_loadFill(fill)
             @saveMap()
 
       selectionEvents.add()
+
+    # TODO: This is the same as _addEventsToMapObjects()
+    _addEventsToSelectionBoxes: ($boxes) ->
+      evtns = 'editor.viewport.selection-box'
+      $boxes
+        .dragObject
+          dropTarget: @$elem
+          containWithinDropTarget: true
+        .bind "mousedown.#{evtns}", (evt) ->
+          console.log 'selection box mousedown (after creation)'
+          $draggee = $(this)
+          state = $draggee.attr('data-is-selected')
+          newstate = if state is 'no' or !state then 'yes' else 'no'
+          $draggee.attr('data-is-selected', newstate)
+
+    _removeEventsFromSelectionBoxes: ($boxes) ->
+      evtns = 'editor.viewport.selection-box'
+      $boxes
+        .dragObject('destroy')
+        .unbind "mouseupnodrag.#{evtns}"
 
     deactivate_fill_select_tool: ->
       evtns = 'editor.viewport.layer-fill.tool-select'
@@ -370,14 +430,47 @@ define 'editor.viewport', ->
         .position(fill)
         .size(fill)
         .css('background-color', fill.color)
+        .data('fill', fill)
 
     _addFill: (fill) ->
       @fills.push(fill)
 
+    # fill is a Hash:
+    # x     - x coord of top-left corner
+    # y     - y coord of top-left corner
+    # w     - width
+    # h     - height
+    # color - rgb hex string
+    #
     _loadFill: (fill) ->
+      fill = util.dup(fill)
+      fill.position = (pos) ->
+        if pos
+          @$elem.position(pos)
+          @x = pos.x
+          @y = pos.y
+          return this
+        else
+          return {@x, @y}
+      fill.size = (dim) ->
+        if dim
+          @$elem.size(dim)
+          @w = dim.w
+          @h = dim.h
+          return this
+        else
+          return {@w, @h}
+
       $fill = @_createFill(fill)
-      @getContentForLayer('fill').append($fill)
+      $content = @getContentForLayer('fill')
+      if not $content.length
+        throw new Error "Can't add fill, couldn't find layer content element"
+      $content.append($fill)
+      fill.$elem = $fill
+
       @_addFill(fill)
+
+      return fill
 
     saveMap: ->
       console.log 'viewport: saving map...'
@@ -392,7 +485,8 @@ define 'editor.viewport', ->
             y: pos.y
           })
       layers['fill'] = []
-      for fill in @fills
+      $.v.each @fills, (fill) ->
+        fill = util.hash.without(fill, '$elem')
         layers['fill'].push(fill)
       localStorage.setItem('editor.map', JSON.stringify(layers))
 
@@ -421,6 +515,7 @@ define 'editor.viewport', ->
         offset.height
       )
 
+    # TODO: This is the same as _addEventsToSelectionBoxes()
     _addEventsToMapObjects: ($draggees) ->
       evtns = 'editor.viewport.layer-tiles.tool-normal'
       $draggees.bind "mouseupnodrag.#{evtns}", (evt) ->

@@ -25,8 +25,8 @@ define 'editor.core', ->
         @_populateMapObjects()
         @_initLayers()
         @_initToolbox()
-        @_changeLayerTo(0)   # currentTool is already set
         @viewport.loadMap()
+        @_changeLayerTo(0)   # currentTool is already set
 
       # Block backspace from leaving the page
       $(window)

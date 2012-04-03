@@ -29,8 +29,6 @@
 
 ## Editor
 
-* BUG: When switching layers sidebar never gets hidden
-
 * FEATURE: Add ability to click on a fill object and delete it just like you can
   do with tiles -- or extract this into a common place
 

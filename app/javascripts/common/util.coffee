@@ -18,7 +18,7 @@ define 'util', ->
   #
   # Returns a modified version of `target`.
   #
-  extend: (args...) ->
+  extend = (args...) ->
     if typeof args[0] is 'boolean'
       deep = args.shift()
     else
@@ -29,7 +29,7 @@ define 'util', ->
     for obj in objects
       for own prop of obj
         if deep and ($.v.is.obj(obj[prop]) or $.v.is.arr(obj[prop]))
-          target[prop] = @clone obj[prop]
+          target[prop] = clone obj[prop]
         else
           target[prop] = obj[prop]
 
@@ -41,11 +41,11 @@ define 'util', ->
   #
   # Returns an Object of the same type as the given Object.
   #
-  clone: (obj) ->
+  clone = (obj) ->
     if $.v.is.arr(obj)
-      @extend true, [], obj
-    else if @isPlainObject(obj)
-      @extend true, {}, obj
+      extend true, [], obj
+    else if isPlainObject(obj)
+      extend true, {}, obj
     else
       obj
 
@@ -55,44 +55,82 @@ define 'util', ->
   #
   # Returns an Object of the same type as the given Object.
   #
-  dup: (obj) ->
+  dup = (obj) ->
     if $.v.is.arr(obj)
-      @extend false, [], obj
-    else if @isPlainObject(obj)
-      @extend false, {}, obj
+      extend false, [], obj
+    else if isPlainObject(obj)
+      extend false, {}, obj
     else
       obj
 
-  isPlainObject: (obj) ->
+  isPlainObject = (obj) ->
     $.v.is.obj(obj) and obj.constructor is Object
 
-  createFromProto: (obj) ->
+  # DEPRECATED (use Object.create() directly)
+  createFromProto = (obj) ->
     Object.create(obj)
 
-  randomItem: (arr) ->
-    arr[@randomInt(arr.length-1)]
+  randomItem = (arr) ->
+    arr[randomInt(arr.length-1)]
 
-  randomInt: (args...) ->
+  randomInt = (args...) ->
     if args.length is 1
       [min, max] = [0, args[0]]
     else
       [min, max] = args
     Math.floor(Math.random() * (max - min + 1)) + min
 
-  capitalize: (str) ->
+  capitalize = (str) ->
     str[0].toUpperCase() + str[1..-1]
 
-  ensureArray: (arr) ->
+  ensureArray = (arr) ->
     arr = arr[0] if arr.length is 1 and $.is.arr(arr[0])
     return arr
 
-  arrayDelete: (arr, item) ->
+  arrayDelete = (arr, item) ->
     arr.splice(item, 1)
 
-  cmp: (a, b) ->
+  cmp = (a, b) ->
     if a > b
       return 1
     else if a < b
       return -1
     else
       return 0
+
+  hashWithout = (hash, keys...) ->
+    hash2 = dup(hash)
+    delete hash2[key] for key in keys
+    return hash2
+
+  return {
+    extend: extend
+    clone: clone
+    dup: dup
+    cmp: cmp
+
+    array:
+      delete: arrayDelete
+      wrap: ensureArray
+      random: randomItem
+    int:
+      random: randomInt
+    string:
+      capitalize: capitalize
+    is:
+      hash: isPlainObject
+    hash:
+      is: isPlainObject
+      without: hashWithout
+
+    # DEPRECATED
+    isPlainObject: isPlainObject     # use is.hash() / hash.is()
+    randomItem: randomItem           # use array.random()
+    randomInt: randomInt             # use int.random
+    capitalize: capitalize           # use string.capitalize()
+    ensureArray: ensureArray         # use array.wrap()
+    arrayDelete: arrayDelete         # use array.delete()
+
+    # DEPRECATED
+    createFromProto: createFromProto
+  }

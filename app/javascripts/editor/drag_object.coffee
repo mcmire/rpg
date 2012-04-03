@@ -10,6 +10,7 @@ define 'editor.DragObject', ->
       that = this
 
       @$elem = $(elem)
+      @$elem.addClass('editor-drag-object')
       @offset = @$elem.offset()
 
       @options = options
@@ -17,7 +18,7 @@ define 'editor.DragObject', ->
         $dropTarget = $(options.dropTarget)
         @dropTarget = $dropTarget.data('dropTarget')
         if not @dropTarget
-          throw new Error "DragObject#init: Drop target does not exist"
+          throw new Error "DragObject#init: Drop target not defined. Either the drop target doesn't exist, or you need to call $(...).dropTarget() on it."
 
       @dragOffset = null
 
@@ -37,7 +38,7 @@ define 'editor.DragObject', ->
 
         .bind "mousedragstart.#{EVT_NS}", (evt) =>
           @_logEvent @$elem, 'elem mousedragstart'
-          $(document.body).addClass('editor-drag-active')
+          $(document.body).addClass('editor-drag-object-dragged')
           elemOffset = @$elem.offset()
           console.log "setting dragOffset on #{@$elem.data('node-uid')}"
           @dragOffset =
@@ -56,7 +57,7 @@ define 'editor.DragObject', ->
 
           @$elem.one "mousedragend.#{EVT_NS}", (evt) =>
             @_logEvent @$elem, 'elem mousedragend'
-            $(document.body).removeClass('editor-drag-active')
+            $(document.body).removeClass('editor-drag-object-dragged')
             @dragOffset = null
             if @dropTarget
               evt.relatedTarget = @$elem[0]
@@ -69,8 +70,9 @@ define 'editor.DragObject', ->
               @_removeDragEventsWithoutHelper()
 
     destroy: ->
-      @$elem.unbind(".#{EVT_NS}")
-      $(window).unbind(".#{EVT_NS}")
+      @$elem.removeClass('editor-drag-object')
+      @$elem.unbind ".#{EVT_NS}"
+      $(window).unbind ".#{EVT_NS}"
 
     position: (evt) ->
       $elem = if @options.helper then @$helper else @$elem

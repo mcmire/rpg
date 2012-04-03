@@ -7,6 +7,17 @@
   height: 100%;
 }
 
+@mixin border-image($url) {
+  -moz-border-image: url($url) 1 repeat;
+  -webkit-border-image: url($url) 1 repeat;
+  border-image: url($url) 1 repeat;
+}
+
+@mixin transform($txn) {
+  -webkit-transform: $txn;
+  -moz-transform: $txn;
+}
+
 // prevent rubber-band effect in webkit browsers when scrolling
 // http://mir.aculo.us/2011/07/29/prevent-rubber-band-scrolling-for-single-page-apps-in-safari-5-1/
 html, body {
@@ -20,8 +31,8 @@ body {
   font-family: Helvetica Neue, Arial, sans-serif;
 }
 
-.editor-tool-normal .editor-drag-active,
-.editor-tool-normal .editor-map-object,
+.editor-drag-object,
+.editor-drag-object-dragged,
 #editor-sidebar div.img {
   cursor: move
 }
@@ -113,12 +124,14 @@ $sidebar-width: 300px;
     position: absolute;
     z-index: 10;
   }
+}
 
-  .editor-map-object.editor-selected {
-    border: 1px solid red;
-    -webkit-transform: translate(-1px, -1px);
-    -moz-transform: translate(-1px, -1px);
-  }
+.editor-selected {
+  border: 1px dashed black;
+  @include border-image('/images/editor/selection-border-static2.gif');
+  @include transform(translate(-1px, -1px));
+  // box-shadow: 1px 1px 5px 1px rgba(0, 0, 0, 0.6);
+  // box-shadow: 4px 4px 3px 1px rgba(0,0,0,0.5);
 }
 
 #editor-map {
@@ -182,7 +195,5 @@ $sidebar-width: 300px;
   z-index: 10;
   // background-color: rgba(255,255,255,0.15);
   border: 1px dashed black;
-  -moz-border-image: url(/images/editor/selection-border.gif) 1 repeat;
-  -webkit-border-image: url(/images/editor/selection-border.gif) 1 repeat;
-  border-image: url(/images/editor/selection-border.gif) 1 repeat;
+  @include border-image('/images/editor/selection-border.gif');
 }

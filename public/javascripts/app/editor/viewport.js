@@ -2,7 +2,8 @@
   var __hasProp = Object.prototype.hasOwnProperty;
 
   define('editor.viewport', function() {
-    var GRID_SIZE, meta;
+    var GRID_SIZE, meta, util;
+    util = require('util');
     meta = require('meta');
     require('editor.DropTarget');
     GRID_SIZE = 16;
@@ -31,8 +32,17 @@
       getMapLayers: function() {
         return this.$mapLayers;
       },
+      getElementForLayer: function(layer) {
+        return this.$mapLayers.find(".editor-layer[data-layer=" + layer + "]");
+      },
+      getElementForCurrentLayer: function() {
+        return this.getElementForLayer(this.core.getCurrentLayer());
+      },
       getContentForLayer: function(layer) {
-        return this.$mapLayers.find(".editor-layer[data-layer=" + layer + "] .editor-layer-content");
+        return this.getElementForLayer(layer).find('.editor-layer-content');
+      },
+      getContentForCurrentLayer: function() {
+        return this.getContentForLayer(this.core.getCurrentLayer());
       },
       setWidth: function(width) {
         this.$elem.width(width);
@@ -56,6 +66,9 @@
           h: this.map.height
         });
         if (data = localStorage.getItem('editor.map')) {
+          console.log({
+            'map data': data
+          });
           try {
             layers = JSON.parse(data);
             _ref = ['tiles'];
@@ -194,6 +207,35 @@
         this.$elem.unbind("." + evtns);
         return $(window).unbind("." + evtns);
       },
+      activate_fill_normal_tool: function() {
+        var $boxes, evtns,
+          _this = this;
+        evtns = 'editor.viewport.layer-fill.tool-normal';
+        this.$elem.dropTarget({
+          receptor: this.getElementForCurrentLayer()
+        }).bind("mousedropwithin." + evtns, function(evt) {
+          var $draggee, fill;
+          $draggee = $(evt.relatedTarget);
+          fill = $draggee.data('fill');
+          fill.position(_this._roundCoordsToGrid($draggee.position()));
+          return _this.saveMap();
+        });
+        $boxes = this.getContentForCurrentLayer().find('.editor-fill');
+        this._addEventsToSelectionBoxes($boxes);
+        return this.$elem.bind("mousedown." + evtns, function(evt) {
+          console.log("" + evtns + ": mousedown");
+          _this.$map.find('.editor-fill').removeClass('editor-selected');
+          return _this.$map.find('.editor-fill[data-is-selected=yes]').addClass('editor-selected').removeAttr('data-is-selected');
+        });
+      },
+      deactivate_fill_normal_tool: function() {
+        var $boxes, evtns;
+        evtns = 'editor.viewport.layer-fill.tool-normal';
+        this.$elem.unbind("." + evtns);
+        this.$elem.dropTarget('destroy');
+        $boxes = this.getContentForCurrentLayer().find('.editor-fill');
+        return this._removeEventsFromSelectionBoxes($boxes);
+      },
       activate_fill_select_tool: function() {
         var activeSelections, adjustCoords, clearActiveSelections, currentSelection, dragStarted, evtns, mouseDownAt, selectionEvents,
           _this = this;
@@ -238,25 +280,25 @@
         this.$elem.bind("contextmenu." + evtns, function(evt) {
           return evt.preventDefault();
         }).bind("mousedown." + evtns, function(evt) {
-          var addNewSelection, selectionStartedAt;
+          var appendingNewSelection, selectionStartedAt;
           if (evt.button === 2 || (evt.ctrlKey && evt.button === 0)) return;
           evt.preventDefault();
-          addNewSelection = evt.altKey;
+          appendingNewSelection = evt.altKey;
           selectionStartedAt = _this._roundCoordsToGrid(adjustCoords({
             x: evt.pageX,
             y: evt.pageY
           }));
           return _this.$elem.bind("mousemove." + evtns, function(evt) {
-            var h, mouse, w, x, y;
+            var $box, h, mouse, w, x, y;
             evt.preventDefault();
             if (!dragStarted) {
-              if (!addNewSelection) clearActiveSelections();
+              dragStarted = true;
+              if (!appendingNewSelection) clearActiveSelections();
               selectionEvents.remove();
               currentSelection = {};
               currentSelection.pos = selectionStartedAt;
-              currentSelection.$box = $('<div class="editor-selection-box">');
+              currentSelection.$box = $box = $('<div class="editor-selection-box">');
               _this.$overlay.append(currentSelection.$box);
-              dragStarted = true;
             }
             mouse = _this._roundCoordsToGrid(adjustCoords({
               x: evt.pageX,
@@ -332,6 +374,26 @@
         });
         return selectionEvents.add();
       },
+      _addEventsToSelectionBoxes: function($boxes) {
+        var evtns;
+        evtns = 'editor.viewport.selection-box';
+        return $boxes.dragObject({
+          dropTarget: this.$elem,
+          containWithinDropTarget: true
+        }).bind("mousedown." + evtns, function(evt) {
+          var $draggee, newstate, state;
+          console.log('selection box mousedown (after creation)');
+          $draggee = $(this);
+          state = $draggee.attr('data-is-selected');
+          newstate = state === 'no' || !state ? 'yes' : 'no';
+          return $draggee.attr('data-is-selected', newstate);
+        });
+      },
+      _removeEventsFromSelectionBoxes: function($boxes) {
+        var evtns;
+        evtns = 'editor.viewport.selection-box';
+        return $boxes.dragObject('destroy').unbind("mouseupnodrag." + evtns);
+      },
       deactivate_fill_select_tool: function() {
         var evtns;
         evtns = 'editor.viewport.layer-fill.tool-select';
@@ -364,19 +426,52 @@
       },
       _createFill: function(fill) {
         var $fill;
-        return $fill = $('<div class="editor-fill"></div>').position(fill).size(fill).css('background-color', fill.color);
+        return $fill = $('<div class="editor-fill"></div>').position(fill).size(fill).css('background-color', fill.color).data('fill', fill);
       },
       _addFill: function(fill) {
         return this.fills.push(fill);
       },
       _loadFill: function(fill) {
-        var $fill;
+        var $content, $fill;
+        fill = util.dup(fill);
+        fill.position = function(pos) {
+          if (pos) {
+            this.$elem.position(pos);
+            this.x = pos.x;
+            this.y = pos.y;
+            return this;
+          } else {
+            return {
+              x: this.x,
+              y: this.y
+            };
+          }
+        };
+        fill.size = function(dim) {
+          if (dim) {
+            this.$elem.size(dim);
+            this.w = dim.w;
+            this.h = dim.h;
+            return this;
+          } else {
+            return {
+              w: this.w,
+              h: this.h
+            };
+          }
+        };
         $fill = this._createFill(fill);
-        this.getContentForLayer('fill').append($fill);
-        return this._addFill(fill);
+        $content = this.getContentForLayer('fill');
+        if (!$content.length) {
+          throw new Error("Can't add fill, couldn't find layer content element");
+        }
+        $content.append($fill);
+        fill.$elem = $fill;
+        this._addFill(fill);
+        return fill;
       },
       saveMap: function() {
-        var fill, id, layer, layers, object, pos, _i, _j, _len, _len2, _ref, _ref2, _ref3;
+        var id, layer, layers, object, pos, _i, _len, _ref, _ref2;
         console.log('viewport: saving map...');
         layers = {};
         _ref = ['tiles'];
@@ -395,11 +490,10 @@
           }
         }
         layers['fill'] = [];
-        _ref3 = this.fills;
-        for (_j = 0, _len2 = _ref3.length; _j < _len2; _j++) {
-          fill = _ref3[_j];
-          layers['fill'].push(fill);
-        }
+        $.v.each(this.fills, function(fill) {
+          fill = util.hash.without(fill, '$elem');
+          return layers['fill'].push(fill);
+        });
         return localStorage.setItem('editor.map', JSON.stringify(layers));
       },
       _initMapGrid: function() {
