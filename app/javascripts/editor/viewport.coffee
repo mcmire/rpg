@@ -113,7 +113,7 @@ define 'editor.viewport', ->
       @_addEventsToMapObjects $(mapObjectsSel)
 
       # TODO: This is the same as fill
-      @$map.bind "mouseup.#{evtns}", (evt) =>
+      @$map.bind "mousedown.#{evtns}", (evt) =>
         console.log "#{evtns}: mouseup"
         @$map.find('.editor-map-object')
           .removeClass('editor-selected')
@@ -541,7 +541,7 @@ define 'editor.viewport', ->
     # TODO: This is the same as _addEventsToSelectionBoxes()
     _addEventsToMapObjects: ($draggees) ->
       evtns = 'editor.viewport.layer-tiles.tool-normal'
-      $draggees.bind "mouseupnodrag.#{evtns}", (evt) ->
+      $draggees.bind "mousedown.#{evtns}", (evt) ->
         console.log "#{evtns}: map object mouseupnodrag"
         $draggee = $(this)
         state = $draggee.attr('data-is-selected')

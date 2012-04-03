@@ -123,7 +123,7 @@
           return _this.saveMap();
         });
         this._addEventsToMapObjects($(mapObjectsSel));
-        this.$map.bind("mouseup." + evtns, function(evt) {
+        this.$map.bind("mousedown." + evtns, function(evt) {
           console.log("" + evtns + ": mouseup");
           _this.$map.find('.editor-map-object').removeClass('editor-selected');
           return _this.$map.find('.editor-map-object[data-is-selected=yes]').addClass('editor-selected').removeAttr('data-is-selected');
@@ -541,7 +541,7 @@
       _addEventsToMapObjects: function($draggees) {
         var evtns;
         evtns = 'editor.viewport.layer-tiles.tool-normal';
-        $draggees.bind("mouseupnodrag." + evtns, function(evt) {
+        $draggees.bind("mousedown." + evtns, function(evt) {
           var $draggee, newstate, state;
           console.log("" + evtns + ": map object mouseupnodrag");
           $draggee = $(this);

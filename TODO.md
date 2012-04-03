@@ -29,9 +29,6 @@
 
 ## Editor
 
-* FEATURE: Add ability to click on a fill object and delete it just like you can
-  do with tiles -- or extract this into a common place
-
 * INTERNAL: Use editor-map-object for all objects not just tiles
 
 * FEATURE: Add ability to set the background color of a map
@@ -46,12 +43,15 @@
 
 * INTERNAL: Bind viewport events to viewport.$elem rather than viewport.$map
 
-* FEATURE: Add entities layer
+* FEATURE: When dragging a map object (tile or fill), instantly put its z-index
+  above the others (or just move it after every one)
 
 * FEATURE: Add ability to add a new map. To do this, double-click on "Add new
   map" in the sidebar. A modal will appear with textboxes for the desired
   dimensions of the map, and when the modal is submitted a new canvas is created
   and loaded into the viewport.
+
+* FEATURE: Add entities layer
 
 #---
 
