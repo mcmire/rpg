@@ -6,7 +6,7 @@ define 'editor.viewport', ->
 
   GRID_SIZE = 16
 
-  meta.def
+  viewport = meta.def
     init: (@core) ->
       @keyboard = @core.keyboard
 
@@ -38,6 +38,9 @@ define 'editor.viewport', ->
 
     getContentForCurrentLayer: ->
       @getContentForLayer(@getCurrentLayer())
+
+    getCurrentTool: ->
+      @core.getCurrentTool()
 
     setWidth: (width) ->
       @$elem.width(width)
@@ -77,7 +80,7 @@ define 'editor.viewport', ->
               $elem.addClass('editor-map-object')
               $elem.css('left', "#{o.x}px")
               $elem.css('top', "#{o.y}px")
-              @core.findLayer(layer).find('.editor-layer-content').append($elem)
+              @getContentForLayer(layer).append($elem)
               @addObject(layer, $elem, object)
           for fill in layers['fill']
             @_loadFill(fill)
@@ -231,19 +234,12 @@ define 'editor.viewport', ->
         console.log "#{evtns}: mousedown"
         $layer = @getContentForCurrentLayer()
         $layer.find('.editor-fill')
+          .trigger('unselect')
           .removeClass('editor-selected')
         $layer.find('.editor-fill[data-is-selected=yes]')
+          .trigger('select')
           .addClass('editor-selected')
           .removeAttr('data-is-selected')
-
-      $(window)
-        .bind "keyup.#{evtns}", (evt) =>
-          if @keyboard.isKeyPressed(evt, 'backspace', 'delete')
-            $layerContent = @getContentForCurrentLayer()
-            $selectedObjects = $layerContent.find('.editor-fill.editor-selected')
-            if $selectedObjects.length
-              $selectedObjects.each (elem) => @_removeFill(elem)
-              @saveMap()
 
     deactivate_fill_normal_tool: ->
       evtns = 'editor.viewport.layer-fill.tool-normal'
@@ -399,17 +395,63 @@ define 'editor.viewport', ->
 
     # TODO: This is the same as _addEventsToMapObjects()
     _addEventsToSelectionBoxes: ($boxes) ->
+      that = this
       evtns = 'editor.viewport.selection-box'
       $boxes
         .dragObject
           dropTarget: @$elem
           containWithinDropTarget: true
+
         .bind "mousedown.#{evtns}", (evt) ->
           console.log 'selection box mousedown (after creation)'
-          $draggee = $(this)
-          state = $draggee.attr('data-is-selected')
+          $this = $(this)
+          state = $this.attr('data-is-selected')
           newstate = if state is 'no' or !state then 'yes' else 'no'
-          $draggee.attr('data-is-selected', newstate)
+          $this.attr('data-is-selected', newstate)
+
+        .bind 'select', (evt) ->
+          $this = $(this)
+          return if $this.hasClass('editor-selected')
+          fill = $this.data('fill')
+          console.log "selecting fill #{fill.moid}"
+
+          $(window).bind "keyup.#{evtns}", (evt) ->
+            if that.keyboard.isKeyPressed(evt, 'backspace', 'delete')
+              $layerContent = that.getContentForCurrentLayer()
+              $selectedObjects = $layerContent.find('.editor-fill.editor-selected')
+              if $selectedObjects.length
+                $selectedObjects.each (elem) -> that._removeFill(elem)
+                that.saveMap()
+
+          $input = $('<input>')
+          # ENDER BUG: .attr does not return this?
+          $input.attr('value', fill.store.color)
+          $input
+            .bind 'focus', ->
+              that._unbindGlobalKeyEvents()
+            .bind 'blur', ->
+              that._rebindGlobalKeyEvents()
+            .bind 'keyup', ->
+              if /#[A-Fa-f]/.test(@value)
+                fill.fill(@value)
+                that.saveMap()
+
+          that.core.getToolDetailElement()
+            .html("")
+            .append("Fill background: ")
+            .append($input)
+
+        .bind 'unselect', ->
+          $this = $(this)
+          return if not $this.hasClass('editor-selected')
+          fill = $this.data('fill')
+          console.log "unselecting fill #{fill.moid}"
+
+          $(window).unbind "keyup.#{evtns}"
+
+          $elem = that.core.getToolDetailElement()
+          $elem.find('input').unbind('change')
+          $elem.html("")
 
     _removeEventsFromSelectionBoxes: ($boxes) ->
       evtns = 'editor.viewport.selection-box'
@@ -459,6 +501,12 @@ define 'editor.viewport', ->
           return this
         else
           return {x: @store.x, y: @store.y}
+      fill.fill = (color) ->
+        if color
+          @$elem.css('background-color', @color)
+          @store.color = color
+        else
+          return @store.color
 
       $elem = @_createFillElement(fill)
       fill.$elem = $elem
@@ -565,3 +613,23 @@ define 'editor.viewport', ->
     _mouseWithinViewport: (evt) ->
       @bounds.x1 <= evt.pageX <= @bounds.x2 and
       @bounds.y1 <= evt.pageY <= @bounds.y2
+
+  do ->
+    tmp = {}
+    viewport._unbindGlobalKeyEvents = ->
+      console.log 'removing global key events'
+      # layer = @getCurrentLayer()
+      # tool = @getCurrentTool()
+      # events = ".editor.viewport.layer-#{layer}.tool-#{tool}"
+      events = 'keyup keydown'
+      $(tmp).cloneEvents(window, events)
+      $(window).unbind(events)
+      console.log(tmp)
+    viewport._rebindGlobalKeyEvents = ->
+      console.log 'restoring global key events'
+      # layer = @getCurrentLayer()
+      # tool = @getCurrentTool()
+      events = 'keyup keydown'
+      $(window).cloneEvents(tmp, events)
+
+  return viewport

@@ -16,6 +16,7 @@ define 'editor.core', ->
       @viewport = require('editor.viewport').init(this)
       @$sidebar = $('#editor-sidebar')
       @$mapChooser = $('#editor-map-chooser select')
+      @$toolDetail = $('#editor-tool-detail')
 
       @_resizeUI()
       $(window).resize => @_resizeUI()
@@ -38,12 +39,9 @@ define 'editor.core', ->
 
     getCurrentLayer: -> @currentLayer
 
-    getCurrentLayerElem: ->
-      @findLayer(@getCurrentLayer())
+    getCurrentTool: -> @currentTool
 
-    # TODO: Move to viewport
-    findLayer: (layer) ->
-      @viewport.getMapLayers().find(".editor-layer[data-layer=#{layer}]")
+    getToolDetailElement: -> @$toolDetail
 
     _resizeUI: ->
       win = $.viewport()

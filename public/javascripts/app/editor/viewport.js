@@ -2,12 +2,12 @@
   var __hasProp = Object.prototype.hasOwnProperty;
 
   define('editor.viewport', function() {
-    var GRID_SIZE, meta, util;
+    var GRID_SIZE, meta, util, viewport;
     util = require('util');
     meta = require('meta');
     require('editor.DropTarget');
     GRID_SIZE = 16;
-    return meta.def({
+    viewport = meta.def({
       init: function(core) {
         this.core = core;
         this.keyboard = this.core.keyboard;
@@ -46,6 +46,9 @@
       getContentForCurrentLayer: function() {
         return this.getContentForLayer(this.getCurrentLayer());
       },
+      getCurrentTool: function() {
+        return this.core.getCurrentTool();
+      },
       setWidth: function(width) {
         this.$elem.width(width);
         return this.bounds.setWidth(width);
@@ -83,7 +86,7 @@
                 $elem.addClass('editor-map-object');
                 $elem.css('left', "" + o.x + "px");
                 $elem.css('top', "" + o.y + "px");
-                _this.core.findLayer(layer).find('.editor-layer-content').append($elem);
+                _this.getContentForLayer(layer).append($elem);
                 return _this.addObject(layer, $elem, object);
               });
             }
@@ -101,7 +104,7 @@
         }
       },
       activate_tiles_normal_tool: function() {
-        var evtns, layerSel, mapObjectsSel, viewport,
+        var evtns, layerSel, mapObjectsSel,
           _this = this;
         evtns = 'editor.viewport.layer-tiles.tool-normal';
         viewport = this;
@@ -224,25 +227,12 @@
         });
         $boxes = this.getContentForCurrentLayer().find('.editor-fill');
         this._addEventsToSelectionBoxes($boxes);
-        this.$elem.bind("mousedown." + evtns, function(evt) {
+        return this.$elem.bind("mousedown." + evtns, function(evt) {
           var $layer;
           console.log("" + evtns + ": mousedown");
           $layer = _this.getContentForCurrentLayer();
-          $layer.find('.editor-fill').removeClass('editor-selected');
-          return $layer.find('.editor-fill[data-is-selected=yes]').addClass('editor-selected').removeAttr('data-is-selected');
-        });
-        return $(window).bind("keyup." + evtns, function(evt) {
-          var $layerContent, $selectedObjects;
-          if (_this.keyboard.isKeyPressed(evt, 'backspace', 'delete')) {
-            $layerContent = _this.getContentForCurrentLayer();
-            $selectedObjects = $layerContent.find('.editor-fill.editor-selected');
-            if ($selectedObjects.length) {
-              $selectedObjects.each(function(elem) {
-                return _this._removeFill(elem);
-              });
-              return _this.saveMap();
-            }
-          }
+          $layer.find('.editor-fill').trigger('unselect').removeClass('editor-selected');
+          return $layer.find('.editor-fill[data-is-selected=yes]').trigger('select').addClass('editor-selected').removeAttr('data-is-selected');
         });
       },
       deactivate_fill_normal_tool: function() {
@@ -392,18 +382,61 @@
         return selectionEvents.add();
       },
       _addEventsToSelectionBoxes: function($boxes) {
-        var evtns;
+        var evtns, that;
+        that = this;
         evtns = 'editor.viewport.selection-box';
         return $boxes.dragObject({
           dropTarget: this.$elem,
           containWithinDropTarget: true
         }).bind("mousedown." + evtns, function(evt) {
-          var $draggee, newstate, state;
+          var $this, newstate, state;
           console.log('selection box mousedown (after creation)');
-          $draggee = $(this);
-          state = $draggee.attr('data-is-selected');
+          $this = $(this);
+          state = $this.attr('data-is-selected');
           newstate = state === 'no' || !state ? 'yes' : 'no';
-          return $draggee.attr('data-is-selected', newstate);
+          return $this.attr('data-is-selected', newstate);
+        }).bind('select', function(evt) {
+          var $input, $this, fill;
+          $this = $(this);
+          if ($this.hasClass('editor-selected')) return;
+          fill = $this.data('fill');
+          console.log("selecting fill " + fill.moid);
+          $(window).bind("keyup." + evtns, function(evt) {
+            var $layerContent, $selectedObjects;
+            if (that.keyboard.isKeyPressed(evt, 'backspace', 'delete')) {
+              $layerContent = that.getContentForCurrentLayer();
+              $selectedObjects = $layerContent.find('.editor-fill.editor-selected');
+              if ($selectedObjects.length) {
+                $selectedObjects.each(function(elem) {
+                  return that._removeFill(elem);
+                });
+                return that.saveMap();
+              }
+            }
+          });
+          $input = $('<input>');
+          $input.attr('value', fill.store.color);
+          $input.bind('focus', function() {
+            return that._unbindGlobalKeyEvents();
+          }).bind('blur', function() {
+            return that._rebindGlobalKeyEvents();
+          }).bind('keyup', function() {
+            if (/#[A-Fa-f]/.test(this.value)) {
+              fill.fill(this.value);
+              return that.saveMap();
+            }
+          });
+          return that.core.getToolDetailElement().html("").append("Fill background: ").append($input);
+        }).bind('unselect', function() {
+          var $elem, $this, fill;
+          $this = $(this);
+          if (!$this.hasClass('editor-selected')) return;
+          fill = $this.data('fill');
+          console.log("unselecting fill " + fill.moid);
+          $(window).unbind("keyup." + evtns);
+          $elem = that.core.getToolDetailElement();
+          $elem.find('input').unbind('change');
+          return $elem.html("");
         });
       },
       _removeEventsFromSelectionBoxes: function($boxes) {
@@ -466,6 +499,14 @@
               x: this.store.x,
               y: this.store.y
             };
+          }
+        };
+        fill.fill = function(color) {
+          if (color) {
+            this.$elem.css('background-color', this.color);
+            return this.store.color = color;
+          } else {
+            return this.store.color;
           }
         };
         $elem = this._createFillElement(fill);
@@ -570,6 +611,25 @@
         return (this.bounds.x1 <= (_ref = evt.pageX) && _ref <= this.bounds.x2) && (this.bounds.y1 <= (_ref2 = evt.pageY) && _ref2 <= this.bounds.y2);
       }
     });
+    (function() {
+      var tmp;
+      tmp = {};
+      viewport._unbindGlobalKeyEvents = function() {
+        var events;
+        console.log('removing global key events');
+        events = 'keyup keydown';
+        $(tmp).cloneEvents(window, events);
+        $(window).unbind(events);
+        return console.log(tmp);
+      };
+      return viewport._rebindGlobalKeyEvents = function() {
+        var events;
+        console.log('restoring global key events');
+        events = 'keyup keydown';
+        return $(window).cloneEvents(tmp, events);
+      };
+    })();
+    return viewport;
   });
 
 }).call(this);

@@ -14,6 +14,7 @@
         this.viewport = require('editor.viewport').init(this);
         this.$sidebar = $('#editor-sidebar');
         this.$mapChooser = $('#editor-map-chooser select');
+        this.$toolDetail = $('#editor-tool-detail');
         this._resizeUI();
         $(window).resize(function() {
           return _this._resizeUI();
@@ -38,11 +39,11 @@
       getCurrentLayer: function() {
         return this.currentLayer;
       },
-      getCurrentLayerElem: function() {
-        return this.findLayer(this.getCurrentLayer());
+      getCurrentTool: function() {
+        return this.currentTool;
       },
-      findLayer: function(layer) {
-        return this.viewport.getMapLayers().find(".editor-layer[data-layer=" + layer + "]");
+      getToolDetailElement: function() {
+        return this.$toolDetail;
       },
       _resizeUI: function() {
         var h, nh, sw, wh, win, ww;
