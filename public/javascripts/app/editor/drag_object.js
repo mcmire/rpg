@@ -161,7 +161,7 @@
       },
       _addWindowEvents: function() {
         var _this = this;
-        console.log('addWindowEvents');
+        console.log('DragObject#_addWindowEvents called');
         this.dragStarted = false;
         this._addMousemoveEvent();
         return $(window).one("mouseup." + EVT_NS, function(evt) {
@@ -193,7 +193,7 @@
         return $(window).unbind("mousemove." + EVT_NS);
       },
       _removeWindowEvents: function() {
-        console.log('removeWindowEvents');
+        console.log('DragObject#_removeWindowEvents called');
         this.dragStarted = false;
         return $(window).unbind("." + EVT_NS);
       },

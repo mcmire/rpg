@@ -129,7 +129,7 @@
         this.$map.bind("mousedown." + evtns, function(evt) {
           console.log("" + evtns + ": mouseup");
           _this.$map.find('.editor-map-object').removeClass('editor-selected');
-          return _this.$map.find('.editor-map-object[data-is-selected=yes]').addClass('editor-selected').removeAttr('data-is-selected');
+          return _this.$map.find('.editor-map-object[data-is-selected=yes]').addClass('editor-selected').attr('data-is-selected', 'no');
         });
         return $(window).bind("keyup." + evtns, function(evt) {
           var $selectedObjects;
@@ -232,7 +232,7 @@
           console.log("" + evtns + ": mousedown");
           $layer = _this.getContentForCurrentLayer();
           $layer.find('.editor-fill').trigger('unselect').removeClass('editor-selected');
-          return $layer.find('.editor-fill[data-is-selected=yes]').trigger('select').addClass('editor-selected').removeAttr('data-is-selected');
+          return $layer.find('.editor-fill[data-is-selected=yes]').trigger('select').addClass('editor-selected').attr('data-is-selected', 'no');
         });
       },
       deactivate_fill_normal_tool: function() {
@@ -442,7 +442,8 @@
       _removeEventsFromSelectionBoxes: function($boxes) {
         var evtns;
         evtns = 'editor.viewport.selection-box';
-        return $boxes.dragObject('destroy').unbind("mouseupnodrag." + evtns).removeAttr('data-is-selected').removeClass('editor-selected');
+        $boxes.dragObject('destroy').unbind("mousedown." + evtns + " select unselect").attr('data-is-selected', 'no').removeClass('editor-selected');
+        return $(window).unbind("keyup." + evtns);
       },
       deactivate_fill_select_tool: function() {
         var evtns;

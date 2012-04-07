@@ -165,7 +165,7 @@ define 'editor.DragObject', ->
       @$elem.unbind "mousedrag.#{EVT_NS}"
 
     _addWindowEvents: ->
-      console.log 'addWindowEvents'
+      console.log 'DragObject#_addWindowEvents called'
       @dragStarted = false
 
       @_addMousemoveEvent()
@@ -197,7 +197,7 @@ define 'editor.DragObject', ->
       $(window).unbind "mousemove.#{EVT_NS}"
 
     _removeWindowEvents: ->
-      console.log 'removeWindowEvents'
+      console.log 'DragObject#_removeWindowEvents called'
       @dragStarted = false
       $(window).unbind ".#{EVT_NS}"
 

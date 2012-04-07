@@ -122,7 +122,7 @@ define 'editor.viewport', ->
           .removeClass('editor-selected')
         @$map.find('.editor-map-object[data-is-selected=yes]')
           .addClass('editor-selected')
-          .removeAttr('data-is-selected')
+          .attr('data-is-selected', 'no')
 
       $(window)
         .bind "keyup.#{evtns}", (evt) =>
@@ -239,7 +239,7 @@ define 'editor.viewport', ->
         $layer.find('.editor-fill[data-is-selected=yes]')
           .trigger('select')
           .addClass('editor-selected')
-          .removeAttr('data-is-selected')
+          .attr('data-is-selected', 'no')
 
     deactivate_fill_normal_tool: ->
       evtns = 'editor.viewport.layer-fill.tool-normal'
@@ -457,9 +457,11 @@ define 'editor.viewport', ->
       evtns = 'editor.viewport.selection-box'
       $boxes
         .dragObject('destroy')
-        .unbind("mouseupnodrag.#{evtns}")
-        .removeAttr('data-is-selected')
+        .unbind("mousedown.#{evtns} select unselect")
+        .attr('data-is-selected', 'no')
         .removeClass('editor-selected')
+      $(window).unbind "keyup.#{evtns}"
+
 
     deactivate_fill_select_tool: ->
       evtns = 'editor.viewport.layer-fill.tool-select'
