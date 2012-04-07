@@ -381,70 +381,6 @@
         });
         return selectionEvents.add();
       },
-      _addEventsToSelectionBoxes: function($boxes) {
-        var evtns, that;
-        that = this;
-        evtns = 'editor.viewport.selection-box';
-        return $boxes.dragObject({
-          dropTarget: this.$elem,
-          containWithinDropTarget: true
-        }).bind("mousedown." + evtns, function(evt) {
-          var $this, newstate, state;
-          console.log('selection box mousedown (after creation)');
-          $this = $(this);
-          state = $this.attr('data-is-selected');
-          newstate = state === 'no' || !state ? 'yes' : 'no';
-          return $this.attr('data-is-selected', newstate);
-        }).bind('select', function(evt) {
-          var $input, $this, fill;
-          $this = $(this);
-          if ($this.hasClass('editor-selected')) return;
-          fill = $this.data('fill');
-          console.log("selecting fill " + fill.moid);
-          $(window).bind("keyup." + evtns, function(evt) {
-            var $layerContent, $selectedObjects;
-            if (that.keyboard.isKeyPressed(evt, 'backspace', 'delete')) {
-              $layerContent = that.getContentForCurrentLayer();
-              $selectedObjects = $layerContent.find('.editor-fill.editor-selected');
-              if ($selectedObjects.length) {
-                $selectedObjects.each(function(elem) {
-                  return that._removeFill(elem);
-                });
-                return that.saveMap();
-              }
-            }
-          });
-          $input = $('<input>');
-          $input.attr('value', fill.store.color);
-          $input.bind('focus', function() {
-            return that._unbindGlobalKeyEvents();
-          }).bind('blur', function() {
-            return that._rebindGlobalKeyEvents();
-          }).bind('keyup', function() {
-            if (/#[A-Fa-f]/.test(this.value)) {
-              fill.fill(this.value);
-              return that.saveMap();
-            }
-          });
-          return that.core.getToolDetailElement().html("").append("Fill background: ").append($input);
-        }).bind('unselect', function() {
-          var $elem, $this, fill;
-          $this = $(this);
-          if (!$this.hasClass('editor-selected')) return;
-          fill = $this.data('fill');
-          console.log("unselecting fill " + fill.moid);
-          $(window).unbind("keyup." + evtns);
-          $elem = that.core.getToolDetailElement();
-          $elem.find('input').unbind('change');
-          return $elem.html("");
-        });
-      },
-      _removeEventsFromSelectionBoxes: function($boxes) {
-        var evtns;
-        evtns = 'editor.viewport.selection-box';
-        $boxes.dragObject('destroy').unbind("mousedown." + evtns + " select unselect").attr('data-is-selected', 'no').removeClass('editor-selected');
-        return $(window).unbind("keyup." + evtns);
-      },
       deactivate_fill_select_tool: function() {
         var evtns;
         evtns = 'editor.viewport.layer-fill.tool-select';
@@ -600,6 +536,70 @@
         var evtns;
         evtns = 'editor.viewport.layer-tiles.tool-normal';
         return $draggees.dragObject('destroy').unbind("." + evtns);
+      },
+      _addEventsToSelectionBoxes: function($boxes) {
+        var evtns, that;
+        that = this;
+        evtns = 'editor.viewport.selection-box';
+        return $boxes.dragObject({
+          dropTarget: this.$elem,
+          containWithinDropTarget: true
+        }).bind("mousedown." + evtns, function(evt) {
+          var $this, newstate, state;
+          console.log('selection box mousedown (after creation)');
+          $this = $(this);
+          state = $this.attr('data-is-selected');
+          newstate = state === 'no' || !state ? 'yes' : 'no';
+          return $this.attr('data-is-selected', newstate);
+        }).bind('select', function(evt) {
+          var $input, $this, fill;
+          $this = $(this);
+          if ($this.hasClass('editor-selected')) return;
+          fill = $this.data('fill');
+          console.log("selecting fill " + fill.moid);
+          $(window).bind("keyup." + evtns, function(evt) {
+            var $layerContent, $selectedObjects;
+            if (that.keyboard.isKeyPressed(evt, 'backspace', 'delete')) {
+              $layerContent = that.getContentForCurrentLayer();
+              $selectedObjects = $layerContent.find('.editor-fill.editor-selected');
+              if ($selectedObjects.length) {
+                $selectedObjects.each(function(elem) {
+                  return that._removeFill(elem);
+                });
+                return that.saveMap();
+              }
+            }
+          });
+          $input = $('<input>');
+          $input.attr('value', fill.store.color);
+          $input.bind('focus', function() {
+            return that._unbindGlobalKeyEvents();
+          }).bind('blur', function() {
+            return that._rebindGlobalKeyEvents();
+          }).bind('keyup', function() {
+            if (/#[A-Fa-f]/.test(this.value)) {
+              fill.fill(this.value);
+              return that.saveMap();
+            }
+          });
+          return that.core.getToolDetailElement().html("").append("Fill background: ").append($input);
+        }).bind('unselect', function() {
+          var $elem, $this, fill;
+          $this = $(this);
+          if (!$this.hasClass('editor-selected')) return;
+          fill = $this.data('fill');
+          console.log("unselecting fill " + fill.moid);
+          $(window).unbind("keyup." + evtns);
+          $elem = that.core.getToolDetailElement();
+          $elem.find('input').unbind('change');
+          return $elem.html("");
+        });
+      },
+      _removeEventsFromSelectionBoxes: function($boxes) {
+        var evtns;
+        evtns = 'editor.viewport.selection-box';
+        $boxes.dragObject('destroy').unbind("mousedown." + evtns + " select unselect").attr('data-is-selected', 'no').removeClass('editor-selected');
+        return $(window).unbind("keyup." + evtns);
       },
       _roundCoordsToGrid: function(p) {
         return {

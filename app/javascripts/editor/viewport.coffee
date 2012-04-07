@@ -393,76 +393,6 @@ define 'editor.viewport', ->
 
       selectionEvents.add()
 
-    # TODO: This is the same as _addEventsToMapObjects()
-    _addEventsToSelectionBoxes: ($boxes) ->
-      that = this
-      evtns = 'editor.viewport.selection-box'
-      $boxes
-        .dragObject
-          dropTarget: @$elem
-          containWithinDropTarget: true
-
-        .bind "mousedown.#{evtns}", (evt) ->
-          console.log 'selection box mousedown (after creation)'
-          $this = $(this)
-          state = $this.attr('data-is-selected')
-          newstate = if state is 'no' or !state then 'yes' else 'no'
-          $this.attr('data-is-selected', newstate)
-
-        .bind 'select', (evt) ->
-          $this = $(this)
-          return if $this.hasClass('editor-selected')
-          fill = $this.data('fill')
-          console.log "selecting fill #{fill.moid}"
-
-          $(window).bind "keyup.#{evtns}", (evt) ->
-            if that.keyboard.isKeyPressed(evt, 'backspace', 'delete')
-              $layerContent = that.getContentForCurrentLayer()
-              $selectedObjects = $layerContent.find('.editor-fill.editor-selected')
-              if $selectedObjects.length
-                $selectedObjects.each (elem) -> that._removeFill(elem)
-                that.saveMap()
-
-          $input = $('<input>')
-          # ENDER BUG: .attr does not return this?
-          $input.attr('value', fill.store.color)
-          $input
-            .bind 'focus', ->
-              that._unbindGlobalKeyEvents()
-            .bind 'blur', ->
-              that._rebindGlobalKeyEvents()
-            .bind 'keyup', ->
-              if /#[A-Fa-f]/.test(@value)
-                fill.fill(@value)
-                that.saveMap()
-
-          that.core.getToolDetailElement()
-            .html("")
-            .append("Fill background: ")
-            .append($input)
-
-        .bind 'unselect', ->
-          $this = $(this)
-          return if not $this.hasClass('editor-selected')
-          fill = $this.data('fill')
-          console.log "unselecting fill #{fill.moid}"
-
-          $(window).unbind "keyup.#{evtns}"
-
-          $elem = that.core.getToolDetailElement()
-          $elem.find('input').unbind('change')
-          $elem.html("")
-
-    _removeEventsFromSelectionBoxes: ($boxes) ->
-      evtns = 'editor.viewport.selection-box'
-      $boxes
-        .dragObject('destroy')
-        .unbind("mousedown.#{evtns} select unselect")
-        .attr('data-is-selected', 'no')
-        .removeClass('editor-selected')
-      $(window).unbind "keyup.#{evtns}"
-
-
     deactivate_fill_select_tool: ->
       evtns = 'editor.viewport.layer-fill.tool-select'
       @$elem.unbind(".#{evtns}")
@@ -607,6 +537,75 @@ define 'editor.viewport', ->
       $draggees
         .dragObject('destroy')
         .unbind(".#{evtns}")
+
+    # TODO: This is the same as _addEventsToMapObjects()
+    _addEventsToSelectionBoxes: ($boxes) ->
+      that = this
+      evtns = 'editor.viewport.selection-box'
+      $boxes
+        .dragObject
+          dropTarget: @$elem
+          containWithinDropTarget: true
+
+        .bind "mousedown.#{evtns}", (evt) ->
+          console.log 'selection box mousedown (after creation)'
+          $this = $(this)
+          state = $this.attr('data-is-selected')
+          newstate = if state is 'no' or !state then 'yes' else 'no'
+          $this.attr('data-is-selected', newstate)
+
+        .bind 'select', (evt) ->
+          $this = $(this)
+          return if $this.hasClass('editor-selected')
+          fill = $this.data('fill')
+          console.log "selecting fill #{fill.moid}"
+
+          $(window).bind "keyup.#{evtns}", (evt) ->
+            if that.keyboard.isKeyPressed(evt, 'backspace', 'delete')
+              $layerContent = that.getContentForCurrentLayer()
+              $selectedObjects = $layerContent.find('.editor-fill.editor-selected')
+              if $selectedObjects.length
+                $selectedObjects.each (elem) -> that._removeFill(elem)
+                that.saveMap()
+
+          $input = $('<input>')
+          # ENDER BUG: .attr does not return this?
+          $input.attr('value', fill.store.color)
+          $input
+            .bind 'focus', ->
+              that._unbindGlobalKeyEvents()
+            .bind 'blur', ->
+              that._rebindGlobalKeyEvents()
+            .bind 'keyup', ->
+              if /#[A-Fa-f]/.test(@value)
+                fill.fill(@value)
+                that.saveMap()
+
+          that.core.getToolDetailElement()
+            .html("")
+            .append("Fill background: ")
+            .append($input)
+
+        .bind 'unselect', ->
+          $this = $(this)
+          return if not $this.hasClass('editor-selected')
+          fill = $this.data('fill')
+          console.log "unselecting fill #{fill.moid}"
+
+          $(window).unbind "keyup.#{evtns}"
+
+          $elem = that.core.getToolDetailElement()
+          $elem.find('input').unbind('change')
+          $elem.html("")
+
+    _removeEventsFromSelectionBoxes: ($boxes) ->
+      evtns = 'editor.viewport.selection-box'
+      $boxes
+        .dragObject('destroy')
+        .unbind("mousedown.#{evtns} select unselect")
+        .attr('data-is-selected', 'no')
+        .removeClass('editor-selected')
+      $(window).unbind "keyup.#{evtns}"
 
     _roundCoordsToGrid: (p) ->
       x: Math.round(p.x / GRID_SIZE) * GRID_SIZE,
