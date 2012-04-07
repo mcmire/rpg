@@ -90,6 +90,9 @@ define 'util', ->
   arrayDelete = (arr, item) ->
     arr.splice(item, 1)
 
+  arrayInclude = (arr, item) ->
+    arr.indexOf(item) isnt -1
+
   cmp = (a, b) ->
     if a > b
       return 1
@@ -113,6 +116,7 @@ define 'util', ->
       delete: arrayDelete
       wrap: ensureArray
       random: randomItem
+      include: arrayInclude
     int:
       random: randomInt
     string:

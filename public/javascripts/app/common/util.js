@@ -3,7 +3,7 @@
     __hasProp = Object.prototype.hasOwnProperty;
 
   define('util', function() {
-    var arrayDelete, capitalize, clone, cmp, createFromProto, dup, ensureArray, extend, hashWithout, isPlainObject, randomInt, randomItem;
+    var arrayDelete, arrayInclude, capitalize, clone, cmp, createFromProto, dup, ensureArray, extend, hashWithout, isPlainObject, randomInt, randomItem;
     extend = function() {
       var args, deep, obj, objects, prop, target, _i, _len;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
@@ -74,6 +74,9 @@
     arrayDelete = function(arr, item) {
       return arr.splice(item, 1);
     };
+    arrayInclude = function(arr, item) {
+      return arr.indexOf(item) !== -1;
+    };
     cmp = function(a, b) {
       if (a > b) {
         return 1;
@@ -101,7 +104,8 @@
       array: {
         "delete": arrayDelete,
         wrap: ensureArray,
-        random: randomItem
+        random: randomItem,
+        include: arrayInclude
       },
       int: {
         random: randomInt

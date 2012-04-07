@@ -2,11 +2,13 @@
   var __hasProp = Object.prototype.hasOwnProperty;
 
   define('editor.viewport', function() {
-    var GRID_SIZE, meta, util, viewport;
+    var COLORS, GRID_SIZE, meta, util, viewport;
     util = require('util');
     meta = require('meta');
     require('editor.DropTarget');
     GRID_SIZE = 16;
+    COLORS = "aliceblue\nantiquewhite\naqua\naquamarine\nazure\nbeige\nbisque\nblack\nblanchedalmond\nblue\nblueviolet\nbrown\nburlywood\ncadetblue\nchartreuse\nchocolate\ncoral\ncornflowerblue\ncornsilk\ncrimson\ncyan\ndarkblue\ndarkcyan\ndarkgoldenrod\ndarkgray\ndarkgrey\ndarkgreen\ndarkkhaki\ndarkmagenta\ndarkolivegreen\ndarkorange\ndarkorchid\ndarkred\ndarksalmon\ndarkseagreen\ndarkslateblue\ndarkslategray\ndarkslategrey\ndarkturquoise\ndarkviolet\ndeeppink\ndeepskyblue\ndimgray\ndimgrey\ndodgerblue\nfirebrick\nfloralwhite\nforestgreen\nfuchsia\ngainsboro\nghostwhite\ngold\ngoldenrod\ngray\ngrey\ngreen\ngreenyellow\nhoneydew\nhotpink\nindianred\nindigo\nivory\nkhaki\nlavender\nlavenderblush\nlawngreen\nlemonchiffon\nlightblue\nlightcoral\nlightcyan\nlightgoldenrodyellow\nlightgray\nlightgrey\nlightgreen\nlightpink\nlightsalmon\nlightseagreen\nlightskyblue\nlightslategray\nlightslategrey\nlightsteelblue\nlightyellow\nlime\nlimegreen\nlinen\nmagenta\nmaroon\nmediumaquamarine\nmediumblue\nmediumorchid\nmediumpurple\nmediumseagreen\nmediumslateblue\nmediumspringgreen\nmediumturquoise\nmediumvioletred\nmidnightblue\nmintcream\nmistyrose\nmoccasin\nnavajowhite\nnavy\noldlace\nolive\nolivedrab\norange\norangered\norchid\npalegoldenrod\npalegreen\npaleturquoise\npalevioletred\npapayawhip\npeachpuff\nperu\npink\nplum\npowderblue\npurple\nred\nrosybrown\nroyalblue\nsaddlebrown\nsalmon\nsandybrown\nseagreen\nseashell\nsienna\nsilver\nskyblue\nslateblue\nslategray\nslategrey\nsnow\nspringgreen\nsteelblue\ntan\nteal\nthistle\ntomato\nturquoise\nviolet\nwheat\nwhite\nwhitesmoke\nyellow\nyellowgreen";
+    COLORS = COLORS.split(/\n/);
     viewport = meta.def({
       init: function(core) {
         this.core = core;
@@ -440,7 +442,7 @@
         };
         fill.fill = function(color) {
           if (color) {
-            this.$elem.css('background-color', this.color);
+            this.$elem.css('background-color', color);
             return this.store.color = color;
           } else {
             return this.store.color;
@@ -572,17 +574,17 @@
           });
           $input = $('<input>');
           $input.attr('value', fill.store.color);
-          $input.bind('focus', function() {
+          that.core.getToolDetailElement().html("").append("Fill background: ").append($input);
+          return $input.bind('focus', function() {
             return that._unbindGlobalKeyEvents();
           }).bind('blur', function() {
             return that._rebindGlobalKeyEvents();
           }).bind('keyup', function() {
-            if (/#[A-Fa-f]/.test(this.value)) {
+            if (/#[A-Fa-f0-9]{6}/.test(this.value) || util.array.include(COLORS, this.value)) {
               fill.fill(this.value);
               return that.saveMap();
             }
           });
-          return that.core.getToolDetailElement().html("").append("Fill background: ").append($input);
         }).bind('unselect', function() {
           var $elem, $this, fill;
           $this = $(this);
@@ -591,7 +593,7 @@
           console.log("unselecting fill " + fill.moid);
           $(window).unbind("keyup." + evtns);
           $elem = that.core.getToolDetailElement();
-          $elem.find('input').unbind('change');
+          $elem.find('input').remove();
           return $elem.html("");
         });
       },
@@ -620,8 +622,7 @@
         console.log('removing global key events');
         events = 'keyup keydown';
         $(tmp).cloneEvents(window, events);
-        $(window).unbind(events);
-        return console.log(tmp);
+        return $(window).unbind(events);
       };
       return viewport._rebindGlobalKeyEvents = function() {
         var events;

@@ -5,6 +5,156 @@ define 'editor.viewport', ->
   require('editor.DropTarget')
 
   GRID_SIZE = 16
+  COLORS = """
+    aliceblue
+    antiquewhite
+    aqua
+    aquamarine
+    azure
+    beige
+    bisque
+    black
+    blanchedalmond
+    blue
+    blueviolet
+    brown
+    burlywood
+    cadetblue
+    chartreuse
+    chocolate
+    coral
+    cornflowerblue
+    cornsilk
+    crimson
+    cyan
+    darkblue
+    darkcyan
+    darkgoldenrod
+    darkgray
+    darkgrey
+    darkgreen
+    darkkhaki
+    darkmagenta
+    darkolivegreen
+    darkorange
+    darkorchid
+    darkred
+    darksalmon
+    darkseagreen
+    darkslateblue
+    darkslategray
+    darkslategrey
+    darkturquoise
+    darkviolet
+    deeppink
+    deepskyblue
+    dimgray
+    dimgrey
+    dodgerblue
+    firebrick
+    floralwhite
+    forestgreen
+    fuchsia
+    gainsboro
+    ghostwhite
+    gold
+    goldenrod
+    gray
+    grey
+    green
+    greenyellow
+    honeydew
+    hotpink
+    indianred
+    indigo
+    ivory
+    khaki
+    lavender
+    lavenderblush
+    lawngreen
+    lemonchiffon
+    lightblue
+    lightcoral
+    lightcyan
+    lightgoldenrodyellow
+    lightgray
+    lightgrey
+    lightgreen
+    lightpink
+    lightsalmon
+    lightseagreen
+    lightskyblue
+    lightslategray
+    lightslategrey
+    lightsteelblue
+    lightyellow
+    lime
+    limegreen
+    linen
+    magenta
+    maroon
+    mediumaquamarine
+    mediumblue
+    mediumorchid
+    mediumpurple
+    mediumseagreen
+    mediumslateblue
+    mediumspringgreen
+    mediumturquoise
+    mediumvioletred
+    midnightblue
+    mintcream
+    mistyrose
+    moccasin
+    navajowhite
+    navy
+    oldlace
+    olive
+    olivedrab
+    orange
+    orangered
+    orchid
+    palegoldenrod
+    palegreen
+    paleturquoise
+    palevioletred
+    papayawhip
+    peachpuff
+    peru
+    pink
+    plum
+    powderblue
+    purple
+    red
+    rosybrown
+    royalblue
+    saddlebrown
+    salmon
+    sandybrown
+    seagreen
+    seashell
+    sienna
+    silver
+    skyblue
+    slateblue
+    slategray
+    slategrey
+    snow
+    springgreen
+    steelblue
+    tan
+    teal
+    thistle
+    tomato
+    turquoise
+    violet
+    wheat
+    white
+    whitesmoke
+    yellow
+    yellowgreen
+  """
+  COLORS = COLORS.split(/\n/)
 
   viewport = meta.def
     init: (@core) ->
@@ -435,7 +585,7 @@ define 'editor.viewport', ->
           return {x: @store.x, y: @store.y}
       fill.fill = (color) ->
         if color
-          @$elem.css('background-color', @color)
+          @$elem.css('background-color', color)
           @store.color = color
         else
           return @store.color
@@ -571,20 +721,21 @@ define 'editor.viewport', ->
           $input = $('<input>')
           # ENDER BUG: .attr does not return this?
           $input.attr('value', fill.store.color)
+
+          that.core.getToolDetailElement()
+            .html("")
+            .append("Fill background: ")
+            .append($input)
+
           $input
             .bind 'focus', ->
               that._unbindGlobalKeyEvents()
             .bind 'blur', ->
               that._rebindGlobalKeyEvents()
             .bind 'keyup', ->
-              if /#[A-Fa-f]/.test(@value)
+              if /#[A-Fa-f0-9]{6}/.test(@value) or util.array.include(COLORS, @value)
                 fill.fill(@value)
                 that.saveMap()
-
-          that.core.getToolDetailElement()
-            .html("")
-            .append("Fill background: ")
-            .append($input)
 
         .bind 'unselect', ->
           $this = $(this)
@@ -595,7 +746,8 @@ define 'editor.viewport', ->
           $(window).unbind "keyup.#{evtns}"
 
           $elem = that.core.getToolDetailElement()
-          $elem.find('input').unbind('change')
+          # unbind those events
+          $elem.find('input').remove()
           $elem.html("")
 
     _removeEventsFromSelectionBoxes: ($boxes) ->
@@ -619,17 +771,11 @@ define 'editor.viewport', ->
     tmp = {}
     viewport._unbindGlobalKeyEvents = ->
       console.log 'removing global key events'
-      # layer = @getCurrentLayer()
-      # tool = @getCurrentTool()
-      # events = ".editor.viewport.layer-#{layer}.tool-#{tool}"
       events = 'keyup keydown'
       $(tmp).cloneEvents(window, events)
       $(window).unbind(events)
-      console.log(tmp)
     viewport._rebindGlobalKeyEvents = ->
       console.log 'restoring global key events'
-      # layer = @getCurrentLayer()
-      # tool = @getCurrentTool()
       events = 'keyup keydown'
       $(window).cloneEvents(tmp, events)
 
