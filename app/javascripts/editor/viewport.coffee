@@ -625,6 +625,7 @@ define 'editor.viewport', ->
       fill = $elem.data('fill')
       console.log "viewport: removing fill #{fill.moid}"
       delete @objectsByLayer['fill'][fill.moid]
+      $elem.trigger('unselect')
       $elem.remove()
 
     saveMap: ->

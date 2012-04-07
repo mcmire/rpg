@@ -474,6 +474,7 @@
         fill = $elem.data('fill');
         console.log("viewport: removing fill " + fill.moid);
         delete this.objectsByLayer['fill'][fill.moid];
+        $elem.trigger('unselect');
         return $elem.remove();
       },
       saveMap: function() {
