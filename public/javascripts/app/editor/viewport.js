@@ -618,17 +618,28 @@
       var tmp;
       tmp = {};
       viewport._unbindGlobalKeyEvents = function() {
-        var events;
+        var event, events, _i, _len, _ref;
         console.log('removing global key events');
         events = 'keyup keydown';
-        $(tmp).cloneEvents(window, events);
+        _ref = events.split(" ");
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          event = _ref[_i];
+          $(tmp).cloneEvents(window, event);
+        }
         return $(window).unbind(events);
       };
       return viewport._rebindGlobalKeyEvents = function() {
-        var events;
+        var event, events, _i, _len, _ref, _results;
+        console.log(tmp);
         console.log('restoring global key events');
         events = 'keyup keydown';
-        return $(window).cloneEvents(tmp, events);
+        _ref = events.split(" ");
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          event = _ref[_i];
+          _results.push($(window).cloneEvents(tmp, event));
+        }
+        return _results;
       };
     })();
     return viewport;

@@ -772,11 +772,12 @@ define 'editor.viewport', ->
     viewport._unbindGlobalKeyEvents = ->
       console.log 'removing global key events'
       events = 'keyup keydown'
-      $(tmp).cloneEvents(window, events)
+      $(tmp).cloneEvents(window, event) for event in events.split(" ")
       $(window).unbind(events)
     viewport._rebindGlobalKeyEvents = ->
+      console.log tmp
       console.log 'restoring global key events'
       events = 'keyup keydown'
-      $(window).cloneEvents(tmp, events)
+      $(window).cloneEvents(tmp, event) for event in events.split(" ")
 
   return viewport
