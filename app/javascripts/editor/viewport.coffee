@@ -243,6 +243,23 @@ define 'editor.viewport', ->
           console.warn "Had a problem loading the map!"
           throw e
 
+    _saveMap: ->
+      console.log 'viewport: saving map...'
+      layers = {}
+      for layer in ['tiles']
+        layers[layer] = []
+        for id, object of @objectsByLayer[layer]
+          pos = object.$elem.position()
+          layers[layer].push({
+            name: object.name
+            x: pos.x
+            y: pos.y
+          })
+      layers['fill'] =
+        background: @fillBackground
+        objects: $.v.map(@objectsByLayer['fill'], (moid, fill) -> fill.store)
+      localStorage.setItem('editor.map', JSON.stringify(layers))
+
     activateCurrentLayer: ->
       # put this layer on top of all other layers
       $layer = @$map.find(".editor-layer[data-layer=#{layer}]").detach()
@@ -252,68 +269,7 @@ define 'editor.viewport', ->
         @getElementForLayer(layer).removeClass('editor-layer-hidden')
         break if layer is @getCurrentLayer()
 
-    activate_tiles_normal_tool: ->
-      evtns = 'editor.viewport.layer-tiles.tool-normal'
-      viewport = this
-
-      layerSel = '#editor-map .editor-layer[data-layer=tiles]'
-      mapObjectsSel = "#{layerSel} .editor-map-object"
-
-      @$elem
-        .dropTarget(receptor: "#{layerSel} .editor-layer-content")
-        .bind "mousedropwithin.#{evtns}", (evt) =>
-          console.log "#{evtns}: mousedropwithin"
-          dragObject = evt.relatedObject
-          $dragOwner = dragObject.getElement()
-          $draggee = dragObject.getDraggee()
-
-          # mousedropwithin will get fired even when moving map objects around
-          # within the map, so we have to check for the first fire when the
-          # object is added
-          if not @objectExistsIn('tiles', $draggee)
-            @addObject('tiles', $draggee, $dragOwner.data('so'))
-            @_addEventsToMapObjects($draggee)
-
-          $draggee.position(@_roundCoordsToGrid($draggee.position()))
-          @saveMap()
-
-      @_addEventsToMapObjects $(mapObjectsSel)
-
-      # TODO: This is the same as fill
-      @$map.bind "mousedown.#{evtns}", (evt) =>
-        console.log "#{evtns}: mouseup"
-        @$map.find('.editor-map-object')
-          .removeClass('editor-selected')
-        @$map.find('.editor-map-object[data-is-selected=yes]')
-          .addClass('editor-selected')
-          .attr('data-is-selected', 'no')
-
-      $(window)
-        .bind "keyup.#{evtns}", (evt) =>
-          if @keyboard.isKeyPressed(evt, 'backspace', 'delete')
-            $selectedObjects = @$map.find('.editor-map-object.editor-selected')
-            if $selectedObjects.length
-              $selectedObjects.each (elem) =>
-                $elem = $(elem)
-                objectId = $elem.data('moid')
-                console.log "viewport: removing object #{objectId}"
-                # TODO: This should be a method
-                delete @objectsByLayer[@core.getCurrentLayer()][objectId]
-                $elem.remove()
-              @saveMap()
-
-    deactivate_tiles_normal_tool: ->
-      evtns = 'editor.viewport.layer-tiles.tool-normal'
-
-      layerSel = '#editor-map .editor-layer[data-layer=tiles]'
-      mapObjectsSel = "#{layerSel} .editor-map-object"
-
-      @$elem
-        .dropTarget('destroy')
-        .unbind(".#{evtns}")
-      @_removeEventsFromMapObjects $(mapObjectsSel)
-      @$map.unbind(".#{evtns}")
-      $(window).unbind(".#{evtns}")
+    #---
 
     activate_hand_tool: ->
       evtns = 'editor.viewport.tool-hand'
@@ -380,6 +336,115 @@ define 'editor.viewport', ->
       @$elem.unbind(".#{evtns}")
       $(window).unbind(".#{evtns}")
 
+    #---
+
+    activate_tiles_normal_tool: ->
+      evtns = 'editor.viewport.layer-tiles.tool-normal'
+      viewport = this
+
+      layerSel = '#editor-map .editor-layer[data-layer=tiles]'
+      mapObjectsSel = "#{layerSel} .editor-map-object"
+
+      @$elem
+        .dropTarget(receptor: "#{layerSel} .editor-layer-content")
+        .bind "mousedropwithin.#{evtns}", (evt) =>
+          console.log "#{evtns}: mousedropwithin"
+          dragObject = evt.relatedObject
+          $dragOwner = dragObject.getElement()
+          $draggee = dragObject.getDraggee()
+
+          # mousedropwithin will get fired even when moving map objects around
+          # within the map, so we have to check for the first fire when the
+          # object is added
+          if not @objectExistsIn('tiles', $draggee)
+            @addObject('tiles', $draggee, $dragOwner.data('so'))
+            @_addEventsToMapObjects($draggee)
+
+          $draggee.position(@_roundCoordsToGrid($draggee.position()))
+          @_saveMap()
+
+      @_addEventsToMapObjects $(mapObjectsSel)
+
+      # TODO: This is the same as fill
+      @$map.bind "mousedown.#{evtns}", (evt) =>
+        console.log "#{evtns}: mouseup"
+        @_unselectAllTiles()
+        @getContentForCurrentLayer().find('.editor-map-object[data-is-selected=yes]')
+          .trigger('select')
+          .addClass('editor-selected')
+          .attr('data-is-selected', 'no')
+
+      $(window)
+        .bind "keyup.#{evtns}", (evt) =>
+          if @keyboard.isKeyPressed(evt, 'backspace', 'delete')
+            $selectedObjects = @$map.find('.editor-map-object.editor-selected')
+            if $selectedObjects.length
+              $selectedObjects.each (elem) =>
+                $elem = $(elem)
+                objectId = $elem.data('moid')
+                console.log "viewport: removing object #{objectId}"
+                # TODO: This should be a method
+                delete @objectsByLayer[@core.getCurrentLayer()][objectId]
+                $elem.remove()
+              @_saveMap()
+
+    deactivate_tiles_normal_tool: ->
+      evtns = 'editor.viewport.layer-tiles.tool-normal'
+
+      layerSel = '#editor-map .editor-layer[data-layer=tiles]'
+      mapObjectsSel = "#{layerSel} .editor-map-object"
+
+      @$elem
+        .dropTarget('destroy')
+        .unbind(".#{evtns}")
+      @_removeEventsFromMapObjects $(mapObjectsSel)
+      @$map.unbind(".#{evtns}")
+      $(window).unbind(".#{evtns}")
+
+    addObject: (layer, $elem, object) ->
+      console.log 'viewport: addObject'
+      obj = {}
+      obj.moid = @objectId
+      obj[k] = v for own k, v of object
+      obj.$elem = $elem
+      $elem.data('moid', @objectId)
+      console.log adding: obj
+      @objectsByLayer[layer][@objectId] = obj
+      @objectId++
+
+      @["_activate_#{layer}_#{@core.currentTool}_tool_for_object"]?(obj)
+
+    objectExistsIn: (layer, $elem) ->
+      moid = $elem.data('moid')
+      !!@objectsByLayer[layer][moid]
+
+    # TODO: This is the same as _addEventsToSelectionBoxes()
+    _addEventsToMapObjects: ($draggees) ->
+      evtns = 'editor.viewport.layer-tiles.tool-normal'
+      $draggees.bind "mousedown.#{evtns}", (evt) ->
+        console.log "#{evtns}: map object mouseupnodrag"
+        $draggee = $(this)
+        state = $draggee.attr('data-is-selected')
+        newstate = if state is 'no' or !state then 'yes' else 'no'
+        $draggee.attr('data-is-selected', newstate)
+      # CS bug #2221 regarding indentation
+      $draggees.dragObject
+        dropTarget: @$elem
+        containWithinDropTarget: true
+
+    _removeEventsFromMapObjects: ($draggees) ->
+      evtns = 'editor.viewport.layer-tiles.tool-normal'
+      $draggees
+        .dragObject('destroy')
+        .unbind(".#{evtns}")
+
+    _unselectAllTiles: ->
+      @getContentForCurrentLayer().find('.editor-map-object')
+        .trigger('unselect')
+        .removeClass('editor-selected')
+
+    #---
+
     activate_fill_layer: ->
       that = this
       $input = $('<input>')
@@ -392,7 +457,7 @@ define 'editor.viewport', ->
         .bind 'keyup', ->
           if _isValidColor(@value)
             that._setFillLayerBackground(@value)
-            that.saveMap()
+            that._saveMap()
       @$bgColorDiv = $('<div id="editor-bg-color"></div>')
         .append("Background color: ")
         .append($input)
@@ -409,7 +474,7 @@ define 'editor.viewport', ->
           $draggee = $(evt.relatedTarget)
           fill = $draggee.data('fill')
           fill.position @_roundCoordsToGrid($draggee.position())
-          @saveMap()
+          @_saveMap()
 
       $boxes = @getContentForCurrentLayer().find('.editor-fill')
       @_addEventsToSelectionBoxes($boxes)
@@ -572,7 +637,7 @@ define 'editor.viewport', ->
                 w: sel.w, h: sel.h
                 color: '#800000'
               @_loadFill(fill)
-            @saveMap()
+            @_saveMap()
 
       selectionEvents.add()
 
@@ -581,22 +646,9 @@ define 'editor.viewport', ->
       @$elem.unbind(".#{evtns}")
       $(window).unbind(".#{evtns}")
 
-    addObject: (layer, $elem, object) ->
-      console.log 'viewport: addObject'
-      obj = {}
-      obj.moid = @objectId
-      obj[k] = v for own k, v of object
-      obj.$elem = $elem
-      $elem.data('moid', @objectId)
-      console.log adding: obj
-      @objectsByLayer[layer][@objectId] = obj
-      @objectId++
-
-      @["_activate_#{layer}_#{@core.currentTool}_tool_for_object"]?(obj)
-
-    objectExistsIn: (layer, $elem) ->
-      moid = $elem.data('moid')
-      !!@objectsByLayer[layer][moid]
+    _setFillLayerBackground: (color) ->
+      @getContentForCurrentLayer().css('background-color', color)
+      @fillBackground = color
 
     _createFillElement: (fill) ->
       $elem = $('<div class="editor-fill"></div>')
@@ -661,77 +713,6 @@ define 'editor.viewport', ->
       $elem.trigger('unselect')
       $elem.remove()
 
-    _setFillLayerBackground: (color) ->
-      @getContentForCurrentLayer().css('background-color', color)
-      @fillBackground = color
-
-    _unselectAllFills: ->
-      @getContentForCurrentLayer().find('.editor-fill')
-        .trigger('unselect')
-        .removeClass('editor-selected')
-
-    saveMap: ->
-      console.log 'viewport: saving map...'
-      layers = {}
-      for layer in ['tiles']
-        layers[layer] = []
-        for id, object of @objectsByLayer[layer]
-          pos = object.$elem.position()
-          layers[layer].push({
-            name: object.name
-            x: pos.x
-            y: pos.y
-          })
-      layers['fill'] =
-        background: @fillBackground
-        objects: $.v.map(@objectsByLayer['fill'], (moid, fill) -> fill.store)
-      localStorage.setItem('editor.map', JSON.stringify(layers))
-
-    _initMapGrid: ->
-      # create the grid pattern that backgrounds the map
-      canvas = require('game.canvas').create(GRID_SIZE, GRID_SIZE)
-      ctx = canvas.getContext()
-      ctx.strokeStyle = 'rgba(0,0,0,0.15)'
-      ctx.moveTo(0.5, 0.5)
-      ctx.lineTo(GRID_SIZE, 0.5)
-      ctx.moveTo(0.5, 0.5)
-      ctx.lineTo(0.5, GRID_SIZE)
-      ctx.stroke()
-      mapGrid = canvas
-
-      @$mapGrid = $('#editor-map-grid')
-        .css('background-image', "url(#{mapGrid.element.toDataURL()})")
-        .css('background-repeat', 'repeat')
-
-    _initBounds: ->
-      offset = @$elem.offset()
-      @bounds = require('game.Bounds').rect(
-        offset.left,
-        offset.top,
-        offset.width,
-        offset.height
-      )
-
-    # TODO: This is the same as _addEventsToSelectionBoxes()
-    _addEventsToMapObjects: ($draggees) ->
-      evtns = 'editor.viewport.layer-tiles.tool-normal'
-      $draggees.bind "mousedown.#{evtns}", (evt) ->
-        console.log "#{evtns}: map object mouseupnodrag"
-        $draggee = $(this)
-        state = $draggee.attr('data-is-selected')
-        newstate = if state is 'no' or !state then 'yes' else 'no'
-        $draggee.attr('data-is-selected', newstate)
-      # CS bug #2221 regarding indentation
-      $draggees.dragObject
-        dropTarget: @$elem
-        containWithinDropTarget: true
-
-    _removeEventsFromMapObjects: ($draggees) ->
-      evtns = 'editor.viewport.layer-tiles.tool-normal'
-      $draggees
-        .dragObject('destroy')
-        .unbind(".#{evtns}")
-
     # TODO: This is the same as _addEventsToMapObjects()
     _addEventsToSelectionBoxes: ($boxes) ->
       that = this
@@ -761,7 +742,7 @@ define 'editor.viewport', ->
               $selectedObjects = $layerContent.find('.editor-fill.editor-selected')
               if $selectedObjects.length
                 $selectedObjects.each (elem) -> that._removeFill(elem)
-                that.saveMap()
+                that._saveMap()
 
           $input = $('<input>')
           # ENDER BUG: .attr does not return this?
@@ -780,7 +761,7 @@ define 'editor.viewport', ->
             .bind 'keyup', ->
               if _isValidColor(@value)
                 fill.fill(@value)
-                that.saveMap()
+                that._saveMap()
 
         .bind 'unselect', ->
           $this = $(this)
@@ -801,6 +782,38 @@ define 'editor.viewport', ->
         .removeClass('editor-selected')
       $(window).unbind "keyup.#{evtns}"
 
+    _unselectAllFills: ->
+      @getContentForCurrentLayer().find('.editor-fill')
+        .trigger('unselect')
+        .removeClass('editor-selected')
+
+    #---
+
+    _initMapGrid: ->
+      # create the grid pattern that backgrounds the map
+      canvas = require('game.canvas').create(GRID_SIZE, GRID_SIZE)
+      ctx = canvas.getContext()
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)'
+      ctx.moveTo(0.5, 0.5)
+      ctx.lineTo(GRID_SIZE, 0.5)
+      ctx.moveTo(0.5, 0.5)
+      ctx.lineTo(0.5, GRID_SIZE)
+      ctx.stroke()
+      mapGrid = canvas
+
+      @$mapGrid = $('#editor-map-grid')
+        .css('background-image', "url(#{mapGrid.element.toDataURL()})")
+        .css('background-repeat', 'repeat')
+
+    _initBounds: ->
+      offset = @$elem.offset()
+      @bounds = require('game.Bounds').rect(
+        offset.left,
+        offset.top,
+        offset.width,
+        offset.height
+      )
+
     _roundCoordsToGrid: (p) ->
       x: Math.round(p.x / GRID_SIZE) * GRID_SIZE,
       y: Math.round(p.y / GRID_SIZE) * GRID_SIZE
@@ -811,15 +824,16 @@ define 'editor.viewport', ->
 
   do ->
     tmp = {}
-    viewport._unbindGlobalKeyEvents = ->
-      console.log 'removing global key events'
-      events = 'keyup keydown'
-      $(tmp).cloneEvents(window, event) for event in events.split(" ")
-      $(window).unbind(events)
-    viewport._rebindGlobalKeyEvents = ->
-      console.log tmp
-      console.log 'restoring global key events'
-      events = 'keyup keydown'
-      $(window).cloneEvents(tmp, event) for event in events.split(" ")
+    $.extend viewport,
+      _unbindGlobalKeyEvents: ->
+        console.log 'removing global key events'
+        events = 'keyup keydown'
+        $(tmp).cloneEvents(window, event) for event in events.split(" ")
+        $(window).unbind(events)
+      _rebindGlobalKeyEvents: ->
+        console.log tmp
+        console.log 'restoring global key events'
+        events = 'keyup keydown'
+        $(window).cloneEvents(tmp, event) for event in events.split(" ")
 
   return viewport

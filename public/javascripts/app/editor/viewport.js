@@ -110,6 +110,33 @@
           }
         }
       },
+      _saveMap: function() {
+        var id, layer, layers, object, pos, _i, _len, _ref, _ref2;
+        console.log('viewport: saving map...');
+        layers = {};
+        _ref = ['tiles'];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          layer = _ref[_i];
+          layers[layer] = [];
+          _ref2 = this.objectsByLayer[layer];
+          for (id in _ref2) {
+            object = _ref2[id];
+            pos = object.$elem.position();
+            layers[layer].push({
+              name: object.name,
+              x: pos.x,
+              y: pos.y
+            });
+          }
+        }
+        layers['fill'] = {
+          background: this.fillBackground,
+          objects: $.v.map(this.objectsByLayer['fill'], function(moid, fill) {
+            return fill.store;
+          })
+        };
+        return localStorage.setItem('editor.map', JSON.stringify(layers));
+      },
       activateCurrentLayer: function() {
         var $layer, layer, _i, _len, _ref, _results;
         $layer = this.$map.find(".editor-layer[data-layer=" + layer + "]").detach();
@@ -126,62 +153,6 @@
           }
         }
         return _results;
-      },
-      activate_tiles_normal_tool: function() {
-        var evtns, layerSel, mapObjectsSel,
-          _this = this;
-        evtns = 'editor.viewport.layer-tiles.tool-normal';
-        viewport = this;
-        layerSel = '#editor-map .editor-layer[data-layer=tiles]';
-        mapObjectsSel = "" + layerSel + " .editor-map-object";
-        this.$elem.dropTarget({
-          receptor: "" + layerSel + " .editor-layer-content"
-        }).bind("mousedropwithin." + evtns, function(evt) {
-          var $dragOwner, $draggee, dragObject;
-          console.log("" + evtns + ": mousedropwithin");
-          dragObject = evt.relatedObject;
-          $dragOwner = dragObject.getElement();
-          $draggee = dragObject.getDraggee();
-          if (!_this.objectExistsIn('tiles', $draggee)) {
-            _this.addObject('tiles', $draggee, $dragOwner.data('so'));
-            _this._addEventsToMapObjects($draggee);
-          }
-          $draggee.position(_this._roundCoordsToGrid($draggee.position()));
-          return _this.saveMap();
-        });
-        this._addEventsToMapObjects($(mapObjectsSel));
-        this.$map.bind("mousedown." + evtns, function(evt) {
-          console.log("" + evtns + ": mouseup");
-          _this.$map.find('.editor-map-object').removeClass('editor-selected');
-          return _this.$map.find('.editor-map-object[data-is-selected=yes]').addClass('editor-selected').attr('data-is-selected', 'no');
-        });
-        return $(window).bind("keyup." + evtns, function(evt) {
-          var $selectedObjects;
-          if (_this.keyboard.isKeyPressed(evt, 'backspace', 'delete')) {
-            $selectedObjects = _this.$map.find('.editor-map-object.editor-selected');
-            if ($selectedObjects.length) {
-              $selectedObjects.each(function(elem) {
-                var $elem, objectId;
-                $elem = $(elem);
-                objectId = $elem.data('moid');
-                console.log("viewport: removing object " + objectId);
-                delete _this.objectsByLayer[_this.core.getCurrentLayer()][objectId];
-                return $elem.remove();
-              });
-              return _this.saveMap();
-            }
-          }
-        });
-      },
-      deactivate_tiles_normal_tool: function() {
-        var evtns, layerSel, mapObjectsSel;
-        evtns = 'editor.viewport.layer-tiles.tool-normal';
-        layerSel = '#editor-map .editor-layer[data-layer=tiles]';
-        mapObjectsSel = "" + layerSel + " .editor-map-object";
-        this.$elem.dropTarget('destroy').unbind("." + evtns);
-        this._removeEventsFromMapObjects($(mapObjectsSel));
-        this.$map.unbind("." + evtns);
-        return $(window).unbind("." + evtns);
       },
       activate_hand_tool: function() {
         var dragActive, evtns,
@@ -236,6 +207,110 @@
         this.$elem.unbind("." + evtns);
         return $(window).unbind("." + evtns);
       },
+      activate_tiles_normal_tool: function() {
+        var evtns, layerSel, mapObjectsSel,
+          _this = this;
+        evtns = 'editor.viewport.layer-tiles.tool-normal';
+        viewport = this;
+        layerSel = '#editor-map .editor-layer[data-layer=tiles]';
+        mapObjectsSel = "" + layerSel + " .editor-map-object";
+        this.$elem.dropTarget({
+          receptor: "" + layerSel + " .editor-layer-content"
+        }).bind("mousedropwithin." + evtns, function(evt) {
+          var $dragOwner, $draggee, dragObject;
+          console.log("" + evtns + ": mousedropwithin");
+          dragObject = evt.relatedObject;
+          $dragOwner = dragObject.getElement();
+          $draggee = dragObject.getDraggee();
+          if (!_this.objectExistsIn('tiles', $draggee)) {
+            _this.addObject('tiles', $draggee, $dragOwner.data('so'));
+            _this._addEventsToMapObjects($draggee);
+          }
+          $draggee.position(_this._roundCoordsToGrid($draggee.position()));
+          return _this._saveMap();
+        });
+        this._addEventsToMapObjects($(mapObjectsSel));
+        this.$map.bind("mousedown." + evtns, function(evt) {
+          console.log("" + evtns + ": mouseup");
+          _this._unselectAllTiles();
+          return _this.getContentForCurrentLayer().find('.editor-map-object[data-is-selected=yes]').trigger('select').addClass('editor-selected').attr('data-is-selected', 'no');
+        });
+        return $(window).bind("keyup." + evtns, function(evt) {
+          var $selectedObjects;
+          if (_this.keyboard.isKeyPressed(evt, 'backspace', 'delete')) {
+            $selectedObjects = _this.$map.find('.editor-map-object.editor-selected');
+            if ($selectedObjects.length) {
+              $selectedObjects.each(function(elem) {
+                var $elem, objectId;
+                $elem = $(elem);
+                objectId = $elem.data('moid');
+                console.log("viewport: removing object " + objectId);
+                delete _this.objectsByLayer[_this.core.getCurrentLayer()][objectId];
+                return $elem.remove();
+              });
+              return _this._saveMap();
+            }
+          }
+        });
+      },
+      deactivate_tiles_normal_tool: function() {
+        var evtns, layerSel, mapObjectsSel;
+        evtns = 'editor.viewport.layer-tiles.tool-normal';
+        layerSel = '#editor-map .editor-layer[data-layer=tiles]';
+        mapObjectsSel = "" + layerSel + " .editor-map-object";
+        this.$elem.dropTarget('destroy').unbind("." + evtns);
+        this._removeEventsFromMapObjects($(mapObjectsSel));
+        this.$map.unbind("." + evtns);
+        return $(window).unbind("." + evtns);
+      },
+      addObject: function(layer, $elem, object) {
+        var k, obj, v, _name;
+        console.log('viewport: addObject');
+        obj = {};
+        obj.moid = this.objectId;
+        for (k in object) {
+          if (!__hasProp.call(object, k)) continue;
+          v = object[k];
+          obj[k] = v;
+        }
+        obj.$elem = $elem;
+        $elem.data('moid', this.objectId);
+        console.log({
+          adding: obj
+        });
+        this.objectsByLayer[layer][this.objectId] = obj;
+        this.objectId++;
+        return typeof this[_name = "_activate_" + layer + "_" + this.core.currentTool + "_tool_for_object"] === "function" ? this[_name](obj) : void 0;
+      },
+      objectExistsIn: function(layer, $elem) {
+        var moid;
+        moid = $elem.data('moid');
+        return !!this.objectsByLayer[layer][moid];
+      },
+      _addEventsToMapObjects: function($draggees) {
+        var evtns;
+        evtns = 'editor.viewport.layer-tiles.tool-normal';
+        $draggees.bind("mousedown." + evtns, function(evt) {
+          var $draggee, newstate, state;
+          console.log("" + evtns + ": map object mouseupnodrag");
+          $draggee = $(this);
+          state = $draggee.attr('data-is-selected');
+          newstate = state === 'no' || !state ? 'yes' : 'no';
+          return $draggee.attr('data-is-selected', newstate);
+        });
+        return $draggees.dragObject({
+          dropTarget: this.$elem,
+          containWithinDropTarget: true
+        });
+      },
+      _removeEventsFromMapObjects: function($draggees) {
+        var evtns;
+        evtns = 'editor.viewport.layer-tiles.tool-normal';
+        return $draggees.dragObject('destroy').unbind("." + evtns);
+      },
+      _unselectAllTiles: function() {
+        return this.getContentForCurrentLayer().find('.editor-map-object').trigger('unselect').removeClass('editor-selected');
+      },
       activate_fill_layer: function() {
         var $input, that;
         that = this;
@@ -248,7 +323,7 @@
         }).bind('keyup', function() {
           if (_isValidColor(this.value)) {
             that._setFillLayerBackground(this.value);
-            return that.saveMap();
+            return that._saveMap();
           }
         });
         this.$bgColorDiv = $('<div id="editor-bg-color"></div>').append("Background color: ").append($input);
@@ -268,7 +343,7 @@
           $draggee = $(evt.relatedTarget);
           fill = $draggee.data('fill');
           fill.position(_this._roundCoordsToGrid($draggee.position()));
-          return _this.saveMap();
+          return _this._saveMap();
         });
         $boxes = this.getContentForCurrentLayer().find('.editor-fill');
         this._addEventsToSelectionBoxes($boxes);
@@ -420,7 +495,7 @@
               };
               return _this._loadFill(fill);
             });
-            return _this.saveMap();
+            return _this._saveMap();
           }
         });
         return selectionEvents.add();
@@ -431,29 +506,9 @@
         this.$elem.unbind("." + evtns);
         return $(window).unbind("." + evtns);
       },
-      addObject: function(layer, $elem, object) {
-        var k, obj, v, _name;
-        console.log('viewport: addObject');
-        obj = {};
-        obj.moid = this.objectId;
-        for (k in object) {
-          if (!__hasProp.call(object, k)) continue;
-          v = object[k];
-          obj[k] = v;
-        }
-        obj.$elem = $elem;
-        $elem.data('moid', this.objectId);
-        console.log({
-          adding: obj
-        });
-        this.objectsByLayer[layer][this.objectId] = obj;
-        this.objectId++;
-        return typeof this[_name = "_activate_" + layer + "_" + this.core.currentTool + "_tool_for_object"] === "function" ? this[_name](obj) : void 0;
-      },
-      objectExistsIn: function(layer, $elem) {
-        var moid;
-        moid = $elem.data('moid');
-        return !!this.objectsByLayer[layer][moid];
+      _setFillLayerBackground: function(color) {
+        this.getContentForCurrentLayer().css('background-color', color);
+        return this.fillBackground = color;
       },
       _createFillElement: function(fill) {
         var $elem;
@@ -519,79 +574,6 @@
         $elem.trigger('unselect');
         return $elem.remove();
       },
-      _setFillLayerBackground: function(color) {
-        this.getContentForCurrentLayer().css('background-color', color);
-        return this.fillBackground = color;
-      },
-      _unselectAllFills: function() {
-        return this.getContentForCurrentLayer().find('.editor-fill').trigger('unselect').removeClass('editor-selected');
-      },
-      saveMap: function() {
-        var id, layer, layers, object, pos, _i, _len, _ref, _ref2;
-        console.log('viewport: saving map...');
-        layers = {};
-        _ref = ['tiles'];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          layer = _ref[_i];
-          layers[layer] = [];
-          _ref2 = this.objectsByLayer[layer];
-          for (id in _ref2) {
-            object = _ref2[id];
-            pos = object.$elem.position();
-            layers[layer].push({
-              name: object.name,
-              x: pos.x,
-              y: pos.y
-            });
-          }
-        }
-        layers['fill'] = {
-          background: this.fillBackground,
-          objects: $.v.map(this.objectsByLayer['fill'], function(moid, fill) {
-            return fill.store;
-          })
-        };
-        return localStorage.setItem('editor.map', JSON.stringify(layers));
-      },
-      _initMapGrid: function() {
-        var canvas, ctx, mapGrid;
-        canvas = require('game.canvas').create(GRID_SIZE, GRID_SIZE);
-        ctx = canvas.getContext();
-        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-        ctx.moveTo(0.5, 0.5);
-        ctx.lineTo(GRID_SIZE, 0.5);
-        ctx.moveTo(0.5, 0.5);
-        ctx.lineTo(0.5, GRID_SIZE);
-        ctx.stroke();
-        mapGrid = canvas;
-        return this.$mapGrid = $('#editor-map-grid').css('background-image', "url(" + (mapGrid.element.toDataURL()) + ")").css('background-repeat', 'repeat');
-      },
-      _initBounds: function() {
-        var offset;
-        offset = this.$elem.offset();
-        return this.bounds = require('game.Bounds').rect(offset.left, offset.top, offset.width, offset.height);
-      },
-      _addEventsToMapObjects: function($draggees) {
-        var evtns;
-        evtns = 'editor.viewport.layer-tiles.tool-normal';
-        $draggees.bind("mousedown." + evtns, function(evt) {
-          var $draggee, newstate, state;
-          console.log("" + evtns + ": map object mouseupnodrag");
-          $draggee = $(this);
-          state = $draggee.attr('data-is-selected');
-          newstate = state === 'no' || !state ? 'yes' : 'no';
-          return $draggee.attr('data-is-selected', newstate);
-        });
-        return $draggees.dragObject({
-          dropTarget: this.$elem,
-          containWithinDropTarget: true
-        });
-      },
-      _removeEventsFromMapObjects: function($draggees) {
-        var evtns;
-        evtns = 'editor.viewport.layer-tiles.tool-normal';
-        return $draggees.dragObject('destroy').unbind("." + evtns);
-      },
       _addEventsToSelectionBoxes: function($boxes) {
         var $fillBgDiv, evtns, that;
         that = this;
@@ -622,7 +604,7 @@
                 $selectedObjects.each(function(elem) {
                   return that._removeFill(elem);
                 });
-                return that.saveMap();
+                return that._saveMap();
               }
             }
           });
@@ -637,7 +619,7 @@
           }).bind('keyup', function() {
             if (_isValidColor(this.value)) {
               fill.fill(this.value);
-              return that.saveMap();
+              return that._saveMap();
             }
           });
         }).bind('unselect', function() {
@@ -656,6 +638,27 @@
         $boxes.dragObject('destroy').unbind("mousedown." + evtns + " select unselect").attr('data-is-selected', 'no').removeClass('editor-selected');
         return $(window).unbind("keyup." + evtns);
       },
+      _unselectAllFills: function() {
+        return this.getContentForCurrentLayer().find('.editor-fill').trigger('unselect').removeClass('editor-selected');
+      },
+      _initMapGrid: function() {
+        var canvas, ctx, mapGrid;
+        canvas = require('game.canvas').create(GRID_SIZE, GRID_SIZE);
+        ctx = canvas.getContext();
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+        ctx.moveTo(0.5, 0.5);
+        ctx.lineTo(GRID_SIZE, 0.5);
+        ctx.moveTo(0.5, 0.5);
+        ctx.lineTo(0.5, GRID_SIZE);
+        ctx.stroke();
+        mapGrid = canvas;
+        return this.$mapGrid = $('#editor-map-grid').css('background-image', "url(" + (mapGrid.element.toDataURL()) + ")").css('background-repeat', 'repeat');
+      },
+      _initBounds: function() {
+        var offset;
+        offset = this.$elem.offset();
+        return this.bounds = require('game.Bounds').rect(offset.left, offset.top, offset.width, offset.height);
+      },
       _roundCoordsToGrid: function(p) {
         return {
           x: Math.round(p.x / GRID_SIZE) * GRID_SIZE,
@@ -670,30 +673,32 @@
     (function() {
       var tmp;
       tmp = {};
-      viewport._unbindGlobalKeyEvents = function() {
-        var event, events, _i, _len, _ref;
-        console.log('removing global key events');
-        events = 'keyup keydown';
-        _ref = events.split(" ");
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          event = _ref[_i];
-          $(tmp).cloneEvents(window, event);
+      return $.extend(viewport, {
+        _unbindGlobalKeyEvents: function() {
+          var event, events, _i, _len, _ref;
+          console.log('removing global key events');
+          events = 'keyup keydown';
+          _ref = events.split(" ");
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            event = _ref[_i];
+            $(tmp).cloneEvents(window, event);
+          }
+          return $(window).unbind(events);
+        },
+        _rebindGlobalKeyEvents: function() {
+          var event, events, _i, _len, _ref, _results;
+          console.log(tmp);
+          console.log('restoring global key events');
+          events = 'keyup keydown';
+          _ref = events.split(" ");
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            event = _ref[_i];
+            _results.push($(window).cloneEvents(tmp, event));
+          }
+          return _results;
         }
-        return $(window).unbind(events);
-      };
-      return viewport._rebindGlobalKeyEvents = function() {
-        var event, events, _i, _len, _ref, _results;
-        console.log(tmp);
-        console.log('restoring global key events');
-        events = 'keyup keydown';
-        _ref = events.split(" ");
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          event = _ref[_i];
-          _results.push($(window).cloneEvents(tmp, event));
-        }
-        return _results;
-      };
+      });
     })();
     return viewport;
   });
