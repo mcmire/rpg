@@ -2,13 +2,17 @@
   var __hasProp = Object.prototype.hasOwnProperty;
 
   define('editor.viewport', function() {
-    var COLORS, GRID_SIZE, meta, util, viewport;
+    var COLORS, GRID_SIZE, meta, util, viewport, _colorRegex, _isValidColor;
     util = require('util');
     meta = require('meta');
     require('editor.DropTarget');
     GRID_SIZE = 16;
     COLORS = "aliceblue\nantiquewhite\naqua\naquamarine\nazure\nbeige\nbisque\nblack\nblanchedalmond\nblue\nblueviolet\nbrown\nburlywood\ncadetblue\nchartreuse\nchocolate\ncoral\ncornflowerblue\ncornsilk\ncrimson\ncyan\ndarkblue\ndarkcyan\ndarkgoldenrod\ndarkgray\ndarkgrey\ndarkgreen\ndarkkhaki\ndarkmagenta\ndarkolivegreen\ndarkorange\ndarkorchid\ndarkred\ndarksalmon\ndarkseagreen\ndarkslateblue\ndarkslategray\ndarkslategrey\ndarkturquoise\ndarkviolet\ndeeppink\ndeepskyblue\ndimgray\ndimgrey\ndodgerblue\nfirebrick\nfloralwhite\nforestgreen\nfuchsia\ngainsboro\nghostwhite\ngold\ngoldenrod\ngray\ngrey\ngreen\ngreenyellow\nhoneydew\nhotpink\nindianred\nindigo\nivory\nkhaki\nlavender\nlavenderblush\nlawngreen\nlemonchiffon\nlightblue\nlightcoral\nlightcyan\nlightgoldenrodyellow\nlightgray\nlightgrey\nlightgreen\nlightpink\nlightsalmon\nlightseagreen\nlightskyblue\nlightslategray\nlightslategrey\nlightsteelblue\nlightyellow\nlime\nlimegreen\nlinen\nmagenta\nmaroon\nmediumaquamarine\nmediumblue\nmediumorchid\nmediumpurple\nmediumseagreen\nmediumslateblue\nmediumspringgreen\nmediumturquoise\nmediumvioletred\nmidnightblue\nmintcream\nmistyrose\nmoccasin\nnavajowhite\nnavy\noldlace\nolive\nolivedrab\norange\norangered\norchid\npalegoldenrod\npalegreen\npaleturquoise\npalevioletred\npapayawhip\npeachpuff\nperu\npink\nplum\npowderblue\npurple\nred\nrosybrown\nroyalblue\nsaddlebrown\nsalmon\nsandybrown\nseagreen\nseashell\nsienna\nsilver\nskyblue\nslateblue\nslategray\nslategrey\nsnow\nspringgreen\nsteelblue\ntan\nteal\nthistle\ntomato\nturquoise\nviolet\nwheat\nwhite\nwhitesmoke\nyellow\nyellowgreen";
     COLORS = COLORS.split(/\n/);
+    _colorRegex = /^(\#[A-Fa-f0-9]{6}|rgb\([ ]*\d+,[ ]*\d+,[ ]*\d+[ ]*\)|rgba\([ ]*\d+,[ ]*\d+,[ ]*\d+(,[ ]*\d+(\.\d+)?)?[ ]*\)|hsl\([ ]*\d+,[ ]*\d+%,[ ]*\d+%[ ]*\)|hsla\([ ]*\d+,[ ]*\d+%,[ ]*\d+%(,[ ]*\d+(\.\d+)?)?[ ]*\))$/;
+    _isValidColor = function(value) {
+      return _colorRegex.test(value) || util.array.include(COLORS, value);
+    };
     viewport = meta.def({
       init: function(core) {
         this.core = core;
@@ -226,7 +230,7 @@
         }).bind('blur', function() {
           return that._rebindGlobalKeyEvents();
         }).bind('keyup', function() {
-          if (/#[A-Fa-f0-9]{6}/.test(this.value) || util.array.include(COLORS, this.value)) {
+          if (_isValidColor(this.value)) {
             that._setFillLayerBackground(this.value);
             return that.saveMap();
           }
@@ -613,7 +617,7 @@
           }).bind('blur', function() {
             return that._rebindGlobalKeyEvents();
           }).bind('keyup', function() {
-            if (/#[A-Fa-f0-9]{6}/.test(this.value) || util.array.include(COLORS, this.value)) {
+            if (_isValidColor(this.value)) {
               fill.fill(this.value);
               return that.saveMap();
             }

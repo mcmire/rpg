@@ -156,6 +156,11 @@ define 'editor.viewport', ->
   """
   COLORS = COLORS.split(/\n/)
 
+  _colorRegex = /^(\#[A-Fa-f0-9]{6}|rgb\([ ]*\d+,[ ]*\d+,[ ]*\d+[ ]*\)|rgba\([ ]*\d+,[ ]*\d+,[ ]*\d+(,[ ]*\d+(\.\d+)?)?[ ]*\)|hsl\([ ]*\d+,[ ]*\d+%,[ ]*\d+%[ ]*\)|hsla\([ ]*\d+,[ ]*\d+%,[ ]*\d+%(,[ ]*\d+(\.\d+)?)?[ ]*\))$/
+
+  _isValidColor = (value) ->
+    _colorRegex.test(value) or util.array.include(COLORS, value)
+
   viewport = meta.def
     init: (@core) ->
       @keyboard = @core.keyboard
@@ -378,7 +383,7 @@ define 'editor.viewport', ->
         .bind 'blur', ->
           that._rebindGlobalKeyEvents()
         .bind 'keyup', ->
-          if /#[A-Fa-f0-9]{6}/.test(@value) or util.array.include(COLORS, @value)
+          if _isValidColor(@value)
             that._setFillLayerBackground(@value)
             that.saveMap()
       @$bgColorDiv = $('<div id="editor-bg-color"></div>')
@@ -763,7 +768,7 @@ define 'editor.viewport', ->
             .bind 'blur', ->
               that._rebindGlobalKeyEvents()
             .bind 'keyup', ->
-              if /#[A-Fa-f0-9]{6}/.test(@value) or util.array.include(COLORS, @value)
+              if _isValidColor(@value)
                 fill.fill(@value)
                 that.saveMap()
 
