@@ -273,16 +273,15 @@
         $boxes = this.getContentForCurrentLayer().find('.editor-fill');
         this._addEventsToSelectionBoxes($boxes);
         return this.$elem.bind("mousedown." + evtns, function(evt) {
-          var $layer;
           console.log("" + evtns + ": mousedown");
-          $layer = _this.getContentForCurrentLayer();
-          $layer.find('.editor-fill').trigger('unselect').removeClass('editor-selected');
-          return $layer.find('.editor-fill[data-is-selected=yes]').trigger('select').addClass('editor-selected').attr('data-is-selected', 'no');
+          _this._unselectAllFills();
+          return _this.getContentForCurrentLayer().find('.editor-fill[data-is-selected=yes]').trigger('select').addClass('editor-selected').attr('data-is-selected', 'no');
         });
       },
       deactivate_fill_normal_tool: function() {
         var $boxes, evtns;
         evtns = 'editor.viewport.layer-fill.tool-normal';
+        this._unselectAllFills();
         this.$elem.unbind("." + evtns);
         this.$elem.dropTarget('destroy');
         $boxes = this.getContentForCurrentLayer().find('.editor-fill');
@@ -523,6 +522,9 @@
       _setFillLayerBackground: function(color) {
         this.getContentForCurrentLayer().css('background-color', color);
         return this.fillBackground = color;
+      },
+      _unselectAllFills: function() {
+        return this.getContentForCurrentLayer().find('.editor-fill').trigger('unselect').removeClass('editor-selected');
       },
       saveMap: function() {
         var id, layer, layers, object, pos, _i, _len, _ref, _ref2;

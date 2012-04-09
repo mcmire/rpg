@@ -410,24 +410,22 @@ define 'editor.viewport', ->
           fill = $draggee.data('fill')
           fill.position @_roundCoordsToGrid($draggee.position())
           @saveMap()
-      $boxes = @getContentForCurrentLayer().find('.editor-fill')
 
+      $boxes = @getContentForCurrentLayer().find('.editor-fill')
       @_addEventsToSelectionBoxes($boxes)
 
       # TODO: This is the same as tiles
       @$elem.bind "mousedown.#{evtns}", (evt) =>
         console.log "#{evtns}: mousedown"
-        $layer = @getContentForCurrentLayer()
-        $layer.find('.editor-fill')
-          .trigger('unselect')
-          .removeClass('editor-selected')
-        $layer.find('.editor-fill[data-is-selected=yes]')
+        @_unselectAllFills()
+        @getContentForCurrentLayer().find('.editor-fill[data-is-selected=yes]')
           .trigger('select')
           .addClass('editor-selected')
           .attr('data-is-selected', 'no')
 
     deactivate_fill_normal_tool: ->
       evtns = 'editor.viewport.layer-fill.tool-normal'
+      @_unselectAllFills()
       @$elem.unbind ".#{evtns}"
       @$elem.dropTarget('destroy')
       $boxes = @getContentForCurrentLayer().find('.editor-fill')
@@ -666,6 +664,11 @@ define 'editor.viewport', ->
     _setFillLayerBackground: (color) ->
       @getContentForCurrentLayer().css('background-color', color)
       @fillBackground = color
+
+    _unselectAllFills: ->
+      @getContentForCurrentLayer().find('.editor-fill')
+        .trigger('unselect')
+        .removeClass('editor-selected')
 
     saveMap: ->
       console.log 'viewport: saving map...'
