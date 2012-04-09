@@ -27,7 +27,8 @@ define 'editor.core', ->
         @_initLayers()
         @_initToolbox()
         @viewport.loadMap()
-        @_changeLayerTo(0)   # currentTool is already set
+        # @_changeLayerTo(0)   # currentTool is already set
+        @_activateCurrentLayer()
 
       # Block backspace from leaving the page
       $(window)
@@ -175,6 +176,10 @@ define 'editor.core', ->
       $(window).bind 'keyup', (evt) =>
         index = LAYER_KEYS.indexOf(evt.keyCode)
         @_changeLayerTo(index) unless index is -1
+
+      # set something so that we can load the map before totally initializing
+      # the current layer
+      @currentLayer = LAYER_NAMES[0]
 
     _changeLayerTo: (index) ->
       @$layerChooser[0].selectedIndex = index

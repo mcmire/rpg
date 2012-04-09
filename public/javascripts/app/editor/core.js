@@ -25,7 +25,7 @@
           _this._initLayers();
           _this._initToolbox();
           _this.viewport.loadMap();
-          return _this._changeLayerTo(0);
+          return _this._activateCurrentLayer();
         });
         return $(window).bind("keydown.editor.core", function(evt) {
           if (_this.keyboard.isKeyPressed(evt, 'backspace')) {
@@ -187,11 +187,12 @@
           this.$layerChooser.append("<option data-layer=\"" + layer + "\">" + layer + "</option>");
           this.viewport.addLayer(layer);
         }
-        return $(window).bind('keyup', function(evt) {
+        $(window).bind('keyup', function(evt) {
           var index;
           index = LAYER_KEYS.indexOf(evt.keyCode);
           if (index !== -1) return _this._changeLayerTo(index);
         });
+        return this.currentLayer = LAYER_NAMES[0];
       },
       _changeLayerTo: function(index) {
         this.$layerChooser[0].selectedIndex = index;

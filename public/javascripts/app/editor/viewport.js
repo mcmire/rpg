@@ -25,6 +25,7 @@
           h[n] = {};
           return h;
         }), {});
+        this.fillBackground = null;
         return this;
       },
       getElement: function() {
@@ -92,7 +93,8 @@
                 return _this.addObject(layer, $elem, object);
               });
             }
-            _ref2 = layers['fill'];
+            this._setFillLayerBackground(layers['fill'].background);
+            _ref2 = layers['fill'].objects;
             _results = [];
             for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
               fill = _ref2[_j];
@@ -213,6 +215,27 @@
         evtns = 'editor.viewport.tool-hand';
         this.$elem.unbind("." + evtns);
         return $(window).unbind("." + evtns);
+      },
+      activate_fill_layer: function() {
+        var $input, that;
+        that = this;
+        $input = $('<input>');
+        if (this.fillBackground) $input.val(this.fillBackground);
+        $input.bind('focus', function() {
+          return that._unbindGlobalKeyEvents();
+        }).bind('blur', function() {
+          return that._rebindGlobalKeyEvents();
+        }).bind('keyup', function() {
+          if (/#[A-Fa-f0-9]{6}/.test(this.value) || util.array.include(COLORS, this.value)) {
+            that._setFillLayerBackground(this.value);
+            return that.saveMap();
+          }
+        });
+        this.$bgColorDiv = $('<div id="editor-bg-color"></div>').append("Background color: ").append($input);
+        return this.core.getToolDetailElement().append(this.$bgColorDiv);
+      },
+      deactivate_fill_layer: function() {
+        return this.$bgColorDiv.remove();
       },
       activate_fill_normal_tool: function() {
         var $boxes, evtns,
@@ -477,6 +500,10 @@
         $elem.trigger('unselect');
         return $elem.remove();
       },
+      _setFillLayerBackground: function(color) {
+        this.getContentForCurrentLayer().css('background-color', color);
+        return this.fillBackground = color;
+      },
       saveMap: function() {
         var id, layer, layers, object, pos, _i, _len, _ref, _ref2;
         console.log('viewport: saving map...');
@@ -496,9 +523,12 @@
             });
           }
         }
-        layers['fill'] = $.v.map(this.objectsByLayer['fill'], function(moid, fill) {
-          return fill.store;
-        });
+        layers['fill'] = {
+          background: this.fillBackground,
+          objects: $.v.map(this.objectsByLayer['fill'], function(moid, fill) {
+            return fill.store;
+          })
+        };
         return localStorage.setItem('editor.map', JSON.stringify(layers));
       },
       _initMapGrid: function() {
@@ -541,9 +571,10 @@
         return $draggees.dragObject('destroy').unbind("." + evtns);
       },
       _addEventsToSelectionBoxes: function($boxes) {
-        var evtns, that;
+        var $fillBgDiv, evtns, that;
         that = this;
         evtns = 'editor.viewport.selection-box';
+        $fillBgDiv = null;
         return $boxes.dragObject({
           dropTarget: this.$elem,
           containWithinDropTarget: true
@@ -575,7 +606,8 @@
           });
           $input = $('<input>');
           $input.attr('value', fill.store.color);
-          that.core.getToolDetailElement().html("").append("Fill background: ").append($input);
+          $fillBgDiv = $('<div id="editor-fill-bg"></div>').append("Fill background: ").append($input);
+          that.core.getToolDetailElement().append($fillBgDiv);
           return $input.bind('focus', function() {
             return that._unbindGlobalKeyEvents();
           }).bind('blur', function() {
@@ -587,15 +619,13 @@
             }
           });
         }).bind('unselect', function() {
-          var $elem, $this, fill;
+          var $this, fill;
           $this = $(this);
           if (!$this.hasClass('editor-selected')) return;
           fill = $this.data('fill');
           console.log("unselecting fill " + fill.moid);
           $(window).unbind("keyup." + evtns);
-          $elem = that.core.getToolDetailElement();
-          $elem.find('input').remove();
-          return $elem.html("");
+          return $fillBgDiv.remove();
         });
       },
       _removeEventsFromSelectionBoxes: function($boxes) {

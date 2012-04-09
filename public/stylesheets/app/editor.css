@@ -27,9 +27,10 @@ body {
   height: 40px;
   line-height: 40px;
   overflow: hidden; }
-  #editor-nav > div {
-    float: left;
-    margin-right: 40px; }
+
+#editor-nav > div, #editor-tool-detail > div {
+  float: left;
+  margin-right: 40px; }
 
 #editor-main {
   position: relative; }

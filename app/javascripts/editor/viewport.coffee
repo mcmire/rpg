@@ -169,6 +169,7 @@ define 'editor.viewport', ->
       @map = null
       @objectId = 0
       @objectsByLayer = $.v.reduce @core.getLayers(), ((h, n) -> h[n] = {}; h), {}
+      @fillBackground = null
       return this
 
     getElement: -> @$elem
@@ -232,7 +233,8 @@ define 'editor.viewport', ->
               $elem.css('top', "#{o.y}px")
               @getContentForLayer(layer).append($elem)
               @addObject(layer, $elem, object)
-          for fill in layers['fill']
+          @_setFillLayerBackground(layers['fill'].background)
+          for fill in layers['fill'].objects
             @_loadFill(fill)
         catch e
           console.warn "Had a problem loading the map!"
@@ -365,6 +367,27 @@ define 'editor.viewport', ->
       evtns = 'editor.viewport.tool-hand'
       @$elem.unbind(".#{evtns}")
       $(window).unbind(".#{evtns}")
+
+    activate_fill_layer: ->
+      that = this
+      $input = $('<input>')
+      $input.val(@fillBackground) if @fillBackground
+      $input
+        .bind 'focus', ->
+          that._unbindGlobalKeyEvents()
+        .bind 'blur', ->
+          that._rebindGlobalKeyEvents()
+        .bind 'keyup', ->
+          if /#[A-Fa-f0-9]{6}/.test(@value) or util.array.include(COLORS, @value)
+            that._setFillLayerBackground(@value)
+            that.saveMap()
+      @$bgColorDiv = $('<div id="editor-bg-color"></div>')
+        .append("Background color: ")
+        .append($input)
+      @core.getToolDetailElement().append(@$bgColorDiv)
+
+    deactivate_fill_layer: ->
+      @$bgColorDiv.remove()
 
     activate_fill_normal_tool: ->
       evtns = 'editor.viewport.layer-fill.tool-normal'
@@ -628,6 +651,10 @@ define 'editor.viewport', ->
       $elem.trigger('unselect')
       $elem.remove()
 
+    _setFillLayerBackground: (color) ->
+      @getContentForCurrentLayer().css('background-color', color)
+      @fillBackground = color
+
     saveMap: ->
       console.log 'viewport: saving map...'
       layers = {}
@@ -641,7 +668,8 @@ define 'editor.viewport', ->
             y: pos.y
           })
       layers['fill'] =
-        $.v.map @objectsByLayer['fill'], (moid, fill) -> fill.store
+        background: @fillBackground
+        objects: $.v.map(@objectsByLayer['fill'], (moid, fill) -> fill.store)
       localStorage.setItem('editor.map', JSON.stringify(layers))
 
     _initMapGrid: ->
@@ -693,6 +721,7 @@ define 'editor.viewport', ->
     _addEventsToSelectionBoxes: ($boxes) ->
       that = this
       evtns = 'editor.viewport.selection-box'
+      $fillBgDiv = null
       $boxes
         .dragObject
           dropTarget: @$elem
@@ -723,10 +752,10 @@ define 'editor.viewport', ->
           # ENDER BUG: .attr does not return this?
           $input.attr('value', fill.store.color)
 
-          that.core.getToolDetailElement()
-            .html("")
+          $fillBgDiv = $('<div id="editor-fill-bg"></div>')
             .append("Fill background: ")
             .append($input)
+          that.core.getToolDetailElement().append($fillBgDiv)
 
           $input
             .bind 'focus', ->
@@ -746,10 +775,7 @@ define 'editor.viewport', ->
 
           $(window).unbind "keyup.#{evtns}"
 
-          $elem = that.core.getToolDetailElement()
-          # unbind those events
-          $elem.find('input').remove()
-          $elem.html("")
+          $fillBgDiv.remove()
 
     _removeEventsFromSelectionBoxes: ($boxes) ->
       evtns = 'editor.viewport.selection-box'

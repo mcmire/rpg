@@ -56,11 +56,11 @@ body {
   height: $height;
   line-height: $height;
   overflow: hidden;
+}
 
-  > div {
-    float: left;
-    margin-right: 40px
-  }
+#editor-nav > div, #editor-tool-detail > div {
+  float: left;
+  margin-right: 40px;
 }
 
 #editor-main {
