@@ -105,19 +105,9 @@ $sidebar-width: 300px;
   .editor-layer, .editor-layer-content, .editor-layer-bg {
     @include absfill();
   }
-  .editor-layer-content {
-    opacity: 0.5;
-  }
-  .editor-layer-bg {
-    background: white;
-  }
-  .editor-layer-selected {
-    .editor-layer-content {
-      opacity: 1
-    }
-    .editor-layer-bg {
-      opacity: 0.5;
-    }
+
+  .editor-layer-hidden {
+    display: none
   }
 
   .editor-dragged-image {

@@ -207,12 +207,11 @@ define 'editor.viewport', ->
 
     addLayer: (layer) ->
       $layer = $("""
-        <div class="editor-layer" data-layer="#{layer}">
+        <div class="editor-layer editor-layer-hidden" data-layer="#{layer}">
           <div class="editor-layer-bg"></div>
           <div class="editor-layer-content"></div>
         </div>
       """)
-      # $layer.css('z-index', (i + 1) * 10)
       @$mapLayers.append($layer)
 
     loadMap: ->
@@ -243,6 +242,15 @@ define 'editor.viewport', ->
         catch e
           console.warn "Had a problem loading the map!"
           throw e
+
+    activateCurrentLayer: ->
+      # put this layer on top of all other layers
+      $layer = @$map.find(".editor-layer[data-layer=#{layer}]").detach()
+      @getMapLayers().append($layer)
+      # go through all the layers and unhide them, stopping on the current layer
+      for layer in @core.getLayers()
+        @getElementForLayer(layer).removeClass('editor-layer-hidden')
+        break if layer is @getCurrentLayer()
 
     activate_tiles_normal_tool: ->
       evtns = 'editor.viewport.layer-tiles.tool-normal'

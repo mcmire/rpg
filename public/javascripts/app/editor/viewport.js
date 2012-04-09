@@ -65,7 +65,7 @@
       },
       addLayer: function(layer) {
         var $layer;
-        $layer = $("<div class=\"editor-layer\" data-layer=\"" + layer + "\">\n  <div class=\"editor-layer-bg\"></div>\n  <div class=\"editor-layer-content\"></div>\n</div>");
+        $layer = $("<div class=\"editor-layer editor-layer-hidden\" data-layer=\"" + layer + "\">\n  <div class=\"editor-layer-bg\"></div>\n  <div class=\"editor-layer-content\"></div>\n</div>");
         return this.$mapLayers.append($layer);
       },
       loadMap: function() {
@@ -109,6 +109,23 @@
             throw e;
           }
         }
+      },
+      activateCurrentLayer: function() {
+        var $layer, layer, _i, _len, _ref, _results;
+        $layer = this.$map.find(".editor-layer[data-layer=" + layer + "]").detach();
+        this.getMapLayers().append($layer);
+        _ref = this.core.getLayers();
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          layer = _ref[_i];
+          this.getElementForLayer(layer).removeClass('editor-layer-hidden');
+          if (layer === this.getCurrentLayer()) {
+            break;
+          } else {
+            _results.push(void 0);
+          }
+        }
+        return _results;
       },
       activate_tiles_normal_tool: function() {
         var evtns, layerSel, mapObjectsSel,

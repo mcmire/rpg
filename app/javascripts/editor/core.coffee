@@ -27,7 +27,6 @@ define 'editor.core', ->
         @_initLayers()
         @_initToolbox()
         @viewport.loadMap()
-        # @_changeLayerTo(0)   # currentTool is already set
         @_activateCurrentLayer()
 
       # Block backspace from leaving the page
@@ -170,7 +169,7 @@ define 'editor.core', ->
 
       for layer in LAYER_NAMES
         @$sidebar.append """<div data-layer="#{layer}"></div>"""
-        @$layerChooser.append """<option data-layer="#{layer}">#{layer}</option>"""
+        @$layerChooser.append("""<option data-layer="#{layer}">#{layer}</option>""")
         @viewport.addLayer(layer)
 
       $(window).bind 'keyup', (evt) =>
@@ -180,6 +179,7 @@ define 'editor.core', ->
       # set something so that we can load the map before totally initializing
       # the current layer
       @currentLayer = LAYER_NAMES[0]
+      @$layerChooser.find("option[data-layer=#{@currentLayer}]").attr('selected', 'selected')
 
     _changeLayerTo: (index) ->
       @$layerChooser[0].selectedIndex = index
@@ -193,17 +193,12 @@ define 'editor.core', ->
     _activateCurrentLayer: ->
       layer = @currentLayer
 
-      # TODO: Move to viewport
-      $layer = @viewport.$map.find(".editor-layer[data-layer=#{layer}]")
-        .addClass('editor-layer-selected')
-        .detach()
-      # put on top of all other elements
-      @viewport.getMapLayers().append($layer)
       $(document.body).addClass("editor-layer-#{layer}")
 
       @$sidebar.find("> div[data-layer=#{layer}]").show()
 
       m = "activate_#{layer}_layer"
+      @viewport.activateCurrentLayer()
       console.log "viewport: activating #{layer} layer"
       @viewport[m]?()
       console.log "core: activating #{layer} layer"
@@ -215,7 +210,7 @@ define 'editor.core', ->
 
       # TODO: Move to viewport
       @viewport.$map.find(".editor-layer[data-layer=#{layer}")
-        .removeClass('editor-layer-selected')
+        .addClass('editor-layer-hidden')
       $(document.body).removeClass("editor-layer-#{layer}")
 
       @$sidebar.find("> div[data-layer=#{layer}]").hide()

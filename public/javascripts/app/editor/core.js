@@ -192,7 +192,8 @@
           index = LAYER_KEYS.indexOf(evt.keyCode);
           if (index !== -1) return _this._changeLayerTo(index);
         });
-        return this.currentLayer = LAYER_NAMES[0];
+        this.currentLayer = LAYER_NAMES[0];
+        return this.$layerChooser.find("option[data-layer=" + this.currentLayer + "]").attr('selected', 'selected');
       },
       _changeLayerTo: function(index) {
         this.$layerChooser[0].selectedIndex = index;
@@ -204,13 +205,12 @@
         return this._activateCurrentLayer();
       },
       _activateCurrentLayer: function() {
-        var $layer, layer, m, _base;
+        var layer, m, _base;
         layer = this.currentLayer;
-        $layer = this.viewport.$map.find(".editor-layer[data-layer=" + layer + "]").addClass('editor-layer-selected').detach();
-        this.viewport.getMapLayers().append($layer);
         $(document.body).addClass("editor-layer-" + layer);
         this.$sidebar.find("> div[data-layer=" + layer + "]").show();
         m = "activate_" + layer + "_layer";
+        this.viewport.activateCurrentLayer();
         console.log("viewport: activating " + layer + " layer");
         if (typeof (_base = this.viewport)[m] === "function") _base[m]();
         console.log("core: activating " + layer + " layer");
@@ -220,7 +220,7 @@
       _deactivateCurrentLayer: function() {
         var layer, m, _base;
         layer = this.currentLayer;
-        this.viewport.$map.find(".editor-layer[data-layer=" + layer).removeClass('editor-layer-selected');
+        this.viewport.$map.find(".editor-layer[data-layer=" + layer).addClass('editor-layer-hidden');
         $(document.body).removeClass("editor-layer-" + layer);
         this.$sidebar.find("> div[data-layer=" + layer + "]").hide();
         m = "deactivate_" + layer + "_layer";
