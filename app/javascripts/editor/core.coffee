@@ -157,7 +157,7 @@ define 'editor.core', ->
           $draggee = $(this)
           dragObject = $draggee.data('dragObject')
           $helper = dragObject.getHelper()
-          $helper.addClass('editor-map-object')
+          $helper.addClass('editor-tile')
 
       @sidebarPopulated = true
 

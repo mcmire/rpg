@@ -170,7 +170,7 @@
           $draggee = $(this);
           dragObject = $draggee.data('dragObject');
           $helper = dragObject.getHelper();
-          return $helper.addClass('editor-map-object');
+          return $helper.addClass('editor-tile');
         });
         return this.sidebarPopulated = true;
       },

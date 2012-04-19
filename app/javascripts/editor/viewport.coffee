@@ -231,7 +231,7 @@ define 'editor.viewport', ->
             $.v.each layers[layer], (o) =>
               object = @core.objectsByName[o.name]
               $elem = object.$elem.clone()
-              $elem.addClass('editor-map-object')
+              $elem.addClass('editor-tile')
               $elem.css('left', "#{o.x}px")
               $elem.css('top', "#{o.y}px")
               @getContentForLayer(layer).append($elem)
@@ -343,7 +343,7 @@ define 'editor.viewport', ->
       viewport = this
 
       layerSel = '#editor-map .editor-layer[data-layer=tiles]'
-      mapObjectsSel = "#{layerSel} .editor-map-object"
+      mapObjectsSel = "#{layerSel} .editor-tile"
 
       @$elem
         .dropTarget(receptor: "#{layerSel} .editor-layer-content")
@@ -369,7 +369,7 @@ define 'editor.viewport', ->
       @$map.bind "mousedown.#{evtns}", (evt) =>
         console.log "#{evtns}: mouseup"
         @_unselectAllTiles()
-        @getContentForCurrentLayer().find('.editor-map-object[data-is-selected=yes]')
+        @getContentForCurrentLayer().find('.editor-tile[data-is-selected=yes]')
           .trigger('select')
           .addClass('editor-selected')
           .attr('data-is-selected', 'no')
@@ -377,7 +377,7 @@ define 'editor.viewport', ->
       $(window)
         .bind "keyup.#{evtns}", (evt) =>
           if @keyboard.isKeyPressed(evt, 'backspace', 'delete')
-            $selectedObjects = @$map.find('.editor-map-object.editor-selected')
+            $selectedObjects = @$map.find('.editor-tile.editor-selected')
             if $selectedObjects.length
               $selectedObjects.each (elem) =>
                 $elem = $(elem)
@@ -392,7 +392,7 @@ define 'editor.viewport', ->
       evtns = 'editor.viewport.layer-tiles.tool-normal'
 
       layerSel = '#editor-map .editor-layer[data-layer=tiles]'
-      mapObjectsSel = "#{layerSel} .editor-map-object"
+      mapObjectsSel = "#{layerSel} .editor-tile"
 
       @$elem
         .dropTarget('destroy')
@@ -400,6 +400,27 @@ define 'editor.viewport', ->
       @_removeEventsFromMapObjects $(mapObjectsSel)
       @$map.unbind(".#{evtns}")
       $(window).unbind(".#{evtns}")
+
+    _createTileElement: (tile) ->
+      @_createMapObjectElement('Tile', tile)
+
+    _createTile: (store) ->
+      @_createMapObject('Tile', store)
+
+    _addTile: (tile) ->
+      @_addMapObject('Tile', tile)
+
+    # fill is a Hash:
+    # x     - x coord of top-left corner
+    # y     - y coord of top-left corner
+    # w     - width
+    # h     - height
+    #
+    _loadTile: (tile) ->
+      @_loadMapObject('Tile', tile)
+
+    _removeTile: (elem) ->
+      @_loadMapObject('Tile', elem)
 
     addObject: (layer, $elem, object) ->
       console.log 'viewport: addObject'
@@ -439,7 +460,7 @@ define 'editor.viewport', ->
         .unbind(".#{evtns}")
 
     _unselectAllTiles: ->
-      @getContentForCurrentLayer().find('.editor-map-object')
+      @getContentForCurrentLayer().find('.editor-tile')
         .trigger('unselect')
         .removeClass('editor-selected')
 
@@ -651,40 +672,23 @@ define 'editor.viewport', ->
       @fillBackground = color
 
     _createFillElement: (fill) ->
-      $elem = $('<div class="editor-fill"></div>')
-      $elem.position(fill.store)
+      $elem = @_createMapObjectElement('Fill', fill)
       $elem.size(fill.store)
       $elem.css('background-color', fill.store.color)
-      $elem.data('fill', fill)
       return $elem
 
     _createFill: (store) ->
-      fill = { store: util.dup(store) }
-      fill.position = (pos) ->
-        if pos
-          @$elem.position(pos)
-          @store.x = pos.x
-          @store.y = pos.y
-          return this
-        else
-          return {x: @store.x, y: @store.y}
+      fill = @_createMapObject('Fill', store)
       fill.fill = (color) ->
         if color
           @$elem.css('background-color', color)
           @store.color = color
         else
           return @store.color
-
-      $elem = @_createFillElement(fill)
-      fill.$elem = $elem
-
-      fill.moid = @objectId
-      @objectId++
-
       return fill
 
     _addFill: (fill) ->
-      @objectsByLayer['fill'][fill.moid] = fill
+      @_addMapObject('Fill', fill)
 
     # fill is a Hash:
     # x     - x coord of top-left corner
@@ -694,24 +698,10 @@ define 'editor.viewport', ->
     # color - rgb hex string
     #
     _loadFill: (fill) ->
-      fill = @_createFill(fill)
-
-      $content = @getContentForLayer('fill')
-      if not $content.length
-        throw new Error "Can't add fill, couldn't find layer content element"
-      $content.append(fill.$elem)
-
-      @_addFill(fill)
-
-      return fill
+      @_loadMapObject('Fill', fill)
 
     _removeFill: (elem) ->
-      $elem = $(elem)
-      fill = $elem.data('fill')
-      console.log "viewport: removing fill #{fill.moid}"
-      delete @objectsByLayer['fill'][fill.moid]
-      $elem.trigger('unselect')
-      $elem.remove()
+      @_removeMapObject('Fill', elem)
 
     # TODO: This is the same as _addEventsToMapObjects()
     _addEventsToSelectionBoxes: ($boxes) ->
@@ -788,6 +778,58 @@ define 'editor.viewport', ->
         .removeClass('editor-selected')
 
     #---
+
+    _createMapObjectElement: (klass, obj) ->
+      objectName = klass.toLowerCase()
+      $elem = $("""<div class="editor-#{objectName}"></div>""")
+      $elem.position(obj.store)
+      $elem.data(objectName, obj)
+      return $elem
+
+    _createMapObject: (klass, store) ->
+      obj = { store: util.dup(store) }
+      obj.position = (pos) ->
+        if pos
+          @$elem.position(pos)
+          @store.x = pos.x
+          @store.y = pos.y
+          return this
+        else
+          return {x: @store.x, y: @store.y}
+
+      $elem = @["_create#{klass}Element"](obj)
+      obj.$elem = $elem
+
+      obj.moid = @objectId
+      @objectId++
+
+      return obj
+
+    _addMapObject: (klass, obj) ->
+      objectName = klass.toLowerCase()
+      @objectsByLayer[objectName][obj.moid] = obj
+
+    _loadMapObject: (klass, def) ->
+      objectName = klass.toLowerCase()
+      obj = @["_create#{klass}"](def)
+
+      $content = @getContentForLayer(objectName)
+      if not $content.length
+        throw new Error "Can't add #{objectName}, couldn't find layer content element"
+      $content.append(obj.$elem)
+
+      @["_add#{klass}"](obj)
+
+      return obj
+
+    _removeMapObject: (klass, elem) ->
+      objectName = klass.toLowerCase()
+      $elem = $(elem)
+      obj = $elem.data(objectName)
+      console.log "viewport: removing #{objectName} #{obj.moid}"
+      delete @objectsByLayer[objectName][obj.moid]
+      $elem.trigger('unselect')
+      $elem.remove()
 
     _initMapGrid: ->
       # create the grid pattern that backgrounds the map

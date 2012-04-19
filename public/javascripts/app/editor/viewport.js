@@ -89,7 +89,7 @@
                 var $elem, object;
                 object = _this.core.objectsByName[o.name];
                 $elem = object.$elem.clone();
-                $elem.addClass('editor-map-object');
+                $elem.addClass('editor-tile');
                 $elem.css('left', "" + o.x + "px");
                 $elem.css('top', "" + o.y + "px");
                 _this.getContentForLayer(layer).append($elem);
@@ -213,7 +213,7 @@
         evtns = 'editor.viewport.layer-tiles.tool-normal';
         viewport = this;
         layerSel = '#editor-map .editor-layer[data-layer=tiles]';
-        mapObjectsSel = "" + layerSel + " .editor-map-object";
+        mapObjectsSel = "" + layerSel + " .editor-tile";
         this.$elem.dropTarget({
           receptor: "" + layerSel + " .editor-layer-content"
         }).bind("mousedropwithin." + evtns, function(evt) {
@@ -233,12 +233,12 @@
         this.$map.bind("mousedown." + evtns, function(evt) {
           console.log("" + evtns + ": mouseup");
           _this._unselectAllTiles();
-          return _this.getContentForCurrentLayer().find('.editor-map-object[data-is-selected=yes]').trigger('select').addClass('editor-selected').attr('data-is-selected', 'no');
+          return _this.getContentForCurrentLayer().find('.editor-tile[data-is-selected=yes]').trigger('select').addClass('editor-selected').attr('data-is-selected', 'no');
         });
         return $(window).bind("keyup." + evtns, function(evt) {
           var $selectedObjects;
           if (_this.keyboard.isKeyPressed(evt, 'backspace', 'delete')) {
-            $selectedObjects = _this.$map.find('.editor-map-object.editor-selected');
+            $selectedObjects = _this.$map.find('.editor-tile.editor-selected');
             if ($selectedObjects.length) {
               $selectedObjects.each(function(elem) {
                 var $elem, objectId;
@@ -257,11 +257,26 @@
         var evtns, layerSel, mapObjectsSel;
         evtns = 'editor.viewport.layer-tiles.tool-normal';
         layerSel = '#editor-map .editor-layer[data-layer=tiles]';
-        mapObjectsSel = "" + layerSel + " .editor-map-object";
+        mapObjectsSel = "" + layerSel + " .editor-tile";
         this.$elem.dropTarget('destroy').unbind("." + evtns);
         this._removeEventsFromMapObjects($(mapObjectsSel));
         this.$map.unbind("." + evtns);
         return $(window).unbind("." + evtns);
+      },
+      _createTileElement: function(tile) {
+        return this._createMapObjectElement('Tile', tile);
+      },
+      _createTile: function(store) {
+        return this._createMapObject('Tile', store);
+      },
+      _addTile: function(tile) {
+        return this._addMapObject('Tile', tile);
+      },
+      _loadTile: function(tile) {
+        return this._loadMapObject('Tile', tile);
+      },
+      _removeTile: function(elem) {
+        return this._loadMapObject('Tile', elem);
       },
       addObject: function(layer, $elem, object) {
         var k, obj, v, _name;
@@ -309,7 +324,7 @@
         return $draggees.dragObject('destroy').unbind("." + evtns);
       },
       _unselectAllTiles: function() {
-        return this.getContentForCurrentLayer().find('.editor-map-object').trigger('unselect').removeClass('editor-selected');
+        return this.getContentForCurrentLayer().find('.editor-tile').trigger('unselect').removeClass('editor-selected');
       },
       activate_fill_layer: function() {
         var $input, that;
@@ -512,31 +527,14 @@
       },
       _createFillElement: function(fill) {
         var $elem;
-        $elem = $('<div class="editor-fill"></div>');
-        $elem.position(fill.store);
+        $elem = this._createMapObjectElement('Fill', fill);
         $elem.size(fill.store);
         $elem.css('background-color', fill.store.color);
-        $elem.data('fill', fill);
         return $elem;
       },
       _createFill: function(store) {
-        var $elem, fill;
-        fill = {
-          store: util.dup(store)
-        };
-        fill.position = function(pos) {
-          if (pos) {
-            this.$elem.position(pos);
-            this.store.x = pos.x;
-            this.store.y = pos.y;
-            return this;
-          } else {
-            return {
-              x: this.store.x,
-              y: this.store.y
-            };
-          }
-        };
+        var fill;
+        fill = this._createMapObject('Fill', store);
         fill.fill = function(color) {
           if (color) {
             this.$elem.css('background-color', color);
@@ -545,34 +543,16 @@
             return this.store.color;
           }
         };
-        $elem = this._createFillElement(fill);
-        fill.$elem = $elem;
-        fill.moid = this.objectId;
-        this.objectId++;
         return fill;
       },
       _addFill: function(fill) {
-        return this.objectsByLayer['fill'][fill.moid] = fill;
+        return this._addMapObject('Fill', fill);
       },
       _loadFill: function(fill) {
-        var $content;
-        fill = this._createFill(fill);
-        $content = this.getContentForLayer('fill');
-        if (!$content.length) {
-          throw new Error("Can't add fill, couldn't find layer content element");
-        }
-        $content.append(fill.$elem);
-        this._addFill(fill);
-        return fill;
+        return this._loadMapObject('Fill', fill);
       },
       _removeFill: function(elem) {
-        var $elem, fill;
-        $elem = $(elem);
-        fill = $elem.data('fill');
-        console.log("viewport: removing fill " + fill.moid);
-        delete this.objectsByLayer['fill'][fill.moid];
-        $elem.trigger('unselect');
-        return $elem.remove();
+        return this._removeMapObject('Fill', elem);
       },
       _addEventsToSelectionBoxes: function($boxes) {
         var $fillBgDiv, evtns, that;
@@ -640,6 +620,65 @@
       },
       _unselectAllFills: function() {
         return this.getContentForCurrentLayer().find('.editor-fill').trigger('unselect').removeClass('editor-selected');
+      },
+      _createMapObjectElement: function(klass, obj) {
+        var $elem, objectName;
+        objectName = klass.toLowerCase();
+        $elem = $("<div class=\"editor-" + objectName + "\"></div>");
+        $elem.position(obj.store);
+        $elem.data(objectName, obj);
+        return $elem;
+      },
+      _createMapObject: function(klass, store) {
+        var $elem, obj;
+        obj = {
+          store: util.dup(store)
+        };
+        obj.position = function(pos) {
+          if (pos) {
+            this.$elem.position(pos);
+            this.store.x = pos.x;
+            this.store.y = pos.y;
+            return this;
+          } else {
+            return {
+              x: this.store.x,
+              y: this.store.y
+            };
+          }
+        };
+        $elem = this["_create" + klass + "Element"](obj);
+        obj.$elem = $elem;
+        obj.moid = this.objectId;
+        this.objectId++;
+        return obj;
+      },
+      _addMapObject: function(klass, obj) {
+        var objectName;
+        objectName = klass.toLowerCase();
+        return this.objectsByLayer[objectName][obj.moid] = obj;
+      },
+      _loadMapObject: function(klass, def) {
+        var $content, obj, objectName;
+        objectName = klass.toLowerCase();
+        obj = this["_create" + klass](def);
+        $content = this.getContentForLayer(objectName);
+        if (!$content.length) {
+          throw new Error("Can't add " + objectName + ", couldn't find layer content element");
+        }
+        $content.append(obj.$elem);
+        this["_add" + klass](obj);
+        return obj;
+      },
+      _removeMapObject: function(klass, elem) {
+        var $elem, obj, objectName;
+        objectName = klass.toLowerCase();
+        $elem = $(elem);
+        obj = $elem.data(objectName);
+        console.log("viewport: removing " + objectName + " " + obj.moid);
+        delete this.objectsByLayer[objectName][obj.moid];
+        $elem.trigger('unselect');
+        return $elem.remove();
       },
       _initMapGrid: function() {
         var canvas, ctx, mapGrid;

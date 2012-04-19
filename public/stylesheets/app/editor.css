@@ -115,10 +115,10 @@ body {
     #editor-toolbox > img:hover, #editor-toolbox > img.editor-active {
       opacity: 1; }
 
-.editor-map-object {
+.editor-tile {
   position: absolute;
   z-index: 5; }
-  .editor-map-object.editor-drag-helper {
+  .editor-tile.editor-drag-helper {
     opacity: 0.7; }
 
 .editor-fill {
