@@ -2,7 +2,7 @@
 define 'game.FilteredObjectMatrix', ->
   meta = require('meta')
 
-  return meta.def
+  meta.def 'game.FilteredObjectMatrix'
     without: (@exception) ->
       return this
 

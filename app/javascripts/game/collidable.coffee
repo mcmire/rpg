@@ -3,7 +3,7 @@ define 'game.Collidable', ->
   meta = require('meta')
 
   # This assumes Mappable
-  Collidable = meta.def
+  Collidable = meta.def 'game.Collidable',
     init: (args...) ->
       @_super(args...)
       @_initCollidableBounds()

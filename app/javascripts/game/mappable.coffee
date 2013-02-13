@@ -3,7 +3,7 @@ define 'game.Mappable', ->
   meta = require('meta')
 
   # This assumes assignable
-  Mappable = meta.def
+  Mappable = meta.def 'game.Mappable',
     init: (@width, @height) ->
       @_initMappableBounds()
       @_initPrevMappableBounds()

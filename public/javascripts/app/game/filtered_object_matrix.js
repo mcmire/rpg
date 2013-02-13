@@ -3,7 +3,7 @@
   define('game.FilteredObjectMatrix', function() {
     var meta;
     meta = require('meta');
-    return meta.def({
+    return meta.def('game.FilteredObjectMatrix', {
       without: function(exception) {
         this.exception = exception;
         return this;

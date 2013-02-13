@@ -4,7 +4,7 @@
   define('game.Mappable', function() {
     var Mappable, meta;
     meta = require('meta');
-    Mappable = meta.def({
+    Mappable = meta.def('game.Mappable', {
       init: function(width, height) {
         this.width = width;
         this.height = height;

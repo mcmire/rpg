@@ -56,30 +56,28 @@ define 'meta', ->
         typeof mixin[sk] is 'function' and
         mixin[sk].__original__?
       )
-        # console.log "}{ #{properMixinName}[#{sk}] }{ -> #{properBaseName}[#{tk}]"
         # If a module has a function that contains _super, it has already been
         # wrapped. The problem is that an attempt to mix it into this object
         # will result in a double-wrapped function; plus, the original
         # object's _super call will also most likely refer to the default _super
         # function (which is an empty function). So, here we unwrap the function
         # and re-wrap it in this context.
+        ##console.log "}{ #{properMixinName}[#{sk}] }{ -> #{properBaseName}[#{tk}]"
         base[tk] = _wrap(mixin[sk].__original__, _super[tk])
       else if (
         typeof mixin[sk] is 'function' and
         _fnContainsSuper(mixin[sk]) and
         typeof _super[tk] is 'function'
       )
-        # console.log "{ #{properMixinName}[#{sk}] } -> #{properBaseName}[#{tk}]"
-        # if properBaseName is 'game.ticker' and tk is '_includeMixin'
-          # console.log _super[tk].toString()
         # If base and the object we're mixing into the object both have a
         # function with the same name, and the mixin's function contains a call
         # to _super(), replace base's function with the mixin's function, but
         # first wrap the mixin's function in another function that sets _super
         # to the base function.
+        ##console.log "{ #{properMixinName}[#{sk}] } -> #{properBaseName}[#{tk}]"
         base[tk] = _wrap(mixin[sk], _super[tk])
       else
-        # console.log "#{properMixinName}[#{sk}] -> #{properBaseName}[#{tk}]"
+        ##console.log "#{properMixinName}[#{sk}] -> #{properBaseName}[#{tk}]"
         base[tk] = mixin[sk]
 
       # Call extended hook
