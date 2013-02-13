@@ -20,7 +20,9 @@ define 'game.viewport', ->
 
     attach: ->
       @_super()
-      @getParentElement().append('<p>Controls: arrow keys (WASD also works too)</p>')
+      @getParentElement().append('<p>You can use the arrow keys to move around (WASD also works too).</p>')
+      @getParentElement().append("<p>Walk around the map! Explore! (Yeah, there isn't much to see, I guess.)</p>")
+      @getParentElement().append("<p>Also try the <a href=\"/editor\">cool map editor</a> (in progress, of course).</p>")
 
     setMap: (map) ->
       @currentMap = map
