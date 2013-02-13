@@ -14,7 +14,7 @@ body {
 
 .editor-tool-hand #editor-viewport,
 .editor-tool-hand .editor-drag-active {
-  cursor: url(/images/editor/tool-hand.gif?1331100093), auto; }
+  cursor: url(/images/editor/tool-hand.gif?1360744115), auto; }
 
 .editor-tool-select #editor-viewport {
   cursor: crosshair; }
@@ -79,9 +79,9 @@ body {
 
 .editor-selected {
   border: 1px dashed black;
-  -moz-border-image: url(/images/editor/selection-border-static2.gif?1333419504) 1 repeat;
-  -webkit-border-image: url(/images/editor/selection-border-static2.gif?1333419504) 1 repeat;
-  border-image: url(/images/editor/selection-border-static2.gif?1333419504) 1 repeat;
+  -moz-border-image: url(/images/editor/selection-border-static2.gif?1360744115) 1 repeat;
+  -webkit-border-image: url(/images/editor/selection-border-static2.gif?1360744115) 1 repeat;
+  border-image: url(/images/editor/selection-border-static2.gif?1360744115) 1 repeat;
   -webkit-transform: translate(-1px, -1px);
   -moz-transform: translate(-1px, -1px); }
 
@@ -102,7 +102,7 @@ body {
 
 #editor-toolbox {
   border-radius: 5px;
-  border: 1px solid #666;
+  border: 1px solid #666666;
   background-color: rgba(235, 235, 235, 0.8);
   padding: 10px;
   position: absolute;
@@ -134,6 +134,6 @@ body {
   position: absolute;
   z-index: 10;
   border: 1px dashed black;
-  -moz-border-image: url(/images/editor/selection-border.gif?1333257793) 1 repeat;
-  -webkit-border-image: url(/images/editor/selection-border.gif?1333257793) 1 repeat;
-  border-image: url(/images/editor/selection-border.gif?1333257793) 1 repeat; }
+  -moz-border-image: url(/images/editor/selection-border.gif?1360744115) 1 repeat;
+  -webkit-border-image: url(/images/editor/selection-border.gif?1360744115) 1 repeat;
+  border-image: url(/images/editor/selection-border.gif?1360744115) 1 repeat; }

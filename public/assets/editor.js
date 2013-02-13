@@ -2494,7 +2494,7 @@
   define('game.Collidable', function() {
     var Collidable, meta;
     meta = require('meta');
-    Collidable = meta.def({
+    Collidable = meta.def('game.Collidable', {
       init: function() {
         var args;
         args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
@@ -3102,7 +3102,7 @@
   define('game.Mappable', function() {
     var Mappable, meta;
     meta = require('meta');
-    Mappable = meta.def({
+    Mappable = meta.def('game.Mappable', {
       init: function(width, height) {
         this.width = width;
         this.height = height;
