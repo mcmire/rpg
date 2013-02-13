@@ -72,7 +72,6 @@ helpers do
     scriptsLoaded.push(name);
     var numScripts = window.scripts.length;
     var numScriptsLoaded = window.scriptsLoaded.length;
-    # console.log(">> " + name + " loaded (" + numScriptsLoaded + "/" + numScripts + ").");
   };
 </script>
     )
