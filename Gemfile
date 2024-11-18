@@ -1,7 +1,7 @@
 source :rubygems
 
 gem 'rake'
-gem 'sinatra', '1.3.2'
+gem 'sinatra', '4.1.0'
 gem 'thin'
 gem 'yajl-ruby', :require => 'yajl/json_gem'
 gem 'jammit', :git => 'https://github.com/mcmire/jammit', :branch => 'fix_rails_assumptions'
